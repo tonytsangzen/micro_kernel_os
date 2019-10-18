@@ -4,12 +4,10 @@
 #include <arch_info.h>
 #include <mm/mmu.h>
 #include <mm/kalloc.h>
+#include <mm/kmalloc.h>
 #include <kstring.h>
 #include <printk.h>
-
-
-extern char _kernel_start[];
-extern char _kernel_end[];
+#include <kernel.h>
 
 static page_dir_entry_t* _kernel_vm;
 
@@ -73,7 +71,7 @@ static void init_kernel_vm(void) {
 	/*
 	init kernel trunk memory malloc.
 	*/
-	//km_init();
+	km_init();
 }
 
 static void init_allocable_mem(void) {

@@ -45,6 +45,8 @@ OBJS = ${ARCH_OBJS} \
 	kernel/mm/startup.o \
 	kernel/mm/kalloc.o \
 	kernel/mm/mmu.o \
+	kernel/mm/trunkmalloc.o \
+	kernel/mm/kmalloc.o \
 	kernel/printk.o \
 	kernel/init.o \
 	kernel/kernel.o

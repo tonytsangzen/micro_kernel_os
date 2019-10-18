@@ -13,4 +13,6 @@ __entry:
   bl __jump2_high_mem /*system.S*/
 
 	bl _copy_interrupt_table
+	bl __use_high_interrupts  /* (system.S*/
+	bl __enable_interrupts /*system.S*/
 	bl _kernel_entry_c
