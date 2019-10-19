@@ -9,6 +9,7 @@
 #include <kernel/system.h>
 #include <kernel/arch_info.h>
 #include <dev/timer.h>
+#include <svc_call.h>
 
 static page_dir_entry_t* _kernel_vm;
 
@@ -98,8 +99,11 @@ void _kernel_entry_c(void) {
 
 	__irq_enable();
 
+
+	svc_call(1, 2, 3, 4);
 	timer_init();
 	timer_set_interval(0, 1000);
+
 	while(1) {
 	}
 }

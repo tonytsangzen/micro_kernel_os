@@ -40,6 +40,7 @@ ARCH_OBJS = \
 
 LIB_OBJS = \
 	lib/kstring.o \
+	lib/svc_call.o \
 	lib/vprintf.o
 
 OBJS = ${ARCH_OBJS} \
@@ -52,6 +53,7 @@ OBJS = ${ARCH_OBJS} \
 	kernel/printk.o \
 	kernel/init.o \
 	kernel/irq.o \
+	kernel/svc.o \
 	kernel/kernel.o
 
 $(OS).bin: $(OBJS) mkos.lds.S
