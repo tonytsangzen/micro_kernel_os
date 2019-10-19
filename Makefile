@@ -34,7 +34,9 @@ ARCH_OBJS = \
 	arch/arm/common/system.o \
 	arch/arm/common/memcpy.o \
 	arch/${ARCH}/arch_info.o \
-	arch/${ARCH}/uart_basic.o 
+	arch/${ARCH}/uart_basic.o \
+	arch/${ARCH}/gic.o \
+	arch/${ARCH}/timer.o 
 
 LIB_OBJS = \
 	lib/kstring.o \
@@ -49,6 +51,7 @@ OBJS = ${ARCH_OBJS} \
 	kernel/mm/kmalloc.o \
 	kernel/printk.o \
 	kernel/init.o \
+	kernel/irq.o \
 	kernel/kernel.o
 
 $(OS).bin: $(OBJS) mkos.lds.S

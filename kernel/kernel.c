@@ -1,13 +1,14 @@
-
 #include <stdint.h>
-#include <uart_basic.h>
-#include <arch_info.h>
+#include <dev/uart_basic.h>
 #include <mm/mmu.h>
 #include <mm/kalloc.h>
 #include <mm/kmalloc.h>
 #include <kstring.h>
 #include <printk.h>
-#include <kernel.h>
+#include <kernel/kernel.h>
+#include <kernel/system.h>
+#include <kernel/arch_info.h>
+#include <dev/timer.h>
 
 static page_dir_entry_t* _kernel_vm;
 
@@ -94,4 +95,11 @@ void _kernel_entry_c(void) {
 
 	uart_basic_init();
 	printk("hello world %d\n", 100);
+
+	__irq_enable();
+
+	timer_init();
+	timer_set_interval(0, 1000);
+	while(1) {
+	}
 }

@@ -61,27 +61,17 @@ __enable_scu:
 	BX lr
 #endif
 
-.global __enable_interrupts
-__enable_interrupts:
-	push {lr}
-	mrs r1, cpsr
-	bic r1, r1, #0x80
+.global __irq_enable
+__irq_enable:
+	mrs r0, cpsr
+	bic r0, r0, #0x80
 	msr cpsr_c, r1
-	pop {lr}
 	mov pc, lr
 
-.global __cli 
-__cli:
-	push {r4}
-	mrs r4, cpsr
-	mov r0, r4 /*return cpsr*/
-	orr r4, r4, #0x80
-	msr cpsr, r4
-	pop {r4}
-	mov pc, lr
-
-.global __sti
-__sti:
+.global __irq_disable
+__irq_disable:
+	mrs r0, cpsr
+	orr r0, r0, #0x80
 	msr cpsr, r0
 	mov pc, lr
 

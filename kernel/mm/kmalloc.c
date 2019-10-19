@@ -1,7 +1,7 @@
 #include <mm/kmalloc.h>
 #include <mm/trunkmalloc.h>
 #include <mm/mmu.h>
-#include <kernel.h>
+#include <kernel/kernel.h>
 
 static malloc_t _kmalloc;
 static uint32_t _kmalloc_mem_tail;

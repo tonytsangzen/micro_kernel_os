@@ -1,4 +1,4 @@
-#include <arch_info.h>
+#include <kernel/arch_info.h>
 #include <mm/mmu.h>
 
 arch_info_t _arch_info;

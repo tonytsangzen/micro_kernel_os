@@ -14,5 +14,4 @@ __entry:
 
 	bl _copy_interrupt_table
 	bl __use_high_interrupts  /* (system.S*/
-	bl __enable_interrupts /*system.S*/
 	bl _kernel_entry_c

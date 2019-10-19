@@ -1,4 +1,4 @@
-#include <uart_basic.h>
+#include <dev/uart_basic.h>
 #include <mm/mmu.h>
 
 /* memory mapping for the serial port */
@@ -19,7 +19,7 @@ uint8_t uart_basic_init(void) {
 	return 1;
 }
 
-void uart_basic_trans(char c) {
+static void uart_basic_trans(char c) {
 	/* wait until transmit buffer is full */
 	while (UART0[UART_FLAGS] & UART_TRANSMIT);
 	/* write the character */

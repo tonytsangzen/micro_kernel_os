@@ -1,6 +1,6 @@
 #include "printk.h"
 #include "vprintf.h"
-#include "uart_basic.h"
+#include "dev/uart_basic.h"
 
 static void outc(char c, void* p) {
 	(void)p;
