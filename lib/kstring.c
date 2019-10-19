@@ -1,5 +1,4 @@
 #include "kstring.h"
-#include <stdint.h>
 
 /*
  * memcmp copies n bytes from the source buffer to the target buffer. It returns

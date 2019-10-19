@@ -1,4 +1,3 @@
-#include <stdint.h>
 #include <mm/mmu.h>
 #include <dev/timer.h>
 #include <kernel/irq.h>

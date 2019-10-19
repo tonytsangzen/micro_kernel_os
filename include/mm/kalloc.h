@@ -1,7 +1,7 @@
 #ifndef KALLOC_H
 #define KALLOC_H
 
-#include <stdint.h>
+#include <types.h>
 
 typedef struct PageList {
 	struct PageList *next;

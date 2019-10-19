@@ -1,6 +1,5 @@
 #include <mm/kalloc.h>
 #include <mm/mmu.h>
-#include <stdint.h>
 
 /*physical memory split to pages for paging mmu, managed by kalloc/kfree, phymem page state must be occupied or free*/
 

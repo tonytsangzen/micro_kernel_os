@@ -1,7 +1,7 @@
 #ifndef ARCH_INFO_H
 #define ARCH_INFO_H
 
-#include <stdint.h>
+#include <types.h>
 
 typedef struct {
 	uint32_t phy_mem_size;

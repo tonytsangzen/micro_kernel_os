@@ -1,7 +1,7 @@
 #ifndef UART_BASIC_H
 #define UART_BASIC_H
 
-#include <stdint.h>
+#include <types.h>
 
 uint8_t uart_basic_init(void);
 

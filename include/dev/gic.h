@@ -1,7 +1,7 @@
 #ifndef GIC_H
 #define GIC_H
 
-#include <stdint.h>
+#include <types.h>
 
 extern void pic_set_enabled(uint32_t v);
 extern uint32_t pic_get_enabled(void);

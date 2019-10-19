@@ -3,7 +3,7 @@
 
 /*km_alloc/km_free manage the kernel-reserved memory trunk(from KMALLOC_BASE, with size KMALLOC_SIZE), the memory trunk only reserved for kernel, not managed by MMU! */
 
-#include <stdint.h>
+#include <types.h>
 
 void* km_alloc(uint32_t size);
 void km_free(void* p);

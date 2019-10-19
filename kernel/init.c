@@ -1,5 +1,5 @@
 #include <mm/mmu.h>
-#include <stdint.h>
+#include <types.h>
 
 /*Copy interrupt talbe to phymen address 0x00000000.
 	Virtual address #INTERRUPT_VECTOR_BASE(0xFFFF0000 for ARM) must mapped to phymen 0x00000000.

@@ -1,4 +1,3 @@
-#include <stdint.h>
 #include <dev/uart_basic.h>
 #include <mm/mmu.h>
 #include <mm/kalloc.h>
@@ -8,8 +7,8 @@
 #include <kernel/kernel.h>
 #include <kernel/system.h>
 #include <kernel/arch_info.h>
+#include <kernel/proc.h>
 #include <dev/timer.h>
-#include <svc_call.h>
 
 static page_dir_entry_t* _kernel_vm;
 
@@ -88,6 +87,18 @@ static void init_allocable_mem(void) {
 	kalloc_init(ALLOCATABLE_MEMORY_START + INIT_RESERV_MEMORY_SIZE, P2V(_phy_mem_size));
 }
 
+void P(void) {
+	while(1) {
+		//printk("hello, P\n");
+	}
+}
+
+void X(void) {
+	while(1) {
+		//printk("hello, X\n");
+	}
+}
+
 void _kernel_entry_c(void) {
 	arch_info_init();
 
@@ -95,14 +106,14 @@ void _kernel_entry_c(void) {
 	init_allocable_mem(); /*init the rest allocable memory VM*/
 
 	uart_basic_init();
-	printk("hello world %d\n", 100);
-
 	__irq_enable();
 
+	proc_init();
+	proc_add((uint32_t)P);
+	proc_add((uint32_t)X);
 
-	svc_call(1, 2, 3, 4);
 	timer_init();
-	timer_set_interval(0, 1000);
+	timer_set_interval(0, 1000000);
 
 	while(1) {
 	}

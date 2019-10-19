@@ -54,6 +54,8 @@ OBJS = ${ARCH_OBJS} \
 	kernel/init.o \
 	kernel/irq.o \
 	kernel/svc.o \
+	kernel/proc.o \
+	kernel/schedule.o \
 	kernel/kernel.o
 
 $(OS).bin: $(OBJS) mkos.lds.S
