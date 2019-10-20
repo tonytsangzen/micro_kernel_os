@@ -1,3 +1,2 @@
 *.o
-patches
-.pc
+build
