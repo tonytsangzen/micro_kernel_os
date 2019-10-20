@@ -58,25 +58,27 @@ OBJS = ${ARCH_OBJS} \
 	kernel/schedule.o \
 	kernel/kernel.o
 
+BUILD_DIR = ../build
+
 $(OS).bin: $(OBJS) mkos.lds.S
-	mkdir -p build
-	$(LD) -L arch/${ARCH} -T mkos.lds.S $(OBJS) -o build/$(OS).elf
-	$(OBJCOPY) -O binary build/$(OS).elf build/$(OS).bin
-	$(OBJDUMP) -D build/$(OS).elf > build/$(OS).asm
+	mkdir -p ${BUILD_DIR}
+	$(LD) -L arch/${ARCH} -T mkos.lds.S $(OBJS) -o ${BUILD_DIR}/$(OS).elf
+	$(OBJCOPY) -O binary ${BUILD_DIR}/$(OS).elf ${BUILD_DIR}/$(OS).bin
+	$(OBJDUMP) -D ${BUILD_DIR}/$(OS).elf > ${BUILD_DIR}/$(OS).asm
 
 run:
-	qemu-system-arm $(QEMU_FLAGS) -kernel build/$(OS).bin
+	qemu-system-arm $(QEMU_FLAGS) -kernel ${BUILD_DIR}/$(OS).bin
 
 runasm:
-	qemu-system-arm $(QEMU_FLAGS) -d in_asm -kernel build/$(OS).bin
+	qemu-system-arm $(QEMU_FLAGS) -d in_asm -kernel ${BUILD_DIR}/$(OS).bin
 
 debug:
-	qemu-system-arm $(QEMU_FLAGS) -gdb tcp::26000 -S -kernel build/$(OS).bin
+	qemu-system-arm $(QEMU_FLAGS) -gdb tcp::26000 -S -kernel ${BUILD_DIR}/$(OS).bin
 
 gdb: 
 	echo "target remote :26000" > /tmp/gdbinit
-	arm-none-eabi-gdb build/$(OS).elf -x /tmp/gdbinit
+	arm-none-eabi-gdb ${BUILD_DIR}/$(OS).elf -x /tmp/gdbinit
 
 clean:
 	rm -f $(OBJS)
-	rm -fr build
+	rm -fr ${BUILD_DIR}
