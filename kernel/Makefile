@@ -9,12 +9,13 @@ LD = arm-none-eabi-ld
 OBJCOPY = arm-none-eabi-objcopy
 OBJDUMP = arm-none-eabi-objdump
 
+ARCH_DIR=arch
 ARCH=arm/versatilepb
-include arch/${ARCH}/config.mk
+include ${ARCH_DIR}/${ARCH}/config.mk
 
 # flags
 CFLAGS = \
-	-I. -Iinclude \
+	-I. -I../include -Iinclude \
 	-marm $(QEMU_CFLAGS) \
 	-Wstrict-prototypes \
 	-pedantic -Wall -Wextra -msoft-float -fPIC -mapcs-frame \
@@ -29,40 +30,41 @@ ASFLAGS = -g -I. -Iinclude -mcpu=$(CPU)
 all: $(OS).bin 
 
 ARCH_OBJS = \
-	arch/arm/common/boot.o \
-	arch/arm/common/interrupt.o \
-	arch/arm/common/system.o \
-	arch/arm/common/memcpy.o \
-	arch/${ARCH}/arch_info.o \
-	arch/${ARCH}/uart_basic.o \
-	arch/${ARCH}/gic.o \
-	arch/${ARCH}/timer.o 
+	${ARCH_DIR}/arm/common/boot.o \
+	${ARCH_DIR}/arm/common/interrupt.o \
+	${ARCH_DIR}/arm/common/system.o \
+	${ARCH_DIR}/arm/common/memcpy.o \
+	${ARCH_DIR}/${ARCH}/arch_info.o \
+	${ARCH_DIR}/${ARCH}/uart_basic.o \
+	${ARCH_DIR}/${ARCH}/gic.o \
+	${ARCH_DIR}/${ARCH}/timer.o 
 
+LIB_DIR = lib
 LIB_OBJS = \
-	lib/kstring.o \
-	lib/svc_call.o \
-	lib/vprintf.o
+	${LIB_DIR}/kstring.o \
+	${LIB_DIR}/vprintf.o
 
+KERNEL_DIR = kernel
 OBJS = ${ARCH_OBJS} \
 	${LIB_OBJS} \
-	kernel/mm/startup.o \
-	kernel/mm/kalloc.o \
-	kernel/mm/mmu.o \
-	kernel/mm/trunkmalloc.o \
-	kernel/mm/kmalloc.o \
-	kernel/printk.o \
-	kernel/init.o \
-	kernel/irq.o \
-	kernel/svc.o \
-	kernel/proc.o \
-	kernel/schedule.o \
-	kernel/kernel.o
+	${KERNEL_DIR}/mm/startup.o \
+	${KERNEL_DIR}/mm/kalloc.o \
+	${KERNEL_DIR}/mm/mmu.o \
+	${KERNEL_DIR}/mm/trunkmalloc.o \
+	${KERNEL_DIR}/mm/kmalloc.o \
+	${KERNEL_DIR}/printk.o \
+	${KERNEL_DIR}/init.o \
+	${KERNEL_DIR}/irq.o \
+	${KERNEL_DIR}/svc.o \
+	${KERNEL_DIR}/proc.o \
+	${KERNEL_DIR}/schedule.o \
+	${KERNEL_DIR}/kernel.o
 
 BUILD_DIR = ../build
 
 $(OS).bin: $(OBJS) mkos.lds.S
 	mkdir -p ${BUILD_DIR}
-	$(LD) -L arch/${ARCH} -T mkos.lds.S $(OBJS) -o ${BUILD_DIR}/$(OS).elf
+	$(LD) -L ${ARCH_DIR}/${ARCH} -T mkos.lds.S $(OBJS) -o ${BUILD_DIR}/$(OS).elf
 	$(OBJCOPY) -O binary ${BUILD_DIR}/$(OS).elf ${BUILD_DIR}/$(OS).bin
 	$(OBJDUMP) -D ${BUILD_DIR}/$(OS).elf > ${BUILD_DIR}/$(OS).asm
 
