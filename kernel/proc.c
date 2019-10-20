@@ -1,6 +1,7 @@
 #include <kernel/system.h>
 #include <kernel/proc.h>
 #include <kernel/kernel.h>
+#include <mm/kalloc.h>
 #include <kstring.h>
 #include <printk.h>
 
@@ -37,6 +38,11 @@ int32_t proc_get_next_ready(void) {
 	return i;
 }
 
+static inline  uint32_t proc_get_user_stack(proc_t* proc) {
+	(void)proc;
+  return USER_STACK_BOTTOM;
+}
+
 /* proc_creates allocates a new process and returns it. */
 static proc_t *proc_create(void) {
 	int32_t index = -1;
@@ -59,6 +65,14 @@ static proc_t *proc_create(void) {
 
 	page_dir_entry_t *vm = proc_get_vm(proc);
 	set_kernel_vm(vm);
+
+	char *stack = kalloc();
+  uint32_t user_stack =  proc_get_user_stack(proc);
+  map_page(vm,
+		user_stack,
+    V2P(stack),
+    AP_RW_RW);
+  proc->user_stack = user_stack;
 	return proc;
 }
 
@@ -66,7 +80,7 @@ int32_t proc_add(uint32_t entry) {
 	proc_t *proc = proc_create();
 	if(proc == NULL)
 		return -1;
-	proc->ctx.sp = (uint32_t)proc->stack; 
+	proc->ctx.sp = ((uint32_t)proc->user_stack)+PAGE_SIZE;
 	proc->ctx.cpsr = 0x50;
 	proc->ctx.pc = entry;
 	proc->state = READY;
@@ -85,5 +99,9 @@ void proc_switch(context_t* ctx, int32_t pid){
 
 	page_dir_entry_t *vm = proc_get_vm(_current_proc);
 	__set_translation_table_base((uint32_t) V2P(vm));
+	__asm__ volatile("push {R4}");
+  __asm__ volatile("mov R4, #0");
+  __asm__ volatile("MCR p15, 0, R4, c8, c7, 0");
+  __asm__ volatile("pop {R4}");
 }
 

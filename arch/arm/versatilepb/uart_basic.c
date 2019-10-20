@@ -1,4 +1,6 @@
 #include <dev/uart_basic.h>
+#include <kernel/irq.h>
+#include <dev/gic.h>
 #include <mm/mmu.h>
 
 /* memory mapping for the serial port */
@@ -16,6 +18,7 @@
 
 uint8_t uart_basic_init(void) {
 	put32(UART0+UART_INT_ENABLE, UART_RECEIVE);
+	gic_set_irqs(IRQ_UART0);
 	return 1;
 }
 

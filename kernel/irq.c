@@ -1,5 +1,6 @@
 #include <dev/gic.h>
 #include <dev/timer.h>
+#include <dev/uart_basic.h>
 #include <printk.h>
 #include <kernel/irq.h>
 #include <kernel/system.h>
@@ -14,6 +15,10 @@ void irq_handler(context_t* ctx) {
 		timer_clear_interrupt(0);
 		schedule(ctx);
 	}
+	if((irqs & IRQ_UART0) != 0) {
+		char c = (char)uart_basic_recv();
+		printk("%c", c);
+	}
 
-	__irq_enable();
+	//__irq_enable();
 }

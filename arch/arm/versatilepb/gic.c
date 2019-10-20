@@ -50,19 +50,22 @@ uint32_t sic_get_status(void) {
 void gic_set_irqs(uint32_t irqs) {
 	uint32_t pic_en = pic_get_enabled();
 	uint32_t sic_en = sic_get_enabled();
-	pic_set_enabled(pic_en | PIC_INT_SIC);
+	pic_en |= PIC_INT_SIC;
 
   if((irqs & IRQ_TIMER0) != 0) 
-		pic_set_enabled(pic_en | PIC_INT_TIMER0);
+		pic_en |= PIC_INT_TIMER0;
   if((irqs & IRQ_UART0) != 0) 
-		pic_set_enabled(pic_en | PIC_INT_UART0);
+		pic_en |= PIC_INT_UART0;
 
   if((irqs & IRQ_KEY) != 0) 
-		sic_set_enabled(sic_en | SIC_INT_KEY);
+		sic_en |= SIC_INT_KEY;
   if((irqs & IRQ_MOUSE) != 0) 
-		sic_set_enabled(sic_en | SIC_INT_MOUSE);
+		sic_en |= SIC_INT_MOUSE;
   if((irqs & IRQ_SDC) != 0) 
-		sic_set_enabled(sic_en | SIC_INT_SDC);
+		sic_en |= SIC_INT_SDC;
+	
+	pic_set_enabled(pic_en);
+	sic_set_enabled(sic_en);
 }
 
 uint32_t gic_get_irqs(void) {

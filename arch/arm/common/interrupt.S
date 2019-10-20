@@ -61,6 +61,39 @@ irq_entry:
 	movs  pc, lr                  @ return from interrupt
 
 prefetch_abort_entry:
+	sub   lr, lr, #4              @ correct return address
+	msr   cpsr, #0xD7             @ enter ABT mode with IRQ and FIQ interrupts disabled
+	sub   sp, sp, #60             @ update SVC mode stack
+	stmia sp, { r0-r12, sp, lr }^ @ store  USR registers
+	mrs   r5, spsr                @ get    USR        CPSR
+	stmdb sp!, { r5, lr }         @ store  USR PC and CPSR
+
+	mov   r0, lr
+	mov   r1, sp
+	@bl    pab_handler             @ invoke high-level C function
+
+	ldmia sp!, { r1, lr }         @ load   USR mode PC and CPSR
+	msr   spsr, r1                @ set    USR mode        CPSR
+	ldmia sp, { r0-r12, sp, lr }^ @ load   USR mode registers
+	add   sp, sp, #60
+	movs  pc, lr                  @ return from interrupt
 
 data_abort_entry:
+	sub   lr, lr, #8              @ correct return address
+	msr   cpsr, #0xD7             @ enter ABT mode with IRQ and FIQ interrupts disabled
+	sub   sp, sp, #60             @ update SVC mode stack
+	stmia sp, { r0-r12, sp, lr }^ @ store  USR registers
+	mrs   r5, spsr                @ get    USR        CPSR
+	stmdb sp!, { r5, lr }         @ store  USR PC and CPSR
+
+	mov   r0, lr
+	ldm   r0, {r0}
+	mov   r1, sp
+	//bl    dab_handler             @ invoke high-level C function
+
+	ldmia sp!, { r1, lr }         @ load   USR mode PC and CPSR
+	msr   spsr, r1                @ set    USR mode        CPSR
+	ldmia sp, { r0-r12, sp, lr }^ @ load   USR mode registers
+	add   sp, sp, #60
+	movs  pc, lr
 

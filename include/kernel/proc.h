@@ -20,7 +20,8 @@ typedef struct {
 	int32_t father_pid;
 	int32_t state;
 	context_t ctx;
-	char stack[PAGE_SIZE];
+
+	uint32_t user_stack;
 } proc_t;
 
 extern proc_t* _current_proc;

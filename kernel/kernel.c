@@ -87,18 +87,6 @@ static void init_allocable_mem(void) {
 	kalloc_init(ALLOCATABLE_MEMORY_START + INIT_RESERV_MEMORY_SIZE, P2V(_phy_mem_size));
 }
 
-void P(void) {
-	while(1) {
-		//printk("hello, P\n");
-	}
-}
-
-void X(void) {
-	while(1) {
-		//printk("hello, X\n");
-	}
-}
-
 void _kernel_entry_c(void) {
 	arch_info_init();
 
@@ -106,15 +94,12 @@ void _kernel_entry_c(void) {
 	init_allocable_mem(); /*init the rest allocable memory VM*/
 
 	uart_basic_init();
-	__irq_enable();
-
 	proc_init();
-	proc_add((uint32_t)P);
-	proc_add((uint32_t)X);
 
 	timer_init();
 	timer_set_interval(0, 1000000);
 
+	__irq_enable();
 	while(1) {
 	}
 }

@@ -1,6 +1,6 @@
 #include <svc_call.h>
 
-int32_t svc_call(int32_t code, int32_t arg0, int32_t arg1, int32_t arg2) {
+int32_t svc_call3(int32_t code, int32_t arg0, int32_t arg1, int32_t arg2) {
 	volatile int32_t r;
   __asm__ volatile("stmdb sp!, {lr}\n"
                 "mrs   r0,  cpsr\n"
@@ -17,4 +17,16 @@ int32_t svc_call(int32_t code, int32_t arg0, int32_t arg1, int32_t arg2) {
               : "r"(code), "r" (arg0), "r" (arg1), "r" (arg2)
               : "r0", "r1", "r2", "r3" );
   return r;
+}
+
+int32_t svc_call2(int32_t code, int32_t arg0, int32_t arg1) {
+	return svc_call3(code, arg0, arg1, 0);
+}
+
+int32_t svc_call1(int32_t code, int32_t arg0) {
+	return svc_call3(code, arg0, 0, 0);
+}
+
+int32_t svc_call0(int32_t code) {
+	return svc_call3(code, 0, 0, 0);
 }
