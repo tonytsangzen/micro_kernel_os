@@ -24,18 +24,23 @@ void proc_init(void) {
 
 int32_t proc_get_next_ready(void) {
 	int32_t i = 0;
-	if(_current_proc != NULL)
-		i = _current_proc->pid + 1;
+	int32_t end = 0;
+	if(_current_proc != NULL) {
+		end = _current_proc->pid;
+		i = end + 1;
+	}
 	
 	while(1) {
+		if(i == end)
+			break;
 		if(i >= PROC_MAX)
 			i = 0;
-		if(_proc_table[i].state == READY ||
-				i == _current_proc->pid)
-			break;
+
+		if(_proc_table[i].state == READY)
+			return i;
 		i++;
 	}
-	return i;
+	return -1;
 }
 
 static inline  uint32_t proc_get_user_stack(proc_t* proc) {

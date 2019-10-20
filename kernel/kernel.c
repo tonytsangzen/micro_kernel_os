@@ -100,6 +100,7 @@ void _kernel_entry_c(void) {
 	timer_set_interval(0, 1000000);
 
 	__irq_enable();
+
 	while(1) {
 	}
 }

@@ -16,9 +16,6 @@ void irq_handler(context_t* ctx) {
 		schedule(ctx);
 	}
 	if((irqs & IRQ_UART0) != 0) {
-		char c = (char)uart_basic_recv();
-		printk("%c", c);
+		//char c = (char)uart_basic_recv();
 	}
-
-	//__irq_enable();
 }
