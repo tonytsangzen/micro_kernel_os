@@ -8,6 +8,7 @@
 #include <kernel/system.h>
 #include <kernel/arch_info.h>
 #include <kernel/proc.h>
+#include <kernel/irq.h>
 #include <dev/timer.h>
 
 static page_dir_entry_t* _kernel_vm;
@@ -92,15 +93,14 @@ void _kernel_entry_c(void) {
 
 	init_kernel_vm();  /* Done mapping all mem */
 	init_allocable_mem(); /*init the rest allocable memory VM*/
+	irq_init();
 
 	uart_basic_init();
 	proc_init();
 
-	timer_init();
 	timer_set_interval(0, 1000000);
 
 	__irq_enable();
-
 	while(1) {
 	}
 }

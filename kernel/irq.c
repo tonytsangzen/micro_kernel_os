@@ -14,8 +14,15 @@ void irq_handler(context_t* ctx) {
 	if((irqs & IRQ_TIMER0) != 0) {
 		timer_clear_interrupt(0);
 		schedule(ctx);
+		return;
 	}
+
 	if((irqs & IRQ_UART0) != 0) {
-		//char c = (char)uart_basic_recv();
+		char c = (char)uart_basic_recv();
+		uart_basic_putch(c);
 	}
+}
+
+void irq_init(void) {
+	gic_set_irqs( IRQ_UART0 | IRQ_TIMER0 | IRQ_KEY);
 }

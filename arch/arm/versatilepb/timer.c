@@ -46,7 +46,3 @@ void timer_clear_interrupt(uint32_t id) {
   put32(t + TIMER_INTCTL, 0xFFFFFFFF);
 }
 
-
-void timer_init(void) {
-	gic_set_irqs(IRQ_TIMER0);
-}
