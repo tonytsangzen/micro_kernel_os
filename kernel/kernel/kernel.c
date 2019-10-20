@@ -88,19 +88,31 @@ static void init_allocable_mem(void) {
 	kalloc_init(ALLOCATABLE_MEMORY_START + INIT_RESERV_MEMORY_SIZE, P2V(_phy_mem_size));
 }
 
+extern char _initrd[];
+static void load_initrd(void) {
+	uint32_t initrd = 0x08000000;
+	map_pages(_kernel_vm, initrd, initrd, initrd+1*MB, AP_RW_D);
+	memcpy(_initrd, (char*)initrd, 1*MB);
+}
+
+static void load_init(void) {
+	proc_t *proc = proc_create();
+	proc_load_elf(proc, _initrd);
+}
+
 void _kernel_entry_c(void) {
 	arch_info_init();
-
 	init_kernel_vm();  /* Done mapping all mem */
+	load_initrd();
 	init_allocable_mem(); /*init the rest allocable memory VM*/
+
 	irq_init();
 
 	uart_basic_init();
-	proc_init();
+
+	procs_init();
+	load_init();
 
 	timer_set_interval(0, 1000000);
-
-	__irq_enable();
-	while(1) {
-	}
+	while(1);
 }

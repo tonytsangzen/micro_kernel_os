@@ -42,7 +42,8 @@ ARCH_OBJS = \
 LIB_DIR = lib
 LIB_OBJS = \
 	${LIB_DIR}/kstring.o \
-	${LIB_DIR}/vprintf.o
+	${LIB_DIR}/vprintf.o \
+	${LIB_DIR}/printk.o
 
 KERNEL_DIR = kernel
 OBJS = ${ARCH_OBJS} \
@@ -52,7 +53,6 @@ OBJS = ${ARCH_OBJS} \
 	${KERNEL_DIR}/mm/mmu.o \
 	${KERNEL_DIR}/mm/trunkmalloc.o \
 	${KERNEL_DIR}/mm/kmalloc.o \
-	${KERNEL_DIR}/printk.o \
 	${KERNEL_DIR}/init.o \
 	${KERNEL_DIR}/irq.o \
 	${KERNEL_DIR}/svc.o \
@@ -60,7 +60,8 @@ OBJS = ${ARCH_OBJS} \
 	${KERNEL_DIR}/schedule.o \
 	${KERNEL_DIR}/kernel.o
 
-BUILD_DIR = ../build
+BUILD_DIR = build
+SYS_DIR = ../system
 
 $(OS).bin: $(OBJS) mkos.lds.S
 	mkdir -p ${BUILD_DIR}
@@ -69,13 +70,13 @@ $(OS).bin: $(OBJS) mkos.lds.S
 	$(OBJDUMP) -D ${BUILD_DIR}/$(OS).elf > ${BUILD_DIR}/$(OS).asm
 
 run:
-	qemu-system-arm $(QEMU_FLAGS) -kernel ${BUILD_DIR}/$(OS).bin
+	qemu-system-arm $(QEMU_FLAGS) -kernel ${BUILD_DIR}/$(OS).bin -initrd ${SYS_DIR}/build/sbin/init
 
 runasm:
-	qemu-system-arm $(QEMU_FLAGS) -d in_asm -kernel ${BUILD_DIR}/$(OS).bin
+	qemu-system-arm $(QEMU_FLAGS) -d in_asm -kernel ${BUILD_DIR}/$(OS).bin -initrd ${SYS_DIR}/build/sbin/init
 
 debug:
-	qemu-system-arm $(QEMU_FLAGS) -gdb tcp::26000 -S -kernel ${BUILD_DIR}/$(OS).bin
+	qemu-system-arm $(QEMU_FLAGS) -gdb tcp::26000 -S -kernel ${BUILD_DIR}/$(OS).bin -initrd ${SYS_DIR}/build/sbin/init
 
 gdb: 
 	echo "target remote :26000" > /tmp/gdbinit

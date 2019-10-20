@@ -35,12 +35,12 @@ static void try_break(malloc_t* m, mem_block_t* block, uint32_t size) {
 	newBlock->prev = block;
 	block->next = newBlock;
 
-	if(m->mTail == block) 
-		m->mTail = newBlock;
+	if(m->tail == block) 
+		m->tail = newBlock;
 }
 
 char* trunk_malloc(malloc_t* m, uint32_t size) {
-	mem_block_t* block = m->mHead;
+	mem_block_t* block = m->head;
 	while(block != 0) {
 		if(block->used || block->size < size) {
 			block = block->next;
@@ -64,23 +64,23 @@ char* trunk_malloc(malloc_t* m, uint32_t size) {
 		pages++;
 
 	char* p = (char*)m->get_mem_tail(m->arg);
-	if(!m->expand(m->arg, pages))
+	if(m->expand(m->arg, pages) != 0)
 		return 0;
 
 	block = gen_block(p, pages*PAGE_SIZE);
 	block->used = 1;
 
-	if(m->mHead == 0) {
-		m->mHead = block;
+	if(m->head == 0) {
+		m->head = block;
 	}
 
-	if(m->mTail == 0) {
-		m->mTail = block;
+	if(m->tail == 0) {
+		m->tail = block;
 	}
 	else {
-		m->mTail->next = block;
-		block->prev = m->mTail;
-		m->mTail = block;
+		m->tail->next = block;
+		block->prev = m->tail;
+		m->tail = block;
 	}
 
 	try_break(m, block, size);
@@ -100,7 +100,7 @@ static void try_merge(malloc_t* m, mem_block_t* block) {
 		if(block->next != 0) 
 			block->next->prev = block;
 		else
-			m->mTail = block;
+			m->tail = block;
 	}
 
 	//try left block	
@@ -111,7 +111,7 @@ static void try_merge(malloc_t* m, mem_block_t* block) {
 		if(b->next != 0) 
 			b->next->prev = b;
 		else
-			m->mTail = b;
+			m->tail = b;
 	}
 }
 
@@ -120,19 +120,19 @@ try to shrink the pages.
 */
 static void try_shrink(malloc_t* m) {
 	uint32_t block_size = sizeof(mem_block_t);
-	uint32_t addr = (uint32_t)m->mTail;
+	uint32_t addr = (uint32_t)m->tail;
 	//check if page aligned.	
-	if(m->mTail == 0 || m->mTail->used == 1 || (addr % PAGE_SIZE) != 0)
+	if(m->tail == 0 || m->tail->used == 1 || (addr % PAGE_SIZE) != 0)
 		return;
 
-	int pages = (m->mTail->size+block_size) / PAGE_SIZE;
-	m->mTail = m->mTail->prev;
-	if(m->mTail != 0)
-		m->mTail->next = 0;
+	int pages = (m->tail->size+block_size) / PAGE_SIZE;
+	m->tail = m->tail->prev;
+	if(m->tail != 0)
+		m->tail->next = 0;
 	//else
-	//	m->mTail = m->mHead;
+	//	m->tail = m->head;
 	else
-		m->mHead = 0; 
+		m->head = 0; 
 	m->shrink(m->arg, pages);
 }
 

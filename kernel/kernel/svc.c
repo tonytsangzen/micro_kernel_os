@@ -1,21 +1,28 @@
 #include <kernel/svc.h>
 #include <kernel/schedule.h>
+#include <kernel/proc.h>
 #include <syscalls.h>
+#include <printk.h>
+
+static int32_t sys_uart_debug(const char* s) {
+	printk("%s", s);
+	return 0;
+}
 
 static int32_t svc_handler_raw(int32_t code, int32_t arg0, int32_t arg1, int32_t arg2, context_t* ctx, int32_t processor_mode) {
-	(void)arg0;
 	(void)arg1;
 	(void)arg2;
 	(void)ctx;
 	(void)processor_mode;
-	int32_t res = 0;
 
 	switch(code) {
+	case SYS_UART_DEBUG: 
+		return sys_uart_debug((const char*)arg0);		
 	case SYS_YIELD: 
 		schedule(ctx);
-		return res;
+		return 0;
 	}
-	return res;
+	return -1;
 }
 
 void svc_handler(int32_t code, int32_t arg0, int32_t arg1, int32_t arg2, context_t* ctx, int32_t processor_mode) {

@@ -27,10 +27,12 @@ SECTIONS
 	. = ALIGN(8);
 	. = . + 0x1000;
 	_irq_stack = .;
-	. = . + 0x100000;
+	. = . + 0x10000;
 	_abt_stack = .;
-	. = . + 0x100000;
+	. = . + 0x10000;
 	_svc_stack = .;
+	_initrd = .;
+	. = . + 0x100000;
 
 	PROVIDE(_kernel_end = .);
 }
