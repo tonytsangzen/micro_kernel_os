@@ -1,5 +1,4 @@
 #include <kernel/proc.h>
-#include <printk.h>
 
 void schedule(context_t* ctx) {
 	proc_t* next = proc_get_next_ready();

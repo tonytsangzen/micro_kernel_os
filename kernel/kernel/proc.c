@@ -5,7 +5,7 @@
 #include <mm/kalloc.h>
 #include <mm/kmalloc.h>
 #include <kstring.h>
-#include <printk.h>
+#include <kprintf.h>
 #include <elf.h>
 
 static proc_t _proc_table[PROC_MAX];

@@ -3,7 +3,6 @@
 #include <mm/kalloc.h>
 #include <mm/kmalloc.h>
 #include <kstring.h>
-#include <printk.h>
 #include <kernel/kernel.h>
 #include <kernel/system.h>
 #include <kernel/arch_info.h>

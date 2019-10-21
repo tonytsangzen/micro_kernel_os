@@ -1,4 +1,4 @@
-#include "printk.h"
+#include "kprintf.h"
 #include "vprintf.h"
 #include "dev/uart_basic.h"
 

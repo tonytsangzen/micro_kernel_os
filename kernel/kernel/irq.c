@@ -1,7 +1,6 @@
 #include <dev/gic.h>
 #include <dev/timer.h>
 #include <dev/uart_basic.h>
-#include <printk.h>
 #include <kernel/irq.h>
 #include <kernel/system.h>
 #include <kernel/schedule.h>

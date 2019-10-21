@@ -43,7 +43,7 @@ LIB_DIR = lib
 LIB_OBJS = \
 	${LIB_DIR}/kstring.o \
 	${LIB_DIR}/vprintf.o \
-	${LIB_DIR}/printk.o
+	${LIB_DIR}/kprintf.o
 
 KERNEL_DIR = kernel
 OBJS = ${ARCH_OBJS} \

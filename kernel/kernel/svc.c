@@ -2,7 +2,7 @@
 #include <kernel/schedule.h>
 #include <kernel/proc.h>
 #include <syscalls.h>
-#include <printk.h>
+#include <kprintf.h>
 
 static int32_t sys_exit(context_t* ctx, int32_t res) {
 	if(_current_proc == NULL)
