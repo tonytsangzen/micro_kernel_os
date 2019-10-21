@@ -44,8 +44,8 @@ extern int32_t proc_expand_mem(proc_t *proc, int32_t page_num);
 extern void    proc_shrink_mem(proc_t* proc, int32_t page_num);
 extern void    proc_exit(context_t* ctx, proc_t *proc, int32_t res);
 
-extern void*   proc_malloc(uint32_t size);
-extern void    proc_free(void* p);
+extern void*   proc_malloc(proc_t* proc, uint32_t size);
+extern void    proc_free(proc_t* proc, void* p);
 
 #define PROC_MAX 128
 

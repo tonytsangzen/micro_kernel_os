@@ -2,6 +2,7 @@
 #define SVC_CALL_H
 
 #include <stdint.h>
+#include <syscalls.h>
 
 extern int32_t svc_call3(int32_t code, int32_t arg0, int32_t arg1, int32_t arg2);
 extern int32_t svc_call2(int32_t code, int32_t arg0, int32_t arg1);

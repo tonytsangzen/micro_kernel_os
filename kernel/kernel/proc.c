@@ -151,16 +151,16 @@ void proc_exit(context_t* ctx, proc_t *proc, int32_t res) {
 	schedule(ctx);
 }
 
-void* proc_malloc(uint32_t size) {
-	if(_current_proc == NULL || size == 0)
+void* proc_malloc(proc_t *proc, uint32_t size) {
+	if(proc == NULL || size == 0)
 		return NULL;
-	return trunk_malloc(&_current_proc->space->malloc_man, size);
+	return trunk_malloc(&proc->space->malloc_man, size);
 }
 
-void proc_free(void* p) {
-	if(_current_proc == NULL || p == NULL)
+void proc_free(proc_t* proc, void* p) {
+	if(proc == NULL || p == NULL)
 		return;
-	trunk_free(&_current_proc->space->malloc_man, p);
+	trunk_free(&proc->space->malloc_man, p);
 }
 
 /* proc_creates allocates a new process and returns it. */

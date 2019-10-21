@@ -4,6 +4,8 @@
 enum {
 	SYS_NONE = 0,
 	SYS_UART_DEBUG,
+	SYS_MALLOC,
+	SYS_FREE,
 	SYS_YIELD,
 	SYS_EXIT
 };

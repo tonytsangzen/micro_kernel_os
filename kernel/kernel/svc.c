@@ -16,6 +16,17 @@ static int32_t sys_uart_debug(const char* s) {
 	return 0;
 }
 
+static int32_t sys_malloc(int32_t size) {
+	return (int32_t)proc_malloc(_current_proc, size);
+}
+
+static int32_t sys_free(int32_t p) {
+	if(p == 0)
+		return -1;
+	proc_free(_current_proc, (void*)p);
+	return 0;
+}
+
 static int32_t svc_handler_raw(int32_t code, int32_t arg0, int32_t arg1, int32_t arg2, context_t* ctx, int32_t processor_mode) {
 	(void)arg1;
 	(void)arg2;
@@ -27,6 +38,10 @@ static int32_t svc_handler_raw(int32_t code, int32_t arg0, int32_t arg1, int32_t
 		return sys_uart_debug((const char*)arg0);		
 	case SYS_EXIT:
 		return sys_exit(ctx, arg0);
+	case SYS_MALLOC:
+		return sys_malloc(arg0);
+	case SYS_FREE:
+		return sys_free(arg0);
 	case SYS_YIELD: 
 		schedule(ctx);
 		return 0;
