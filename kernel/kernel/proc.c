@@ -239,6 +239,7 @@ int32_t proc_load_elf(proc_t *proc, const char *proc_image) {
 
 	proc->space->malloc_man.head = 0;
 	proc->space->malloc_man.tail = 0;
+	proc->ctx.sp = ((uint32_t)proc->user_stack)+PAGE_SIZE;
 	proc->ctx.pc = header->entry;
 	proc->state = READY;
 	return 0;
