@@ -32,7 +32,7 @@ SECTIONS
 	. = . + 0x10000;
 	_svc_stack = .;
 	_initrd = .;
-	. = . + 0x40000;
+	. = . + 0x40000; /*256KB*/
 
 	PROVIDE(_kernel_end = .);
 }

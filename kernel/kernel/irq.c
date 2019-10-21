@@ -7,7 +7,7 @@
 
 void irq_handler(context_t* ctx) {
 	(void)ctx;
-	__irq_disable();
+	//__irq_disable();
 
 	uint32_t irqs = gic_get_irqs();
 	if((irqs & IRQ_TIMER0) != 0) {
