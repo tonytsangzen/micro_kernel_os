@@ -2,7 +2,6 @@
 #include <syscalls.h>
 
 void _start(void) {
-	while(1) {
-		svc_call1(SYS_UART_DEBUG, (int32_t)"hello init.\n");
-	}
+	svc_call1(SYS_UART_DEBUG, (int32_t)"hello init.\n");
+	svc_call1(SYS_EXIT, 0);
 }

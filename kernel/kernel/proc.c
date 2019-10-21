@@ -1,6 +1,7 @@
 #include <kernel/system.h>
 #include <kernel/proc.h>
 #include <kernel/kernel.h>
+#include <kernel/schedule.h>
 #include <mm/kalloc.h>
 #include <mm/kmalloc.h>
 #include <kstring.h>
@@ -20,7 +21,7 @@ void procs_init(void) {
 	_current_proc = NULL;
 }
 
-int32_t proc_get_next_ready(void) {
+proc_t* proc_get_next_ready(void) {
 	int32_t i = 0;
 	int32_t end = 0;
 	if(_current_proc != NULL) {
@@ -38,10 +39,10 @@ int32_t proc_get_next_ready(void) {
 		if(i >= PROC_MAX)
 			i = 0;
 		if(_proc_table[i].state == READY)
-			return i;
+			return &_proc_table[i];
 		i++;
 	}
-	return -1;
+	return NULL;
 }
 
 static inline  uint32_t proc_get_user_stack(proc_t* proc) {
@@ -77,17 +78,15 @@ static void proc_init_space(proc_t* proc) {
 	proc->space->malloc_man.get_mem_tail = proc_get_mem_tail;
 }
 
-void proc_switch(context_t* ctx, int32_t pid){
-	if(_current_proc != NULL) {
-		memcpy(&_current_proc->ctx, ctx, sizeof(context_t));
-		if(pid == _current_proc->pid)
-			return;
-	}
-
-	if(pid < 0)
+void proc_switch(context_t* ctx, proc_t* to){
+	if(to == NULL || to == _current_proc)
 		return;
 
-	_current_proc = &_proc_table[pid];
+	if(_current_proc != NULL) {
+		memcpy(&_current_proc->ctx, ctx, sizeof(context_t));
+	}
+
+	_current_proc = to;
 	memcpy(ctx, &_current_proc->ctx, sizeof(context_t));
 
 	page_dir_entry_t *vm = _current_proc->space->vm;
@@ -143,10 +142,13 @@ static void proc_free_space(proc_t *proc) {
 }
 
 /* proc_free frees all resources allocated by proc. */
-void proc_exit(proc_t *proc) {
+void proc_exit(context_t* ctx, proc_t *proc, int32_t res) {
+	(void)res;
 	proc->state = UNUSED;
 	kfree((void*)proc->user_stack);
 	proc_free_space(proc);
+	_current_proc = NULL;	
+	schedule(ctx);
 }
 
 void* proc_malloc(uint32_t size) {
