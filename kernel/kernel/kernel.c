@@ -21,7 +21,9 @@ static void set_kernel_init_vm(page_dir_entry_t* vm) {
 	//map kernel image to high(virtual) mem
 	map_pages(vm, KERNEL_BASE+PAGE_SIZE, PAGE_SIZE, V2P(_kernel_end), AP_RW_D);
 	//map kernel page dir to high(virtual) mem
-	map_pages(vm, (uint32_t)_kernel_vm, V2P(_kernel_vm), V2P(ALLOCATABLE_MEMORY_START), AP_RW_D);
+	map_pages(vm, (uint32_t)_kernel_vm, V2P(_kernel_vm), V2P(KMALLOC_BASE), AP_RW_D);
+	//map kernel malloc mem
+	map_pages(vm, KMALLOC_BASE, V2P(KMALLOC_BASE), V2P(ALLOCATABLE_MEMORY_START), AP_RW_D);
 	//map MMIO to high(virtual) mem.
 	map_pages(vm, MMIO_BASE, _hw_info.phy_mmio_base, _hw_info.phy_mmio_base + _hw_info.mmio_size, AP_RW_D);
 }
@@ -37,15 +39,17 @@ void set_kernel_vm(page_dir_entry_t* vm) {
 
 static void init_kernel_vm(void) {
 	_kernel_vm = (page_dir_entry_t*)KERNEL_PAGE_DIR;
-	kalloc_init((uint32_t)_kernel_vm, ALLOCATABLE_MEMORY_START);
+	kalloc_init((uint32_t)_kernel_vm, KMALLOC_BASE);
 	set_kernel_init_vm(_kernel_vm);
 	//Use physical address of kernel virtual memory as the new virtual memory page dir table base.
 	__set_translation_table_base(V2P((uint32_t)_kernel_vm));
 }
 
 static void init_allocable_mem(void) {
+	kalloc_init(ALLOCATABLE_PAGE_TABLES_START, ALLOCATABLE_MEMORY_START);
+
 	map_pages(_kernel_vm,
-		ALLOCATABLE_MEMORY_START, 
+		ALLOCATABLE_MEMORY_START,
 		V2P(ALLOCATABLE_MEMORY_START),
 		_hw_info.phy_mem_size,
 		AP_RW_D);
@@ -80,6 +84,7 @@ void _kernel_entry_c(void) {
 	uart_basic_init();
 
 	procs_init();
+	load_init();
 	load_init();
 
 	timer_set_interval(0, 1000000);

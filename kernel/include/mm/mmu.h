@@ -15,13 +15,14 @@
 
 #define KERNEL_BASE 0x80000000 //=2G virtual address start base.
 #define MMIO_BASE (KERNEL_BASE + 1*GB)
-#define IPC_TASK_BASE (MMIO_BASE + 512*MB)
 #define INTERRUPT_VECTOR_BASE 0xffff0000
 #define USER_STACK_BOTTOM (KERNEL_BASE - 2 * PAGE_SIZE)
 
 #define KERNEL_PAGE_DIR ALIGN_UP((uint32_t)_kernel_end, PAGE_DIR_SIZE)
+#define KMALLOC_BASE (KERNEL_PAGE_DIR + 128*KB)
 //1MB reserved for _kernel_vm page_dir and kalloc
-#define ALLOCATABLE_MEMORY_START (KERNEL_PAGE_DIR + 1*MB)
+#define ALLOCATABLE_PAGE_TABLES_START (KMALLOC_BASE + 4*MB)
+#define ALLOCATABLE_MEMORY_START (ALLOCATABLE_PAGE_TABLES_START + 1*MB)
 
 
 #define V2P(V) ((uint32_t)V - KERNEL_BASE)
