@@ -103,7 +103,7 @@ int32_t proc_expand_mem(proc_t *proc, int32_t page_num) {
 	for (i = 0; i < page_num; i++) {
 		char *page = kalloc();
 		if(page == NULL) {
-			printk("proc expand failed!! free mem size: (%x), pid:%d, pages ask:%d\n", get_free_mem_size(), proc->pid, page_num);
+			printf("proc expand failed!! free mem size: (%x), pid:%d, pages ask:%d\n", get_free_mem_size(), proc->pid, page_num);
 			//proc_shrink_mem(proc, i);
 			return -1;
 		}

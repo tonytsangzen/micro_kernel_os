@@ -12,7 +12,7 @@ static int32_t sys_exit(context_t* ctx, int32_t res) {
 }
 
 static int32_t sys_uart_debug(const char* s) {
-	printk("%s", s);
+	printf("%s", s);
 	return 0;
 }
 

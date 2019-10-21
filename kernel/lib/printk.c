@@ -7,7 +7,7 @@ static void outc(char c, void* p) {
 	uart_basic_putch(c);
 }
 
-void printk(const char *format, ...) {
+void printf(const char *format, ...) {
 	va_list ap;
 	va_start(ap, format);
 	v_printf(outc, 0, format, ap);
