@@ -66,7 +66,7 @@ static void proc_shrink(void* p, int32_t page_num) {
 static void proc_init_space(proc_t* proc) {
 	page_dir_entry_t *vm = _proc_vm[proc->pid];
 	set_kernel_vm(vm);
-	proc->space = (proc_space_t*)km_alloc(sizeof(proc_space_t));
+	proc->space = (proc_space_t*)kmalloc(sizeof(proc_space_t));
 	proc->space->vm = vm;
 	proc->space->heap_size = 0;
 	
@@ -101,7 +101,7 @@ void proc_switch(context_t* ctx, proc_t* to){
 int32_t proc_expand_mem(proc_t *proc, int32_t page_num) {
 	int32_t i;
 	for (i = 0; i < page_num; i++) {
-		char *page = kalloc();
+		char *page = kalloc4k();
 		if(page == NULL) {
 			printf("proc expand failed!! free mem size: (%x), pid:%d, pages ask:%d\n", get_free_mem_size(), proc->pid, page_num);
 			//proc_shrink_mem(proc, i);
@@ -122,10 +122,9 @@ void proc_shrink_mem(proc_t* proc, int32_t page_num) {
 	int32_t i;
 	for (i = 0; i < page_num; i++) {
 		uint32_t virtual_addr = proc->space->heap_size - PAGE_SIZE;
-		uint32_t physical_addr = resolve_phy_address(proc->space->vm, virtual_addr);
-		//get the kernel address for kalloc/kfree
-		uint32_t kernel_addr = P2V(physical_addr);
-		kfree((void *) kernel_addr);
+		uint32_t kernel_addr = resolve_kernel_address(proc->space->vm, virtual_addr);
+		//get the kernel address for kalloc4k/kfree4k
+		kfree4k((void *) kernel_addr);
 
 		unmap_page(proc->space->vm, virtual_addr);
 		proc->space->heap_size -= PAGE_SIZE;
@@ -138,14 +137,17 @@ static void proc_free_space(proc_t *proc) {
 	/*free file info*/
 	proc_shrink_mem(proc, proc->space->heap_size / PAGE_SIZE);
 	free_page_tables(proc->space->vm);
-	km_free(proc->space);
+	kfree(proc->space);
 }
 
 /* proc_free frees all resources allocated by proc. */
 void proc_exit(context_t* ctx, proc_t *proc, int32_t res) {
 	(void)res;
 	proc->state = UNUSED;
-	kfree((void*)proc->user_stack);
+
+	uint32_t kernel_addr = resolve_kernel_address(proc->space->vm, proc->user_stack);
+	kfree4k((void *) kernel_addr);
+
 	proc_free_space(proc);
 	_current_proc = NULL;	
 	schedule(ctx);
@@ -184,7 +186,7 @@ proc_t *proc_create(void) {
 	proc->state = CREATED;
 	proc_init_space(proc);
 
-	char *stack = kalloc();
+	char *stack = kalloc4k();
   uint32_t user_stack =  proc_get_user_stack(proc);
   map_page(proc->space->vm,
 		user_stack,
@@ -226,8 +228,7 @@ int32_t proc_load_elf(proc_t *proc, const char *proc_image) {
 		uint32_t hoff = header->off;
 		for (j = 0; j < header->memsz; j++) {
 			uint32_t vaddr = hvaddr + j; /*vaddr in elf (proc vaddr)*/
-			uint32_t paddr = resolve_phy_address(proc->space->vm, vaddr); /*trans to phyaddr by proc's page dir*/
-			uint32_t vkaddr = P2V(paddr); /*trans the phyaddr to vaddr now in kernel page dir*/
+			uint32_t vkaddr = resolve_kernel_address(proc->space->vm, vaddr); /*trans to phyaddr by proc's page dir*/
 			/*copy from elf to vaddrKernel(=phyaddr=vaddrProc=vaddrElf)*/
 
 			uint32_t image_off = hoff + j;

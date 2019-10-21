@@ -86,6 +86,10 @@ uint32_t resolve_phy_address(page_dir_entry_t *vm, uint32_t virtual) {
 	return result;
 }
 
+uint32_t resolve_kernel_address(page_dir_entry_t *vm, uint32_t virtual) {
+	uint32_t phy = resolve_phy_address(vm, virtual);
+	return P2V(phy);
+}
 /*
 get page entry(virtual addr) by virtual address
 */

@@ -5,8 +5,8 @@
 
 #include <types.h>
 
-void* km_alloc(uint32_t size);
-void km_free(void* p);
+void* kmalloc(uint32_t size);
+void kfree(void* p);
 void km_init(void);
 
 #endif

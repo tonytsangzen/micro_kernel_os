@@ -17,16 +17,12 @@
 #define MMIO_BASE (KERNEL_BASE + 1*GB)
 #define IPC_TASK_BASE (MMIO_BASE + 512*MB)
 #define INTERRUPT_VECTOR_BASE 0xffff0000
-
 #define USER_STACK_BOTTOM (KERNEL_BASE - 2 * PAGE_SIZE)
-//#define KERNEL_STACK_BOTTOM (KERNEL_BASE - 3 * PAGE_SIZE)
 
-#define KMALLOC_BASE ((uint32_t)&_kernel_end +  256*KB) //256KB reserved for kernel pageDirTable(at least 16KB).
-#define KMALLOC_SIZE 4*MB // keep for kernel trunk memory, can only used by kernel(km_alloc/km_free).
+#define KERNEL_PAGE_DIR ALIGN_UP((uint32_t)_kernel_end, PAGE_DIR_SIZE)
+//1MB reserved for _kernel_vm page_dir and kalloc
+#define ALLOCATABLE_MEMORY_START (KERNEL_PAGE_DIR + 1*MB)
 
-#define ALLOCATABLE_MEMORY_START (KMALLOC_BASE + KMALLOC_SIZE)
-
-#define INIT_RESERV_MEMORY_SIZE (8*MB) 
 
 #define V2P(V) ((uint32_t)V - KERNEL_BASE)
 #define P2V(P) ((uint32_t)P + KERNEL_BASE)
@@ -89,9 +85,12 @@ void map_page(page_dir_entry_t *vm,
 	uint32_t physical,
 	uint32_t access_permissions);
 
+extern unsigned _startup_page_dir[PAGE_DIR_NUM];
+
 void unmap_page(page_dir_entry_t *vm, uint32_t virtual_addr);
 void free_page_tables(page_dir_entry_t *vm);
 uint32_t resolve_phy_address(page_dir_entry_t *vm, uint32_t virtual);
+uint32_t resolve_kernel_address(page_dir_entry_t *vm, uint32_t virtual);
 page_table_entry_t* get_page_table_entry(page_dir_entry_t *vm, uint32_t virtual);
 
 #endif
