@@ -75,6 +75,19 @@ __irq_disable:
 	msr cpsr, r0
 	mov pc, lr
 
+.global __int_off // SR = int_off()
+__int_off: 
+	mrs r0, cpsr
+	mov r1, r0
+	orr r1, r1, #0x80
+	msr cpsr, r1
+  mov pc, lr
+
+.global __int_on
+__int_on:
+	msr cpsr, r0
+  mov pc, lr
+
 .global __use_high_interrupts
 __use_high_interrupts:
 	push {lr}
@@ -84,14 +97,6 @@ __use_high_interrupts:
 	pop {lr}
 
 	mov pc, lr
-
-.global __switch_to_context
-__switch_to_context:
-	LDMIA R0!, {R12, R14} //proc->context 0(CPSR) 1(RESTART_ADDR), (proc.h)
-	MSR SPSR_fsxc, R12
-	LDMIA R0, {R0-R14}^ //restore proc->context(2-16: R0-R14)
-	NOP
-	MOVS PC, R14 //run proc.
 
 #ifdef CPU_NUM
 // spinlock, 0=UNLOCKED, 1=LOCKED

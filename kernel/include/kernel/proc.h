@@ -28,6 +28,8 @@ typedef struct {
 	int32_t state;
 	context_t ctx;
 
+	uint32_t sleep_event;
+
 	proc_space_t* space;
 	uint32_t user_stack;
 } proc_t;
@@ -46,6 +48,10 @@ extern void    proc_exit(context_t* ctx, proc_t *proc, int32_t res);
 
 extern void*   proc_malloc(proc_t* proc, uint32_t size);
 extern void    proc_free(proc_t* proc, void* p);
+
+extern void    proc_sleep(context_t* ctx, uint32_t event);
+extern void    proc_wakeup(uint32_t event);
+extern proc_t* kfork(void);
 
 #define PROC_MAX 128
 

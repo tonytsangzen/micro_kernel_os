@@ -85,7 +85,6 @@ void _kernel_entry_c(void) {
 
 	procs_init();
 	load_init();
-	load_init();
 
 	timer_set_interval(0, 1000000);
 	while(1);

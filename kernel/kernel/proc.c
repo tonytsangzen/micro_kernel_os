@@ -244,3 +244,93 @@ int32_t proc_load_elf(proc_t *proc, const char *proc_image) {
 	proc->state = READY;
 	return 0;
 }
+
+void proc_sleep(context_t* ctx, uint32_t event) {
+	if(_current_proc == NULL)
+		return;
+
+	uint32_t cpsr = __int_off();
+	_current_proc->sleep_event = event;
+	_current_proc->state = SLEEPING;
+	schedule(ctx);
+	__int_on(cpsr);
+}
+
+void proc_wakeup(uint32_t event) {
+	uint32_t cpsr = __int_off();
+
+	int32_t i = 0;	
+	while(1) {
+		if(i >= PROC_MAX)
+			break;
+		proc_t* proc = &_proc_table[i];	
+		if(proc->state == SLEEPING && proc->sleep_event == event)
+			proc->state = READY;
+		i++;
+	}
+	__int_on(cpsr);
+}
+
+static int32_t proc_clone(proc_t* child, proc_t* parent) {
+	uint32_t pages = parent->space->heap_size / PAGE_SIZE;
+	if((parent->space->heap_size % PAGE_SIZE) != 0)
+		pages++;
+
+	uint32_t p;
+	uint32_t i;
+	for(p=0; p<pages; ++p) {
+		uint32_t v_addr = (p * PAGE_SIZE);
+
+		page_table_entry_t * pge = get_page_table_entry(parent->space->vm, v_addr);
+		if(pge->permissions == AP_RW_R) {
+			uint32_t phy_page_addr = resolve_phy_address(parent->space->vm, v_addr);
+			map_page(child->space->vm, 
+					child->space->heap_size,
+					phy_page_addr,
+					AP_RW_R);
+			child->space->heap_size += PAGE_SIZE;
+		}
+		else {
+			if(proc_expand_mem(child, 1) != 0) {
+				printf("Panic: kfork expand memory failed!!(%d)\n", parent->pid);
+				return -1;
+			}
+			// copy parent's memory to child's memory
+			for (i=0; i<PAGE_SIZE; ++i) {
+				uint32_t v_addr = (p * PAGE_SIZE) + i;
+				char *child_ptr = (char*)resolve_kernel_address(child->space->vm, v_addr);
+				char *parent_ptr = (char*)v_addr;
+				*child_ptr = *parent_ptr;
+			}
+		}
+	}
+
+	/*pmalloc list*/
+	child->space->malloc_man = parent->space->malloc_man;
+	child->space->malloc_man.arg = child;
+	/* copy parent's context to child's context */
+	memcpy(&child->ctx, &parent->ctx, sizeof(context_t));
+	/* copy parent's stack to child's stack */
+	memcpy((void*)child->user_stack, (void*)parent->user_stack, PAGE_SIZE);
+	return 0;
+}
+
+proc_t* kfork() {
+	proc_t *child = NULL;
+	proc_t *parent = _current_proc;
+
+	child = proc_create();
+	if(proc_clone(child, parent) != 0) {
+		printf("panic: kfork clone failed!!(%d)\n", parent->pid);
+		return NULL;
+	}
+
+	/* set return value of fork in child to 0 */
+	child->ctx.gpr[0] = 0;
+	/* child is ready to run */
+	child->state = READY;
+	/*set father*/
+	child->father_pid = parent->pid;
+	/*same owner*/
+	return child;
+}
