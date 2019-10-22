@@ -44,7 +44,8 @@ static int32_t sys_free(int32_t p) {
 	return 0;
 }
 
-static int32_t sys_fork(void) {
+static int32_t sys_fork(context_t* ctx) {
+	(void)ctx;
 	proc_t *proc = kfork();
 	return proc->pid;
 }
@@ -71,7 +72,7 @@ static int32_t svc_handler_raw(int32_t code, int32_t arg0, int32_t arg1, int32_t
 	case SYS_WAKEUP:
 		return sys_wakeup((uint32_t)arg0);
 	case SYS_FORK:
-		return sys_fork();
+		return sys_fork(ctx);
 	case SYS_YIELD: 
 		schedule(ctx);
 		return 0;

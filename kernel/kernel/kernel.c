@@ -61,7 +61,7 @@ extern char _initrd[];
 static void load_initrd(void) {
 	uint32_t initrd = 0x08000000;
 	map_pages(_kernel_vm, initrd, initrd, initrd+0x40000, AP_RW_D); //initrd max 256KB 
-	memcpy(_initrd, (char*)initrd, 1*MB);
+	memcpy(_initrd, (char*)initrd, 0x40000);
 }
 
 static void load_init(void) {

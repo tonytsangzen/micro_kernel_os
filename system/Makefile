@@ -3,10 +3,11 @@ AR = arm-none-eabi-ar
 CC = arm-none-eabi-gcc
 CXX = arm-none-eabi-c++
 LD = arm-none-eabi-ld
+OBJDUMP = arm-none-eabi-objdump
 
 # flags
-CFLAGS = -I. -O2 \
-			   -Wstrict-prototypes \
+CFLAGS = -Wstrict-prototypes \
+				 -I. -g \
 				 -I include \
 				 -I ../kernel/include \
 				 -marm \
@@ -33,6 +34,7 @@ INIT = ${TARGET_DIR}/sbin/init
 init: $(INIT_OBJS)
 	mkdir -p ${TARGET_DIR}/sbin
 	$(LD) -Ttext=100 $(INIT_OBJS) -o $(INIT)
+	$(OBJDUMP) -D $(INIT) > $(INIT).asm
 
 all: ${init}
 

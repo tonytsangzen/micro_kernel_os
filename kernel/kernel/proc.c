@@ -91,10 +91,12 @@ void proc_switch(context_t* ctx, proc_t* to){
 
 	page_dir_entry_t *vm = _current_proc->space->vm;
 	__set_translation_table_base((uint32_t) V2P(vm));
+	/*
 	__asm__ volatile("push {R4}");
 	__asm__ volatile("mov R4, #0");
 	__asm__ volatile("MCR p15, 0, R4, c8, c7, 0");
 	__asm__ volatile("pop {R4}");
+	*/
 }
 
 /* proc_exapnad_memory expands the heap size of the given process. */
@@ -271,6 +273,16 @@ void proc_wakeup(uint32_t event) {
 	__int_on(cpsr);
 }
 
+static void proc_stack_clone(proc_t* child, proc_t* parent) {
+	int32_t i;
+	for (i=0; i<PAGE_SIZE; ++i) {
+		uint32_t v_addr = parent->user_stack + i;
+		char *child_ptr = (char*)resolve_kernel_address(child->space->vm, v_addr);
+		char *parent_ptr = (char*)v_addr;
+		*child_ptr = *parent_ptr;
+	}
+}
+
 static int32_t proc_clone(proc_t* child, proc_t* parent) {
 	uint32_t pages = parent->space->heap_size / PAGE_SIZE;
 	if((parent->space->heap_size % PAGE_SIZE) != 0)
@@ -311,7 +323,7 @@ static int32_t proc_clone(proc_t* child, proc_t* parent) {
 	/* copy parent's context to child's context */
 	memcpy(&child->ctx, &parent->ctx, sizeof(context_t));
 	/* copy parent's stack to child's stack */
-	memcpy((void*)child->user_stack, (void*)parent->user_stack, PAGE_SIZE);
+	proc_stack_clone(child, parent);
 	return 0;
 }
 

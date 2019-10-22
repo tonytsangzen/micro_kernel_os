@@ -8,17 +8,11 @@ void _start(void) {
 	int pid = fork();
 
 	if(pid == 0) {
-		char* s = malloc(100);
-		strcpy(s, "Hello, World child!\n");
-		uart_debug(s);
-		free(s);
+		uart_debug("child1\n");
+		uart_debug("child2\n");
 		exit(0);
 	}
-	else {
-		char* s = malloc(100);
-		strcpy(s, "Hello, World parent!\n");
-		uart_debug(s);
-		free(s);
-		exit(0);
-	}
+
+	uart_debug("father\n");
+	while(1);
 }
