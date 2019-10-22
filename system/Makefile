@@ -21,6 +21,7 @@ LDFLAGS = -lgcc
 
 LIB_DIR = lib
 LIB_OBJS = $(LIB_DIR)/svc_call.o \
+	$(LIB_DIR)/vprintf.o \
 	$(LIB_DIR)/unistd.o \
 	$(LIB_DIR)/stdlib.o \
 	$(LIB_DIR)/uart_debug.o

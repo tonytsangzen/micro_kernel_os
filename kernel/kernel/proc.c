@@ -273,12 +273,13 @@ void proc_wakeup(uint32_t event) {
 	__int_on(cpsr);
 }
 
-static void proc_stack_clone(proc_t* child, proc_t* parent) {
+static void proc_page_clone(proc_t* child, uint32_t c_addr, proc_t* parent, uint32_t p_addr) {
 	int32_t i;
 	for (i=0; i<PAGE_SIZE; ++i) {
-		uint32_t v_addr = parent->user_stack + i;
-		char *child_ptr = (char*)resolve_kernel_address(child->space->vm, v_addr);
-		char *parent_ptr = (char*)v_addr;
+		uint32_t cv_addr = c_addr + i;
+		uint32_t pv_addr = p_addr + i;
+		char *child_ptr = (char*)resolve_kernel_address(child->space->vm, cv_addr);
+		char *parent_ptr = (char*)resolve_kernel_address(parent->space->vm, pv_addr);
 		*child_ptr = *parent_ptr;
 	}
 }
@@ -289,7 +290,6 @@ static int32_t proc_clone(proc_t* child, proc_t* parent) {
 		pages++;
 
 	uint32_t p;
-	uint32_t i;
 	for(p=0; p<pages; ++p) {
 		uint32_t v_addr = (p * PAGE_SIZE);
 
@@ -308,22 +308,20 @@ static int32_t proc_clone(proc_t* child, proc_t* parent) {
 				return -1;
 			}
 			// copy parent's memory to child's memory
-			for (i=0; i<PAGE_SIZE; ++i) {
-				uint32_t v_addr = (p * PAGE_SIZE) + i;
-				char *child_ptr = (char*)resolve_kernel_address(child->space->vm, v_addr);
-				char *parent_ptr = (char*)v_addr;
-				*child_ptr = *parent_ptr;
-			}
+			uint32_t v_addr = (p * PAGE_SIZE);
+			proc_page_clone(child, v_addr, parent, v_addr);
 		}
 	}
 
+	/*set father*/
+	child->father_pid = parent->pid;
 	/*pmalloc list*/
 	child->space->malloc_man = parent->space->malloc_man;
 	child->space->malloc_man.arg = child;
 	/* copy parent's context to child's context */
 	memcpy(&child->ctx, &parent->ctx, sizeof(context_t));
 	/* copy parent's stack to child's stack */
-	proc_stack_clone(child, parent);
+	proc_page_clone(child, child->user_stack, parent, parent->user_stack);
 	return 0;
 }
 
@@ -341,8 +339,6 @@ proc_t* kfork() {
 	child->ctx.gpr[0] = 0;
 	/* child is ready to run */
 	child->state = READY;
-	/*set father*/
-	child->father_pid = parent->pid;
 	/*same owner*/
 	return child;
 }

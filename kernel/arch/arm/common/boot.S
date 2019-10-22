@@ -14,4 +14,14 @@ __entry:
 
 	bl _copy_interrupt_table
 	bl __use_high_interrupts  /* (system.S*/
+
+	sub   sp, sp, #68             @ initialise dummy context
+	mov   r0, sp                  @ set    high-level C function arg. = SP
+
 	bl _kernel_entry_c
+
+	ldmia sp!, { r0, lr }         @ load   USR mode PC and CPSR
+	msr   spsr, r0                @ set    USR mode        CPSR
+	ldmia sp, { r0-r12, sp, lr }^ @ load   USR mode registers
+	add   sp, sp, #60             @ update SVC mode SP
+	movs  pc, lr                  @ return from interrupt

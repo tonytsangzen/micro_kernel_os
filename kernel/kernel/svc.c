@@ -3,6 +3,7 @@
 #include <kernel/system.h>
 #include <kernel/proc.h>
 #include <syscalls.h>
+#include <kstring.h>
 #include <kprintf.h>
 
 static int32_t sys_exit(context_t* ctx, int32_t res) {
@@ -44,8 +45,7 @@ static int32_t sys_free(int32_t p) {
 	return 0;
 }
 
-static int32_t sys_fork(context_t* ctx) {
-	(void)ctx;
+static int32_t sys_fork(void) {
 	proc_t *proc = kfork();
 	return proc->pid;
 }
@@ -55,6 +55,9 @@ static int32_t svc_handler_raw(int32_t code, int32_t arg0, int32_t arg1, int32_t
 	(void)arg2;
 	(void)ctx;
 	(void)processor_mode;
+
+	if(_current_proc != NULL)
+		memcpy(&_current_proc->ctx, ctx, sizeof(context_t));
 
 	switch(code) {
 	case SYS_UART_DEBUG: 
@@ -72,7 +75,7 @@ static int32_t svc_handler_raw(int32_t code, int32_t arg0, int32_t arg1, int32_t
 	case SYS_WAKEUP:
 		return sys_wakeup((uint32_t)arg0);
 	case SYS_FORK:
-		return sys_fork(ctx);
+		return sys_fork();
 	case SYS_YIELD: 
 		schedule(ctx);
 		return 0;
@@ -82,6 +85,5 @@ static int32_t svc_handler_raw(int32_t code, int32_t arg0, int32_t arg1, int32_t
 
 void svc_handler(int32_t code, int32_t arg0, int32_t arg1, int32_t arg2, context_t* ctx, int32_t processor_mode) {
 	__irq_disable();
-	ctx->lr = ctx->pc;
 	ctx->gpr[0] = svc_handler_raw(code, arg0, arg1, arg2, ctx, processor_mode);
 }

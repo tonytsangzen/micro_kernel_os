@@ -4,10 +4,13 @@
 #include <kernel/irq.h>
 #include <kernel/system.h>
 #include <kernel/schedule.h>
+#include <kernel/proc.h>
+#include <string.h>
 
 void irq_handler(context_t* ctx) {
-	(void)ctx;
 	__irq_disable();
+	if(_current_proc != NULL)
+		memcpy(&_current_proc->ctx, ctx, sizeof(context_t));
 
 	uint32_t irqs = gic_get_irqs();
 	if((irqs & IRQ_TIMER0) != 0) {

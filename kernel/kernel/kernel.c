@@ -69,7 +69,8 @@ static void load_init(void) {
 	proc_load_elf(proc, _initrd);
 }
 
-void _kernel_entry_c(void) {
+void _kernel_entry_c(context_t* ctx) {
+	(void)ctx;
 	hw_info_init();
 
 	init_kernel_vm();  
