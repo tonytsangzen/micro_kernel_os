@@ -35,12 +35,12 @@ proc_t* proc_get_next_ready(void) {
 	while(1) {
 		if(i == end)
 			break;
-
-		if(i >= PROC_MAX)
-			i = 0;
 		if(_proc_table[i].state == READY)
 			return &_proc_table[i];
 		i++;
+		if(i >= PROC_MAX)
+			i = 0;
+
 	}
 	return NULL;
 }
