@@ -85,5 +85,6 @@ static int32_t svc_handler_raw(int32_t code, int32_t arg0, int32_t arg1, int32_t
 
 void svc_handler(int32_t code, int32_t arg0, int32_t arg1, int32_t arg2, context_t* ctx, int32_t processor_mode) {
 	__irq_disable();
+	//printf("code: %d\n", code);
 	ctx->gpr[0] = svc_handler_raw(code, arg0, arg1, arg2, ctx, processor_mode);
 }

@@ -8,12 +8,13 @@ void _start(void) {
 	int pid = fork();
 	char s[32];
 	if(pid == 0) {
-		snprintf(s, 31, "new proc\n");
-		uart_debug(s);
+		uart_debug("new child\n");
+		exit(0);
 	}
 	else {
-		snprintf(s, 31, "child pid %d\n", pid);
+		snprintf(s, 31, "child pid : %d\n", pid);
 		uart_debug(s);
+		//exit(0);
+		while(1);
 	}
-	exit(0);
 }

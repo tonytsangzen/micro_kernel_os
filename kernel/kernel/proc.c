@@ -82,21 +82,22 @@ void proc_switch(context_t* ctx, proc_t* to){
 	if(to == NULL || to == _current_proc)
 		return;
 
-	if(_current_proc != NULL) {
+	if(_current_proc != NULL)
 		memcpy(&_current_proc->ctx, ctx, sizeof(context_t));
-	}
 
 	_current_proc = to;
-	memcpy(ctx, &_current_proc->ctx, sizeof(context_t));
+		
 
 	page_dir_entry_t *vm = _current_proc->space->vm;
 	__set_translation_table_base((uint32_t) V2P(vm));
-	/*
+	
 	__asm__ volatile("push {R4}");
 	__asm__ volatile("mov R4, #0");
 	__asm__ volatile("MCR p15, 0, R4, c8, c7, 0");
 	__asm__ volatile("pop {R4}");
-	*/
+	
+	memcpy(ctx, &_current_proc->ctx, sizeof(context_t));
+	//printf("%d: op: 0x%x\n", _current_proc->pid, ctx->lr);
 }
 
 /* proc_exapnad_memory expands the heap size of the given process. */
@@ -144,15 +145,18 @@ static void proc_free_space(proc_t *proc) {
 
 /* proc_free frees all resources allocated by proc. */
 void proc_exit(context_t* ctx, proc_t *proc, int32_t res) {
-	(void)res;
+	(void)res;;
 	proc->state = UNUSED;
 
 	uint32_t kernel_addr = resolve_kernel_address(proc->space->vm, proc->user_stack);
 	kfree4k((void *) kernel_addr);
 
 	proc_free_space(proc);
-	_current_proc = NULL;	
-	schedule(ctx);
+	proc = proc_get_next_ready();
+	if(proc != NULL) {
+		_current_proc = NULL;
+		proc_switch(ctx, proc);
+	}
 }
 
 void* proc_malloc(proc_t *proc, uint32_t size) {
@@ -273,14 +277,14 @@ void proc_wakeup(uint32_t event) {
 	__int_on(cpsr);
 }
 
-static void proc_page_clone(proc_t* child, uint32_t c_addr, proc_t* parent, uint32_t p_addr) {
+static void proc_page_clone(proc_t* to, uint32_t c_addr, proc_t* from, uint32_t p_addr) {
 	int32_t i;
 	for (i=0; i<PAGE_SIZE; ++i) {
 		uint32_t cv_addr = c_addr + i;
 		uint32_t pv_addr = p_addr + i;
-		char *child_ptr = (char*)resolve_kernel_address(child->space->vm, cv_addr);
-		char *parent_ptr = (char*)resolve_kernel_address(parent->space->vm, pv_addr);
-		*child_ptr = *parent_ptr;
+		char *to_ptr = (char*)resolve_kernel_address(to->space->vm, cv_addr);
+		char *from_ptr = (char*)resolve_kernel_address(from->space->vm, pv_addr);
+		*to_ptr = *from_ptr;
 	}
 }
 
@@ -292,7 +296,7 @@ static int32_t proc_clone(proc_t* child, proc_t* parent) {
 	uint32_t p;
 	for(p=0; p<pages; ++p) {
 		uint32_t v_addr = (p * PAGE_SIZE);
-
+		/*
 		page_table_entry_t * pge = get_page_table_entry(parent->space->vm, v_addr);
 		if(pge->permissions == AP_RW_R) {
 			uint32_t phy_page_addr = resolve_phy_address(parent->space->vm, v_addr);
@@ -302,15 +306,15 @@ static int32_t proc_clone(proc_t* child, proc_t* parent) {
 					AP_RW_R);
 			child->space->heap_size += PAGE_SIZE;
 		}
-		else {
+		*/
+		//else {
 			if(proc_expand_mem(child, 1) != 0) {
 				printf("Panic: kfork expand memory failed!!(%d)\n", parent->pid);
 				return -1;
 			}
 			// copy parent's memory to child's memory
-			uint32_t v_addr = (p * PAGE_SIZE);
 			proc_page_clone(child, v_addr, parent, v_addr);
-		}
+		//}
 	}
 
 	/*set father*/
