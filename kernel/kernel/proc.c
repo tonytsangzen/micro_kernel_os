@@ -33,14 +33,15 @@ proc_t* proc_get_next_ready(void) {
 	}
 	
 	while(1) {
-		if(i == end)
-			break;
 		if(_proc_table[i].state == READY)
 			return &_proc_table[i];
+
+		if(i == end)
+			break;
+
 		i++;
 		if(i >= PROC_MAX)
 			i = 0;
-
 	}
 	return NULL;
 }
@@ -86,17 +87,15 @@ void proc_switch(context_t* ctx, proc_t* to){
 		memcpy(&_current_proc->ctx, ctx, sizeof(context_t));
 
 	_current_proc = to;
-		
+	memcpy(ctx, &_current_proc->ctx, sizeof(context_t));
 
 	page_dir_entry_t *vm = _current_proc->space->vm;
 	__set_translation_table_base((uint32_t) V2P(vm));
-	
 	__asm__ volatile("push {R4}");
 	__asm__ volatile("mov R4, #0");
 	__asm__ volatile("MCR p15, 0, R4, c8, c7, 0");
 	__asm__ volatile("pop {R4}");
 	
-	memcpy(ctx, &_current_proc->ctx, sizeof(context_t));
 	//printf("%d: op: 0x%x\n", _current_proc->pid, ctx->lr);
 }
 
@@ -147,6 +146,7 @@ static void proc_free_space(proc_t *proc) {
 void proc_exit(context_t* ctx, proc_t *proc, int32_t res) {
 	(void)res;;
 	proc->state = UNUSED;
+	printf("exit: %d\n", proc->pid);
 
 	uint32_t kernel_addr = resolve_kernel_address(proc->space->vm, proc->user_stack);
 	kfree4k((void *) kernel_addr);
@@ -277,15 +277,10 @@ void proc_wakeup(uint32_t event) {
 	__int_on(cpsr);
 }
 
-static void proc_page_clone(proc_t* to, uint32_t c_addr, proc_t* from, uint32_t p_addr) {
-	int32_t i;
-	for (i=0; i<PAGE_SIZE; ++i) {
-		uint32_t cv_addr = c_addr + i;
-		uint32_t pv_addr = p_addr + i;
-		char *to_ptr = (char*)resolve_kernel_address(to->space->vm, cv_addr);
-		char *from_ptr = (char*)resolve_kernel_address(from->space->vm, pv_addr);
-		*to_ptr = *from_ptr;
-	}
+static void proc_page_clone(proc_t* to, uint32_t to_addr, proc_t* from, uint32_t from_addr) {
+	char *to_ptr = (char*)resolve_kernel_address(to->space->vm, to_addr);
+	char *from_ptr = (char*)resolve_kernel_address(from->space->vm, from_addr);
+	memcpy(to_ptr, from_ptr, PAGE_SIZE);
 }
 
 static int32_t proc_clone(proc_t* child, proc_t* parent) {

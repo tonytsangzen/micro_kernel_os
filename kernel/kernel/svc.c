@@ -47,6 +47,7 @@ static int32_t sys_free(int32_t p) {
 
 static int32_t sys_fork(void) {
 	proc_t *proc = kfork();
+	printf("fork: %d\n", proc->pid);
 	return proc->pid;
 }
 
