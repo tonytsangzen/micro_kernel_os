@@ -85,18 +85,17 @@ void proc_switch(context_t* ctx, proc_t* to){
 
 	if(_current_proc != NULL)
 		memcpy(&_current_proc->ctx, ctx, sizeof(context_t));
+	memcpy(ctx, &to->ctx, sizeof(context_t));
 
-	_current_proc = to;
-	memcpy(ctx, &_current_proc->ctx, sizeof(context_t));
-
-	page_dir_entry_t *vm = _current_proc->space->vm;
+	page_dir_entry_t *vm = to->space->vm;
 	__set_translation_table_base((uint32_t) V2P(vm));
+
 	__asm__ volatile("push {R4}");
 	__asm__ volatile("mov R4, #0");
 	__asm__ volatile("MCR p15, 0, R4, c8, c7, 0");
 	__asm__ volatile("pop {R4}");
 	
-	//printf("%d: op: 0x%x\n", _current_proc->pid, ctx->lr);
+	_current_proc = to;
 }
 
 /* proc_exapnad_memory expands the heap size of the given process. */
@@ -142,16 +141,28 @@ static void proc_free_space(proc_t *proc) {
 	kfree(proc->space);
 }
 
+static void proc_wakeup_waiting(int32_t pid) {
+	int32_t i;
+	for (i = 0; i < PROC_MAX; i++) {
+		proc_t *proc = &_proc_table[i];
+		if (proc->state == WAIT && proc->wait_pid == pid) {
+			proc->state = READY;
+		}
+	}
+}
+
 /* proc_free frees all resources allocated by proc. */
 void proc_exit(context_t* ctx, proc_t *proc, int32_t res) {
-	(void)res;;
-	proc->state = UNUSED;
-	printf("exit: %d\n", proc->pid);
+	(void)res;
+	int32_t pid = proc->pid;
 
+	proc->state = UNUSED;
 	uint32_t kernel_addr = resolve_kernel_address(proc->space->vm, proc->user_stack);
 	kfree4k((void *) kernel_addr);
-
 	proc_free_space(proc);
+
+	proc_wakeup_waiting(pid);
+
 	proc = proc_get_next_ready();
 	if(proc != NULL) {
 		_current_proc = NULL;
@@ -251,13 +262,24 @@ int32_t proc_load_elf(proc_t *proc, const char *proc_image) {
 	return 0;
 }
 
-void proc_sleep(context_t* ctx, uint32_t event) {
+void proc_sleep_on(context_t* ctx, uint32_t event) {
 	if(_current_proc == NULL)
 		return;
 
 	uint32_t cpsr = __int_off();
 	_current_proc->sleep_event = event;
 	_current_proc->state = SLEEPING;
+	schedule(ctx);
+	__int_on(cpsr);
+}
+
+void proc_waitpid(context_t* ctx, int32_t pid) {
+	if(_current_proc == NULL || _proc_table[pid].state == UNUSED)
+		return;
+
+	uint32_t cpsr = __int_off();
+	_current_proc->wait_pid = pid;
+	_current_proc->state = WAIT;
 	schedule(ctx);
 	__int_on(cpsr);
 }
@@ -314,11 +336,6 @@ static int32_t proc_clone(proc_t* child, proc_t* parent) {
 
 	/*set father*/
 	child->father_pid = parent->pid;
-	/*pmalloc list*/
-	child->space->malloc_man = parent->space->malloc_man;
-	child->space->malloc_man.arg = child;
-	/* copy parent's context to child's context */
-	memcpy(&child->ctx, &parent->ctx, sizeof(context_t));
 	/* copy parent's stack to child's stack */
 	proc_page_clone(child, child->user_stack, parent, parent->user_stack);
 	return 0;
@@ -329,15 +346,16 @@ proc_t* kfork() {
 	proc_t *parent = _current_proc;
 
 	child = proc_create();
+	if(child == NULL) {
+		printf("panic: kfork create proc failed!!(%d)\n", parent->pid);
+		return NULL;
+	}
+
 	if(proc_clone(child, parent) != 0) {
 		printf("panic: kfork clone failed!!(%d)\n", parent->pid);
 		return NULL;
 	}
 
-	/* set return value of fork in child to 0 */
-	child->ctx.gpr[0] = 0;
-	/* child is ready to run */
 	child->state = READY;
-	/*same owner*/
 	return child;
 }

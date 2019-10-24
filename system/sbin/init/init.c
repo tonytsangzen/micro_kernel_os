@@ -2,20 +2,21 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <vprintf.h>
+#include <sys/wait.h>
 #include <uart_debug.h>
 
 void _start(void) {
+	char s[32];
 	while(1) {
 		int pid = fork();
-		char s[32];
 		if(pid == 0) {
-			snprintf(s, 31, "child: %d\n", getpid());
-			uart_debug(s);
+			uart_debug("child\n");
 			exit(0);
 		}
 		else {
-			snprintf(s, 31, "create pid : %d\n", pid);
+			waitpid(pid);
+			snprintf(s, 31, "2:father waited: c = %d\n", pid);
 			uart_debug(s);
 		}
-	}
+	}	
 }

@@ -11,6 +11,7 @@ enum {
 	SYS_WAKEUP,
 	SYS_GET_PID,
 	SYS_FORK,
+	SYS_WAIT_PID,
 	SYS_EXIT
 };
 
