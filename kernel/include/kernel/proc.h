@@ -22,7 +22,7 @@ typedef struct {
 	uint32_t heap_size;
 } proc_space_t;
 
-typedef struct {
+typedef struct st_proc {
 	int32_t pid;
 	int32_t father_pid;
 	int32_t state;
@@ -33,9 +33,13 @@ typedef struct {
 
 	proc_space_t* space;
 	uint32_t user_stack;
+
+	struct st_proc* prev;
+	struct st_proc* next;
 } proc_t;
 
 extern proc_t* _current_proc;
+extern proc_t* _ready_proc;
 
 extern void    procs_init(void);
 extern proc_t* proc_create(void);

@@ -12,6 +12,7 @@ static proc_t _proc_table[PROC_MAX];
 __attribute__((__aligned__(PAGE_DIR_SIZE))) 
 static page_dir_entry_t _proc_vm[PROC_MAX][PAGE_DIR_NUM];
 proc_t* _current_proc = NULL;
+proc_t* _ready_proc = NULL;
 
 /* proc_init initializes the process sub-system. */
 void procs_init(void) {
@@ -19,31 +20,7 @@ void procs_init(void) {
 	for (i = 0; i < PROC_MAX; i++)
 		_proc_table[i].state = UNUSED;
 	_current_proc = NULL;
-}
-
-proc_t* proc_get_next_ready(void) {
-	int32_t i = 0;
-	int32_t end = 0;
-	if(_current_proc != NULL) {
-		end = _current_proc->pid;
-		i = end + 1;
-	}
-	else {
-		end = PROC_MAX;
-	}
-	
-	while(1) {
-		if(_proc_table[i].state == READY)
-			return &_proc_table[i];
-
-		if(i == end)
-			break;
-
-		i++;
-		if(i >= PROC_MAX)
-			i = 0;
-	}
-	return NULL;
+	_ready_proc = NULL;
 }
 
 static inline  uint32_t proc_get_user_stack(proc_t* proc) {
@@ -89,11 +66,6 @@ void proc_switch(context_t* ctx, proc_t* to){
 
 	page_dir_entry_t *vm = to->space->vm;
 	__set_translation_table_base((uint32_t) V2P(vm));
-
-	__asm__ volatile("push {R4}");
-	__asm__ volatile("mov R4, #0");
-	__asm__ volatile("MCR p15, 0, R4, c8, c7, 0");
-	__asm__ volatile("pop {R4}");
 	
 	_current_proc = to;
 }
@@ -141,12 +113,42 @@ static void proc_free_space(proc_t *proc) {
 	kfree(proc->space);
 }
 
+static void proc_ready(proc_t* proc) {
+	if(proc == NULL)
+		return;
+
+	proc->state = READY;
+	if(_ready_proc == NULL)
+		_ready_proc = proc;
+
+	proc->next = _ready_proc;
+	proc->prev = _ready_proc->prev;
+	_ready_proc->prev->next = proc;
+	_ready_proc->prev = proc;
+}
+
+static void proc_unready(proc_t* proc) {
+	if(proc == NULL)
+		return;
+
+	proc->next->prev = proc->prev;
+	proc->prev->next = proc->next;
+
+	if(proc->next == proc) //only one left.
+		_ready_proc = NULL;
+	else
+		_ready_proc = proc->next;
+
+	proc->next = NULL;
+	proc->prev = NULL;
+}
+
 static void proc_wakeup_waiting(int32_t pid) {
 	int32_t i;
 	for (i = 0; i < PROC_MAX; i++) {
 		proc_t *proc = &_proc_table[i];
 		if (proc->state == WAIT && proc->wait_pid == pid) {
-			proc->state = READY;
+			proc_ready(proc);
 		}
 	}
 }
@@ -156,17 +158,16 @@ void proc_exit(context_t* ctx, proc_t *proc, int32_t res) {
 	(void)res;
 	int32_t pid = proc->pid;
 
-	proc->state = UNUSED;
 	uint32_t kernel_addr = resolve_kernel_address(proc->space->vm, proc->user_stack);
 	kfree4k((void *) kernel_addr);
 	proc_free_space(proc);
-
 	proc_wakeup_waiting(pid);
+	proc->state = UNUSED;
+	proc_unready(proc);
 
-	proc = proc_get_next_ready();
-	if(proc != NULL) {
+	if(_current_proc == proc) {
 		_current_proc = NULL;
-		proc_switch(ctx, proc);
+		schedule(ctx);
 	}
 }
 
@@ -258,7 +259,8 @@ int32_t proc_load_elf(proc_t *proc, const char *proc_image) {
 	proc->space->malloc_man.tail = 0;
 	proc->ctx.sp = ((uint32_t)proc->user_stack)+PAGE_SIZE;
 	proc->ctx.pc = header->entry;
-	proc->state = READY;
+	proc->ctx.lr = header->entry;
+	proc_ready(proc);
 	return 0;
 }
 
@@ -269,6 +271,8 @@ void proc_sleep_on(context_t* ctx, uint32_t event) {
 	uint32_t cpsr = __int_off();
 	_current_proc->sleep_event = event;
 	_current_proc->state = SLEEPING;
+	proc_unready(_current_proc);
+	_current_proc = NULL;
 	schedule(ctx);
 	__int_on(cpsr);
 }
@@ -280,6 +284,8 @@ void proc_waitpid(context_t* ctx, int32_t pid) {
 	uint32_t cpsr = __int_off();
 	_current_proc->wait_pid = pid;
 	_current_proc->state = WAIT;
+	proc_unready(_current_proc);
+	_current_proc = NULL;
 	schedule(ctx);
 	__int_on(cpsr);
 }
@@ -293,7 +299,7 @@ void proc_wakeup(uint32_t event) {
 			break;
 		proc_t* proc = &_proc_table[i];	
 		if(proc->state == SLEEPING && proc->sleep_event == event)
-			proc->state = READY;
+			proc_ready(proc);
 		i++;
 	}
 	__int_on(cpsr);
@@ -356,6 +362,6 @@ proc_t* kfork() {
 		return NULL;
 	}
 
-	child->state = READY;
+	proc_ready(child);
 	return child;
 }
