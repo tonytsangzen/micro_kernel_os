@@ -16,15 +16,16 @@ int main(int argc, char** argv) {
 		if(pid == 0) {
 			sleep(0);
 			debug("child\n");
-			char* p = ipc_get_msg(NULL, NULL);
+			uint32_t sz;
+			char* p = ipc_get_msg(&pid, &sz, 1);
 			if(p != NULL) {
-				debug(p);
+				debug("msg from: %d: (%d)%s\n", pid, sz, p);
 				free(p);
 			}
 			exit(0);
 		}
 		else {
-			ipc_send_msg(pid, "hello\n", 7);
+			ipc_send_msg(pid, "hello", 6);
 			waitpid(pid);
 			debug("father waited: c = %d\n", pid);
 			//sleep(0);

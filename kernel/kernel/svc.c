@@ -96,7 +96,7 @@ void svc_handler(int32_t code, int32_t arg0, int32_t arg1, int32_t arg2, context
 		ctx->gpr[0] = proc_send_msg(arg0, (void*)arg1, (uint32_t)arg2);
 		return;
 	case SYS_GET_MSG:
-		ctx->gpr[0] = (uint32_t)proc_get_msg(ctx, (int32_t*)arg0, (uint32_t*)arg1);
+		ctx->gpr[0] = (uint32_t)proc_get_msg(ctx, (int32_t*)arg0, (uint32_t*)arg1, (uint8_t)arg2);
 		return;
 	case SYS_YIELD: 
 		schedule(ctx);

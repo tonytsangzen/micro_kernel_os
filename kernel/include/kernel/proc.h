@@ -70,7 +70,7 @@ extern proc_t* proc_get(int32_t pid);
 extern proc_t* kfork(void);
 
 extern int32_t proc_send_msg(int32_t to_pid, void* data, uint32_t size);
-extern void*   proc_get_msg(context_t* ctx, int32_t *pid, uint32_t* size);
+extern void*   proc_get_msg(context_t* ctx, int32_t *pid, uint32_t* size, uint8_t block);
 
 #define PROC_MAX 128
 

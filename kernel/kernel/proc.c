@@ -409,9 +409,34 @@ int32_t proc_send_msg(int32_t to_pid, void* data, uint32_t size) {
 	return 0;
 }
 
-void* proc_get_msg(context_t* ctx, int32_t *pid, uint32_t* size) {
+void* proc_get_msg(context_t* ctx, int32_t *pid, uint32_t* size, uint8_t block) {
 	void *ret = NULL;
 
+	if(block == 0) { //async mode, none blocked.
+		uint32_t cpsr = __int_off();
+		proc_msg_t* msg = _current_proc->msg_queue_head;
+		if(msg != NULL) {
+			if(msg->next == NULL)
+				_current_proc->msg_queue_tail = NULL;
+			_current_proc->msg_queue_head = msg->next;
+
+			if(pid != NULL)
+				*pid = msg->from_pid;
+			if(size != NULL)
+				*size = msg->size;
+
+			ret = proc_malloc(msg->size);
+			if(ret != NULL) 
+				memcpy(ret, msg->data, msg->size);
+
+			kfree(msg->data);
+			kfree(msg);
+		}
+		__int_on(cpsr);
+		return ret;
+	}
+
+	//sync mode, blocked when no msg to read
 	while(1) {
 		uint32_t cpsr = __int_off();
 		proc_msg_t* msg = _current_proc->msg_queue_head;
