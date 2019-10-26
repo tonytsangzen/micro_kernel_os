@@ -12,6 +12,8 @@ enum {
 	SYS_GET_PID,
 	SYS_FORK,
 	SYS_WAIT_PID,
+	SYS_SEND_MSG,
+	SYS_GET_MSG,
 	SYS_EXIT
 };
 

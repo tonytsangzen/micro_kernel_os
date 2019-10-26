@@ -23,6 +23,12 @@ void procs_init(void) {
 	_ready_proc = NULL;
 }
 
+proc_t* proc_get(int32_t pid) {
+	if(pid < 0 || pid >= PROC_MAX)
+		return NULL;
+	return &_proc_table[pid];
+}
+
 static inline  uint32_t proc_get_user_stack(proc_t* proc) {
 	(void)proc;
   return USER_STACK_BOTTOM;
@@ -171,16 +177,16 @@ void proc_exit(context_t* ctx, proc_t *proc, int32_t res) {
 	}
 }
 
-void* proc_malloc(proc_t *proc, uint32_t size) {
-	if(proc == NULL || size == 0)
+void* proc_malloc(uint32_t size) {
+	if(size == 0)
 		return NULL;
-	return trunk_malloc(&proc->space->malloc_man, size);
+	return trunk_malloc(&_current_proc->space->malloc_man, size);
 }
 
-void proc_free(proc_t* proc, void* p) {
-	if(proc == NULL || p == NULL)
+void proc_free(void* p) {
+	if(p == NULL)
 		return;
-	trunk_free(&proc->space->malloc_man, p);
+	trunk_free(&_current_proc->space->malloc_man, p);
 }
 
 /* proc_creates allocates a new process and returns it. */
@@ -365,3 +371,70 @@ proc_t* kfork() {
 	proc_ready(child);
 	return child;
 }
+
+int32_t proc_send_msg(int32_t to_pid, void* data, uint32_t size) {
+	uint32_t cpsr = __int_off();
+
+	proc_t* proc_to = proc_get(to_pid);
+	if(proc_to == NULL || proc_to->state == UNUSED) {
+		__int_on(cpsr);
+		return -1;
+	}
+
+	proc_msg_t* msg = (proc_msg_t*)kmalloc(sizeof(proc_msg_t));
+	if(msg == NULL) {
+		__int_on(cpsr);
+		return -1;
+	}
+	
+	msg->data = kmalloc(size);
+	if(msg->data == NULL) {
+		kfree(msg->data);
+		__int_on(cpsr);
+		return -1;
+	}
+	memcpy(msg->data, data, size);
+
+	msg->from_pid = _current_proc->pid;
+	msg->size = size;
+	msg->next = NULL;
+
+	
+	if(proc_to->msg_queue_tail == NULL) {
+		proc_to->msg_queue_tail = proc_to->msg_queue_head = msg;
+	}
+	else {
+		proc_to->msg_queue_tail->next = msg;
+		proc_to->msg_queue_tail = msg;
+	}
+
+	__int_on(cpsr);
+	return 0;
+}
+
+void* proc_get_msg(int32_t *pid, uint32_t* size) {
+	void *ret = NULL;
+
+	uint32_t cpsr = __int_off();
+
+	proc_msg_t* msg = _current_proc->msg_queue_head;
+	if(msg != NULL) {
+		_current_proc->msg_queue_head = msg->next;
+
+		if(pid != NULL)
+			*pid = msg->from_pid;
+		if(size != NULL)
+			*size = msg->size;
+		
+		ret = proc_malloc(msg->size);
+		if(ret != NULL) 
+			memcpy(ret, msg->data, msg->size);
+
+		kfree(msg->data);
+		kfree(msg);
+	}
+
+	__int_on(cpsr);
+	return ret;
+}
+

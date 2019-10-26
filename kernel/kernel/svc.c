@@ -31,13 +31,13 @@ static void sys_uart_debug(const char* s) {
 }
 
 static int32_t sys_malloc(int32_t size) {
-	return (int32_t)proc_malloc(_current_proc, size);
+	return (int32_t)proc_malloc(size);
 }
 
 static void sys_free(int32_t p) {
 	if(p == 0)
 		return;
-	proc_free(_current_proc, (void*)p);
+	proc_free((void*)p);
 }
 
 static int32_t sys_fork(context_t* ctx) {
@@ -91,6 +91,12 @@ void svc_handler(int32_t code, int32_t arg0, int32_t arg1, int32_t arg2, context
 		return;
 	case SYS_WAIT_PID:
 		sys_waitpid(ctx, arg0);
+		return;
+	case SYS_SEND_MSG:
+		ctx->gpr[0] = proc_send_msg(arg0, (void*)arg1, (uint32_t)arg2);
+		return;
+	case SYS_GET_MSG:
+		ctx->gpr[0] = (uint32_t)proc_get_msg((int32_t*)arg0, (uint32_t*)arg1);
 		return;
 	case SYS_YIELD: 
 		schedule(ctx);
