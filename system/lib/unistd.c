@@ -8,3 +8,9 @@ int getpid(void) {
 int fork(void) {
 	return svc_call0(SYS_FORK);
 }
+
+unsigned int sleep(unsigned int seconds) {
+	if(seconds == 0)
+		svc_call0(SYS_YIELD);
+	return 0;
+}

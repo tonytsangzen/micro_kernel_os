@@ -15,8 +15,9 @@ void _start(void) {
 		}
 		else {
 			waitpid(pid);
-			snprintf(s, 31, "2:father waited: c = %d\n", pid);
+			snprintf(s, 31, "father waited: c = %d\n", pid);
 			uart_debug(s);
+			//sleep(0);
 		}
 	}	
 }

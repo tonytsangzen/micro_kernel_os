@@ -7,7 +7,7 @@ OBJDUMP = arm-none-eabi-objdump
 
 # flags
 CFLAGS = -Wstrict-prototypes \
-				 -I. -g \
+				 -I. -O2 \
 				 -I include \
 				 -I ../kernel/include \
 				 -marm \

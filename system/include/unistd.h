@@ -5,5 +5,5 @@
 
 int getpid(void);
 int fork(void);
-
+unsigned int sleep(unsigned int seconds);
 #endif
