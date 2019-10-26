@@ -1,6 +1,6 @@
 #ifndef UART_DEBUG_H
 #define UART_DEBUG_H
 
-void uart_debug(const char* str);
+void debug(const char *format, ...);
 
 #endif

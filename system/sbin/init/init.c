@@ -3,24 +3,30 @@
 #include <unistd.h>
 #include <vprintf.h>
 #include <sys/wait.h>
-#include <uart_debug.h>
+#include <debug.h>
+#include <ipc.h>
 #include <cmain.h>
 
 int main(int argc, char** argv) {
 	(void)argc;
 	(void)argv;
 
-	char s[32];
 	while(1) {
 		int pid = fork();
 		if(pid == 0) {
-			uart_debug("child\n");
+			sleep(0);
+			debug("child\n");
+			char* p = ipc_get_msg(NULL, NULL);
+			if(p != NULL) {
+				debug(p);
+				free(p);
+			}
 			exit(0);
 		}
 		else {
+			ipc_send_msg(pid, "hello\n", 7);
 			waitpid(pid);
-			snprintf(s, 31, "father waited: c = %d\n", pid);
-			uart_debug(s);
+			debug("father waited: c = %d\n", pid);
 			//sleep(0);
 		}
 	}	

@@ -27,7 +27,7 @@ LIB_OBJS = $(LIB_DIR)/svc_call.o \
 	$(LIB_DIR)/ipc.o \
 	$(LIB_DIR)/proto.o \
 	$(LIB_DIR)/sys/wait.o \
-	$(LIB_DIR)/uart_debug.o
+	$(LIB_DIR)/debug.o
 
 INIT_OBJS = ${LIB_OBJS} \
 	sbin/init/init.o
