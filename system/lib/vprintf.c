@@ -1,3 +1,4 @@
+#include <string.h>
 #include <vprintf.h>
 
 /* digits */
@@ -8,14 +9,6 @@
 static void print_string(outc_func_t outc, void* p, const char *str, int32_t width);
 static void print_int(outc_func_t outc, void* p, int32_t numberm, int32_t width, uint8_t zero);
 static void print_uint_in_base(outc_func_t outc, void* p, uint32_t number, uint32_t base, int32_t width, uint8_t zero, uint8_t cap);
-
-static uint32_t str_len(const char* s) {
-	uint32_t i = 0;
-	while(*s++ != 0) {
-		i++;
-	}
-	return i;
-}
 
 /*
  * unsigned_divmod divides numerator and denmoriator, then returns the quotient
@@ -161,7 +154,7 @@ void v_printf(outc_func_t outc, void* p, const char *format, va_list ap) {
 }
 
 static void print_string(outc_func_t outc, void* p, const char *str, int32_t width) {
-	int32_t len = (int32_t)str_len(str);
+	int32_t len = (int32_t)strlen(str);
 	int32_t i = 0;
 
 	if(width < 0) {
@@ -210,10 +203,10 @@ static void print_int(outc_func_t outc, void* p, int32_t number, int32_t width, 
 
 static void print_uint_in_base(outc_func_t outc, void* p, uint32_t number, uint32_t base, int32_t width, uint8_t zero, uint8_t cap) {
 	char s[32];
-	//memset(s, 0, 32);
+	memset(s, 0, 32);
 	print_uint_in_base_raw(s, number, base, cap);
 
-	int32_t len = width- (int32_t)str_len(s);
+	int32_t len = width- (int32_t)strlen(s);
 	int32_t i = 0;
 
 	if(zero) {
@@ -222,7 +215,7 @@ static void print_uint_in_base(outc_func_t outc, void* p, uint32_t number, uint3
 		}
 	}
 
-	int32_t j = str_len(s)-1;
+	int32_t j = strlen(s)-1;
 	while(j >= 0 && s[j] != 0) {
 		if(width > 0 && i >= width)
 			break;

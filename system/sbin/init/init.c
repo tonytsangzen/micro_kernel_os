@@ -4,8 +4,12 @@
 #include <vprintf.h>
 #include <sys/wait.h>
 #include <uart_debug.h>
+#include <cmain.h>
 
-void _start(void) {
+int main(int argc, char** argv) {
+	(void)argc;
+	(void)argv;
+
 	char s[32];
 	while(1) {
 		int pid = fork();
@@ -20,4 +24,5 @@ void _start(void) {
 			//sleep(0);
 		}
 	}	
+	return 0;
 }

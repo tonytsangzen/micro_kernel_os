@@ -14,16 +14,18 @@ CFLAGS = -Wstrict-prototypes \
 				 -pedantic -Wall -Wextra -msoft-float -fPIC -mapcs-frame \
          -fno-builtin-printf -Wno-overlength-strings \
          -fno-builtin-exit -fno-builtin-stdio \
-         -nostdlib \
 				 -std=c99 
 
-LDFLAGS = -lgcc
+LDFLAGS = -lc
 
 LIB_DIR = lib
 LIB_OBJS = $(LIB_DIR)/svc_call.o \
+	$(LIB_DIR)/cmain.o \
 	$(LIB_DIR)/vprintf.o \
 	$(LIB_DIR)/unistd.o \
 	$(LIB_DIR)/stdlib.o \
+	$(LIB_DIR)/ipc.o \
+	$(LIB_DIR)/proto.o \
 	$(LIB_DIR)/sys/wait.o \
 	$(LIB_DIR)/uart_debug.o
 
@@ -35,7 +37,7 @@ INIT = ${TARGET_DIR}/sbin/init
 
 init: $(INIT_OBJS)
 	mkdir -p ${TARGET_DIR}/sbin
-	$(LD) -Ttext=100 $(INIT_OBJS) -o $(INIT)
+	$(LD) -Ttext=100 $(INIT_OBJS) -o $(INIT) ${LDFLAGS}
 	$(OBJDUMP) -D $(INIT) > $(INIT).asm
 
 all: ${init}
