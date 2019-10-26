@@ -133,7 +133,7 @@ static void proc_ready(proc_t* proc) {
 	_ready_proc->prev = proc;
 }
 
-static void proc_unready(proc_t* proc) {
+static void proc_unready(context_t* ctx, proc_t* proc) {
 	if(proc == NULL)
 		return;
 
@@ -147,6 +147,11 @@ static void proc_unready(proc_t* proc) {
 
 	proc->next = NULL;
 	proc->prev = NULL;
+
+	if(_current_proc == proc) {
+		_current_proc = NULL;
+		schedule(ctx);
+	}
 }
 
 static void proc_wakeup_waiting(int32_t pid) {
@@ -169,12 +174,7 @@ void proc_exit(context_t* ctx, proc_t *proc, int32_t res) {
 	proc_free_space(proc);
 	proc_wakeup_waiting(pid);
 	proc->state = UNUSED;
-	proc_unready(proc);
-
-	if(_current_proc == proc) {
-		_current_proc = NULL;
-		schedule(ctx);
-	}
+	proc_unready(ctx, proc);
 }
 
 void* proc_malloc(uint32_t size) {
@@ -277,9 +277,7 @@ void proc_sleep_on(context_t* ctx, uint32_t event) {
 	uint32_t cpsr = __int_off();
 	_current_proc->sleep_event = event;
 	_current_proc->state = SLEEPING;
-	proc_unready(_current_proc);
-	_current_proc = NULL;
-	schedule(ctx);
+	proc_unready(ctx, _current_proc);
 	__int_on(cpsr);
 }
 
@@ -290,9 +288,7 @@ void proc_waitpid(context_t* ctx, int32_t pid) {
 	uint32_t cpsr = __int_off();
 	_current_proc->wait_pid = pid;
 	_current_proc->state = WAIT;
-	proc_unready(_current_proc);
-	_current_proc = NULL;
-	schedule(ctx);
+	proc_unready(ctx, _current_proc);
 	__int_on(cpsr);
 }
 
@@ -407,34 +403,41 @@ int32_t proc_send_msg(int32_t to_pid, void* data, uint32_t size) {
 		proc_to->msg_queue_tail->next = msg;
 		proc_to->msg_queue_tail = msg;
 	}
-
 	__int_on(cpsr);
+
+	proc_wakeup((uint32_t)&proc_to->pid);
 	return 0;
 }
 
-void* proc_get_msg(int32_t *pid, uint32_t* size) {
+void* proc_get_msg(context_t* ctx, int32_t *pid, uint32_t* size) {
 	void *ret = NULL;
 
-	uint32_t cpsr = __int_off();
+	while(1) {
+		uint32_t cpsr = __int_off();
+		proc_msg_t* msg = _current_proc->msg_queue_head;
+		if(msg != NULL) {
+			if(msg->next == NULL)
+				_current_proc->msg_queue_tail = NULL;
+			_current_proc->msg_queue_head = msg->next;
 
-	proc_msg_t* msg = _current_proc->msg_queue_head;
-	if(msg != NULL) {
-		_current_proc->msg_queue_head = msg->next;
+			if(pid != NULL)
+				*pid = msg->from_pid;
+			if(size != NULL)
+				*size = msg->size;
 
-		if(pid != NULL)
-			*pid = msg->from_pid;
-		if(size != NULL)
-			*size = msg->size;
-		
-		ret = proc_malloc(msg->size);
-		if(ret != NULL) 
-			memcpy(ret, msg->data, msg->size);
+			ret = proc_malloc(msg->size);
+			if(ret != NULL) 
+				memcpy(ret, msg->data, msg->size);
 
-		kfree(msg->data);
-		kfree(msg);
+			kfree(msg->data);
+			kfree(msg);
+			break;
+		}
+		else {
+			proc_sleep_on(ctx, (uint32_t)&_current_proc->pid);
+		}
+		__int_on(cpsr);
 	}
-
-	__int_on(cpsr);
 	return ret;
 }
 
