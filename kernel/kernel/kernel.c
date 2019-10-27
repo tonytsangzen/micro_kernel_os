@@ -9,6 +9,7 @@
 #include <kernel/proc.h>
 #include <kernel/irq.h>
 #include <dev/timer.h>
+#include <vfs.h>
 
 page_dir_entry_t* _kernel_vm = NULL;
 
@@ -85,6 +86,9 @@ void _kernel_entry_c(context_t* ctx) {
 	uart_basic_init();
 
 	procs_init();
+
+	vfs_init();
+
 	load_init();
 
 	timer_set_interval(0, 1000000);
