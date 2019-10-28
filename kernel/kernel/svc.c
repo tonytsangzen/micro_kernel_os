@@ -2,6 +2,7 @@
 #include <kernel/schedule.h>
 #include <kernel/system.h>
 #include <kernel/proc.h>
+#include <vfs.h>
 #include <syscalls.h>
 #include <kstring.h>
 #include <kprintf.h>
@@ -56,6 +57,41 @@ static void sys_waitpid(context_t* ctx, int32_t pid) {
 	proc_waitpid(ctx, pid);
 }
 
+static int32_t sys_vfs_get_info(const char* name, fsinfo_t* info) {
+	vfs_node_t* node = vfs_get(vfs_root(), name);
+	if(node == NULL)
+		return -1;
+	memcpy(info, &node->fsinfo, sizeof(fsinfo_t));
+	return 0;
+}
+
+static int32_t sys_vfs_set_info(vfs_node_t* node, fsinfo_t* info) {
+	if(node == NULL)
+		return -1;
+	memcpy(&node->fsinfo, info, sizeof(fsinfo_t));
+	return 0;
+}
+
+static int32_t sys_vfs_add(vfs_node_t* node, fsinfo_t* info) {
+	if(node == NULL || info == NULL)
+		return -1;
+	
+	node = vfs_simple_add(node, info->name);
+	if(node == NULL)
+		return -1;
+
+	memcpy(&node->fsinfo, info, sizeof(fsinfo_t));
+	return 0;
+}
+
+static int32_t sys_vfs_del(vfs_node_t* node) {
+	if(node == NULL)
+		return -1;
+	
+	vfs_del(node);
+	return 0;
+}
+
 void svc_handler(int32_t code, int32_t arg0, int32_t arg1, int32_t arg2, context_t* ctx, int32_t processor_mode) {
 	(void)arg1;
 	(void)arg2;
@@ -98,6 +134,19 @@ void svc_handler(int32_t code, int32_t arg0, int32_t arg1, int32_t arg2, context
 	case SYS_GET_MSG:
 		ctx->gpr[0] = (uint32_t)proc_get_msg(ctx, (int32_t*)arg0, (uint32_t*)arg1, (uint8_t)arg2);
 		return;
+	case SYS_VFS_GET_INFO:
+		ctx->gpr[0] = sys_vfs_get_info((const char*)arg0, (fsinfo_t*)arg1);
+		return;
+	case SYS_VFS_SET_INFO:
+		ctx->gpr[0] = sys_vfs_set_info((vfs_node_t*)arg0, (fsinfo_t*)arg1);
+		return;
+	case SYS_VFS_ADD:
+		ctx->gpr[0] = sys_vfs_add((vfs_node_t*)arg0, (fsinfo_t*)arg1);
+		return;
+	case SYS_VFS_DEL:
+		ctx->gpr[0] = sys_vfs_del((vfs_node_t*)arg0);
+		return;
+
 	case SYS_YIELD: 
 		schedule(ctx);
 		return;

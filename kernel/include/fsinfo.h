@@ -10,6 +10,7 @@
 #define FS_TYPE_FILE  1 
 
 typedef struct {
+	uint32_t node;
 	char name[FS_NODE_NAME_MAX];
 	uint32_t type;
 	int32_t mount_pid;

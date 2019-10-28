@@ -10,7 +10,6 @@ typedef struct vfs_node {
 	struct vfs_node* next; /*next brother*/
 	struct vfs_node* prev; /*prev brother*/
 
-	uint32_t id;
 	uint32_t kids_num;
 
 	fsinfo_t fsinfo;

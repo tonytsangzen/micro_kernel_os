@@ -2,12 +2,10 @@
 #include <kstring.h>
 #include <mm/kmalloc.h>
 
-static uint32_t _node_id_counter = 0;
 static vfs_node_t* _vfs_root = NULL;
 
 static void vfs_node_init(vfs_node_t* node) {
 	memset(node, 0, sizeof(vfs_node_t));
-	node->id = _node_id_counter++;
 }
 
 void vfs_add(vfs_node_t* father, vfs_node_t* node) {
