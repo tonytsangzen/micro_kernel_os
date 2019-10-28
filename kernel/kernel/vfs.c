@@ -65,7 +65,7 @@ vfs_node_t* vfs_simple_get(vfs_node_t* father, const char* name) {
 
 	vfs_node_t* node = father->first_kid;
 	while(node != NULL) {
-		if(strcmp(node->name, name) == 0) {
+		if(strcmp(node->fsinfo.name, name) == 0) {
 			return node;
 		}
 		node = node->next;
@@ -88,9 +88,9 @@ vfs_node_t* vfs_get(vfs_node_t* father, const char* name) {
 	}
 
 	vfs_node_t* node = father;	
-	char n[VFS_FULL_NAME_MAX+1];
+	char n[FS_FULL_NAME_MAX+1];
 	int32_t j = 0;
-	for(int32_t i=0; i<VFS_FULL_NAME_MAX; i++) {
+	for(int32_t i=0; i<FS_FULL_NAME_MAX; i++) {
 		n[i] = name[i];
 		if(n[i] == 0) {
 			return vfs_simple_get(node, n+j);
@@ -109,11 +109,11 @@ vfs_node_t* vfs_get(vfs_node_t* father, const char* name) {
 vfs_node_t* vfs_simple_add(vfs_node_t* father, const char* name) {
 	vfs_node_t* node = vfs_new_node();
 	if(node == NULL ||
-			node->type != VFS_TYPE_DIR ||
+			node->fsinfo.type != FS_TYPE_DIR ||
 			strchr(name, '/') != NULL)
 		return NULL;
 
-	strncpy(node->name, name, VFS_NODE_NAME_MAX);
+	strncpy(node->fsinfo.name, name, FS_NODE_NAME_MAX);
 	vfs_add(father, node);
 	return node;
 }
