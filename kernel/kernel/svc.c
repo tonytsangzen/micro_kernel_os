@@ -65,18 +65,10 @@ static int32_t sys_vfs_get_info(const char* name, fsinfo_t* info) {
 	return 0;
 }
 
-static int32_t sys_vfs_set_info(vfs_node_t* node, fsinfo_t* info) {
-	if(node == NULL)
+static int32_t sys_vfs_set_info(fsinfo_t* info) {
+	if(info == NULL)
 		return -1;
-	memcpy(&node->fsinfo, info, sizeof(fsinfo_t));
-	return 0;
-}
-
-static int32_t sys_vfs_add(vfs_node_t* node, fsinfo_t* info) {
-	if(node == NULL || info == NULL)
-		return -1;
-	
-	node = vfs_simple_add(node, info->name);
+	vfs_node_t* node  = (vfs_node_t*)info->node;
 	if(node == NULL)
 		return -1;
 
@@ -84,11 +76,60 @@ static int32_t sys_vfs_add(vfs_node_t* node, fsinfo_t* info) {
 	return 0;
 }
 
-static int32_t sys_vfs_del(vfs_node_t* node) {
-	if(node == NULL)
+static int32_t sys_vfs_add(fsinfo_t* info_to, fsinfo_t* info) {
+	if(info_to == NULL || info == NULL)
 		return -1;
 	
-	vfs_del(node);
+	vfs_node_t* node = vfs_simple_add((vfs_node_t*)info_to->node, info->name);
+	if(node == NULL)
+		return -1;
+
+	memcpy(&node->fsinfo, info, sizeof(fsinfo_t));
+	node->fsinfo.node = (uint32_t)node;
+	return 0;
+}
+
+static int32_t sys_vfs_mount(fsinfo_t* info_to, fsinfo_t* info, uint32_t access) {
+	if(info_to == NULL || info == NULL)
+		return -1;
+	
+	vfs_node_t* node_to = (vfs_node_t*)info_to->node;
+	vfs_node_t* node = (vfs_node_t*)info->node;
+	if(node == NULL || node_to == NULL)
+		return -1;
+	
+	vfs_mount(node_to, node, access);
+	return 0;
+}
+
+static void sys_vfs_umount(fsinfo_t* info) {
+	if(info == NULL)
+		return;
+	
+	vfs_node_t* node = (vfs_node_t*)info->node;
+	if(node == NULL)
+		return;
+	
+	vfs_umount(node);
+}
+
+static int32_t sys_vfs_new_node(fsinfo_t* info) {
+	if(info  == NULL)
+		return -1;
+
+	vfs_node_t* node = vfs_new_node();
+	if(node == NULL)
+		return -1;
+
+	memcpy(info, &node->fsinfo, sizeof(fsinfo_t));
+	return 0;
+}
+
+static int32_t sys_vfs_del(fsinfo_t* info) {
+	if(info == NULL)
+		return -1;
+	
+	vfs_del((vfs_node_t*)info->node);
 	return 0;
 }
 
@@ -138,13 +179,22 @@ void svc_handler(int32_t code, int32_t arg0, int32_t arg1, int32_t arg2, context
 		ctx->gpr[0] = sys_vfs_get_info((const char*)arg0, (fsinfo_t*)arg1);
 		return;
 	case SYS_VFS_SET_INFO:
-		ctx->gpr[0] = sys_vfs_set_info((vfs_node_t*)arg0, (fsinfo_t*)arg1);
+		ctx->gpr[0] = sys_vfs_set_info((fsinfo_t*)arg0);
 		return;
 	case SYS_VFS_ADD:
-		ctx->gpr[0] = sys_vfs_add((vfs_node_t*)arg0, (fsinfo_t*)arg1);
+		ctx->gpr[0] = sys_vfs_add((fsinfo_t*)arg0, (fsinfo_t*)arg1);
 		return;
 	case SYS_VFS_DEL:
-		ctx->gpr[0] = sys_vfs_del((vfs_node_t*)arg0);
+		ctx->gpr[0] = sys_vfs_del((fsinfo_t*)arg0);
+		return;
+	case SYS_VFS_NEW_NODE:
+		ctx->gpr[0] = (int32_t)sys_vfs_new_node((fsinfo_t*)arg0);
+		return;
+	case SYS_VFS_MOUNT:
+		ctx->gpr[0] = sys_vfs_mount((fsinfo_t*)arg0, (fsinfo_t*)arg1, (int32_t)arg2);
+		return;
+	case SYS_VFS_UMOUNT:
+		sys_vfs_umount((fsinfo_t*)arg0);
 		return;
 
 	case SYS_YIELD: 

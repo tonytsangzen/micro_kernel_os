@@ -23,7 +23,9 @@ vfs_node_t* vfs_simple_get(vfs_node_t* father, const char* name);
 
 vfs_node_t* vfs_get(vfs_node_t* father, const char* name);
 
-void vfs_add(vfs_node_t* father, vfs_node_t* node);
+int32_t vfs_mount(vfs_node_t* org, vfs_node_t* node, uint32_t access);
+
+void vfs_umount(vfs_node_t* node);
 
 void vfs_del(vfs_node_t* node);
 

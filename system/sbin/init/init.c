@@ -6,10 +6,27 @@
 #include <debug.h>
 #include <ipc.h>
 #include <cmain.h>
+#include <fsinfo.h>
+#include <string.h>
+
 
 int main(int argc, char** argv) {
 	(void)argc;
 	(void)argv;
+
+	fsinfo_t info;
+	svc_call1(SYS_VFS_NEW_NODE, (int32_t)&info);
+	info.type = FS_TYPE_FILE;
+	strcpy(info.name, "sbin");
+	svc_call1(SYS_VFS_SET_INFO, (int32_t)&info);
+
+	fsinfo_t root_info;
+
+	svc_call2(SYS_VFS_GET_INFO, (int32_t)"/", (int32_t)&root_info);
+	svc_call3(SYS_VFS_MOUNT, (int32_t)&root_info, (int32_t)&info, 0);
+	svc_call2(SYS_VFS_GET_INFO, (int32_t)"/", (int32_t)&root_info);
+	svc_call1(SYS_VFS_UMOUNT, (int32_t)&root_info);
+
 
 	while(1) {
 		int pid = fork();
