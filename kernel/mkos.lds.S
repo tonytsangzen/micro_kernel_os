@@ -31,6 +31,8 @@ SECTIONS
 	_abt_stack = .;
 	. = . + 0x10000;
 	_svc_stack = .;
+
+	. = ALIGN(4096);
 	_initrd = .;
 	. = . + 0x40000; /*256KB*/
 

@@ -7,7 +7,7 @@ OBJDUMP = arm-none-eabi-objdump
 
 # flags
 CFLAGS = -Wstrict-prototypes \
-				 -I. -O2 \
+				 -I. -g \
 				 -I include \
 				 -I ../kernel/include \
 				 -marm \
@@ -21,6 +21,8 @@ LDFLAGS = -lc
 LIB_DIR = lib
 LIB_OBJS = $(LIB_DIR)/svc_call.o \
 	$(LIB_DIR)/cmain.o \
+	$(LIB_DIR)/vfs.o \
+	$(LIB_DIR)/ramfs.o \
 	$(LIB_DIR)/vprintf.o \
 	$(LIB_DIR)/unistd.o \
 	$(LIB_DIR)/stdlib.o \
@@ -29,18 +31,28 @@ LIB_OBJS = $(LIB_DIR)/svc_call.o \
 	$(LIB_DIR)/sys/wait.o \
 	$(LIB_DIR)/debug.o
 
-INIT_OBJS = ${LIB_OBJS} \
-	sbin/init/init.o
-
 TARGET_DIR = build
-INIT = ${TARGET_DIR}/sbin/init
+
+INIT_OBJS = ${LIB_OBJS} \
+	initfs/init/init.o
+INIT = ${TARGET_DIR}/initfs/init
+
+INITFSD_OBJS = ${LIB_OBJS} \
+	initfs/initfsd/initfsd.o
+INITFSD = ${TARGET_DIR}/initfs/initfsd
+
+all: init initfsd
+	mkramfs/mkramfs ${TARGET_DIR}/initfs.img ${TARGET_DIR}/initfs
 
 init: $(INIT_OBJS)
-	mkdir -p ${TARGET_DIR}/sbin
+	mkdir -p ${TARGET_DIR}/initfs
+	mkdir -p ${TARGET_DIR}/asm
 	$(LD) -Ttext=100 $(INIT_OBJS) -o $(INIT) ${LDFLAGS}
-	$(OBJDUMP) -D $(INIT) > $(INIT).asm
+	$(OBJDUMP) -D ${INIT} > ${TARGET_DIR}/asm/init.asm
 
-all: ${init}
+initfsd: $(INITFSD_OBJS)
+	$(LD) -Ttext=100 $(INITFSD_OBJS) -o $(INITFSD) ${LDFLAGS}
+	$(OBJDUMP) -D ${INITFSD} > ${TARGET_DIR}/asm/initfsd.asm
 
 clean:
 	rm -f $(LIB_OBJS)

@@ -1,3 +1,4 @@
+#include <kernel/kernel.h>
 #include <kernel/svc.h>
 #include <kernel/schedule.h>
 #include <kernel/system.h>
@@ -128,9 +129,20 @@ static int32_t sys_vfs_new_node(fsinfo_t* info) {
 static int32_t sys_vfs_del(fsinfo_t* info) {
 	if(info == NULL)
 		return -1;
-	
-	vfs_del((vfs_node_t*)info->node);
+		
+	vfs_node_t* node = (vfs_node_t*)info->node;
+	if(node == NULL)
+		return -1;
+
+	vfs_del(node);
 	return 0;
+}
+
+static int32_t sys_load_elf(void* elf) {
+	if(elf == NULL)
+		return -1;
+	
+	return proc_load_elf(_current_proc, elf);
 }
 
 void svc_handler(int32_t code, int32_t arg0, int32_t arg1, int32_t arg2, context_t* ctx, int32_t processor_mode) {
@@ -144,6 +156,9 @@ void svc_handler(int32_t code, int32_t arg0, int32_t arg1, int32_t arg2, context
 	switch(code) {
 	case SYS_UART_DEBUG: 
 		sys_uart_debug((const char*)arg0);		
+		return;
+	case SYS_INITRD:
+		ctx->gpr[0] = (int32_t)_initrd;
 		return;
 	case SYS_EXIT:
 		sys_exit(ctx, arg0);
@@ -163,6 +178,9 @@ void svc_handler(int32_t code, int32_t arg0, int32_t arg1, int32_t arg2, context
 	case SYS_WAKEUP:
 		sys_wakeup((uint32_t)arg0);
 		return;
+	case SYS_LOAD_ELF:
+		ctx->gpr[0] = sys_load_elf((void*)arg0);
+		return;
 	case SYS_FORK:
 		ctx->gpr[0] = sys_fork(ctx);
 		return;
@@ -173,7 +191,7 @@ void svc_handler(int32_t code, int32_t arg0, int32_t arg1, int32_t arg2, context
 		ctx->gpr[0] = proc_send_msg(arg0, (void*)arg1, (uint32_t)arg2);
 		return;
 	case SYS_GET_MSG:
-		ctx->gpr[0] = (uint32_t)proc_get_msg(ctx, (int32_t*)arg0, (uint32_t*)arg1, (uint8_t)arg2);
+		ctx->gpr[0] = (uint32_t)proc_get_msg((int32_t*)arg0, (uint32_t*)arg1);
 		return;
 	case SYS_VFS_GET_INFO:
 		ctx->gpr[0] = sys_vfs_get_info((const char*)arg0, (fsinfo_t*)arg1);
@@ -196,7 +214,6 @@ void svc_handler(int32_t code, int32_t arg0, int32_t arg1, int32_t arg2, context
 	case SYS_VFS_UMOUNT:
 		sys_vfs_umount((fsinfo_t*)arg0);
 		return;
-
 	case SYS_YIELD: 
 		schedule(ctx);
 		return;

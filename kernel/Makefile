@@ -43,6 +43,7 @@ LIB_DIR = lib
 LIB_OBJS = \
 	${LIB_DIR}/kstring.o \
 	${LIB_DIR}/vprintf.o \
+	${LIB_DIR}/ramfs.o \
 	${LIB_DIR}/kprintf.o
 
 KERNEL_DIR = kernel
@@ -70,17 +71,16 @@ $(OS).bin: $(OBJS) mkos.lds.S
 	$(OBJCOPY) -O binary ${BUILD_DIR}/$(OS).elf ${BUILD_DIR}/$(OS).bin
 	$(OBJDUMP) -D ${BUILD_DIR}/$(OS).elf > ${BUILD_DIR}/$(OS).asm
 
-run:
-	qemu-system-arm $(QEMU_FLAGS) -kernel ${BUILD_DIR}/$(OS).bin -initrd ${SYS_DIR}/build/sbin/init
+INITFS = ${SYS_DIR}/build/initfs.img
 
-runasm:
-	qemu-system-arm $(QEMU_FLAGS) -d in_asm -kernel ${BUILD_DIR}/$(OS).bin -initrd ${SYS_DIR}/build/sbin/init
+run: ${INITFS}
+	qemu-system-arm $(QEMU_FLAGS) -kernel ${BUILD_DIR}/$(OS).bin -initrd ${INITFS}
 
-debug:
-	qemu-system-arm $(QEMU_FLAGS) -gdb tcp::26000 -S -kernel ${BUILD_DIR}/$(OS).bin -initrd ${SYS_DIR}/build/sbin/init
+debug: ${INITFS}
+	qemu-system-arm $(QEMU_FLAGS) -gdb tcp::26000 -S -kernel ${BUILD_DIR}/$(OS).bin -initrd  ${INITFS}
 
-debugasm:
-	qemu-system-arm $(QEMU_FLAGS) -d in_asm -gdb tcp::26000 -S -kernel ${BUILD_DIR}/$(OS).bin -initrd ${SYS_DIR}/build/sbin/init
+debugasm: ${INITFS}
+	qemu-system-arm $(QEMU_FLAGS) -d in_asm -gdb tcp::26000 -S -kernel ${BUILD_DIR}/$(OS).bin -initrd ${INITFS}
 
 gdb: 
 	echo "target remote :26000" > /tmp/gdbinit

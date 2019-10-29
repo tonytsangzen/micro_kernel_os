@@ -409,60 +409,30 @@ int32_t proc_send_msg(int32_t to_pid, void* data, uint32_t size) {
 	return 0;
 }
 
-void* proc_get_msg(context_t* ctx, int32_t *pid, uint32_t* size, uint8_t block) {
+void* proc_get_msg(int32_t *pid, uint32_t* size) {
 	void *ret = NULL;
+	uint32_t cpsr = __int_off();
 
-	if(block == 0) { //async mode, none blocked.
-		uint32_t cpsr = __int_off();
-		proc_msg_t* msg = _current_proc->msg_queue_head;
-		if(msg != NULL) {
-			if(msg->next == NULL)
-				_current_proc->msg_queue_tail = NULL;
-			_current_proc->msg_queue_head = msg->next;
+	proc_msg_t* msg = _current_proc->msg_queue_head;
+	if(msg != NULL) {
+		if(msg->next == NULL)
+			_current_proc->msg_queue_tail = NULL;
+		_current_proc->msg_queue_head = msg->next;
 
-			if(pid != NULL)
-				*pid = msg->from_pid;
-			if(size != NULL)
-				*size = msg->size;
+		if(pid != NULL)
+			*pid = msg->from_pid;
+		if(size != NULL)
+			*size = msg->size;
 
-			ret = proc_malloc(msg->size);
-			if(ret != NULL) 
-				memcpy(ret, msg->data, msg->size);
+		ret = proc_malloc(msg->size);
+		if(ret != NULL) 
+			memcpy(ret, msg->data, msg->size);
 
-			kfree(msg->data);
-			kfree(msg);
-		}
-		__int_on(cpsr);
-		return ret;
+		kfree(msg->data);
+		kfree(msg);
 	}
 
-	//sync mode, blocked when no msg to read
-	while(1) {
-		uint32_t cpsr = __int_off();
-		proc_msg_t* msg = _current_proc->msg_queue_head;
-		if(msg != NULL) {
-			if(msg->next == NULL)
-				_current_proc->msg_queue_tail = NULL;
-			_current_proc->msg_queue_head = msg->next;
-
-			if(pid != NULL)
-				*pid = msg->from_pid;
-			if(size != NULL)
-				*size = msg->size;
-
-			ret = proc_malloc(msg->size);
-			if(ret != NULL) 
-				memcpy(ret, msg->data, msg->size);
-
-			kfree(msg->data);
-			kfree(msg);
-			break;
-		}
-		else {
-			proc_sleep_on(ctx, (uint32_t)&_current_proc->pid);
-		}
-		__int_on(cpsr);
-	}
+	__int_on(cpsr);
 	return ret;
 }
 
