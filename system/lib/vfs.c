@@ -9,15 +9,27 @@ int vfs_new_node(const char* name, int type, fsinfo_t* info) {
 
 	info->type = type;
 	strcpy(info->name, name);
-	return vfs_set_info(info);
+	return vfs_set(info);
 }
 
-int vfs_get_info(const char* fname, fsinfo_t* info) {
-	return svc_call2(SYS_VFS_GET_INFO, (int32_t)fname, (int32_t)info);
+int vfs_get(const char* fname, fsinfo_t* info) {
+	return svc_call2(SYS_VFS_GET, (int32_t)fname, (int32_t)info);
 }
 
-int vfs_set_info(fsinfo_t* info) {
-	return svc_call1(SYS_VFS_SET_INFO, (int32_t)info);
+int vfs_first_kid(fsinfo_t* info, fsinfo_t* ret) {
+	return svc_call2(SYS_VFS_FKID, (int32_t)info, (int32_t)ret);
+}
+
+int vfs_next(fsinfo_t* info, fsinfo_t* ret) {
+	return svc_call2(SYS_VFS_NEXT, (int32_t)info, (int32_t)ret);
+}
+
+int vfs_father(fsinfo_t* info, fsinfo_t* ret) {
+	return svc_call2(SYS_VFS_FATHER, (int32_t)info, (int32_t)ret);
+}
+
+int vfs_set(fsinfo_t* info) {
+	return svc_call1(SYS_VFS_SET, (int32_t)info);
 }
 
 int vfs_add(fsinfo_t* to, fsinfo_t* info) {

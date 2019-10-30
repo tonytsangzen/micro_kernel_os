@@ -66,6 +66,30 @@ static int32_t sys_vfs_get_info(const char* name, fsinfo_t* info) {
 	return 0;
 }
 
+static int32_t sys_vfs_get_fkid(fsinfo_t* info, fsinfo_t* ret) {
+	vfs_node_t* node = (vfs_node_t*)info->node;
+	if(node == NULL || node->first_kid == NULL || ret == NULL)
+		return -1;
+	memcpy(ret, &node->first_kid->fsinfo, sizeof(fsinfo_t));
+	return 0;
+}
+
+static int32_t sys_vfs_get_next(fsinfo_t* info, fsinfo_t* ret) {
+	vfs_node_t* node = (vfs_node_t*)info->node;
+	if(node == NULL || node->next == NULL || ret == NULL)
+		return -1;
+	memcpy(ret, &node->next->fsinfo, sizeof(fsinfo_t));
+	return 0;
+}
+
+static int32_t sys_vfs_get_father(fsinfo_t* info, fsinfo_t* ret) {
+	vfs_node_t* node = (vfs_node_t*)info->node;
+	if(node == NULL || node->father == NULL || ret == NULL)
+		return -1;
+	memcpy(ret, &node->father->fsinfo, sizeof(fsinfo_t));
+	return 0;
+}
+
 static int32_t sys_vfs_set_info(fsinfo_t* info) {
 	if(info == NULL)
 		return -1;
@@ -145,7 +169,8 @@ static int32_t sys_load_elf(context_t* ctx, void* elf) {
 	if(proc_load_elf(_current_proc, elf) != 0)
 		return -1;
 
-	schedule(ctx);
+	//schedule(ctx);
+	memcpy(ctx, &_current_proc->ctx, sizeof(context_t));
 	return 0;
 }
 
@@ -182,7 +207,7 @@ void svc_handler(int32_t code, int32_t arg0, int32_t arg1, int32_t arg2, context
 	case SYS_WAKEUP:
 		sys_wakeup((uint32_t)arg0);
 		return;
-	case SYS_LOAD_ELF:
+	case SYS_EXEC_ELF:
 		ctx->gpr[0] = sys_load_elf(ctx, (void*)arg0);
 		return;
 	case SYS_FORK:
@@ -195,12 +220,21 @@ void svc_handler(int32_t code, int32_t arg0, int32_t arg1, int32_t arg2, context
 		ctx->gpr[0] = proc_send_msg(arg0, (void*)arg1, (uint32_t)arg2);
 		return;
 	case SYS_GET_MSG:
-		ctx->gpr[0] = (uint32_t)proc_get_msg((int32_t*)arg0, (uint32_t*)arg1);
+		ctx->gpr[0] = (uint32_t)proc_get_msg(ctx, (int32_t*)arg0, (uint32_t*)arg1, arg2);
 		return;
-	case SYS_VFS_GET_INFO:
+	case SYS_VFS_GET:
 		ctx->gpr[0] = sys_vfs_get_info((const char*)arg0, (fsinfo_t*)arg1);
 		return;
-	case SYS_VFS_SET_INFO:
+	case SYS_VFS_FKID:
+		ctx->gpr[0] = sys_vfs_get_fkid((fsinfo_t*)arg0, (fsinfo_t*)arg1);
+		return;
+	case SYS_VFS_NEXT:
+		ctx->gpr[0] = sys_vfs_get_next((fsinfo_t*)arg0, (fsinfo_t*)arg1);
+		return;
+	case SYS_VFS_FATHER:
+		ctx->gpr[0] = sys_vfs_get_father((fsinfo_t*)arg0, (fsinfo_t*)arg1);
+		return;
+	case SYS_VFS_SET:
 		ctx->gpr[0] = sys_vfs_set_info((fsinfo_t*)arg0);
 		return;
 	case SYS_VFS_ADD:

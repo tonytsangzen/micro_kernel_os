@@ -12,3 +12,10 @@ void free(void* ptr) {
 void exit(int status) {
 	svc_call1(SYS_EXIT, (int32_t)status);
 }
+
+int execl(const char* fname, const char* arg, ...) {
+	(void)fname; //TODO
+	(void)arg; //TODO
+
+	return 0;
+}

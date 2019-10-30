@@ -13,17 +13,19 @@ int main(int argc, char** argv) {
 	(void)argc;
 	(void)argv;
 
-	debug("initfs loading....\n");
+	debug("initfs loading......\n");
+
 	fsinfo_t initfs;
 	vfs_new_node("initfs", FS_TYPE_DIR, &initfs);
 
 	fsinfo_t root_info;
-	vfs_get_info("/", &root_info);
+	vfs_get("/", &root_info);
 	vfs_add(&root_info, &initfs);
 
 	ramfs_t ramfs;
 	const char* initrd = (const char*)svc_call0(SYS_INITRD);
 	ramfs_open(initrd, &ramfs);
+
 	debug("initfs loaded\n");
 
 	fsinfo_t info;
@@ -38,6 +40,8 @@ int main(int argc, char** argv) {
 	}
 
 	vfs_mount(&initfs, &info, 0);
+
+	ipc_send_msg(0, ".", 1);
 
 	while(1) {
 		sleep(0);

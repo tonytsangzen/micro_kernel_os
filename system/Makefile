@@ -56,5 +56,6 @@ initfsd: $(INITFSD_OBJS)
 
 clean:
 	rm -f $(LIB_OBJS)
-	rm -f $(INIT_OBJS) $(INIT)
+	rm -f $(INIT_OBJS)
+	rm -f $(INITFSD_OBJS)
 	rm -fr build
