@@ -63,17 +63,19 @@ static void proc_init_space(proc_t* proc) {
 }
 
 void proc_switch(context_t* ctx, proc_t* to){
-	if(to == NULL || to == _current_proc)
+	if(to == NULL)
 		return;
 
-	if(_current_proc != NULL)
-		memcpy(&_current_proc->ctx, ctx, sizeof(context_t));
 	memcpy(ctx, &to->ctx, sizeof(context_t));
+	if(_current_proc != NULL) {
+		memcpy(&_current_proc->ctx, ctx, sizeof(context_t));
+	}
 
-	page_dir_entry_t *vm = to->space->vm;
-	__set_translation_table_base((uint32_t) V2P(vm));
-	
-	_current_proc = to;
+	if(_current_proc != to) {
+		page_dir_entry_t *vm = to->space->vm;
+		__set_translation_table_base((uint32_t) V2P(vm));
+		_current_proc = to;
+	}
 }
 
 /* proc_exapnad_memory expands the heap size of the given process. */
@@ -120,7 +122,7 @@ static void proc_free_space(proc_t *proc) {
 }
 
 static void proc_ready(proc_t* proc) {
-	if(proc == NULL)
+	if(proc == NULL || proc->state == READY)
 		return;
 
 	proc->state = READY;
@@ -134,7 +136,7 @@ static void proc_ready(proc_t* proc) {
 }
 
 static void proc_unready(context_t* ctx, proc_t* proc) {
-	if(proc == NULL)
+	if(proc == NULL || proc->state != READY)
 		return;
 
 	proc->next->prev = proc->prev;

@@ -76,7 +76,7 @@ static void free_initrd(void) {
 }
 
 static void load_init(void) {
-	const char* elf = ramfs_read(&_initfs, "initfsd", NULL);
+	const char* elf = ramfs_read(&_initfs, "init", NULL);
 	if(elf != NULL) {
 		proc_t *proc = proc_create();
 		proc_load_elf(proc, elf);

@@ -138,11 +138,15 @@ static int32_t sys_vfs_del(fsinfo_t* info) {
 	return 0;
 }
 
-static int32_t sys_load_elf(void* elf) {
+static int32_t sys_load_elf(context_t* ctx, void* elf) {
 	if(elf == NULL)
 		return -1;
 	
-	return proc_load_elf(_current_proc, elf);
+	if(proc_load_elf(_current_proc, elf) != 0)
+		return -1;
+
+	schedule(ctx);
+	return 0;
 }
 
 void svc_handler(int32_t code, int32_t arg0, int32_t arg1, int32_t arg2, context_t* ctx, int32_t processor_mode) {
@@ -179,7 +183,7 @@ void svc_handler(int32_t code, int32_t arg0, int32_t arg1, int32_t arg2, context
 		sys_wakeup((uint32_t)arg0);
 		return;
 	case SYS_LOAD_ELF:
-		ctx->gpr[0] = sys_load_elf((void*)arg0);
+		ctx->gpr[0] = sys_load_elf(ctx, (void*)arg0);
 		return;
 	case SYS_FORK:
 		ctx->gpr[0] = sys_fork(ctx);

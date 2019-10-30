@@ -23,6 +23,7 @@ int main(int argc, char** argv) {
 	if(pid == 0) {
 		debug("load elf\n");
 		svc_call1(SYS_LOAD_ELF, (int32_t)elf);
+		debug("load elf end\n");
 		exit(0);
 	}
 
