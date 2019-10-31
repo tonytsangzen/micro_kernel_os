@@ -30,7 +30,7 @@ static void vfs_add(vfs_node_t* father, vfs_node_t* node) {
 	father->last_kid = node;
 }
 
-static int32_t vfs_get_mount_id(void) {
+static int32_t vfs_get_free_mount_id(void) {
 	int32_t i;
 	for(i = 0; i<FS_MOUNT_MAX; i++) {
 		if(_vfs_mounts[i].org_node == 0)
@@ -53,6 +53,26 @@ static void vfs_remove(vfs_node_t* node) {
 	node->next = NULL;
 }
 
+static int32_t vfs_get_mount_id(vfs_node_t* node) {
+	while(node != NULL) {
+		if(node->fsinfo.mount_id >= 0)
+			return node->fsinfo.mount_id;
+		node = node->father;
+	}
+	return -1;
+}
+
+int32_t vfs_get_mount(vfs_node_t* node, mount_t* mount) {
+	if(node == NULL || mount == NULL)
+		return -1;
+
+	int32_t mount_id = vfs_get_mount_id(node);
+	if(mount_id < 0)
+		return -1;
+	memcpy(mount, &_vfs_mounts[mount_id], sizeof(mount_t));
+	return 0;
+}
+
 int32_t vfs_mount(vfs_node_t* org, vfs_node_t* node, uint32_t access) {
 	if(org == NULL || node == NULL)
 		return -1;
@@ -60,7 +80,7 @@ int32_t vfs_mount(vfs_node_t* org, vfs_node_t* node, uint32_t access) {
 	if(node->fsinfo.mount_id > 0) //already been mounted 
 		return -1;
 	
-	int32_t id = vfs_get_mount_id();
+	int32_t id = vfs_get_free_mount_id();
 	if(id < 0)
 		return -1;
 

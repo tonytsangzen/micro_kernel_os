@@ -34,11 +34,14 @@ int main(int argc, char** argv) {
 	}
 
 	fsinfo_t root, info;
+	mount_t mount;
 	vfs_get("/", &root);
 	vfs_first_kid(&root, &info);
-	debug("%s\n", info.name);
+	vfs_get_mount(&info, &mount);
+	debug("%d, %s\n", mount.pid, info.name);
 	vfs_next(&info, &info);
-	debug("%s\n", info.name);
+	vfs_get_mount(&info, &mount);
+	debug("%d, %s\n", mount.pid, info.name);
 
 	while(1) {
 		sleep(0);		

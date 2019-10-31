@@ -58,11 +58,15 @@ static void sys_waitpid(context_t* ctx, int32_t pid) {
 	proc_waitpid(ctx, pid);
 }
 
+static void get_fsinfo(vfs_node_t* node, fsinfo_t* info) {
+	memcpy(info, &node->fsinfo, sizeof(fsinfo_t));
+}
+
 static int32_t sys_vfs_get_info(const char* name, fsinfo_t* info) {
 	vfs_node_t* node = vfs_get(vfs_root(), name);
 	if(node == NULL)
 		return -1;
-	memcpy(info, &node->fsinfo, sizeof(fsinfo_t));
+	get_fsinfo(node, info);
 	return 0;
 }
 
@@ -70,7 +74,7 @@ static int32_t sys_vfs_get_fkid(fsinfo_t* info, fsinfo_t* ret) {
 	vfs_node_t* node = (vfs_node_t*)info->node;
 	if(node == NULL || node->first_kid == NULL || ret == NULL)
 		return -1;
-	memcpy(ret, &node->first_kid->fsinfo, sizeof(fsinfo_t));
+	get_fsinfo(node->first_kid, ret);
 	return 0;
 }
 
@@ -78,7 +82,7 @@ static int32_t sys_vfs_get_next(fsinfo_t* info, fsinfo_t* ret) {
 	vfs_node_t* node = (vfs_node_t*)info->node;
 	if(node == NULL || node->next == NULL || ret == NULL)
 		return -1;
-	memcpy(ret, &node->next->fsinfo, sizeof(fsinfo_t));
+	get_fsinfo(node->next, ret);
 	return 0;
 }
 
@@ -86,7 +90,7 @@ static int32_t sys_vfs_get_father(fsinfo_t* info, fsinfo_t* ret) {
 	vfs_node_t* node = (vfs_node_t*)info->node;
 	if(node == NULL || node->father == NULL || ret == NULL)
 		return -1;
-	memcpy(ret, &node->father->fsinfo, sizeof(fsinfo_t));
+	get_fsinfo(node->father, ret);
 	return 0;
 }
 
@@ -96,7 +100,6 @@ static int32_t sys_vfs_set_info(fsinfo_t* info) {
 	vfs_node_t* node  = (vfs_node_t*)info->node;
 	if(node == NULL)
 		return -1;
-
 	memcpy(&node->fsinfo, info, sizeof(fsinfo_t));
 	return 0;
 }
@@ -112,6 +115,17 @@ static int32_t sys_vfs_add(fsinfo_t* info_to, fsinfo_t* info) {
 	memcpy(&node->fsinfo, info, sizeof(fsinfo_t));
 	node->fsinfo.node = (uint32_t)node;
 	return 0;
+}
+
+static int32_t sys_vfs_get_mount(fsinfo_t* info, mount_t* mount) {
+	if(info == NULL || mount == NULL)
+		return -1;
+	
+	vfs_node_t* node = (vfs_node_t*)info->node;
+	if(node == NULL)
+		return -1;
+	
+	return vfs_get_mount(node, mount);
 }
 
 static int32_t sys_vfs_mount(fsinfo_t* info_to, fsinfo_t* info, uint32_t access) {
@@ -245,6 +259,9 @@ void svc_handler(int32_t code, int32_t arg0, int32_t arg1, int32_t arg2, context
 		return;
 	case SYS_VFS_NEW_NODE:
 		ctx->gpr[0] = (int32_t)sys_vfs_new_node((fsinfo_t*)arg0);
+		return;
+	case SYS_VFS_GET_MOUNT:
+		ctx->gpr[0] = sys_vfs_get_mount((fsinfo_t*)arg0, (mount_t*)arg1);
 		return;
 	case SYS_VFS_MOUNT:
 		ctx->gpr[0] = sys_vfs_mount((fsinfo_t*)arg0, (fsinfo_t*)arg1, (int32_t)arg2);

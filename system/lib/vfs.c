@@ -40,6 +40,10 @@ int vfs_del(fsinfo_t* info) {
 	return svc_call1(SYS_VFS_DEL, (int32_t)info);
 }
 
+int vfs_get_mount(fsinfo_t* info, mount_t* mount) {
+	return svc_call2(SYS_VFS_GET_MOUNT, (int32_t)info, (int32_t)mount);
+}
+
 int vfs_mount(fsinfo_t* mount_to, fsinfo_t* info, int access) {
 	return svc_call3(SYS_VFS_MOUNT, (int32_t)mount_to, (int32_t)info, access);
 }
