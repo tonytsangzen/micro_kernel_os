@@ -140,8 +140,10 @@ static void proc_unready(context_t* ctx, proc_t* proc) {
 	if(proc == NULL)
 		return;
 
-	proc->next->prev = proc->prev;
-	proc->prev->next = proc->next;
+	if(proc->next != NULL)
+		proc->next->prev = proc->prev;
+	if(proc->prev != NULL)
+		proc->prev->next = proc->next;
 
 	if(proc->next == proc) //only one left.
 		_ready_proc = NULL;
@@ -173,6 +175,8 @@ void proc_exit(context_t* ctx, proc_t *proc, int32_t res) {
 	(void)res;
 	int32_t pid = proc->pid;
 
+	uint32_t cpsr = __int_off();
+
 	uint32_t kernel_addr = resolve_kernel_address(proc->space->vm, proc->user_stack);
 	kfree4k((void *) kernel_addr);
 	proc_free_space(proc);
@@ -180,6 +184,8 @@ void proc_exit(context_t* ctx, proc_t *proc, int32_t res) {
 	proc->state = UNUSED;
 	proc_unready(ctx, proc);
 	memset(proc, 0, sizeof(proc_t));
+
+	__int_on(cpsr);
 }
 
 void* proc_malloc(uint32_t size) {
@@ -280,9 +286,11 @@ void proc_sleep_on(context_t* ctx, uint32_t event) {
 		return;
 
 	uint32_t cpsr = __int_off();
+
 	_current_proc->sleep_event = event;
 	_current_proc->state = SLEEPING;
 	proc_unready(ctx, _current_proc);
+
 	__int_on(cpsr);
 }
 
@@ -291,9 +299,11 @@ void proc_waitpid(context_t* ctx, int32_t pid) {
 		return;
 
 	uint32_t cpsr = __int_off();
+
 	_current_proc->wait_pid = pid;
 	_current_proc->state = WAIT;
 	proc_unready(ctx, _current_proc);
+
 	__int_on(cpsr);
 }
 

@@ -20,6 +20,8 @@
 #define IRQ_SDC    0x00000800
 
 extern void irq_handler(context_t* ctx);
+extern void prefetch_abort_handler(context_t* ctx);
+extern void data_abort_handler(context_t* ctx);
 extern void irq_init(void);
 
 #endif

@@ -13,12 +13,21 @@ static void vfs_node_init(vfs_node_t* node) {
 	node->fsinfo.mount_id = -1;
 }
 
-static void vfs_add(vfs_node_t* father, vfs_node_t* node) {
+static inline int32_t check_mount(vfs_node_t* node) {
+	mount_t mount;	
+	int32_t res = vfs_get_mount(node, &mount);
+	if(res == 0 && mount.pid != _current_proc->pid) //current proc not the mounting one.
+		return -1;
+	return 0;
+}
+
+int32_t vfs_add(vfs_node_t* father, vfs_node_t* node) {
 	if(father == NULL || node == NULL)
-		return;
+		return -1;
+	if(check_mount(father) != 0)
+		return -1;
 
 	node->father = father;
-	node->fsinfo.mount_id = father->fsinfo.mount_id;
 	if(father->last_kid == NULL) {
 		father->first_kid = node;
 	}
@@ -28,6 +37,7 @@ static void vfs_add(vfs_node_t* father, vfs_node_t* node) {
 	}
 	father->kids_num++;
 	father->last_kid = node;
+	return 0;
 }
 
 static int32_t vfs_get_free_mount_id(void) {
@@ -40,8 +50,17 @@ static int32_t vfs_get_free_mount_id(void) {
 }
 
 static void vfs_remove(vfs_node_t* node) {
-	if(node == NULL)
+	if(node == NULL || check_mount(node) != 0)
 		return;
+
+	vfs_node_t* father = node->father;
+	if(father != NULL) {
+		if(father->first_kid == node)
+			father->first_kid = node->next;
+		if(father->last_kid == node)
+			father->last_kid = node->prev;
+		father->kids_num--;
+	}
 
 	if(node->next != NULL)
 		node->next->prev = node->prev;
@@ -103,7 +122,7 @@ int32_t vfs_mount(vfs_node_t* org, vfs_node_t* node, uint32_t access) {
 }
 
 void vfs_umount(vfs_node_t* node) {
-	if(node == NULL || node->fsinfo.mount_id < 0)
+	if(node == NULL || node->fsinfo.mount_id < 0 || check_mount(node) != 0)
 		return;
 
 	strcpy(node->fsinfo.name, _vfs_mounts[node->fsinfo.mount_id].org_name);
@@ -122,7 +141,7 @@ void vfs_umount(vfs_node_t* node) {
 }
 
 void vfs_del(vfs_node_t* node) {
-	if(node == NULL)
+	if(node == NULL || check_mount(node) != 0)
 		return;
 	/*free children*/
 	vfs_node_t* c = node->first_kid;
@@ -148,6 +167,12 @@ void vfs_del(vfs_node_t* node) {
 	kfree(node);
 }
 
+int32_t vfs_set(vfs_node_t* node, fsinfo_t* info) {
+	if(node == NULL || info == NULL || check_mount(node) != 0)
+		return -1;
+	memcpy(&node->fsinfo, info, sizeof(fsinfo_t));
+	return 0;
+}
 
 vfs_node_t* vfs_new_node(void) {
 	vfs_node_t* ret = (vfs_node_t*)kmalloc(sizeof(vfs_node_t));
@@ -155,7 +180,7 @@ vfs_node_t* vfs_new_node(void) {
 	return ret;
 }
 
-vfs_node_t* vfs_simple_get(vfs_node_t* father, const char* name) {
+static vfs_node_t* vfs_simple_get(vfs_node_t* father, const char* name) {
 	if(father == NULL || strchr(name, '/') != NULL)
 		return NULL;
 
@@ -200,18 +225,6 @@ vfs_node_t* vfs_get(vfs_node_t* father, const char* name) {
 		}
 	}
 	return NULL;
-}
-	
-vfs_node_t* vfs_simple_add(vfs_node_t* father, const char* name) {
-	vfs_node_t* node = vfs_new_node();
-	if(node == NULL ||
-			node->fsinfo.type != FS_TYPE_DIR ||
-			strchr(name, '/') != NULL)
-		return NULL;
-
-	strncpy(node->fsinfo.name, name, FS_NODE_NAME_MAX);
-	vfs_add(father, node);
-	return node;
 }
 
 vfs_node_t* vfs_root(void) {

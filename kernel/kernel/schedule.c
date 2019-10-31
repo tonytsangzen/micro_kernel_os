@@ -1,5 +1,6 @@
 #include <kernel/proc.h>
 #include <kernel/system.h>
+#include <kprintf.h>
 
 void schedule(context_t* ctx) {
 	proc_t* next = NULL;

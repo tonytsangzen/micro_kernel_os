@@ -12,7 +12,7 @@ interrupt_table_start: /*interrupt table, with syscall and irq items*/
 	svc_entry_address: .word svc_entry
 	irq_entry_address: .word irq_entry
 	prefetch_abort_entry_address: .word prefetch_abort_entry
-	data_abort_entry_address: .word prefetch_abort_entry
+	data_abort_entry_address: .word data_abort_entry
 interrupt_table_end:
 
 svc_entry:
@@ -70,7 +70,7 @@ prefetch_abort_entry:
 
 	mov   r0, lr
 	mov   r1, sp
-	@bl    pab_handler             @ invoke high-level C function
+	bl    prefetch_abort_handler             @ invoke high-level C function
 
 	ldmia sp!, { r1, lr }         @ load   USR mode PC and CPSR
 	msr   spsr, r1                @ set    USR mode        CPSR
@@ -89,7 +89,7 @@ data_abort_entry:
 	mov   r0, lr
 	ldm   r0, {r0}
 	mov   r1, sp
-	//bl    dab_handler             @ invoke high-level C function
+	bl    data_abort_handler             @ invoke high-level C function
 
 	ldmia sp!, { r1, lr }         @ load   USR mode PC and CPSR
 	msr   spsr, r1                @ set    USR mode        CPSR

@@ -15,8 +15,10 @@ int main(int argc, char** argv) {
 
 	int pid = fork();
 	if(pid == 0) {
-		const char* initrd = (const char*)svc_call0(SYS_INITRD);
+		//debug("iii\n");
+		sleep(0);
 		ramfs_t ramfs;
+		const char* initrd = (const char*)svc_call0(SYS_INITRD);
 
 		ramfs_open(initrd, &ramfs);
 		const char* elf = ramfs_read(&ramfs, "initfsd", NULL);
@@ -25,8 +27,10 @@ int main(int argc, char** argv) {
 		ramfs_close(&ramfs);
 	}
 
+	sleep(0);
+
 	while(1) {
-		void* p = ipc_get_msg(NULL, NULL, 1);
+		void* p = ipc_get_msg(NULL, NULL, 0);
 		if(p != NULL) {
 			free(p);
 			break;

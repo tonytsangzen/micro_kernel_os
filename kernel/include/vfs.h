@@ -17,9 +17,9 @@ typedef struct vfs_node {
 
 vfs_node_t* vfs_new_node(void);
 
-vfs_node_t* vfs_simple_add(vfs_node_t* father, const char* name);
+int32_t vfs_add(vfs_node_t* node_to, vfs_node_t* node);
 
-vfs_node_t* vfs_simple_get(vfs_node_t* father, const char* name);
+int32_t vfs_set(vfs_node_t* node, fsinfo_t* info);
 
 vfs_node_t* vfs_get(vfs_node_t* father, const char* name);
 

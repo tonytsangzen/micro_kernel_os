@@ -48,10 +48,8 @@ static int32_t sys_fork(context_t* ctx) {
 		return -1;
 
 	memcpy(&proc->ctx, ctx, sizeof(context_t));
-	ctx->gpr[0] = proc->pid;
 	proc->ctx.gpr[0] = 0;
-	proc_switch(ctx, proc);
-	return 0;
+	return proc->pid;
 }
 
 static void sys_waitpid(context_t* ctx, int32_t pid) {
@@ -100,21 +98,19 @@ static int32_t sys_vfs_set_info(fsinfo_t* info) {
 	vfs_node_t* node  = (vfs_node_t*)info->node;
 	if(node == NULL)
 		return -1;
-	memcpy(&node->fsinfo, info, sizeof(fsinfo_t));
-	return 0;
+	return vfs_set(node, info);
 }
 
 static int32_t sys_vfs_add(fsinfo_t* info_to, fsinfo_t* info) {
 	if(info_to == NULL || info == NULL)
 		return -1;
 	
-	vfs_node_t* node = vfs_simple_add((vfs_node_t*)info_to->node, info->name);
-	if(node == NULL)
+	vfs_node_t* node_to = (vfs_node_t*)info_to->node;
+	vfs_node_t* node = (vfs_node_t*)info->node;
+	if(node_to == NULL || node == NULL)
 		return -1;
 
-	memcpy(&node->fsinfo, info, sizeof(fsinfo_t));
-	node->fsinfo.node = (uint32_t)node;
-	return 0;
+	return vfs_add(node_to, node);
 }
 
 static int32_t sys_vfs_get_mount(fsinfo_t* info, mount_t* mount) {

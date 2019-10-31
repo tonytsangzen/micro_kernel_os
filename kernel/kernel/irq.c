@@ -6,6 +6,7 @@
 #include <kernel/schedule.h>
 #include <kernel/proc.h>
 #include <string.h>
+#include <kprintf.h>
 
 void irq_handler(context_t* ctx) {
 	__irq_disable();
@@ -23,7 +24,19 @@ void irq_handler(context_t* ctx) {
 	}
 }
 
+void prefetch_abort_handler(context_t* ctx) {
+	(void)ctx;
+	printf("prefetch abort!!\n");
+}
+
+void data_abort_handler(context_t* ctx) {
+	(void)ctx;
+	printf("data abort!!\n");
+}
+
 void irq_init(void) {
 	gic_set_irqs( IRQ_UART0 | IRQ_TIMER0 | IRQ_KEY);
 	__irq_enable();
 }
+
+
