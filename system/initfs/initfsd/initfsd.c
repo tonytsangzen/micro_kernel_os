@@ -41,7 +41,7 @@ int main(int argc, char** argv) {
 
 	vfs_mount(&initfs, &info, 0);
 
-	ipc_send_msg(0, ".", 1);
+	ipc_send_msg(0, "ipc", 4);
 
 	while(1) {
 		sleep(0);

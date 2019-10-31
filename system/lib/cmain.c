@@ -4,8 +4,8 @@
 #include <stdint.h>
 #include <stdlib.h>
 
-static char _cmd[1024] = { 0 };
-static int _off_cmd = 0;
+static char _cmd[1024];
+static int _off_cmd;
 
 static char* read_cmain_arg(void) {
 	char* p = NULL;
@@ -39,6 +39,8 @@ static char* read_cmain_arg(void) {
 }
 
 void init_cmd(void) {
+	_cmd[0] = 0;
+	_off_cmd = 0;
 }
 
 #define ARG_MAX 16

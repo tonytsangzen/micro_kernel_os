@@ -25,9 +25,12 @@ int main(int argc, char** argv) {
 		ramfs_close(&ramfs);
 	}
 
-	void* p = ipc_get_msg(NULL, NULL, 1);
-	if(p != NULL) {
-		free(p);
+	while(1) {
+		void* p = ipc_get_msg(NULL, NULL, 1);
+		if(p != NULL) {
+			free(p);
+			break;
+		}
 	}
 
 	fsinfo_t root, info;

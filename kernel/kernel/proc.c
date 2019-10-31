@@ -152,6 +152,7 @@ static void proc_unready(context_t* ctx, proc_t* proc) {
 	proc->prev = NULL;
 
 	if(_current_proc == proc) {
+		memcpy(&_current_proc->ctx, ctx, sizeof(context_t));
 		_current_proc = NULL;
 		schedule(ctx);
 	}
@@ -283,7 +284,6 @@ void proc_sleep_on(context_t* ctx, uint32_t event) {
 	_current_proc->state = SLEEPING;
 	proc_unready(ctx, _current_proc);
 	__int_on(cpsr);
-	schedule(ctx);
 }
 
 void proc_waitpid(context_t* ctx, int32_t pid) {
@@ -439,8 +439,10 @@ void* proc_get_msg(context_t* ctx, int32_t *pid, uint32_t* size, int32_t block) 
 	}
 	else {
 		__int_on(cpsr);
-		if(block != 0) 
+		if(block != 0) {
+			ctx->gpr[0] = 0;
 			proc_sleep_on(ctx, (uint32_t)&_current_proc->pid);
+		}
 	}
 
 	return ret;
