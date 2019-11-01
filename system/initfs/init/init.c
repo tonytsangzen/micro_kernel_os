@@ -27,8 +27,6 @@ int main(int argc, char** argv) {
 		ramfs_close(&ramfs);
 	}
 
-	sleep(0);
-
 	while(1) {
 		void* p = ipc_get_msg(NULL, NULL, 1);
 		if(p != NULL) {
@@ -47,7 +45,11 @@ int main(int argc, char** argv) {
 	vfs_get_mount(&info, &mount);
 	debug("%d, %s\n", mount.pid, info.name);
 
-	while(1) {
-		sleep(0);		
-	}
+	int fd, seek;
+	fd = vfs_open(getpid(), &info, 1);
+	debug("fd: %d\n", fd);
+	seek = vfs_seek(fd, 100, 0);
+	debug("seek: %d\n", seek);
+
+	return 0;
 }

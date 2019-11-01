@@ -44,7 +44,7 @@ int main(int argc, char** argv) {
 	ipc_send_msg(0, "ipc", 4);
 
 	while(1) {
-		sleep(0);
+		//sleep(0);
 	}
 
 	vfs_umount(&info);

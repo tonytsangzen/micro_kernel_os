@@ -1,5 +1,6 @@
 #include <kernel/system.h>
 #include <kernel/proc.h>
+#include <vfs.h>
 #include <kernel/kernel.h>
 #include <kernel/schedule.h>
 #include <mm/kalloc.h>
@@ -51,9 +52,10 @@ static void proc_init_space(proc_t* proc) {
 	page_dir_entry_t *vm = _proc_vm[proc->pid];
 	set_kernel_vm(vm);
 	proc->space = (proc_space_t*)kmalloc(sizeof(proc_space_t));
+	memset(proc->space, 0, sizeof(proc_space_t));
+
 	proc->space->vm = vm;
 	proc->space->heap_size = 0;
-	
 	proc->space->malloc_man.arg = (void*)proc;
 	proc->space->malloc_man.head = 0;
 	proc->space->malloc_man.tail = 0;
@@ -115,7 +117,18 @@ void proc_shrink_mem(proc_t* proc, int32_t page_num) {
 	}
 }
 
+static void proc_close_files(proc_t *proc) {
+	int32_t i;
+	for(i=0; i<PROC_FILE_MAX; i++) {
+		if(proc->space->files[i].node != 0)
+			vfs_close_raw(proc->pid, i);
+	}
+}
+
 static void proc_free_space(proc_t *proc) {
+	/*close files*/
+	proc_close_files(proc);
+
 	/*free file info*/
 	proc_shrink_mem(proc, proc->space->heap_size / PAGE_SIZE);
 	free_page_tables(proc->space->vm);

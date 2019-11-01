@@ -52,4 +52,15 @@ int vfs_umount(fsinfo_t* info) {
 	return svc_call1(SYS_VFS_UMOUNT, (int32_t)info);
 }
 
+int vfs_open(int pid, fsinfo_t* info, int wr) {
+	return svc_call3(SYS_VFS_OPEN, (int32_t)pid, (int32_t)info, (int32_t)wr);
+}
+
+int vfs_close(int pid, int fd) {
+	return svc_call2(SYS_VFS_CLOSE, (int32_t)pid, (int32_t)fd);
+}
+
+int vfs_seek(int fd, int offset, int whence) {
+	return svc_call3(SYS_VFS_SEEK, (int32_t)fd,(int32_t)offset, (int32_t)whence);
+}
 

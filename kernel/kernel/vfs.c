@@ -13,6 +13,16 @@ static void vfs_node_init(vfs_node_t* node) {
 	node->fsinfo.mount_id = -1;
 }
 
+void vfs_init(void) {
+	int32_t i;
+	for(i = 0; i<FS_MOUNT_MAX; i++) {
+		memset(&_vfs_mounts[i], 0, sizeof(mount_t));
+	}
+
+	_vfs_root = vfs_new_node();
+	strcpy(_vfs_root->fsinfo.name, "/");
+}
+
 static inline int32_t check_mount(vfs_node_t* node) {
 	mount_t mount;	
 	int32_t res = vfs_get_mount(node, &mount);
@@ -140,9 +150,9 @@ void vfs_umount(vfs_node_t* node) {
 	}
 }
 
-void vfs_del(vfs_node_t* node) {
-	if(node == NULL || check_mount(node) != 0)
-		return;
+int32_t vfs_del(vfs_node_t* node) {
+	if(node == NULL || node->refs > 0 ||  check_mount(node) != 0)
+		return -1;
 	/*free children*/
 	vfs_node_t* c = node->first_kid;
 	while(c != NULL) {
@@ -165,10 +175,12 @@ void vfs_del(vfs_node_t* node) {
 	if(node->prev != NULL)
 		node->prev->next = node->next;
 	kfree(node);
+	return 0;
 }
 
 int32_t vfs_set(vfs_node_t* node, fsinfo_t* info) {
-	if(node == NULL || info == NULL || check_mount(node) != 0)
+	if(node == NULL || node->refs > 0 ||
+			info == NULL || check_mount(node) != 0)
 		return -1;
 	memcpy(&node->fsinfo, info, sizeof(fsinfo_t));
 	return 0;
@@ -231,12 +243,63 @@ vfs_node_t* vfs_root(void) {
 	return _vfs_root;
 }
 
-void vfs_init(void) {
+static int32_t get_free_fd(proc_t* proc) {
 	int32_t i;
-	for(i = 0; i<FS_MOUNT_MAX; i++) {
-		memset(&_vfs_mounts[i], 0, sizeof(mount_t));
+	for(i=0; i<PROC_FILE_MAX; i++) {
+		if(proc->space->files[i].node == 0)
+			return i;
 	}
+	return -1;
+}
 
-	_vfs_root = vfs_new_node();
-	strcpy(_vfs_root->fsinfo.name, "/");
+int32_t vfs_open(int32_t pid, vfs_node_t* node, int32_t wr) {
+	proc_t* proc = proc_get(pid);
+	if(proc == NULL)
+		return -1;
+
+	int32_t fd = get_free_fd(proc);
+	if(fd < 0)
+		return -1;
+
+	proc->space->files[fd].node = (uint32_t)node;
+	proc->space->files[fd].wr = wr;
+
+	node->refs++;
+	if(wr != 0)
+		node->refs_w++;
+	return fd;
+}
+
+void vfs_close_raw(int32_t pid, int32_t fd) {
+	proc_t* proc = proc_get(pid);
+	kfile_t* file = &proc->space->files[fd];
+	vfs_node_t* node = (vfs_node_t*)file->node;
+	if(node == NULL)
+		return;
+
+	if(node->refs > 0)
+		node->refs--;
+	if(file->wr != 0 && node->refs_w > 0)
+		node->refs_w--;
+	memset(file, 0, sizeof(kfile_t));
+}
+
+void vfs_close(int32_t pid, int32_t fd) {
+	if(pid < 0 || fd < 0 || fd >= PROC_FILE_MAX)
+		return;
+	vfs_close_raw(pid, fd);
+}
+
+int32_t vfs_seek(int32_t fd, int32_t offset, int32_t whence) {
+	(void)whence; //TODO
+	if(fd < 0 || fd >= PROC_FILE_MAX)
+		return -1;
+	
+	kfile_t* file = &_current_proc->space->files[fd];
+	vfs_node_t* node = (vfs_node_t*)file->node;
+	if(node == NULL)
+		return -1;
+
+	file->seek = offset;
+	return file->seek;
 }

@@ -3,6 +3,8 @@
 #include <kprintf.h>
 
 void schedule(context_t* ctx) {
+	uint32_t cpsr = __int_off();
+
 	proc_t* next = NULL;
 	if(_current_proc == NULL) 
 		next = _ready_proc;
@@ -11,4 +13,5 @@ void schedule(context_t* ctx) {
 
 	if(next != NULL)
 		proc_switch(ctx, next);
+	__int_on(cpsr);
 }

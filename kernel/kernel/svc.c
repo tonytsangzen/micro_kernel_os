@@ -148,6 +148,23 @@ static void sys_vfs_umount(fsinfo_t* info) {
 	vfs_umount(node);
 }
 
+static int32_t sys_vfs_open(int32_t pid, fsinfo_t* info, int32_t wr) {
+	if(info == NULL || pid < 0)
+		return -1;
+	
+	vfs_node_t* node = (vfs_node_t*)info->node;
+	if(node == NULL)
+		return -1;
+	
+	return vfs_open(pid, node, wr);
+}
+
+static void sys_vfs_close(int32_t pid, int32_t fd) {
+	if(fd < 0 || pid < 0)
+		return;
+	vfs_close(pid, fd);
+}
+
 static int32_t sys_vfs_new_node(fsinfo_t* info) {
 	if(info  == NULL)
 		return -1;
@@ -264,6 +281,15 @@ void svc_handler(int32_t code, int32_t arg0, int32_t arg1, int32_t arg2, context
 		return;
 	case SYS_VFS_UMOUNT:
 		sys_vfs_umount((fsinfo_t*)arg0);
+		return;
+	case SYS_VFS_OPEN:
+		ctx->gpr[0] = sys_vfs_open(arg0, (fsinfo_t*)arg1, arg2);
+		return;
+	case SYS_VFS_SEEK:
+		ctx->gpr[0] = vfs_seek(arg0, arg1, arg2);
+		return;
+	case SYS_VFS_CLOSE:
+		sys_vfs_close(arg0, arg1);
 		return;
 	case SYS_YIELD: 
 		schedule(ctx);

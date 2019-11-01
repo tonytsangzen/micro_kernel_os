@@ -4,6 +4,7 @@
 #include <kernel/context.h>
 #include <mm/mmu.h>
 #include <mm/trunkmalloc.h>
+#include <kernel/kfile.h>
 
 enum {
 	UNUSED = 0,
@@ -16,10 +17,14 @@ enum {
 	TERMINATED
 };
 
+#define PROC_FILE_MAX 128
+
 typedef struct {
 	page_dir_entry_t *vm;
 	malloc_t malloc_man;
 	uint32_t heap_size;
+	
+	kfile_t files[PROC_FILE_MAX];
 } proc_space_t;
 
 typedef struct st_proc_msg {
