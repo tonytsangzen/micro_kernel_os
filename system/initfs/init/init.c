@@ -30,7 +30,7 @@ int main(int argc, char** argv) {
 	sleep(0);
 
 	while(1) {
-		void* p = ipc_get_msg(NULL, NULL, 0);
+		void* p = ipc_get_msg(NULL, NULL, 1);
 		if(p != NULL) {
 			free(p);
 			break;
@@ -39,7 +39,7 @@ int main(int argc, char** argv) {
 
 	fsinfo_t root, info;
 	mount_t mount;
-	vfs_get("/", &root);
+	vfs_get("/initfs", &root);
 	vfs_first_kid(&root, &info);
 	vfs_get_mount(&info, &mount);
 	debug("%d, %s\n", mount.pid, info.name);
