@@ -27,11 +27,13 @@ void irq_handler(context_t* ctx) {
 void prefetch_abort_handler(context_t* ctx) {
 	(void)ctx;
 	printf("prefetch abort!!\n");
+	while(1);
 }
 
 void data_abort_handler(context_t* ctx) {
 	(void)ctx;
 	printf("data abort!!\n");
+	while(1);
 }
 
 void irq_init(void) {

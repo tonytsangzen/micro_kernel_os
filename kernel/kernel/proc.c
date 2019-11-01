@@ -450,8 +450,8 @@ void* proc_get_msg(context_t* ctx, int32_t *pid, uint32_t* size, int32_t block) 
 	else {
 		__int_on(cpsr);
 		if(block != 0) {
-			ctx->gpr[0] = 0;
 			proc_sleep_on(ctx, (uint32_t)&_current_proc->pid);
+			ctx->gpr[0] = 0;
 		}
 	}
 
