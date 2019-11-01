@@ -189,6 +189,18 @@ static int32_t sys_vfs_del(fsinfo_t* info) {
 	return 0;
 }
 
+static int32_t sys_vfs_get_by_fd(int32_t fd, fsinfo_t* info) {
+	if(fd < 0 || info == NULL)
+		return -1;
+	
+	vfs_node_t* node = vfs_node_by_fd(fd);
+	if(node == NULL)
+		return -1;
+
+	memcpy(info, &node->fsinfo, sizeof(fsinfo_t));
+	return 0;
+}
+
 static int32_t sys_load_elf(context_t* ctx, void* elf) {
 	if(elf == NULL)
 		return -1;
@@ -290,6 +302,9 @@ void svc_handler(int32_t code, int32_t arg0, int32_t arg1, int32_t arg2, context
 		return;
 	case SYS_VFS_CLOSE:
 		sys_vfs_close(arg0, arg1);
+		return;
+	case SYS_VFS_GET_BY_FD:
+		sys_vfs_get_by_fd(arg0, (fsinfo_t*)arg1);
 		return;
 	case SYS_YIELD: 
 		schedule(ctx);

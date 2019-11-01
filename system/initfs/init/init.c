@@ -35,21 +35,20 @@ int main(int argc, char** argv) {
 		}
 	}
 
-	fsinfo_t root, info;
-	mount_t mount;
-	vfs_get("/initfs", &root);
-	vfs_first_kid(&root, &info);
-	vfs_get_mount(&info, &mount);
-	debug("%d, %s\n", mount.pid, info.name);
-	vfs_next(&info, &info);
-	vfs_get_mount(&info, &mount);
-	debug("%d, %s\n", mount.pid, info.name);
+	fsinfo_t info;
+	vfs_get("/initfs/init", &info);
 
 	int fd, seek;
 	fd = vfs_open(getpid(), &info, 1);
 	debug("fd: %d\n", fd);
+
 	seek = vfs_seek(fd, 100, 0);
 	debug("seek: %d\n", seek);
+
+	vfs_get_by_fd(fd, &info);
+	debug("name: %s\n", info.name);
+
+	vfs_close(getpid(), fd);
 
 	return 0;
 }

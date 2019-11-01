@@ -270,6 +270,11 @@ int32_t vfs_open(int32_t pid, vfs_node_t* node, int32_t wr) {
 	return fd;
 }
 
+vfs_node_t* vfs_node_by_fd(int32_t fd) {
+	kfile_t* file = &_current_proc->space->files[fd];
+	return (vfs_node_t*)file->node;
+}
+
 void vfs_close_raw(int32_t pid, int32_t fd) {
 	proc_t* proc = proc_get(pid);
 	kfile_t* file = &proc->space->files[fd];

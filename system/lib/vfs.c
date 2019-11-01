@@ -64,3 +64,6 @@ int vfs_seek(int fd, int offset, int whence) {
 	return svc_call3(SYS_VFS_SEEK, (int32_t)fd,(int32_t)offset, (int32_t)whence);
 }
 
+int vfs_get_by_fd(int fd, fsinfo_t* info) {
+	return svc_call2(SYS_VFS_GET_BY_FD, (int32_t)fd, (int32_t)info);
+}
