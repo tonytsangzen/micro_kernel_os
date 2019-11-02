@@ -40,8 +40,10 @@ int main(int argc, char** argv) {
 	}
 
 	vfs_mount(&initfs, &info, 0);
-
-	ipc_send_msg(0, "ipc", 4);
+	
+	proto_t *pkg = proto_new(NULL, 0);
+	proto_add_int(pkg, 1024);
+	ipc_send_pkg(0, pkg);
 
 	while(1) {
 		//sleep(0);

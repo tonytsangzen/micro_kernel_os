@@ -28,9 +28,12 @@ int main(int argc, char** argv) {
 	}
 
 	while(1) {
-		void* p = ipc_get_msg(NULL, NULL, 1);
-		if(p != NULL) {
-			free(p);
+		proto_t *pkg = proto_new(NULL, 0);
+		int res = ipc_get_pkg(NULL, pkg, 1);
+		if(res == 0) {
+			int v = proto_read_int(pkg);
+			debug("pkg: %d\n", v);
+			proto_free(pkg);
 			break;
 		}
 	}
