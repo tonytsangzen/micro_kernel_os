@@ -308,3 +308,15 @@ int32_t vfs_seek(int32_t fd, int32_t offset, int32_t whence) {
 	file->seek = offset;
 	return file->seek;
 }
+
+int32_t vfs_tell(int32_t fd) {
+	if(fd < 0 || fd >= PROC_FILE_MAX)
+		return -1;
+	
+	kfile_t* file = &_current_proc->space->files[fd];
+	vfs_node_t* node = (vfs_node_t*)file->node;
+	if(node == NULL)
+		return -1;
+
+	return file->seek;
+}

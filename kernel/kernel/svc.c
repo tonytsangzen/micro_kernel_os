@@ -165,6 +165,12 @@ static void sys_vfs_close(int32_t pid, int32_t fd) {
 	vfs_close(pid, fd);
 }
 
+static int32_t sys_vfs_tell(int32_t fd) {
+	if(fd < 0)
+		return -1;
+	return vfs_tell(fd);
+}
+
 static int32_t sys_vfs_new_node(fsinfo_t* info) {
 	if(info  == NULL)
 		return -1;
@@ -297,13 +303,16 @@ void svc_handler(int32_t code, int32_t arg0, int32_t arg1, int32_t arg2, context
 	case SYS_VFS_OPEN:
 		ctx->gpr[0] = sys_vfs_open(arg0, (fsinfo_t*)arg1, arg2);
 		return;
-	case SYS_VFS_SEEK:
-		ctx->gpr[0] = vfs_seek(arg0, arg1, arg2);
-		return;
 	case SYS_VFS_CLOSE:
 		sys_vfs_close(arg0, arg1);
 		return;
-	case SYS_VFS_GET_BY_FD:
+	case SYS_VFS_PROC_SEEK:
+		ctx->gpr[0] = vfs_seek(arg0, arg1, arg2);
+		return;
+	case SYS_VFS_PROC_TELL:
+		ctx->gpr[0] = sys_vfs_tell(arg0);
+		return;
+	case SYS_VFS_PROC_GET_BY_FD:
 		sys_vfs_get_by_fd(arg0, (fsinfo_t*)arg1);
 		return;
 	case SYS_YIELD: 
