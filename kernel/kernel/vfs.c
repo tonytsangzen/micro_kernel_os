@@ -253,6 +253,9 @@ static int32_t get_free_fd(proc_t* proc) {
 }
 
 int32_t vfs_open(int32_t pid, vfs_node_t* node, int32_t wr) {
+	if(node == NULL || check_mount(node) != 0)
+		return -1;
+
 	proc_t* proc = proc_get(pid);
 	if(proc == NULL)
 		return -1;
@@ -279,7 +282,7 @@ void vfs_close_raw(int32_t pid, int32_t fd) {
 	proc_t* proc = proc_get(pid);
 	kfile_t* file = &proc->space->files[fd];
 	vfs_node_t* node = (vfs_node_t*)file->node;
-	if(node == NULL)
+	if(node == NULL || check_mount(node) != 0)
 		return;
 
 	if(node->refs > 0)
