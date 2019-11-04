@@ -42,8 +42,12 @@ int main(int argc, char** argv) {
 	vfs_mount(&initfs, &info, 0);
 	
 	proto_t *pkg = proto_new(NULL, 0);
-	proto_add_int(pkg, 1024);
-	ipc_send_pkg(0, pkg);
+	int pid;
+	ipc_recv(&pid, pkg);
+
+	proto_clear(pkg);
+	proto_add_str(pkg, "--1024--");
+	ipc_send_pkg(pid, pkg);
 
 	while(1) {
 		//sleep(0);

@@ -29,7 +29,10 @@ static void sys_wakeup(uint32_t event) {
 }
 
 static void sys_uart_debug(const char* s) {
-	printf("%s", s);
+	if(s == NULL)
+		printf("NULL!");
+	else
+		printf("%s", s);
 }
 
 static int32_t sys_malloc(int32_t size) {
@@ -219,6 +222,89 @@ static int32_t sys_load_elf(context_t* ctx, void* elf) {
 	return 0;
 }
 
+static void sys_get_msg(context_t* ctx, int32_t *pid, uint32_t* size, int32_t block) {
+	void* p = proc_get_msg(pid, size);
+	if(p != NULL) {
+		ctx->gpr[0] = (uint32_t)p;
+		return;
+	}
+
+	if(block == 0) { //non-block mode
+		ctx->gpr[0] = 0;
+		return;
+	}
+
+	proc_t* proc = _current_proc;
+	proc_sleep_on(ctx, (uint32_t)&proc->pid);
+	proc->ctx.gpr[0] = 0;
+}
+
+static inline const char* syscall_code(int32_t code) {
+	switch(code) {
+	case SYS_UART_DEBUG: 
+		return "SYS_UART_DEBUG";
+	case SYS_INITRD:
+		return "SYS_INITRD";
+	case SYS_EXIT:
+		return "SYS_EXIT";
+	case SYS_MALLOC:
+		return "SYS_MALLOC";
+	case SYS_FREE:
+		return "SYS_FREE";
+	case SYS_GET_PID:
+		return "SYS_GET_PID";
+	case SYS_SLEEP_ON:
+		return "SYS_SLEEP_ON";
+	case SYS_WAKEUP:
+		return "SYS_WAKEUP";
+	case SYS_EXEC_ELF:
+		return "SYS_EXEC_ELF";
+	case SYS_FORK:
+		return "SYS_FORK";
+	case SYS_WAIT_PID:
+		return "SYS_WAIT_PID";
+	case SYS_SEND_MSG:
+		return "SYS_SEND_MSG";
+	case SYS_GET_MSG:
+		return "SYS_GET_MSG";
+	case SYS_VFS_GET:
+		return "SYS_VFS_GET";
+	case SYS_VFS_FKID:
+		return "SYS_VFS_FKID";
+	case SYS_VFS_NEXT:
+		return "SYS_VFS_NEXT";
+	case SYS_VFS_FATHER:
+		return "SYS_VFS_FATHER";
+	case SYS_VFS_SET:
+		return "SYS_VFS_SET";
+	case SYS_VFS_ADD:
+		return "SYS_VFS_ADD";
+	case SYS_VFS_DEL:
+		return "SYS_VFS_DEL";
+	case SYS_VFS_NEW_NODE:
+		return "SYS_VFS_NEW_NODE";
+	case SYS_VFS_GET_MOUNT:
+		return "SYS_VFS_GET_MOUNT";
+	case SYS_VFS_MOUNT:
+		return "SYS_VFS_MOUNT";
+	case SYS_VFS_UMOUNT:
+		return "SYS_VFS_UMOUNT";
+	case SYS_VFS_OPEN:
+		return "SYS_VFS_OPEN";
+	case SYS_VFS_CLOSE:
+		return "SYS_VFS_CLOSE";
+	case SYS_VFS_PROC_SEEK:
+		return "SYS_VFS_PROC_SEEK";
+	case SYS_VFS_PROC_TELL:
+		return "SYS_VFS_PROC_TELL";
+	case SYS_VFS_PROC_GET_BY_FD:
+		return "SYS_VFS_PROC_GET_BY_FD";
+	case SYS_YIELD: 
+		return "SYS_YIELD";
+	}
+	return "NONE";
+}
+
 void svc_handler(int32_t code, int32_t arg0, int32_t arg1, int32_t arg2, context_t* ctx, int32_t processor_mode) {
 	(void)arg1;
 	(void)arg2;
@@ -226,6 +312,7 @@ void svc_handler(int32_t code, int32_t arg0, int32_t arg1, int32_t arg2, context
 	(void)processor_mode;
 	
 	__irq_disable();
+	//printf("pid:%d, code: %d (%s)\n", _current_proc->pid, code, syscall_code(code));
 
 	switch(code) {
 	case SYS_UART_DEBUG: 
@@ -239,13 +326,13 @@ void svc_handler(int32_t code, int32_t arg0, int32_t arg1, int32_t arg2, context
 		return;
 	case SYS_MALLOC:
 		ctx->gpr[0] = sys_malloc(arg0);
-		break;
+		return;
 	case SYS_FREE:
 		sys_free(arg0);
 		return;
 	case SYS_GET_PID:
 		ctx->gpr[0] = sys_getpid();
-		break;
+		return;
 	case SYS_SLEEP_ON:
 		sys_sleep_on(ctx, (uint32_t)arg0);
 		return;
@@ -265,7 +352,7 @@ void svc_handler(int32_t code, int32_t arg0, int32_t arg1, int32_t arg2, context
 		ctx->gpr[0] = proc_send_msg(arg0, (void*)arg1, (uint32_t)arg2);
 		return;
 	case SYS_GET_MSG:
-		ctx->gpr[0] = (uint32_t)proc_get_msg(ctx, (int32_t*)arg0, (uint32_t*)arg1, arg2);
+		sys_get_msg(ctx, (int32_t*)arg0, (uint32_t*)arg1, arg2);
 		return;
 	case SYS_VFS_GET:
 		ctx->gpr[0] = sys_vfs_get_info((const char*)arg0, (fsinfo_t*)arg1);
@@ -319,5 +406,6 @@ void svc_handler(int32_t code, int32_t arg0, int32_t arg1, int32_t arg2, context
 		schedule(ctx);
 		return;
 	}
+	printf("pid:%d, code(%d) error!\n", _current_proc->pid, code);
 }
 

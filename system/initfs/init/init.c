@@ -15,8 +15,6 @@ int main(int argc, char** argv) {
 
 	int pid = fork();
 	if(pid == 0) {
-		//debug("iii\n");
-		sleep(0);
 		ramfs_t ramfs;
 		const char* initrd = (const char*)svc_call0(SYS_INITRD);
 
@@ -25,18 +23,15 @@ int main(int argc, char** argv) {
 
 		svc_call1(SYS_EXEC_ELF, (int32_t)elf);
 		ramfs_close(&ramfs);
+		exit(0);
 	}
 
-	while(1) {
-		proto_t *pkg = proto_new(NULL, 0);
-		int res = ipc_get_pkg(NULL, pkg, 1);
-		if(res == 0) {
-			int v = proto_read_int(pkg);
-			debug("pkg: %d\n", v);
-			proto_free(pkg);
-			break;
-		}
+	proto_t *pkg = proto_new("call", 4);
+	if(ipc_call(pid, pkg, pkg) == 0) {
+		const char* s = proto_read_str(pkg);
+		debug("pkg: %s\n", s);
 	}
+	proto_free(pkg);
 
 	fsinfo_t info;
 	vfs_get("/initfs/init", &info);

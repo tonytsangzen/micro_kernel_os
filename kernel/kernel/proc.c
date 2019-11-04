@@ -167,8 +167,6 @@ static void proc_unready(context_t* ctx, proc_t* proc) {
 	proc->prev = NULL;
 
 	if(_current_proc == proc) {
-		memcpy(&_current_proc->ctx, ctx, sizeof(context_t));
-		_current_proc = NULL;
 		schedule(ctx);
 	}
 }
@@ -437,7 +435,7 @@ int32_t proc_send_msg(int32_t to_pid, void* data, uint32_t size) {
 	return 0;
 }
 
-void* proc_get_msg(context_t* ctx, int32_t *pid, uint32_t* size, int32_t block) {
+void* proc_get_msg(int32_t *pid, uint32_t* size) {
 	void *ret = NULL;
 	uint32_t cpsr = __int_off();
 
@@ -458,16 +456,9 @@ void* proc_get_msg(context_t* ctx, int32_t *pid, uint32_t* size, int32_t block) 
 
 		kfree(msg->data);
 		kfree(msg);
-		__int_on(cpsr);
-	}
-	else {
-		__int_on(cpsr);
-		if(block != 0) {
-			ctx->gpr[0] = 0;
-			proc_sleep_on(ctx, (uint32_t)&_current_proc->pid);
-		}
 	}
 
+	__int_on(cpsr);
 	return ret;
 }
 

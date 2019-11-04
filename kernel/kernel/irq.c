@@ -26,13 +26,13 @@ void irq_handler(context_t* ctx) {
 
 void prefetch_abort_handler(context_t* ctx) {
 	(void)ctx;
-	printf("prefetch abort!!\n");
+	printf("pid: %d, prefetch abort!!\n", _current_proc->pid);
 	while(1);
 }
 
 void data_abort_handler(context_t* ctx) {
 	(void)ctx;
-	printf("data abort!!\n");
+	printf("pid: %d, data abort!!\n", _current_proc->pid);
 	while(1);
 }
 
