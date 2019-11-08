@@ -23,8 +23,8 @@ void dump(FILE* out, const char*dname, const char* fname) {
 	fwrite(&size, 1, 4, out);
 
 	char* p = malloc(size);
-	fread(p, 1, size, f);
-	fwrite(p, 1, size, out);
+	int res = fread(p, 1, size, f);
+	res = fwrite(p, 1, size, out);
 
 	free(p);
 	fclose(f);

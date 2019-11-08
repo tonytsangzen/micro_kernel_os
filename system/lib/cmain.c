@@ -2,6 +2,7 @@
 #include <stddef.h>
 #include <string.h>
 #include <stdint.h>
+#include <stdio.h>
 #include <stdlib.h>
 
 static char _cmd[1024];
@@ -38,7 +39,17 @@ static char* read_cmain_arg(void) {
 	return p;
 }
 
-void init_cmd(void) {
+static void init_stdio(void) {
+	_stdin = open("/dev/tty0", 0);
+	_stdout = open("/dev/tty0", 0);
+}
+
+static void close_stdio(void) {
+	close(_stdin);
+	close(_stdout);
+}
+
+static void init_cmd(void) {
 	_cmd[0] = 0;
 	_off_cmd = 0;
 }
@@ -49,6 +60,7 @@ void _start(void) {
 	char* argv[ARG_MAX];
 	int32_t argc = 0;
 
+	init_stdio();
 	init_cmd();
 
 	while(argc < ARG_MAX) {
@@ -59,5 +71,6 @@ void _start(void) {
 	}
 
 	int ret = main(argc, argv);
+	close_stdio();
 	exit(ret);
 }

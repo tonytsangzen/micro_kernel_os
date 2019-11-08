@@ -7,6 +7,7 @@
 #include <vfs.h>
 #include <ipc.h>
 #include <string.h>
+#include <ramfs.h>
 
 int getpid(void) {
 	return svc_call0(SYS_GET_PID);
@@ -97,6 +98,15 @@ int write(int fd, const void* buf, uint32_t size) {
 	proto_clear(&out);
 
 	return res;
+}
+
+void exec_initfs(const char* fname) {
+	ramfs_t ramfs;
+	const char* initrd = (const char*)svc_call0(SYS_INITRD);
+	ramfs_open(initrd, &ramfs);
+	int sz;
+	const char* elf = ramfs_read(&ramfs, fname, &sz);
+	svc_call3(SYS_EXEC_ELF, (int32_t)fname, (int32_t)elf, sz);
 }
 
 int exec(const char* cmd_line) {

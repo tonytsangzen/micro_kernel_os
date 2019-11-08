@@ -91,7 +91,7 @@ int main(int argc, char** argv) {
 
 	fsinfo_t mnt_point;
 	memset(&mnt_point, 0, sizeof(fsinfo_t));
-	strcpy(mnt_point.name, "initfs");
+	strcpy(mnt_point.name, "sbin");
 	mnt_point.type = FS_TYPE_DIR;
 
 	vfs_new_node(&mnt_point);
