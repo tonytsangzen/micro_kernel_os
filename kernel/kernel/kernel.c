@@ -13,7 +13,7 @@
 #include <vfs.h>
 
 page_dir_entry_t* _kernel_vm = NULL;
-static uint32_t _initrd_size = 256*KB;
+static uint32_t _initrd_size = 1*MB;
 
 static void set_kernel_init_vm(page_dir_entry_t* vm) {
 	memset(vm, 0, PAGE_DIR_SIZE);
@@ -30,7 +30,7 @@ static void set_kernel_init_vm(page_dir_entry_t* vm) {
 	//map MMIO to high(virtual) mem.
 	map_pages(vm, MMIO_BASE, _hw_info.phy_mmio_base, _hw_info.phy_mmio_base + _hw_info.mmio_size, AP_RW_D);
 	//map initrd as read only for all proc
-	map_pages(vm, (uint32_t)_initrd, V2P(_initrd), V2P(_initrd)+_initrd_size, AP_RW_R); //initrd max 256KB 
+	map_pages(vm, (uint32_t)_initrd, V2P(_initrd), V2P(_initrd)+_initrd_size, AP_RW_R); 
 }
 
 void set_kernel_vm(page_dir_entry_t* vm) {
@@ -65,8 +65,7 @@ static void init_allocable_mem(void) {
 static ramfs_t _initfs;
 static void load_initrd(void) {
 	uint32_t initrd = 0x08000000;
-
-	map_pages(_kernel_vm, initrd, initrd, initrd+_initrd_size, AP_RW_D); //initrd max 256KB 
+	map_pages(_kernel_vm, initrd, initrd, initrd+_initrd_size, AP_RW_D);
 	memcpy(_initrd, (char*)initrd, _initrd_size);
 	ramfs_open(_initrd, &_initfs);
 }

@@ -243,7 +243,7 @@ proc_t *proc_create(void) {
     AP_RW_RW);
 
 	proc->cmd = tstr_new("");
-	proc->cwd = tstr_new("");
+	proc->cwd = tstr_new("/");
   proc->user_stack = user_stack;
 	proc->ctx.sp = ((uint32_t)proc->user_stack)+PAGE_SIZE;
 	proc->ctx.cpsr = 0x50;

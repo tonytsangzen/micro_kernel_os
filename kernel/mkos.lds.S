@@ -34,7 +34,7 @@ SECTIONS
 
 	. = ALIGN(4096);
 	_initrd = .;
-	. = . + 0x40000; /*256KB*/
+	. = . + 0x100000; /*1MB*/
 
 	PROVIDE(_kernel_end = .);
 }

@@ -235,10 +235,10 @@ static int32_t sys_load_elf(context_t* ctx, const char* cmd, void* elf, uint32_t
 	if(elf == NULL)
 		return -1;
 	
+	tstr_cpy(_current_proc->cmd, cmd);
 	if(proc_load_elf(_current_proc, elf, elf_size) != 0)
 		return -1;
 
-	tstr_cpy(_current_proc->cmd, cmd);
 	memcpy(ctx, &_current_proc->ctx, sizeof(context_t));
 	return 0;
 }
