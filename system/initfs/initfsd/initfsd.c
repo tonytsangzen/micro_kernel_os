@@ -82,6 +82,13 @@ int main(int argc, char** argv) {
 	fsinfo_t root_info;
 	vfs_get("/", &root_info);
 
+	fsinfo_t dev_dir;
+	memset(&dev_dir, 0, sizeof(fsinfo_t));
+	strcpy(dev_dir.name, "dev");
+	dev_dir.type = FS_TYPE_DIR;
+	vfs_new_node(&dev_dir);
+	vfs_add(&root_info, &dev_dir);
+
 	fsinfo_t mnt_point;
 	memset(&mnt_point, 0, sizeof(fsinfo_t));
 	strcpy(mnt_point.name, "initfs");

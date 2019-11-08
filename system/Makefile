@@ -43,7 +43,15 @@ INITFSD_OBJS = ${LIB_OBJS} \
 	initfs/initfsd/initfsd.o
 INITFSD = ${TARGET_DIR}/initfs/initfsd
 
-all: init initfsd
+SHELL_OBJS = ${LIB_OBJS} \
+	initfs/shell/shell.o
+SHELL_ = ${TARGET_DIR}/initfs/shell
+
+TTYD_OBJS = ${LIB_OBJS} \
+	initfs/ttyd/ttyd.o
+TTYD = ${TARGET_DIR}/initfs/ttyd
+
+all: init initfsd shell ttyd
 	mkramfs/mkramfs ${TARGET_DIR}/initfs.img ${TARGET_DIR}/initfs
 
 init: $(INIT_OBJS)
@@ -56,8 +64,18 @@ initfsd: $(INITFSD_OBJS)
 	$(LD) -Ttext=100 $(INITFSD_OBJS) -o $(INITFSD) ${LDFLAGS}
 	$(OBJDUMP) -D ${INITFSD} > ${TARGET_DIR}/asm/initfsd.asm
 
+shell: $(SHELL_OBJS)
+	$(LD) -Ttext=100 $(SHELL_OBJS) -o $(SHELL_) ${LDFLAGS}
+	$(OBJDUMP) -D ${SHELL_} > ${TARGET_DIR}/asm/shell.asm
+
+ttyd: $(TTYD_OBJS)
+	$(LD) -Ttext=100 $(TTYD_OBJS) -o $(TTYD) ${LDFLAGS}
+	$(OBJDUMP) -D ${TTYD} > ${TARGET_DIR}/asm/ttyd.asm
+
 clean:
 	rm -f $(LIB_OBJS)
 	rm -f $(INIT_OBJS)
 	rm -f $(INITFSD_OBJS)
+	rm -f $(SHELL_OBJS)
+	rm -f $(TTYD_OBJS)
 	rm -fr build

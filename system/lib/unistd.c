@@ -1,5 +1,7 @@
 #include <stddef.h>
 #include <unistd.h>
+#include <stdlib.h>
+#include <fcntl.h>
 #include <svc_call.h>
 #include <proto.h>
 #include <vfs.h>
@@ -96,3 +98,26 @@ int write(int fd, const void* buf, uint32_t size) {
 
 	return res;
 }
+
+int exec(const char* cmd_line) {
+	fsinfo_t info;
+
+	if(vfs_get(cmd_line, &info) != 0 || info.size == 0)
+		return -1;
+
+	void* buf = malloc(info.size);
+	if(buf == NULL)
+		return -1;
+
+	int fd = open(cmd_line, 0);
+	int sz = read(fd, buf, info.size);
+	if(sz != (int)info.size) {
+		free(buf);
+		return -1;
+	}
+	close(fd);
+	svc_call2(SYS_EXEC_ELF, (int32_t)buf, sz);
+	free(buf);
+	return 0;
+}
+

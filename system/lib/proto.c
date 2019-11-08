@@ -58,7 +58,7 @@ inline void proto_add_str(proto_t* proto, const char* v) {
 	proto_add(proto, (void*)v, strlen(v)+1);
 }
 
-void* proto_read(proto_t* proto, uint32_t *size) {
+void* proto_read(proto_t* proto, int32_t *size) {
 	if(size != NULL)
 		*size = 0;
 	if(proto->data == NULL || proto->size == 0 ||
@@ -66,7 +66,7 @@ void* proto_read(proto_t* proto, uint32_t *size) {
 		return NULL;
 	char* p = ((char*)proto->data) + proto->offset;
 
-	uint32_t sz;
+	int32_t sz;
 	memcpy(&sz, p, 4);
 	proto->offset += (4 + sz);
 	if(size != NULL)

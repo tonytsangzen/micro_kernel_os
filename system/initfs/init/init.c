@@ -1,6 +1,6 @@
 #include <stdlib.h>
 #include <unistd.h>
-#include <dev/devicetype.h>
+#include <dev/kdevicetype.h>
 #include <sys/wait.h>
 #include <debug.h>
 #include <cmain.h>
@@ -14,33 +14,38 @@ int main(int argc, char** argv) {
 	(void)argc;
 	(void)argv;
 
-	char s[8];
-	while(1) {
-		memset(s, 0, 8);
-		int i = svc_call3(SYS_DEV_READ, DEV_UART0, (int32_t)s, 8);
-		if(i != 0)
-			debug("%s", s);
-	}
-
 	int pid = fork();
 	if(pid == 0) {
 		ramfs_t ramfs;
 		const char* initrd = (const char*)svc_call0(SYS_INITRD);
 
 		ramfs_open(initrd, &ramfs);
-		const char* elf = ramfs_read(&ramfs, "initfsd", NULL);
+		int sz;
+		const char* elf = ramfs_read(&ramfs, "initfsd", &sz);
 
-		svc_call1(SYS_EXEC_ELF, (int32_t)elf);
-		ramfs_close(&ramfs);
-		exit(0);
+		svc_call2(SYS_EXEC_ELF, (int32_t)elf, sz);
 	}
 
 	while(1) {
 		fsinfo_t info;
-		debug("1\n");
-		if(vfs_get("/initfs/init", &info) == 0)
+		if(vfs_get("/initfs/ttyd", &info) == 0)
 			break;
-		debug("2\n");
+	}
+
+	pid = fork();
+	if(pid == 0) {
+		exec("/initfs/ttyd");
+	}
+
+	while(1) {
+		fsinfo_t info;
+		if(vfs_get("/dev/tty0", &info) == 0)
+			break;
+	}
+
+	pid = fork();
+	if(pid == 0) {
+		exec("/initfs/shell");
 	}
 
 /*	int fd = open("/initfs/Makefile", 0);

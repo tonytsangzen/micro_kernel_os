@@ -64,6 +64,28 @@ static void do_read(vdevice_t* dev, int from_pid, proto_t *in, void* p) {
 	proto_clear(&out);
 }
 
+static void do_write(vdevice_t* dev, int from_pid, proto_t *in, void* p) {
+	int32_t size, offset;
+	fsinfo_t info;
+	memcpy(&info, proto_read(in, NULL), sizeof(fsinfo_t));
+	void* data = proto_read(in, &size);
+	offset = proto_read_int(in);
+
+	proto_t out;
+	proto_init(&out, NULL, 0);
+
+	if(dev != NULL && dev->write != NULL) {
+		size = dev->write(&info, data, size, offset, p);
+		proto_add_int(&out, size);
+	}
+	else {
+		proto_add_int(&out, -1);
+	}
+	ipc_send(from_pid, &out);
+	proto_clear(&out);
+}
+
+
 static void handle(vdevice_t* dev, int from_pid, proto_t *in, void* p) {
 	if(dev == NULL)
 		return;
@@ -78,6 +100,9 @@ static void handle(vdevice_t* dev, int from_pid, proto_t *in, void* p) {
 		return;
 	case FS_CMD_READ:
 		do_read(dev, from_pid, in, p);
+		return;
+	case FS_CMD_WRITE:
+		do_write(dev, from_pid, in, p);
 		return;
 	}
 }
