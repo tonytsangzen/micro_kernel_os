@@ -1,4 +1,4 @@
-#include <dev/uart_basic.h>
+#include <dev/device.h>
 #include <mm/mmu.h>
 #include <mm/kalloc.h>
 #include <mm/kmalloc.h>
@@ -102,7 +102,7 @@ void _kernel_entry_c(context_t* ctx) {
 
 	irq_init();
 
-	uart_basic_init();
+	dev_init();
 
 	fs_init();
 

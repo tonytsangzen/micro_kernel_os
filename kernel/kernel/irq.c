@@ -1,6 +1,8 @@
 #include <dev/gic.h>
 #include <dev/timer.h>
 #include <dev/uart_basic.h>
+#include <dev/devicetype.h>
+#include <dev/device.h>
 #include <kernel/irq.h>
 #include <kernel/system.h>
 #include <kernel/schedule.h>
@@ -19,8 +21,13 @@ void irq_handler(context_t* ctx) {
 	}
 
 	if((irqs & IRQ_UART0) != 0) {
-		char c = (char)uart_basic_recv();
-		uart_basic_putch(c);
+		charbuf_t* buf = dev_getbuf(DEV_UART0);
+		while(1) {
+			if(uart_basic_ready_to_recv() == 0)
+				break;
+			char c = (char)uart_basic_recv();
+			charbuf_push(buf, c, 1);
+		}
 	}
 }
 

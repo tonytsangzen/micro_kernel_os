@@ -7,11 +7,20 @@
 #include <syscalls.h>
 #include <kstring.h>
 #include <kprintf.h>
+#include <dev/device.h>
 
 static void sys_exit(context_t* ctx, int32_t res) {
 	if(_current_proc == NULL)
 		return;
 	proc_exit(ctx, _current_proc, res);
+}
+
+static int32_t sys_dev_write(uint32_t type, void* data, uint32_t sz) {
+	return dev_write(type, data, sz);
+}
+
+static int32_t sys_dev_read(uint32_t type, void* data, uint32_t sz) {
+	return dev_read(type, data, sz);
 }
 
 static int32_t sys_getpid(void) {
@@ -26,13 +35,6 @@ static void sys_sleep_on(context_t* ctx, uint32_t event) {
 
 static void sys_wakeup(uint32_t event) {
 	proc_wakeup(event);
-}
-
-static void sys_uart_debug(const char* s) {
-	if(s == NULL)
-		printf("NULL!");
-	else
-		printf("%s", s);
 }
 
 static int32_t sys_malloc(int32_t size) {
@@ -127,8 +129,8 @@ static int32_t sys_vfs_get_mount(fsinfo_t* info, mount_t* mount) {
 	return vfs_get_mount(node, mount);
 }
 
-static int32_t sys_vfs_mount(fsinfo_t* info_to, fsinfo_t* info, uint32_t access) {
-	if(info_to == NULL || info == NULL)
+static int32_t sys_vfs_mount(fsinfo_t* info_to, fsinfo_t* info, mount_info_t* mnt_info) {
+	if(info_to == NULL || info == NULL || mnt_info == NULL)
 		return -1;
 	
 	vfs_node_t* node_to = (vfs_node_t*)info_to->node;
@@ -136,7 +138,7 @@ static int32_t sys_vfs_mount(fsinfo_t* info_to, fsinfo_t* info, uint32_t access)
 	if(node == NULL || node_to == NULL)
 		return -1;
 	
-	vfs_mount(node_to, node, access);
+	vfs_mount(node_to, node, mnt_info);
 	return 0;
 }
 
@@ -181,8 +183,10 @@ static int32_t sys_vfs_new_node(fsinfo_t* info) {
 	vfs_node_t* node = vfs_new_node();
 	if(node == NULL)
 		return -1;
+	info->node = (uint32_t)node;
+	info->mount_id = -1;
 
-	memcpy(info, &node->fsinfo, sizeof(fsinfo_t));
+	memcpy(&node->fsinfo, info, sizeof(fsinfo_t));
 	return 0;
 }
 
@@ -241,8 +245,10 @@ static void sys_get_msg(context_t* ctx, int32_t *pid, uint32_t* size, int32_t bl
 
 static inline const char* syscall_code(int32_t code) {
 	switch(code) {
-	case SYS_UART_DEBUG: 
-		return "SYS_UART_DEBUG";
+	case SYS_DEV_READ:
+		return "SYS_DEV_READ";
+	case SYS_DEV_WRITE:
+		return "SYS_DEV_WRITE";
 	case SYS_INITRD:
 		return "SYS_INITRD";
 	case SYS_EXIT:
@@ -315,8 +321,11 @@ void svc_handler(int32_t code, int32_t arg0, int32_t arg1, int32_t arg2, context
 	//printf("pid:%d, code: %d (%s)\n", _current_proc->pid, code, syscall_code(code));
 
 	switch(code) {
-	case SYS_UART_DEBUG: 
-		sys_uart_debug((const char*)arg0);		
+	case SYS_DEV_READ:
+		ctx->gpr[0] = sys_dev_read(arg0, (void*)arg1, arg2);		
+		return;
+	case SYS_DEV_WRITE:
+		ctx->gpr[0] = sys_dev_write(arg0, (void*)arg1, arg2);		
 		return;
 	case SYS_INITRD:
 		ctx->gpr[0] = (int32_t)_initrd;
@@ -382,7 +391,7 @@ void svc_handler(int32_t code, int32_t arg0, int32_t arg1, int32_t arg2, context
 		ctx->gpr[0] = sys_vfs_get_mount((fsinfo_t*)arg0, (mount_t*)arg1);
 		return;
 	case SYS_VFS_MOUNT:
-		ctx->gpr[0] = sys_vfs_mount((fsinfo_t*)arg0, (fsinfo_t*)arg1, (int32_t)arg2);
+		ctx->gpr[0] = sys_vfs_mount((fsinfo_t*)arg0, (fsinfo_t*)arg1, (mount_info_t*)arg2);
 		return;
 	case SYS_VFS_UMOUNT:
 		sys_vfs_umount((fsinfo_t*)arg0);
@@ -394,13 +403,13 @@ void svc_handler(int32_t code, int32_t arg0, int32_t arg1, int32_t arg2, context
 		sys_vfs_close(arg0, arg1);
 		return;
 	case SYS_VFS_PROC_SEEK:
-		ctx->gpr[0] = vfs_seek(arg0, arg1, arg2);
+		ctx->gpr[0] = vfs_seek(arg0, arg1);
 		return;
 	case SYS_VFS_PROC_TELL:
 		ctx->gpr[0] = sys_vfs_tell(arg0);
 		return;
 	case SYS_VFS_PROC_GET_BY_FD:
-		sys_vfs_get_by_fd(arg0, (fsinfo_t*)arg1);
+		ctx->gpr[0] = sys_vfs_get_by_fd(arg0, (fsinfo_t*)arg1);
 		return;
 	case SYS_YIELD: 
 		schedule(ctx);

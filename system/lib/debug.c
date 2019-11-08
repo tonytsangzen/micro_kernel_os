@@ -1,9 +1,11 @@
 #include <debug.h>
 #include <svc_call.h>
+#include <dev/devicetype.h>
 #include <vprintf.h>
+#include <string.h>
 
 void uart_debug(const char* str) {
-	svc_call1(SYS_UART_DEBUG, (int32_t)str);
+	svc_call3(SYS_DEV_WRITE, DEV_UART0, (int32_t)str, strlen(str));
 }
 
 static void outc(char c, void* p) {

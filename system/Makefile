@@ -27,6 +27,8 @@ LIB_OBJS = $(LIB_DIR)/svc_call.o \
 	$(LIB_DIR)/unistd.o \
 	$(LIB_DIR)/stdlib.o \
 	$(LIB_DIR)/ipc.o \
+	$(LIB_DIR)/vdevice.o \
+	$(LIB_DIR)/fcntl.o \
 	$(LIB_DIR)/proto.o \
 	$(LIB_DIR)/sys/wait.o \
 	$(LIB_DIR)/debug.o

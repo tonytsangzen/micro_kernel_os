@@ -1,10 +1,11 @@
 #include <stdlib.h>
 #include <unistd.h>
+#include <dev/devicetype.h>
 #include <sys/wait.h>
 #include <debug.h>
 #include <cmain.h>
 #include <string.h>
-#include <ipc.h>
+#include <fcntl.h>
 #include <vfs.h>
 #include <ramfs.h>
 #include <svc_call.h>
@@ -12,6 +13,14 @@
 int main(int argc, char** argv) {
 	(void)argc;
 	(void)argv;
+
+	char s[8];
+	while(1) {
+		memset(s, 0, 8);
+		int i = svc_call3(SYS_DEV_READ, DEV_UART0, (int32_t)s, 8);
+		if(i != 0)
+			debug("%s", s);
+	}
 
 	int pid = fork();
 	if(pid == 0) {
@@ -26,27 +35,31 @@ int main(int argc, char** argv) {
 		exit(0);
 	}
 
-	proto_t *pkg = proto_new("call", 4);
-	if(ipc_call(pid, pkg, pkg) == 0) {
-		const char* s = proto_read_str(pkg);
-		debug("pkg: %s\n", s);
+	while(1) {
+		fsinfo_t info;
+		debug("1\n");
+		if(vfs_get("/initfs/init", &info) == 0)
+			break;
+		debug("2\n");
 	}
-	proto_free(pkg);
 
-	fsinfo_t info;
-	vfs_get("/initfs/init", &info);
+/*	int fd = open("/initfs/Makefile", 0);
+	debug("open fd: %d\n", fd);
 
-	int fd, seek;
-	fd = vfs_open(getpid(), &info, 1);
-	debug("fd: %d\n", fd);
+	char buf[128];
+	while(1) {
+		int sz = read(fd, buf, 127);
+		if(sz <= 0)
+			break;
+		buf[sz] = 0;
+		debug("%s", buf);
+	}
 
-	seek = vfs_seek(fd, 100, 0);
-	debug("seek: %d\n", seek);
-
-	vfs_get_by_fd(fd, &info);
-	debug("name: %s\n", info.name);
-
-	vfs_close(getpid(), fd);
-
+	close(fd);
+	debug("closed fd: %d\n", fd);
+	*/
+	while(1) {
+		sleep(0);
+	}	
 	return 0;
 }

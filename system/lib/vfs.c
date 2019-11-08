@@ -2,14 +2,8 @@
 #include <string.h>
 #include <svc_call.h>
 
-int vfs_new_node(const char* name, int type, fsinfo_t* info) {
-	int res = svc_call1(SYS_VFS_NEW_NODE, (int32_t)info);
-	if(res < 0)
-		return -1;
-
-	info->type = type;
-	strcpy(info->name, name);
-	return vfs_set(info);
+int vfs_new_node(fsinfo_t* info) {
+	return svc_call1(SYS_VFS_NEW_NODE, (int32_t)info);
 }
 
 int vfs_get(const char* fname, fsinfo_t* info) {
@@ -44,8 +38,8 @@ int vfs_get_mount(fsinfo_t* info, mount_t* mount) {
 	return svc_call2(SYS_VFS_GET_MOUNT, (int32_t)info, (int32_t)mount);
 }
 
-int vfs_mount(fsinfo_t* mount_to, fsinfo_t* info, int access) {
-	return svc_call3(SYS_VFS_MOUNT, (int32_t)mount_to, (int32_t)info, access);
+int vfs_mount(fsinfo_t* mount_to, fsinfo_t* info, mount_info_t* mnt_info) {
+	return svc_call3(SYS_VFS_MOUNT, (int32_t)mount_to, (int32_t)info, (int32_t)mnt_info);
 }
 
 int vfs_umount(fsinfo_t* info) {

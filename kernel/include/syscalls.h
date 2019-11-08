@@ -3,7 +3,8 @@
 
 enum {
 	SYS_NONE = 0,
-	SYS_UART_DEBUG,
+	SYS_DEV_READ,
+	SYS_DEV_WRITE,
 
 	SYS_INITRD,
 

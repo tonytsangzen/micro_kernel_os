@@ -12,17 +12,27 @@
 #define FS_TYPE_FILE  1 
 
 typedef struct {
-	int32_t pid;
 	uint32_t access;
+	char dev_name[FS_NODE_NAME_MAX];
+	uint32_t dev_index;
+} mount_info_t;
+
+typedef struct {
+	int32_t pid;
 	uint32_t org_node;
 	char org_name[FS_NODE_NAME_MAX];
+
+	mount_info_t info;
 } mount_t;
 
 typedef struct {
 	uint32_t node;
 	char name[FS_NODE_NAME_MAX];
 	uint32_t type;
+	uint32_t size;
 	int32_t mount_id;
+
+	uint32_t data;
 } fsinfo_t;
 
 #endif

@@ -35,11 +35,11 @@ void vfs_close_raw(int32_t pid, int32_t fd);
 
 void vfs_close(int32_t pid, int32_t fd);
 
-int32_t vfs_seek(int32_t fd, int32_t offset, int32_t whence);
+int32_t vfs_seek(int32_t fd, int32_t offset);
 
 int32_t vfs_tell(int32_t fd);
 
-int32_t vfs_mount(vfs_node_t* org, vfs_node_t* node, uint32_t access);
+int32_t vfs_mount(vfs_node_t* org, vfs_node_t* node, mount_info_t* mnt_info);
 
 void vfs_umount(vfs_node_t* node);
 

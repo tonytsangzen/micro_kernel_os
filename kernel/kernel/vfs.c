@@ -102,7 +102,7 @@ int32_t vfs_get_mount(vfs_node_t* node, mount_t* mount) {
 	return 0;
 }
 
-int32_t vfs_mount(vfs_node_t* org, vfs_node_t* node, uint32_t access) {
+int32_t vfs_mount(vfs_node_t* org, vfs_node_t* node, mount_info_t* mnt_info) {
 	if(org == NULL || node == NULL)
 		return -1;
 		
@@ -113,12 +113,12 @@ int32_t vfs_mount(vfs_node_t* org, vfs_node_t* node, uint32_t access) {
 	if(id < 0)
 		return -1;
 
-	_vfs_mounts[id].access = access;
 	_vfs_mounts[id].pid = _current_proc->pid;
 	_vfs_mounts[id].org_node = (uint32_t)org;
 	strcpy(_vfs_mounts[id].org_name, node->fsinfo.name);
 	strcpy(node->fsinfo.name, org->fsinfo.name);
 	node->fsinfo.mount_id =  id;
+	memcpy(&_vfs_mounts[id].info, mnt_info, sizeof(mount_info_t));
 
 	vfs_node_t* father = org->father;
 	if(father == NULL) {
@@ -298,8 +298,7 @@ void vfs_close(int32_t pid, int32_t fd) {
 	vfs_close_raw(pid, fd);
 }
 
-int32_t vfs_seek(int32_t fd, int32_t offset, int32_t whence) {
-	(void)whence; //TODO
+int32_t vfs_seek(int32_t fd, int32_t offset) {
 	if(fd < 0 || fd >= PROC_FILE_MAX)
 		return -1;
 	

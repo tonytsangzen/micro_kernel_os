@@ -44,6 +44,7 @@ LIB_OBJS = \
 	${LIB_DIR}/kstring.o \
 	${LIB_DIR}/vprintf.o \
 	${LIB_DIR}/ramfs.o \
+	${LIB_DIR}/charbuf.o \
 	${LIB_DIR}/kprintf.o
 
 KERNEL_DIR = kernel
@@ -60,6 +61,7 @@ OBJS = ${ARCH_OBJS} \
 	${KERNEL_DIR}/proc.o \
 	${KERNEL_DIR}/schedule.o \
 	${KERNEL_DIR}/vfs.o \
+	${KERNEL_DIR}/dev/device.o \
 	${KERNEL_DIR}/kernel.o
 
 BUILD_DIR = build

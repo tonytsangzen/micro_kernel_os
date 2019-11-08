@@ -10,7 +10,7 @@ void proto_init(proto_t* proto, void* data, uint32_t size) {
 	proto->read_only = (data == NULL) ? 0:1;
 }
 
-void proto_copy(proto_t* proto, void* data, uint32_t size) {
+void proto_copy(proto_t* proto, const void* data, uint32_t size) {
 	if(!proto->read_only && proto->data != NULL)
 		free(proto->data);
 
@@ -28,7 +28,7 @@ proto_t* proto_new(void* data, uint32_t size) {
 	return ret;
 }
 
-void proto_add(proto_t* proto, void* item, uint32_t size) {
+void proto_add(proto_t* proto, const void* item, uint32_t size) {
 	if(proto->read_only)
 		return;
 

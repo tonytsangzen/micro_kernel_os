@@ -4,7 +4,15 @@
 #include <fsinfo.h>
 
 typedef struct {
-	int (*ctrl)(fsinfo_t* node, int cmd, int arg0, int arg1, int arg2);
+	char name[FS_NODE_NAME_MAX];
+	int (*open)(fsinfo_t* info, int oflag, void* p);
+	int (*close)(fsinfo_t* info, void* p);
+	int (*read)(fsinfo_t* info, void* buf, int size, int offset, void* p);
+	int (*write)(fsinfo_t* info, const void* buf, int size, int offset, void* p);
+	int (*mount)(fsinfo_t* mnt_point, mount_info_t* mnt_info, void* p);
+	int (*umount)(fsinfo_t* mnt_point, void* p);
 } vdevice_t;
+
+extern int device_run(vdevice_t* dev, fsinfo_t* mnt_point, mount_info_t* mnt_info, void* p);
 
 #endif
