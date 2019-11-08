@@ -116,8 +116,16 @@ int exec(const char* cmd_line) {
 		return -1;
 	}
 	close(fd);
-	svc_call2(SYS_EXEC_ELF, (int32_t)buf, sz);
+	svc_call3(SYS_EXEC_ELF, (int32_t)cmd_line, (int32_t)buf, sz);
 	free(buf);
 	return 0;
 }
 
+char* getcwd(char* buf, uint32_t size) {
+	svc_call2(SYS_PROC_GET_CWD, (int32_t)buf, (int32_t)size);
+	return buf;
+}
+
+int chdir(const char* path) {
+	return svc_call1(SYS_PROC_SET_CWD, (int32_t)path);
+}

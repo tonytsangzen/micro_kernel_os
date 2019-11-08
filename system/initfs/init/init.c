@@ -23,25 +23,17 @@ int main(int argc, char** argv) {
 		int sz;
 		const char* elf = ramfs_read(&ramfs, "initfsd", &sz);
 
-		svc_call2(SYS_EXEC_ELF, (int32_t)elf, sz);
+		svc_call3(SYS_EXEC_ELF, (int32_t)"/initfs/initfsd", (int32_t)elf, sz);
 	}
-
-	while(1) {
-		fsinfo_t info;
-		if(vfs_get("/initfs/ttyd", &info) == 0)
-			break;
-	}
+	vfs_mount_wait("/initfs", pid);
+	debug("/initfs mounted.\n");
 
 	pid = fork();
 	if(pid == 0) {
 		exec("/initfs/ttyd");
 	}
-
-	while(1) {
-		fsinfo_t info;
-		if(vfs_get("/dev/tty0", &info) == 0)
-			break;
-	}
+	vfs_mount_wait("/dev/tty0", pid);
+	debug("/dev/tty0 mounted.\n");
 
 	pid = fork();
 	if(pid == 0) {
