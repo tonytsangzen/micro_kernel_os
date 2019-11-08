@@ -231,14 +231,14 @@ static int32_t sys_vfs_get_by_fd(int32_t fd, fsinfo_t* info) {
 	return 0;
 }
 
-static int32_t sys_load_elf(context_t* ctx, void* elf, uint32_t elf_size) {
+static int32_t sys_load_elf(context_t* ctx, const char* cmd, void* elf, uint32_t elf_size) {
 	if(elf == NULL)
 		return -1;
 	
 	if(proc_load_elf(_current_proc, elf, elf_size) != 0)
 		return -1;
 
-	//schedule(ctx);
+	tstr_cpy(_current_proc->cmd, cmd);
 	memcpy(ctx, &_current_proc->ctx, sizeof(context_t));
 	return 0;
 }
@@ -258,6 +258,15 @@ static void sys_get_msg(context_t* ctx, int32_t *pid, uint32_t* size, int32_t bl
 	proc_t* proc = _current_proc;
 	proc_sleep_on(ctx, (uint32_t)&proc->pid);
 	proc->ctx.gpr[0] = 0;
+}
+
+static int32_t sys_proc_set_cwd(const char* cwd) {
+	tstr_cpy(_current_proc->cwd, cwd);
+	return 0;
+}
+
+static void sys_proc_get_cwd(char* cwd, int32_t sz) {
+	strncpy(cwd, CS(_current_proc->cwd), sz);
 }
 
 static inline const char* syscall_code(int32_t code) {
@@ -366,7 +375,7 @@ void svc_handler(int32_t code, int32_t arg0, int32_t arg1, int32_t arg2, context
 		sys_wakeup((uint32_t)arg0);
 		return;
 	case SYS_EXEC_ELF:
-		ctx->gpr[0] = sys_load_elf(ctx, (void*)arg0, (uint32_t)arg1);
+		ctx->gpr[0] = sys_load_elf(ctx, (const char*)arg0, (void*)arg1, (uint32_t)arg2);
 		return;
 	case SYS_FORK:
 		ctx->gpr[0] = sys_fork(ctx);
@@ -430,6 +439,12 @@ void svc_handler(int32_t code, int32_t arg0, int32_t arg1, int32_t arg2, context
 		return;
 	case SYS_YIELD: 
 		schedule(ctx);
+		return;
+	case SYS_PROC_SET_CWD: 
+		ctx->gpr[0] = sys_proc_set_cwd((const char*)arg0);
+		return;
+	case SYS_PROC_GET_CWD: 
+		sys_proc_get_cwd((char*)arg0, arg1);
 		return;
 	}
 	printf("pid:%d, code(%d) error!\n", _current_proc->pid, code);

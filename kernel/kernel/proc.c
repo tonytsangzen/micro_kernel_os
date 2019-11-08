@@ -194,8 +194,11 @@ void proc_exit(context_t* ctx, proc_t *proc, int32_t res) {
 	proc_wakeup_waiting(pid);
 	proc->state = UNUSED;
 	proc_unready(ctx, proc);
-	memset(proc, 0, sizeof(proc_t));
 
+	tstr_free(proc->cmd);
+	tstr_free(proc->cwd);
+
+	memset(proc, 0, sizeof(proc_t));
 	__int_on(cpsr);
 }
 
@@ -238,6 +241,9 @@ proc_t *proc_create(void) {
 		user_stack,
     V2P(stack),
     AP_RW_RW);
+
+	proc->cmd = tstr_new("");
+	proc->cwd = tstr_new("");
   proc->user_stack = user_stack;
 	proc->ctx.sp = ((uint32_t)proc->user_stack)+PAGE_SIZE;
 	proc->ctx.cpsr = 0x50;
@@ -377,6 +383,9 @@ static int32_t proc_clone(proc_t* child, proc_t* parent) {
 	child->father_pid = parent->pid;
 	/* copy parent's stack to child's stack */
 	proc_page_clone(child, child->user_stack, parent, parent->user_stack);
+
+	tstr_cpy(child->cmd, CS(parent->cmd));
+	tstr_cpy(child->cwd, CS(parent->cwd));
 	return 0;
 }
 

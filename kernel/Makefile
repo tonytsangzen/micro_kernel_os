@@ -43,6 +43,8 @@ LIB_DIR = lib
 LIB_OBJS = \
 	${LIB_DIR}/kstring.o \
 	${LIB_DIR}/vprintf.o \
+	${LIB_DIR}/trunk.o \
+	${LIB_DIR}/tstr.o \
 	${LIB_DIR}/ramfs.o \
 	${LIB_DIR}/charbuf.o \
 	${LIB_DIR}/kprintf.o

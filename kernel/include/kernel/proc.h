@@ -5,6 +5,7 @@
 #include <mm/mmu.h>
 #include <mm/trunkmalloc.h>
 #include <kernel/kfile.h>
+#include <tstr.h>
 
 enum {
 	UNUSED = 0,
@@ -48,6 +49,10 @@ typedef struct st_proc {
 
 	proc_msg_t *msg_queue_head;
 	proc_msg_t *msg_queue_tail;
+
+	tstr_t* cmd;
+	tstr_t* cwd;
+
 	struct st_proc* prev;
 	struct st_proc* next;
 } proc_t;
