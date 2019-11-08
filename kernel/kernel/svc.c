@@ -7,7 +7,7 @@
 #include <syscalls.h>
 #include <kstring.h>
 #include <kprintf.h>
-#include <dev/device.h>
+#include <dev/kdevice.h>
 
 static void sys_exit(context_t* ctx, int32_t res) {
 	if(_current_proc == NULL)
@@ -15,12 +15,29 @@ static void sys_exit(context_t* ctx, int32_t res) {
 	proc_exit(ctx, _current_proc, res);
 }
 
-static int32_t sys_dev_write(uint32_t type, void* data, uint32_t sz) {
-	return dev_write(type, data, sz);
+static int32_t sys_char_dev_write(uint32_t type, void* data, uint32_t sz) {
+	char_dev_t* dev = get_char_dev(type);
+	if(dev == NULL)
+		return -1;
+	return char_dev_write(dev, data, sz);
 }
 
-static int32_t sys_dev_read(uint32_t type, void* data, uint32_t sz) {
-	return dev_read(type, data, sz);
+static void sys_char_dev_read(context_t* ctx, uint32_t type, void* data, uint32_t sz) {
+	char_dev_t* dev = get_char_dev(type);
+	if(dev == NULL) {
+		ctx->gpr[0] = -1;
+		return;
+	}
+
+	int32_t rd = char_dev_read(dev, data, sz);
+	if(rd > 0) {
+		ctx->gpr[0] = rd;
+		return;
+	}
+
+	proc_t* proc = _current_proc;
+	proc_sleep_on(ctx, (uint32_t)dev);
+	proc->ctx.gpr[0] = 0;
 }
 
 static int32_t sys_getpid(void) {
@@ -214,11 +231,11 @@ static int32_t sys_vfs_get_by_fd(int32_t fd, fsinfo_t* info) {
 	return 0;
 }
 
-static int32_t sys_load_elf(context_t* ctx, void* elf) {
+static int32_t sys_load_elf(context_t* ctx, void* elf, uint32_t elf_size) {
 	if(elf == NULL)
 		return -1;
 	
-	if(proc_load_elf(_current_proc, elf) != 0)
+	if(proc_load_elf(_current_proc, elf, elf_size) != 0)
 		return -1;
 
 	//schedule(ctx);
@@ -245,10 +262,10 @@ static void sys_get_msg(context_t* ctx, int32_t *pid, uint32_t* size, int32_t bl
 
 static inline const char* syscall_code(int32_t code) {
 	switch(code) {
-	case SYS_DEV_READ:
-		return "SYS_DEV_READ";
-	case SYS_DEV_WRITE:
-		return "SYS_DEV_WRITE";
+	case SYS_CHAR_DEV_READ:
+		return "SYS_CHAR_DEV_READ";
+	case SYS_CHAR_DEV_WRITE:
+		return "SYS_CHAR_DEV_WRITE";
 	case SYS_INITRD:
 		return "SYS_INITRD";
 	case SYS_EXIT:
@@ -321,11 +338,11 @@ void svc_handler(int32_t code, int32_t arg0, int32_t arg1, int32_t arg2, context
 	//printf("pid:%d, code: %d (%s)\n", _current_proc->pid, code, syscall_code(code));
 
 	switch(code) {
-	case SYS_DEV_READ:
-		ctx->gpr[0] = sys_dev_read(arg0, (void*)arg1, arg2);		
+	case SYS_CHAR_DEV_READ:
+		sys_char_dev_read(ctx, arg0, (void*)arg1, arg2);		
 		return;
-	case SYS_DEV_WRITE:
-		ctx->gpr[0] = sys_dev_write(arg0, (void*)arg1, arg2);		
+	case SYS_CHAR_DEV_WRITE:
+		ctx->gpr[0] = sys_char_dev_write(arg0, (void*)arg1, arg2);		
 		return;
 	case SYS_INITRD:
 		ctx->gpr[0] = (int32_t)_initrd;
@@ -349,7 +366,7 @@ void svc_handler(int32_t code, int32_t arg0, int32_t arg1, int32_t arg2, context
 		sys_wakeup((uint32_t)arg0);
 		return;
 	case SYS_EXEC_ELF:
-		ctx->gpr[0] = sys_load_elf(ctx, (void*)arg0);
+		ctx->gpr[0] = sys_load_elf(ctx, (void*)arg0, (uint32_t)arg1);
 		return;
 	case SYS_FORK:
 		ctx->gpr[0] = sys_fork(ctx);

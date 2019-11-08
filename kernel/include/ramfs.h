@@ -28,6 +28,6 @@ void ramfs_close(ramfs_t* rd);
 /*
 read file content of fname, return content address and size.
 */
-const char* ramfs_read(ramfs_t* rd, const char* fname, int* size);
+const char* ramfs_read(ramfs_t* rd, const char* fname, int32_t* size);
 
 #endif

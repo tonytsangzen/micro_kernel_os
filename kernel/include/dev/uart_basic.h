@@ -3,11 +3,11 @@
 
 #include <types.h>
 
-uint8_t uart_basic_init(void);
+int32_t uart_basic_init(void);
 
-void uart_basic_putch(int c);
+int32_t uart_basic_putch(int32_t c);
 
-uint8_t uart_basic_ready_to_recv(void);
+int32_t uart_basic_ready_to_recv(void);
 
 int32_t uart_basic_recv(void);
 

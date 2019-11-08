@@ -1,4 +1,4 @@
-#include <dev/device.h>
+#include <dev/kdevice.h>
 #include <mm/mmu.h>
 #include <mm/kalloc.h>
 #include <mm/kmalloc.h>
@@ -76,10 +76,11 @@ static void free_initrd(void) {
 }
 
 static void load_init(void) {
-	const char* elf = ramfs_read(&_initfs, "init", NULL);
+	int32_t sz;
+	const char* elf = ramfs_read(&_initfs, "init", &sz);
 	if(elf != NULL) {
 		proc_t *proc = proc_create();
-		proc_load_elf(proc, elf);
+		proc_load_elf(proc, elf, sz);
 	}
 
 	free_initrd();
@@ -102,7 +103,7 @@ void _kernel_entry_c(context_t* ctx) {
 
 	irq_init();
 
-	dev_init();
+	char_dev_init();
 
 	fs_init();
 

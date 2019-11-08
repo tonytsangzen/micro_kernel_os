@@ -245,10 +245,13 @@ proc_t *proc_create(void) {
 }
 
 /* proc_load loads the given ELF process image into the given process. */
-int32_t proc_load_elf(proc_t *proc, const char *proc_image) {
+int32_t proc_load_elf(proc_t *proc, const char *image, uint32_t size) {
 	uint32_t prog_header_offset = 0;
 	uint32_t prog_header_count = 0;
 	uint32_t i = 0;
+
+	char* proc_image = kmalloc(size);
+	memcpy(proc_image, image, size);
 
 	proc_shrink_mem(proc, proc->space->heap_size/PAGE_SIZE);
 
@@ -266,6 +269,7 @@ int32_t proc_load_elf(proc_t *proc, const char *proc_image) {
 		/* make enough room for this section */
 		while (proc->space->heap_size < header->vaddr + header->memsz) {
 			if(proc_expand_mem(proc, 1) != 0){ 
+				kfree(proc_image);
 				return -1;
 			}
 		}
@@ -289,6 +293,7 @@ int32_t proc_load_elf(proc_t *proc, const char *proc_image) {
 	proc->ctx.pc = header->entry;
 	proc->ctx.lr = header->entry;
 	proc_ready(proc);
+	kfree(proc_image);
 	return 0;
 }
 

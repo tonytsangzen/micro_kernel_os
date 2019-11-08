@@ -14,9 +14,9 @@
 #define UART_RECEIVE  0x10
 #define UART_TRANSMIT 0x20
 
-uint8_t uart_basic_init(void) {
+int32_t uart_basic_init(void) {
 	put32(UART0+UART_INT_ENABLE, UART_RECEIVE);
-	return 1;
+	return 0;
 }
 
 static void uart_basic_trans(char c) {
@@ -26,14 +26,17 @@ static void uart_basic_trans(char c) {
 	put8(UART0+UART_DATA, c);
 }
 
-void uart_basic_putch(int c) {
+int32_t uart_basic_putch(int32_t c) {
 	if(c == '\r')
 		c = '\n';
 	uart_basic_trans(c);
+	return 0;
 }
 
-uint8_t uart_basic_ready_to_recv(void) {
-	return get8(UART0+UART_INT_TARGET) &  UART_RECEIVE;
+int32_t uart_basic_ready_to_recv(void) {
+	if((get8(UART0+UART_INT_TARGET) &  UART_RECEIVE) != 0)
+		return 0;
+	return -1;
 }
 
 int32_t uart_basic_recv(void) {

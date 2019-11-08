@@ -57,7 +57,7 @@ extern proc_t* _ready_proc;
 
 extern void    procs_init(void);
 extern proc_t* proc_create(void);
-extern int32_t proc_load_elf(proc_t *proc, const char *proc_image);
+extern int32_t proc_load_elf(proc_t *proc, const char *proc_image, uint32_t size);
 extern int32_t proc_start(proc_t* proc, uint32_t entry);
 extern proc_t* proc_get_next_ready(void);
 extern void    proc_switch(context_t* ctx, proc_t* to);
