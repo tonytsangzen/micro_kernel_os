@@ -269,72 +269,8 @@ static void sys_proc_get_cwd(char* cwd, int32_t sz) {
 	strncpy(cwd, CS(_current_proc->cwd), sz);
 }
 
-static inline const char* syscall_code(int32_t code) {
-	switch(code) {
-	case SYS_CHAR_DEV_READ:
-		return "SYS_CHAR_DEV_READ";
-	case SYS_CHAR_DEV_WRITE:
-		return "SYS_CHAR_DEV_WRITE";
-	case SYS_INITRD:
-		return "SYS_INITRD";
-	case SYS_EXIT:
-		return "SYS_EXIT";
-	case SYS_MALLOC:
-		return "SYS_MALLOC";
-	case SYS_FREE:
-		return "SYS_FREE";
-	case SYS_GET_PID:
-		return "SYS_GET_PID";
-	case SYS_SLEEP_ON:
-		return "SYS_SLEEP_ON";
-	case SYS_WAKEUP:
-		return "SYS_WAKEUP";
-	case SYS_EXEC_ELF:
-		return "SYS_EXEC_ELF";
-	case SYS_FORK:
-		return "SYS_FORK";
-	case SYS_WAIT_PID:
-		return "SYS_WAIT_PID";
-	case SYS_SEND_MSG:
-		return "SYS_SEND_MSG";
-	case SYS_GET_MSG:
-		return "SYS_GET_MSG";
-	case SYS_VFS_GET:
-		return "SYS_VFS_GET";
-	case SYS_VFS_FKID:
-		return "SYS_VFS_FKID";
-	case SYS_VFS_NEXT:
-		return "SYS_VFS_NEXT";
-	case SYS_VFS_FATHER:
-		return "SYS_VFS_FATHER";
-	case SYS_VFS_SET:
-		return "SYS_VFS_SET";
-	case SYS_VFS_ADD:
-		return "SYS_VFS_ADD";
-	case SYS_VFS_DEL:
-		return "SYS_VFS_DEL";
-	case SYS_VFS_NEW_NODE:
-		return "SYS_VFS_NEW_NODE";
-	case SYS_VFS_GET_MOUNT:
-		return "SYS_VFS_GET_MOUNT";
-	case SYS_VFS_MOUNT:
-		return "SYS_VFS_MOUNT";
-	case SYS_VFS_UMOUNT:
-		return "SYS_VFS_UMOUNT";
-	case SYS_VFS_OPEN:
-		return "SYS_VFS_OPEN";
-	case SYS_VFS_PROC_CLOSE:
-		return "SYS_VFS_PROC_CLOSE";
-	case SYS_VFS_PROC_SEEK:
-		return "SYS_VFS_PROC_SEEK";
-	case SYS_VFS_PROC_TELL:
-		return "SYS_VFS_PROC_TELL";
-	case SYS_VFS_PROC_GET_BY_FD:
-		return "SYS_VFS_PROC_GET_BY_FD";
-	case SYS_YIELD: 
-		return "SYS_YIELD";
-	}
-	return "NONE";
+static void sys_proc_get_cmd(char* cmd, int32_t sz) {
+	strncpy(cmd, CS(_current_proc->cmd), sz);
 }
 
 void svc_handler(int32_t code, int32_t arg0, int32_t arg1, int32_t arg2, context_t* ctx, int32_t processor_mode) {
@@ -344,7 +280,6 @@ void svc_handler(int32_t code, int32_t arg0, int32_t arg1, int32_t arg2, context
 	(void)processor_mode;
 	
 	__irq_disable();
-	//printf("pid:%d, code: %d (%s)\n", _current_proc->pid, code, syscall_code(code));
 
 	switch(code) {
 	case SYS_CHAR_DEV_READ:
@@ -448,6 +383,9 @@ void svc_handler(int32_t code, int32_t arg0, int32_t arg1, int32_t arg2, context
 		return;
 	case SYS_PROC_GET_CWD: 
 		sys_proc_get_cwd((char*)arg0, arg1);
+		return;
+	case SYS_PROC_GET_CMD: 
+		sys_proc_get_cmd((char*)arg0, arg1);
 		return;
 	}
 	printf("pid:%d, code(%d) error!\n", _current_proc->pid, code);

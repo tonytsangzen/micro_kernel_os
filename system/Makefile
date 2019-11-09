@@ -43,12 +43,14 @@ TARGET_DIR = build
 all: mkdirs $(LIB_OBJS) apps 
 	mkramfs/mkramfs ${TARGET_DIR}/initfs.img ${TARGET_DIR}/initfs
 
+include mkramfs/build.mk
 include initfs/initfsd/build.mk
 include initfs/ttyd/build.mk
+include initfs/nulld/build.mk
 include initfs/init/build.mk
 include initfs/shell/build.mk
 include initfs/pwd/build.mk
-include mkramfs/build.mk
+include initfs/cat/build.mk
 
 mkdirs:
 	mkdir -p ${TARGET_DIR}/initfs

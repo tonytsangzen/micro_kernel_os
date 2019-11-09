@@ -9,6 +9,12 @@
 #include <vfs.h>
 #include <svc_call.h>
 
+static void init_stdio(void) {
+	int fd = open("/dev/tty0", 0);
+	dup2(fd, 0);
+	dup2(fd, 1);
+}
+
 int main(int argc, char** argv) {
 	(void)argc;
 	(void)argv;
@@ -23,6 +29,13 @@ int main(int argc, char** argv) {
 
 	pid = fork();
 	if(pid == 0) {
+		exec("/sbin/nulld");
+	}
+	vfs_mount_wait("/dev/null", pid);
+	debug("/dev/null mounted.\n");
+
+	pid = fork();
+	if(pid == 0) {
 		exec("/sbin/ttyd");
 	}
 	vfs_mount_wait("/dev/tty0", pid);
@@ -30,6 +43,7 @@ int main(int argc, char** argv) {
 
 	pid = fork();
 	if(pid == 0) {
+		init_stdio();
 		exec("/sbin/shell");
 	}
 

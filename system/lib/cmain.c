@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <svc_call.h>
 
 static char _cmd[1024];
 static int _off_cmd;
@@ -39,12 +40,6 @@ static char* read_cmain_arg(void) {
 	return p;
 }
 
-static void init_stdio(void) {
-	int fd = open("/dev/tty0", 0);
-	dup2(fd, 0);
-	dup2(fd, 1);
-}
-
 static void close_stdio(void) {
 	close(0);
 	close(1);
@@ -53,6 +48,7 @@ static void close_stdio(void) {
 static void init_cmd(void) {
 	_cmd[0] = 0;
 	_off_cmd = 0;
+	svc_call2(SYS_PROC_GET_CMD, (int32_t)_cmd, 1023);
 }
 
 #define ARG_MAX 16
@@ -61,7 +57,6 @@ void _start(void) {
 	char* argv[ARG_MAX];
 	int32_t argc = 0;
 
-	init_stdio();
 	init_cmd();
 
 	while(argc < ARG_MAX) {

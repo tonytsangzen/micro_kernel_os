@@ -216,18 +216,18 @@ static int32_t find_exec(char* fname, char* cmd) {
 	cmd[at] = c;
 	return -1;
 }
-/*
+
 static void redir(const char* fname, int in) {
 	while(*fname == ' ')
 		fname++;
 
-	if(in) {
+	if(in != 0) {
 		int32_t fd = open(fname, O_RDONLY);
 		if(fd < 0) {
 			printf("error: '%s' open failed!\n", fname);
 			exit(-1);
 		}
-		dup2(fd, _stdin);
+		dup2(fd, 0);
 		close(fd);
 	}
 	else {
@@ -236,11 +236,10 @@ static void redir(const char* fname, int in) {
 			printf("error: '%s' open failed!\n", fname);
 			exit(-1);
 		}
-		dup2(fd, _stdout);
+		dup2(fd, 1);
 		close(fd);
 	}
 }
-*/
 
 static int do_cmd(char* cmd) {
 	while(*cmd == ' ')
@@ -311,6 +310,38 @@ static int run_cmd(char* cmd) {
 }
 */
 
+static int run_cmd(char* cmd) {
+	char* proc = NULL;
+	while(*cmd != 0) {
+		char c = *cmd++;
+		if(proc == NULL && c == ' ')
+			continue;
+
+		if(c == '>') { //redirection
+			*(cmd-1) = 0;	
+			redir(cmd, 0); //redir OUT.
+			return do_cmd(proc);
+		}
+		else if(c == '<') { //redirection
+			*(cmd-1) = 0;	
+			redir(cmd, 1); //redir in.
+			return do_cmd(proc);
+		}
+		/*
+		else if(c == '|') { //redirection
+			*(cmd-1) = 0;	
+			return do_pipe_cmd(proc, cmd);
+		}
+		*/
+		else if(proc == NULL)
+			proc = cmd-1;
+	}
+
+	if(proc != NULL)
+		do_cmd(proc);
+	return 0;
+}
+
 int main(int argc, char* argv[]) {
 	(void)argc;
 	(void)argv;
@@ -338,8 +369,7 @@ int main(int argc, char* argv[]) {
 
 		int child_pid = fork();
 		if (child_pid == 0) {
-			//int res = run_cmd(cmd);
-			int res = do_cmd(cmd);
+			int res = run_cmd(cmd);
 			tstr_free(cmdstr);	
 			return res;
 		}

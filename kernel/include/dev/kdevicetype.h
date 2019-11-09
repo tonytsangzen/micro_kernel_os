@@ -2,7 +2,8 @@
 #define KDEVICE_TYPE_H
 
 enum {
-	DEV_UART0 = 0,
+	DEV_NULL = 0,
+	DEV_UART0,
 	DEV_NUM
 };
 

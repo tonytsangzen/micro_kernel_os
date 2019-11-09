@@ -7,6 +7,7 @@
 #include <vfs.h>
 #include <ipc.h>
 #include <string.h>
+#include <tstr.h>
 #include <ramfs.h>
 
 int getpid(void) {
@@ -112,14 +113,22 @@ void exec_initfs(const char* fname) {
 int exec(const char* cmd_line) {
 	fsinfo_t info;
 
-	if(vfs_get(cmd_line, &info) != 0 || info.size == 0)
+	tstr_t* cmd = tstr_new("");
+	const char *p = cmd_line;
+	while(*p != 0 && *p != ' ') {
+		tstr_addc(cmd, *p);
+		p++;
+	}
+	tstr_addc(cmd, 0);
+
+	if(vfs_get(CS(cmd), &info) != 0 || info.size == 0)
 		return -1;
 
 	void* buf = malloc(info.size);
 	if(buf == NULL)
 		return -1;
 
-	int fd = open(cmd_line, 0);
+	int fd = open(CS(cmd), 0);
 	int sz = read(fd, buf, info.size);
 	if(sz != (int)info.size) {
 		free(buf);
