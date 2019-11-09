@@ -338,7 +338,6 @@ int main(int argc, char* argv[]) {
 
 		int child_pid = fork();
 		if (child_pid == 0) {
-			printf("cmd: %s\n", cmd);
 			//int res = run_cmd(cmd);
 			int res = do_cmd(cmd);
 			tstr_free(cmdstr);	

@@ -46,10 +46,9 @@ void close(int fd) {
 	proto_init(&in, NULL, 0);
 
 	proto_add_int(&in, FS_CMD_CLOSE);
-	proto_add_int(&in, fd);
 	proto_add(&in, &info, sizeof(fsinfo_t));
 
 	ipc_call(mount.pid, &in, NULL);
-
 	proto_clear(&in);
+	vfs_close(fd);
 }

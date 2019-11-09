@@ -40,13 +40,14 @@ static char* read_cmain_arg(void) {
 }
 
 static void init_stdio(void) {
-	_stdin = open("/dev/tty0", 0);
-	_stdout = open("/dev/tty0", 0);
+	int fd = open("/dev/tty0", 0);
+	dup2(fd, 0);
+	dup2(fd, 1);
 }
 
 static void close_stdio(void) {
-	close(_stdin);
-	close(_stdout);
+	close(0);
+	close(1);
 }
 
 static void init_cmd(void) {

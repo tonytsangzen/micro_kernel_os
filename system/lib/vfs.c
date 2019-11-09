@@ -67,8 +67,8 @@ int vfs_open(int pid, fsinfo_t* info, int wr) {
 	return svc_call3(SYS_VFS_OPEN, (int32_t)pid, (int32_t)info, (int32_t)wr);
 }
 
-int vfs_close(int pid, int fd) {
-	return svc_call2(SYS_VFS_CLOSE, (int32_t)pid, (int32_t)fd);
+int vfs_close(int fd) {
+	return svc_call1(SYS_VFS_PROC_CLOSE, (int32_t)fd);
 }
 
 int vfs_seek(int fd, int offset, int whence) {
@@ -77,4 +77,8 @@ int vfs_seek(int fd, int offset, int whence) {
 
 int vfs_get_by_fd(int fd, fsinfo_t* info) {
 	return svc_call2(SYS_VFS_PROC_GET_BY_FD, (int32_t)fd, (int32_t)info);
+}
+
+int vfs_dup2(int from, int to) {
+	return svc_call2(SYS_VFS_PROC_DUP2, (int32_t)from, (int32_t)to);
 }

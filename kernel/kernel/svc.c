@@ -181,10 +181,10 @@ static int32_t sys_vfs_open(int32_t pid, fsinfo_t* info, int32_t wr) {
 	return vfs_open(pid, node, wr);
 }
 
-static void sys_vfs_close(int32_t pid, int32_t fd) {
-	if(fd < 0 || pid < 0)
+static void sys_vfs_close(int32_t fd) {
+	if(fd < 0)
 		return;
-	vfs_close(pid, fd);
+	vfs_close(_current_proc, fd);
 }
 
 static int32_t sys_vfs_tell(int32_t fd) {
@@ -323,8 +323,8 @@ static inline const char* syscall_code(int32_t code) {
 		return "SYS_VFS_UMOUNT";
 	case SYS_VFS_OPEN:
 		return "SYS_VFS_OPEN";
-	case SYS_VFS_CLOSE:
-		return "SYS_VFS_CLOSE";
+	case SYS_VFS_PROC_CLOSE:
+		return "SYS_VFS_PROC_CLOSE";
 	case SYS_VFS_PROC_SEEK:
 		return "SYS_VFS_PROC_SEEK";
 	case SYS_VFS_PROC_TELL:
@@ -425,8 +425,8 @@ void svc_handler(int32_t code, int32_t arg0, int32_t arg1, int32_t arg2, context
 	case SYS_VFS_OPEN:
 		ctx->gpr[0] = sys_vfs_open(arg0, (fsinfo_t*)arg1, arg2);
 		return;
-	case SYS_VFS_CLOSE:
-		sys_vfs_close(arg0, arg1);
+	case SYS_VFS_PROC_CLOSE:
+		sys_vfs_close(arg0);
 		return;
 	case SYS_VFS_PROC_SEEK:
 		ctx->gpr[0] = vfs_seek(arg0, arg1);
@@ -436,6 +436,9 @@ void svc_handler(int32_t code, int32_t arg0, int32_t arg1, int32_t arg2, context
 		return;
 	case SYS_VFS_PROC_GET_BY_FD:
 		ctx->gpr[0] = sys_vfs_get_by_fd(arg0, (fsinfo_t*)arg1);
+		return;
+	case SYS_VFS_PROC_DUP2:
+		ctx->gpr[0] = vfs_dup2(arg0, arg1);
 		return;
 	case SYS_YIELD: 
 		schedule(ctx);

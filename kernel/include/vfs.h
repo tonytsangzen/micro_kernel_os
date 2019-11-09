@@ -2,6 +2,7 @@
 #define VFS_TREE_H
 
 #include <fsinfo.h>
+#include <kernel/proc.h>
 
 typedef struct vfs_node {
 	struct vfs_node* father; 
@@ -31,9 +32,7 @@ int32_t vfs_get_mount(vfs_node_t* node, mount_t* mount);
 
 int32_t vfs_open(int32_t pid, vfs_node_t* node, int32_t wr);
 
-void vfs_close_raw(int32_t pid, int32_t fd);
-
-void vfs_close(int32_t pid, int32_t fd);
+void vfs_close(proc_t* proc, int32_t fd);
 
 int32_t vfs_seek(int32_t fd, int32_t offset);
 
@@ -44,6 +43,8 @@ int32_t vfs_mount(vfs_node_t* org, vfs_node_t* node, mount_info_t* mnt_info);
 void vfs_umount(vfs_node_t* node);
 
 int32_t vfs_del(vfs_node_t* node);
+
+int32_t vfs_dup2(int32_t from, int32_t to);
 
 void vfs_init(void);
 

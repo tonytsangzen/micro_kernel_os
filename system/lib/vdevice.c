@@ -27,16 +27,13 @@ static void do_open(vdevice_t* dev, int from_pid, proto_t *in, void* p) {
 }
 
 static void do_close(vdevice_t* dev, int from_pid, proto_t *in, void* p) {
-	int fd;
+	(void)from_pid;
 	fsinfo_t info;
-	fd = proto_read_int(in);
 	memcpy(&info, proto_read(in, NULL), sizeof(fsinfo_t));
 
 	if(dev != NULL && dev->close != NULL) {
 		dev->close(&info, p);
 	}
-
-	vfs_close(from_pid, fd);
 }
 
 static void do_read(vdevice_t* dev, int from_pid, proto_t *in, void* p) {

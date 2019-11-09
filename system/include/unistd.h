@@ -16,4 +16,6 @@ int exec(const char* cmd_line);
 char* getcwd(char* buf, uint32_t size);
 int chdir(const char* path);
 
+int dup2(int from, int to);
+
 #endif

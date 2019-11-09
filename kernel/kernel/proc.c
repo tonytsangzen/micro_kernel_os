@@ -121,7 +121,21 @@ static void proc_close_files(proc_t *proc) {
 	int32_t i;
 	for(i=0; i<PROC_FILE_MAX; i++) {
 		if(proc->space->files[i].node != 0)
-			vfs_close_raw(proc->pid, i);
+			vfs_close(proc, i);
+	}
+}
+
+static void proc_clone_files(proc_t *proc_to, proc_t* from) {
+	int32_t i;
+	for(i=0; i<PROC_FILE_MAX; i++) {
+		kfile_t *f = &from->space->files[i]; 
+		vfs_node_t* node = 	(vfs_node_t*)f->node;
+		if(node != NULL) {
+			memcpy(&proc_to->space->files[i], f, sizeof(kfile_t));
+			node->refs++;
+			if(f->wr != 0)
+				node->refs_w++;
+		}
 	}
 }
 
@@ -188,9 +202,9 @@ void proc_exit(context_t* ctx, proc_t *proc, int32_t res) {
 
 	uint32_t cpsr = __int_off();
 
+	proc_free_space(proc);
 	uint32_t kernel_addr = resolve_kernel_address(proc->space->vm, proc->user_stack);
 	kfree4k((void *) kernel_addr);
-	proc_free_space(proc);
 	proc_wakeup_waiting(pid);
 	proc->state = UNUSED;
 	proc_unready(ctx, proc);
@@ -383,6 +397,7 @@ static int32_t proc_clone(proc_t* child, proc_t* parent) {
 	child->father_pid = parent->pid;
 	/* copy parent's stack to child's stack */
 	proc_page_clone(child, child->user_stack, parent, parent->user_stack);
+	proc_clone_files(child, parent);
 
 	tstr_cpy(child->cmd, CS(parent->cmd));
 	tstr_cpy(child->cwd, CS(parent->cwd));

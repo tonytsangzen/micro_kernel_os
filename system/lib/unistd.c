@@ -139,3 +139,7 @@ char* getcwd(char* buf, uint32_t size) {
 int chdir(const char* path) {
 	return svc_call1(SYS_PROC_SET_CWD, (int32_t)path);
 }
+
+int dup2(int from, int to) {
+	return vfs_dup2(from, to);
+}

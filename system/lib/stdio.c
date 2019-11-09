@@ -3,12 +3,9 @@
 #include <unistd.h>
 #include <string.h>
 
-int _stdin = -1;
-int _stdout = -1;
-
 static void outc(char c, void* p) {
-	int fd = *(int*)p;
-	write(fd, &c, 1);
+	(void)p;
+	write(1, &c, 1);
 }
 
 void dprintf(int fd, const char *format, ...) {
@@ -21,14 +18,14 @@ void dprintf(int fd, const char *format, ...) {
 void printf(const char *format, ...) {
 	va_list ap;
 	va_start(ap, format);
-	v_printf(outc, &_stdout, format, ap);
+	v_printf(outc, NULL, format, ap);
 	va_end(ap);
 }
 
 int getch(void) {
 	while(1) {
 		char c;
-		int i = read(_stdin, &c, 1);
+		int i = read(0, &c, 1);
 		if(i == 1)
 			return c;
 
@@ -39,6 +36,6 @@ int getch(void) {
 }
 
 void putch(int c) {
-	write(_stdout, &c, 1);
+	write(1, &c, 1);
 }
 

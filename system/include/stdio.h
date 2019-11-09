@@ -3,9 +3,6 @@
 
 #include <fcntl.h>
 
-extern int _stdin;
-extern int _stdout;
-
 void printf(const char *format, ...);
 void dprintf(int fd, const char *format, ...);
 

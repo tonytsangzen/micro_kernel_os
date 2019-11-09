@@ -28,7 +28,8 @@ void vfs_mount_wait(const char* fname, int pid);
 int vfs_umount(fsinfo_t* info);
 
 int vfs_open(int pid, fsinfo_t* info, int wr);
-int vfs_close(int pid, int fd);
+int vfs_close(int fd);
 int vfs_seek(int fd, int offset, int whence);
+int vfs_dup2(int from, int to);
 
 #endif
