@@ -3,6 +3,9 @@
 #include <kernel/schedule.h>
 #include <kernel/system.h>
 #include <kernel/proc.h>
+#include <kernel/hw_info.h>
+#include <mm/kalloc.h>
+#include <sysinfo.h>
 #include <vfs.h>
 #include <syscalls.h>
 #include <kstring.h>
@@ -273,6 +276,14 @@ static void sys_proc_get_cmd(char* cmd, int32_t sz) {
 	strncpy(cmd, CS(_current_proc->cmd), sz);
 }
 
+static void	sys_get_sysinfo(sysinfo_t* info) {
+	if(info == NULL)
+		return;
+
+	info->free_mem = get_free_mem_size();
+	info->total_mem = _hw_info.phy_mem_size;
+}
+
 void svc_handler(int32_t code, int32_t arg0, int32_t arg1, int32_t arg2, context_t* ctx, int32_t processor_mode) {
 	(void)arg1;
 	(void)arg2;
@@ -386,6 +397,12 @@ void svc_handler(int32_t code, int32_t arg0, int32_t arg1, int32_t arg2, context
 		return;
 	case SYS_PROC_GET_CMD: 
 		sys_proc_get_cmd((char*)arg0, arg1);
+		return;
+	case SYS_GET_SYSINFO:
+		sys_get_sysinfo((sysinfo_t*)arg0);
+		return;
+	case SYS_GET_PROCS: 
+		ctx->gpr[0] = (int32_t)get_procs((int32_t*)arg0);
 		return;
 	}
 	printf("pid:%d, code(%d) error!\n", _current_proc->pid, code);

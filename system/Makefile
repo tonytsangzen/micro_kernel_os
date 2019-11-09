@@ -51,6 +51,10 @@ include initfs/init/build.mk
 include initfs/shell/build.mk
 include initfs/pwd/build.mk
 include initfs/cat/build.mk
+include initfs/ps/build.mk
+include initfs/echo/build.mk
+include initfs/ls/build.mk
+include initfs/dump/build.mk
 
 mkdirs:
 	mkdir -p ${TARGET_DIR}/initfs

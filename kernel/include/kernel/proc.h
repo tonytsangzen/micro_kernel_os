@@ -6,6 +6,7 @@
 #include <mm/trunkmalloc.h>
 #include <kernel/kfile.h>
 #include <tstr.h>
+#include <procinfo.h>
 
 enum {
 	UNUSED = 0,
@@ -39,7 +40,8 @@ typedef struct st_proc {
 	int32_t pid;
 	int32_t father_pid;
 	int32_t state;
-	context_t ctx;
+	int32_t owner;
+	uint32_t start_sec;
 
 	uint32_t sleep_event;
 	int32_t wait_pid;
@@ -52,6 +54,8 @@ typedef struct st_proc {
 
 	tstr_t* cmd;
 	tstr_t* cwd;
+
+	context_t ctx;
 
 	struct st_proc* prev;
 	struct st_proc* next;
@@ -81,6 +85,8 @@ extern proc_t* kfork(void);
 
 extern int32_t proc_send_msg(int32_t to_pid, void* data, uint32_t size);
 extern void*   proc_get_msg(int32_t *pid, uint32_t* size);
+
+extern procinfo_t* get_procs(int32_t* num);
 
 #define PROC_MAX 128
 

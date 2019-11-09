@@ -75,13 +75,14 @@ static void free_initrd(void) {
 }
 
 static void load_init(void) {
+	const char* prog = "init";
 	int32_t sz;
-	const char* elf = ramfs_read(&_initfs, "init", &sz);
+	const char* elf = ramfs_read(&_initfs, prog, &sz);
 	if(elf != NULL) {
 		proc_t *proc = proc_create();
+		tstr_cpy(proc->cmd, prog);
 		proc_load_elf(proc, elf, sz);
 	}
-
 	free_initrd();
 }
 

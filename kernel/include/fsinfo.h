@@ -33,6 +33,7 @@ typedef struct {
 	char name[FS_NODE_NAME_MAX];
 	uint32_t type;
 	uint32_t size;
+	uint32_t owner;
 	int32_t mount_id;
 
 	uint32_t data;

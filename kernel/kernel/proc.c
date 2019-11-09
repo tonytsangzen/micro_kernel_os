@@ -491,3 +491,47 @@ void* proc_get_msg(int32_t *pid, uint32_t* size) {
 	return ret;
 }
 
+static int32_t get_procs_num(void) {
+	int32_t res = 0;
+	int32_t i;
+	for(i=0; i<PROC_MAX; i++) {
+		if(_proc_table[i].state != UNUSED &&
+				(_current_proc->owner == 0 ||
+				 _proc_table[i].owner == _current_proc->owner)) {
+			res++;
+		}
+	}
+	return res;
+}
+
+procinfo_t* get_procs(int32_t *num) {
+	*num = get_procs_num();
+	if(*num == 0)
+		return NULL;
+
+	/*need to be freed later used!*/
+	procinfo_t* procs = (procinfo_t*)proc_malloc(sizeof(procinfo_t)*(*num));
+	if(procs == NULL)
+		return NULL;
+
+	int32_t j = 0;
+	int32_t i;
+	for(i=0; i<PROC_MAX && j<(*num); i++) {
+		if(_proc_table[i].state != UNUSED && 
+				(_current_proc->owner == 0 ||
+				 _proc_table[i].owner == _current_proc->owner)) {
+			procs[j].pid = _proc_table[i].pid;	
+			procs[j].father_pid = _proc_table[i].father_pid;	
+			procs[j].owner = _proc_table[i].owner;	
+			procs[j].state = _proc_table[i].state;
+			procs[j].start_sec = _proc_table[i].start_sec;	
+			procs[j].heap_size = _proc_table[i].space->heap_size;	
+			strncpy(procs[j].cmd, CS(_proc_table[i].cmd), PROC_INFO_CMD_MAX-1);
+			j++;
+		}
+	}
+
+	*num = j;
+	return procs;
+}
+
