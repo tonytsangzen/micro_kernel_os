@@ -17,29 +17,34 @@ int main(int argc, char** argv) {
 	(void)argc;
 	(void)argv;
 
+	uprintf("\n------ mkos -------\n");
 	int pid = fork();
 	if(pid == 0) {
 		exec_initfs("initfsd");
 	}
 	vfs_mount_wait("/sbin", pid);
+	uprintf("initfs mounted to /sbin.\n");
 
 	pid = fork();
 	if(pid == 0) {
 		exec("/sbin/nulld");
 	}
 	vfs_mount_wait("/dev/null", pid);
+	uprintf("device null mounted to /dev/null.\n");
 
 	pid = fork();
 	if(pid == 0) {
 		exec("/sbin/ttyd");
 	}
 	vfs_mount_wait("/dev/tty0", pid);
+	uprintf("device uart mounted to /dev/tty0.\n");
 
 	pid = fork();
 	if(pid == 0) {
 		exec("/sbin/keybd");
 	}
 	vfs_mount_wait("/dev/keyb0", pid);
+	uprintf("device keyboard mounted to /dev/keyb.\n\n");
 
 	pid = fork();
 	if(pid == 0) {

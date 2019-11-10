@@ -3,6 +3,8 @@
 #include <unistd.h>
 #include <string.h>
 #include <tstr.h>
+#include <svc_call.h>
+#include <dev/device.h>
 
 static void outc(char c, void* p) {
 	tstr_t* buf = (tstr_t*)p;
@@ -26,6 +28,16 @@ void printf(const char *format, ...) {
 	v_printf(outc, buf, format, ap);
 	va_end(ap);
 	write(1, buf->items, buf->size);
+	tstr_free(buf);
+}
+
+void uprintf(const char *format, ...) {
+	va_list ap;
+	tstr_t* buf = tstr_new("");
+	va_start(ap, format);
+	v_printf(outc, buf, format, ap);
+	va_end(ap);
+	svc_call3(SYS_DEV_WRITE, DEV_UART0, (int32_t)buf->items, (int32_t)buf->size);
 	tstr_free(buf);
 }
 
