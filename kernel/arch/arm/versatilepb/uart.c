@@ -19,10 +19,13 @@ int32_t uart_init(void) {
 	return 0;
 }
 
-static void uart_basic_trans(char c) {
+static inline void uart_basic_trans(char c) {
 	/* wait until transmit buffer is full */
 	while (UART0[UART_FLAGS] & UART_TRANSMIT);
+
 	/* write the character */
+	if(c == '\r')
+		c = '\n';
 	put8(UART0+UART_DATA, c);
 }
 
@@ -35,12 +38,14 @@ int32_t uart_inputch(dev_t* dev, int32_t loop) {
 	return 0;
 }
 
-int32_t uart_outputch(dev_t* dev, int32_t c) {
+int32_t uart_write(dev_t* dev, const void* data, uint32_t size) {
 	(void)dev;
-	if(c == '\r')
-		c = '\n';
-	uart_basic_trans(c);
-	return 0;
+	int32_t i;
+	for(i=0; i<(int32_t)size; i++) {
+		char c = ((char*)data)[i];
+		uart_basic_trans(c);
+	}
+	return i;
 }
 
 int32_t uart_ready(dev_t* dev) {

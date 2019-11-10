@@ -20,8 +20,8 @@ int main(int argc, char** argv) {
 	}
 
 	while(1) {
-		char buf[128];
-		int sz = read(fd, buf, 128);
+		char buf[1024];
+		int sz = read(fd, buf, 1024);
 		if(sz == 0)
 			break;
 

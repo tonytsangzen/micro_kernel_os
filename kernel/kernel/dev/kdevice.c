@@ -21,18 +21,6 @@ static int32_t char_dev_read(dev_t* dev, void* data, uint32_t size) {
 	return i;
 }
 
-static int32_t char_dev_write(dev_t* dev, const void* data, uint32_t size) {
-	if(dev == NULL || dev->outputch == NULL)
-		return -1;
-
-	int32_t i;
-	for(i=0; i<(int32_t)size; i++) {
-		char c = ((char*)data)[i];
-		dev->outputch(dev, c);
-	}
-	return i;
-}
-
 void dev_init(void) {
 	uart_init();
 	keyb_init();
@@ -44,16 +32,14 @@ void dev_init(void) {
 	dev->type = DEV_TYPE_CHAR;
 	dev->ready = uart_ready;
 	dev->inputch = uart_inputch;
-	dev->outputch = uart_outputch;
 	dev->read = char_dev_read;
-	dev->write = char_dev_write;
+	dev->write = uart_write;
 
 	dev = &_devs[DEV_KEYB];
 	memset(dev, 0, sizeof(dev_t));
 	dev->type = DEV_TYPE_CHAR;
 	dev->inputch = keyb_inputch;
 	dev->read = char_dev_read;
-	dev->write = char_dev_write;
 
 	fb_dev_init(RES_1024x768);
 	dev = &_devs[DEV_FRAMEBUFFER];
