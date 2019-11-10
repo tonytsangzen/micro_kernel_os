@@ -1,4 +1,5 @@
 #include <dev/kdevice.h>
+#include <dev/framebuffer.h>
 #include <mm/mmu.h>
 #include <mm/kalloc.h>
 #include <mm/kmalloc.h>
@@ -31,6 +32,9 @@ static void set_kernel_init_vm(page_dir_entry_t* vm) {
 	map_pages(vm, MMIO_BASE, _hw_info.phy_mmio_base, _hw_info.phy_mmio_base + _hw_info.mmio_size, AP_RW_D);
 	//map initrd as read only for all proc
 	map_pages(vm, (uint32_t)_initrd, V2P(_initrd), V2P(_initrd)+_initrd_size, AP_RW_R); 
+
+  uint32_t fb_base = (uint32_t)V2P(_framebuffer_base); //framebuffer addr
+  map_pages(vm, fb_base, fb_base, fb_base+fb_dev_get_size(), AP_RW_D);
 }
 
 void set_kernel_vm(page_dir_entry_t* vm) {
@@ -103,7 +107,7 @@ void _kernel_entry_c(context_t* ctx) {
 
 	irq_init();
 
-	char_dev_init();
+	dev_init();
 
 	fs_init();
 

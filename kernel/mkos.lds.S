@@ -27,10 +27,16 @@ SECTIONS
 	. = ALIGN(8);
 	. = . + 0x1000;
 	_irq_stack = .;
+
 	. = . + 0x10000;
 	_abt_stack = .;
+
 	. = . + 0x10000;
 	_svc_stack = .;
+
+	. = ALIGN(8);
+	PROVIDE(_framebuffer_base = .); 
+	. += framebuffer_size;
 
 	. = ALIGN(4096);
 	_initrd = .;

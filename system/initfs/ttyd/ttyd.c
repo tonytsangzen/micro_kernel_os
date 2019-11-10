@@ -10,7 +10,7 @@
 #include <vdevice.h>
 #include <ramfs.h>
 #include <svc_call.h>
-#include <dev/kdevicetype.h>
+#include <dev/device.h>
 
 static int mount(fsinfo_t* mnt_point, mount_info_t* mnt_info, void* p) {
 	(void)p;
@@ -37,15 +37,15 @@ static int tty_mount(fsinfo_t* info, mount_info_t* mnt_info, void* p) {
 static int tty_read(fsinfo_t* info, void* buf, int size, int offset, void* p) {
 	(void)offset;
 	(void)p;
-	int res = svc_call3(SYS_CHAR_DEV_READ, (int32_t)info->data, (int32_t)buf, size);
+	int res = svc_call3(SYS_DEV_READ, (int32_t)info->data, (int32_t)buf, size);
 	return res;	
 }
 
 static int tty_write(fsinfo_t* info, const void* buf, int size, int offset, void* p) {
 	(void)offset;
 	(void)p;
-	int res = svc_call3(SYS_CHAR_DEV_WRITE, (int32_t)info->data, (int32_t)buf, size);
-	return res;	
+	int res = svc_call3(SYS_DEV_WRITE, (int32_t)info->data, (int32_t)buf, size);
+	return res;
 }
 
 static int tty_umount(fsinfo_t* info, void* p) {

@@ -1,29 +1,34 @@
-#include <dev/kdevicetype.h>
+#include <dev/device.h>
 #include <dev/kdevice.h>
 #include <dev/uart_basic.h>
+#include <dev/framebuffer.h>
 #include <kstring.h>
 
-static char_dev_t _char_devs[DEV_NUM];
+static dev_t _devs[DEV_NUM];
 
-void char_dev_init(void) {
-	char_dev_t* dev;
-
-	uart_basic_init();
-
-	dev = &_char_devs[DEV_UART0];
-	memset(dev, 0, sizeof(char_dev_t));
-	dev->ready = uart_basic_ready_to_recv;
-	dev->read = uart_basic_recv;
-	dev->write = uart_basic_putch;
+static int32_t uart_inputch(dev_t* dev, int32_t loop) {
+	if(dev == NULL)
+		return -1;
+	char c = uart_basic_recv();
+	charbuf_push(&dev->buffer, c, loop);
+	return 0;
 }
 
-char_dev_t* get_char_dev(uint32_t type) {
-	if(type >= DEV_NUM)
-		return NULL;
-	return &_char_devs[type];
+static int32_t uart_outputch(dev_t* dev, int32_t c) {
+	(void)dev;
+	uart_basic_putch(c);
+	return 0;
 }
 
-int32_t char_dev_read(char_dev_t* dev, void* data, uint32_t size) {
+static int32_t uart_ready(dev_t* dev) {
+	(void)dev;
+	return uart_basic_ready_to_recv();
+}
+
+static int32_t char_dev_read(dev_t* dev, void* data, uint32_t size) {
+	if(dev == NULL || dev->write == NULL)
+		return -1;
+
 	int32_t i;
 	for(i=0; i<(int32_t)size; i++) {
 		char c;
@@ -34,12 +39,67 @@ int32_t char_dev_read(char_dev_t* dev, void* data, uint32_t size) {
 	return i;
 }
 
-int32_t char_dev_write(char_dev_t* dev, void* data, uint32_t size) {
+static int32_t char_dev_write(dev_t* dev, const void* data, uint32_t size) {
+	if(dev == NULL || dev->outputch == NULL)
+		return -1;
+
 	int32_t i;
 	for(i=0; i<(int32_t)size; i++) {
 		char c = ((char*)data)[i];
-		dev->write(c);
+		dev->outputch(dev, c);
 	}
 	return i;
+}
+
+void dev_init(void) {
+	uart_basic_init();
+
+	dev_t* dev;
+
+	dev = &_devs[DEV_UART0];
+	memset(dev, 0, sizeof(dev_t));
+	dev->type = DEV_TYPE_CHAR;
+	dev->ready = uart_ready;
+	dev->inputch = uart_inputch;
+	dev->outputch = uart_outputch;
+	dev->read = char_dev_read;
+	dev->write = char_dev_write;
+
+	fb_dev_init(RES_1024x768);
+	dev = &_devs[DEV_FRAMEBUFFER];
+	memset(dev, 0, sizeof(dev_t));
+	dev->type = DEV_TYPE_MEM;
+	dev->write = fb_dev_write;
+	dev->op = fb_dev_op;
+}
+
+dev_t* get_dev(uint32_t type) {
+	if(type >= DEV_NUM)
+		return NULL;
+	return &_devs[type];
+}
+
+int32_t dev_op(dev_t* dev, int32_t opcode, int32_t arg) {
+	if(dev->op == NULL)
+		return -1;
+	return dev->op(dev, opcode, arg);
+}
+
+int32_t dev_ready(dev_t* dev) {
+	if(dev->ready == NULL)
+		return -1;
+	return dev->ready(dev);
+}
+
+int32_t dev_read(dev_t* dev, void* data, uint32_t size) {
+	if(dev->read == NULL)
+		return -1;
+	return dev->read(dev, data, size);
+}
+
+int32_t dev_write(dev_t* dev, void* data, uint32_t size) {
+	if(dev->write == NULL)
+		return -1;
+	return dev->write(dev, data, size);
 }
 

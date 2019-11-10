@@ -18,21 +18,28 @@ static void sys_exit(context_t* ctx, int32_t res) {
 	proc_exit(ctx, _current_proc, res);
 }
 
-static int32_t sys_char_dev_write(uint32_t type, void* data, uint32_t sz) {
-	char_dev_t* dev = get_char_dev(type);
+static int32_t sys_dev_write(uint32_t type, void* data, uint32_t sz) {
+	dev_t* dev = get_dev(type);
 	if(dev == NULL)
 		return -1;
-	return char_dev_write(dev, data, sz);
+	return dev_write(dev, data, sz);
 }
 
-static void sys_char_dev_read(context_t* ctx, uint32_t type, void* data, uint32_t sz) {
-	char_dev_t* dev = get_char_dev(type);
+static int32_t sys_dev_op(uint32_t type, int32_t opcode, int32_t arg) {
+	dev_t* dev = get_dev(type);
+	if(dev == NULL)
+		return -1;
+	return dev_op(dev, opcode, arg);
+}
+
+static void sys_dev_read(context_t* ctx, uint32_t type, void* data, uint32_t sz) {
+	dev_t* dev = get_dev(type);
 	if(dev == NULL) {
 		ctx->gpr[0] = -1;
 		return;
 	}
 
-	int32_t rd = char_dev_read(dev, data, sz);
+	int32_t rd = dev_read(dev, data, sz);
 	if(rd > 0) {
 		ctx->gpr[0] = rd;
 		return;
@@ -293,11 +300,14 @@ void svc_handler(int32_t code, int32_t arg0, int32_t arg1, int32_t arg2, context
 	__irq_disable();
 
 	switch(code) {
-	case SYS_CHAR_DEV_READ:
-		sys_char_dev_read(ctx, arg0, (void*)arg1, arg2);		
+	case SYS_DEV_READ:
+		sys_dev_read(ctx, arg0, (void*)arg1, arg2);		
 		return;
-	case SYS_CHAR_DEV_WRITE:
-		ctx->gpr[0] = sys_char_dev_write(arg0, (void*)arg1, arg2);		
+	case SYS_DEV_WRITE:
+		ctx->gpr[0] = sys_dev_write(arg0, (void*)arg1, arg2);		
+		return;
+	case SYS_DEV_OP:
+		ctx->gpr[0] = sys_dev_op(arg0, arg1, arg2);
 		return;
 	case SYS_INITRD:
 		ctx->gpr[0] = (int32_t)_initrd;

@@ -37,6 +37,7 @@ ARCH_OBJS = \
 	${ARCH_DIR}/${ARCH}/hw_info.o \
 	${ARCH_DIR}/${ARCH}/uart_basic.o \
 	${ARCH_DIR}/${ARCH}/gic.o \
+	${ARCH_DIR}/${ARCH}/framebuffer.o \
 	${ARCH_DIR}/${ARCH}/timer.o 
 
 LIB_DIR = lib

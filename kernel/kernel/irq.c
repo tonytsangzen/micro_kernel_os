@@ -1,7 +1,6 @@
 #include <dev/gic.h>
 #include <dev/timer.h>
 #include <dev/uart_basic.h>
-#include <dev/kdevicetype.h>
 #include <dev/kdevice.h>
 #include <kernel/irq.h>
 #include <kernel/system.h>
@@ -12,13 +11,12 @@
 
 static void uart_handler(void) {
 	int32_t rd = 0;
-	char_dev_t* dev = get_char_dev(DEV_UART0);
+	dev_t* dev = get_dev(DEV_UART0);
 	while(1) {
-		if(dev->ready() != 0)
+		if(dev->inputch == NULL || dev_ready(dev) != 0)
 			break;
 		rd++;
-		char c = dev->read();
-		charbuf_push(&dev->buffer, c, 1);
+		dev->inputch(dev, 1);
 	}
 	if(rd > 0)
 		proc_wakeup((uint32_t)dev);

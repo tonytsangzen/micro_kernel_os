@@ -10,7 +10,7 @@
 #include <vdevice.h>
 #include <ramfs.h>
 #include <svc_call.h>
-#include <dev/kdevicetype.h>
+#include <dev/device.h>
 
 static int mount(fsinfo_t* mnt_point, mount_info_t* mnt_info, void* p) {
 	(void)p;
