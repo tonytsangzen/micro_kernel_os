@@ -77,7 +77,7 @@ static int cd(const char* dir) {
 		}
 	}
 	else if(dir[0] == '/') {
-		strncpy(cwd, dir, FS_FULL_NAME_MAX);
+		strcpy(cwd, dir);
 	}
 	else {
 		int len = strlen(cwd);
@@ -199,6 +199,7 @@ static int32_t find_exec(char* fname, char* cmd) {
 	while(1) {
 		if(paths[i] == 0 || paths[i] == ':') {
 			strncpy(path, paths, i);
+			path[i] = 0;
 			if(path[0] != 0) {
 				snprintf(fname, FS_FULL_NAME_MAX-1, "%s/%s", path, cmd);
 				if(vfs_get(fname, &info) == 0) {

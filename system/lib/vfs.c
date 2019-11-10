@@ -2,13 +2,33 @@
 #include <string.h>
 #include <svc_call.h>
 #include <unistd.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <tstr.h>
 
 int vfs_new_node(fsinfo_t* info) {
 	return svc_call1(SYS_VFS_NEW_NODE, (int32_t)info);
 }
 
 int vfs_get(const char* fname, fsinfo_t* info) {
-	return svc_call2(SYS_VFS_GET, (int32_t)fname, (int32_t)info);
+	tstr_t* fullname = tstr_new("");
+	if(fname[0] == '/') {
+		tstr_cpy(fullname, fname);
+	}
+	else {
+		char* pwd = (char*)malloc(FS_FULL_NAME_MAX);
+		getcwd(pwd, FS_FULL_NAME_MAX-1);
+		tstr_cpy(fullname, pwd);
+		free(pwd);
+		if(pwd[1] != 0)
+			tstr_addc(fullname, '/');
+		tstr_add(fullname, fname);
+	}
+
+	fname = CS(fullname);
+	int res = svc_call2(SYS_VFS_GET, (int32_t)fname, (int32_t)info);
+	tstr_free(fullname);
+	return res;
 }
 
 int vfs_first_kid(fsinfo_t* info, fsinfo_t* ret) {

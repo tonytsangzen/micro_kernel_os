@@ -9,24 +9,22 @@ int main(int argc, char* argv[]) {
 	(void)argc;
 	(void)argv;
 
+	const char* r;
 	char cwd[FS_FULL_NAME_MAX];
-	getcwd(cwd, FS_FULL_NAME_MAX);
 
-	
+	if(argc >= 2)
+		r = argv[1];
+	else 
+		r = getcwd(cwd, FS_FULL_NAME_MAX);
+
 	fsinfo_t info;
-	if(vfs_get(cwd, &info) != 0)
+	if(vfs_get(r, &info) != 0)
 		return -1;
 	if(vfs_first_kid(&info, &info) != 0)
 		return -1;
 
-	char full[FS_FULL_NAME_MAX];
 	printf("  NAME                     TYPE  OWNER  SIZE\n");
 	while(1) {
-		if(strcmp(cwd, "/") != 0)
-			snprintf(full, FS_FULL_NAME_MAX-1, "%s/%s", cwd, info.name);
-		else
-			snprintf(full, FS_FULL_NAME_MAX-1, "/%s", info.name);
-
 		if(info.type == FS_TYPE_FILE)
 			printf("  %24s  f    %4d   %dK\n", info.name, info.owner, info.size/1024);
 		else if(info.type == FS_TYPE_DIR)
