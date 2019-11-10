@@ -19,6 +19,22 @@ CFLAGS = -Wstrict-prototypes \
 LDFLAGS = -lc
 
 LIB_DIR = lib
+GRAPH_OBJS =	$(LIB_DIR)/graph/graph.o \
+	$(LIB_DIR)/graph/font.o \
+	$(LIB_DIR)/graph/font4x6.o \
+	$(LIB_DIR)/graph/font5x12.o \
+	$(LIB_DIR)/graph/font6x8.o \
+	$(LIB_DIR)/graph/font7x9.o \
+	$(LIB_DIR)/graph/font8x8.o \
+	$(LIB_DIR)/graph/font9x8.o \
+	$(LIB_DIR)/graph/font8x10.o \
+	$(LIB_DIR)/graph/font8x16.o \
+	$(LIB_DIR)/graph/font9x16.o \
+	$(LIB_DIR)/graph/font12x16.o \
+	$(LIB_DIR)/graph/font10x20.o \
+	$(LIB_DIR)/graph/font12x24.o \
+	$(LIB_DIR)/graph/font16x32.o
+
 LIB_OBJS = $(LIB_DIR)/svc_call.o \
 	$(LIB_DIR)/cmain.o \
 	$(LIB_DIR)/trunk.o \
@@ -34,7 +50,8 @@ LIB_OBJS = $(LIB_DIR)/svc_call.o \
 	$(LIB_DIR)/proto.o \
 	$(LIB_DIR)/stdio.o \
 	$(LIB_DIR)/sys/wait.o \
-	$(LIB_DIR)/debug.o
+	$(LIB_DIR)/debug.o \
+	$(GRAPH_OBJS)
 
 CLEAN = $(LIB_OBJS)
 

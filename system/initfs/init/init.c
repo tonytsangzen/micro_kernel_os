@@ -1,15 +1,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <dev/device.h>
-#include <dev/fbinfo.h>
 #include <sys/wait.h>
 #include <debug.h>
 #include <cmain.h>
 #include <string.h>
 #include <fcntl.h>
 #include <vfs.h>
-#include <svc_call.h>
 
 static void init_stdio(void) {
 	int fd = open("/dev/tty0", 0);
@@ -48,14 +45,8 @@ int main(int argc, char** argv) {
 		init_stdio();
 		exec("/sbin/shell");
 	}
-	
-	while(1) {
-	uint32_t sz = 1024*768*4;
-	void* buf = malloc(sz);
-	memset(buf, 0xff, sz);
-	svc_call3(SYS_DEV_WRITE, DEV_FRAMEBUFFER, (int32_t)buf, sz);
-	free(buf);
 
+	while(1) {
 		sleep(0);
 	}
 	return 0;

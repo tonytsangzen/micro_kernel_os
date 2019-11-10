@@ -82,6 +82,6 @@ int32_t fb_dev_write(dev_t* dev, const void* buf, uint32_t size) {
 	uint32_t sz = (_fbinfo.depth/8) * _fbinfo.width * _fbinfo.height;
 	if(size > sz)
 		size = sz;
-	memcpy((void*)_fbinfo.pointer, buf, size);
+	memcpy((void*)_framebuffer_base, buf, size);
 	return (int32_t)size;
 }
