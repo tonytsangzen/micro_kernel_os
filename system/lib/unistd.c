@@ -146,14 +146,19 @@ int exec(const char* cmd_line) {
 	}
 	tstr_addc(cmd, 0);
 
-	if(vfs_get(CS(cmd), &info) != 0 || info.size == 0)
+	if(vfs_get(CS(cmd), &info) != 0 || info.size == 0) {
+		tstr_free(cmd);
 		return -1;
+	}
 
 	void* buf = malloc(info.size);
-	if(buf == NULL)
+	if(buf == NULL) {
+		tstr_free(cmd);
 		return -1;
+	}
 
 	int fd = open(CS(cmd), 0);
+	tstr_free(cmd);
 	int sz = read(fd, buf, info.size);
 	if(sz != (int)info.size) {
 		free(buf);
