@@ -1,6 +1,6 @@
 #include <dev/gic.h>
 #include <dev/timer.h>
-#include <dev/uart_basic.h>
+#include <dev/uart.h>
 #include <dev/kdevice.h>
 #include <kernel/irq.h>
 #include <kernel/system.h>
@@ -22,6 +22,14 @@ static void uart_handler(void) {
 		proc_wakeup((uint32_t)dev);
 }
 
+static void keyb_handler(void) {
+	dev_t* dev = get_dev(DEV_KEYB);
+
+	if(dev->inputch != NULL)
+		dev->inputch(dev, 1);
+	proc_wakeup((uint32_t)dev);
+}
+
 void irq_handler(context_t* ctx) {
 	__irq_disable();
 
@@ -34,6 +42,10 @@ void irq_handler(context_t* ctx) {
 
 	if((irqs & IRQ_UART0) != 0) {
 		uart_handler();
+	}
+
+	if((irqs & IRQ_KEY) != 0) {
+		keyb_handler();
 	}
 }
 

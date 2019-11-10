@@ -10,6 +10,8 @@
 #include <tstr.h>
 #include <ramfs.h>
 
+int errno = ENONE;
+
 int getpid(void) {
 	return svc_call0(SYS_GET_PID);
 }
@@ -24,11 +26,23 @@ unsigned int sleep(unsigned int seconds) {
 	return 0;
 }
 
+static int read_pipe(fsinfo_t* info, void* buf, uint32_t size) {
+	while(1) {
+		int res = svc_call3(SYS_PIPE_READ, (int32_t)info, (int32_t)buf, (int32_t)size);
+		if(res != 0)
+			return res;
+		sleep(0);
+	}
+	return 0;
+}
+
 int read(int fd, void* buf, uint32_t size) {
 	fsinfo_t info;
-
 	if(vfs_get_by_fd(fd, &info) != 0)
 		return -1;
+
+	if(info.type == FS_TYPE_PIPE)
+		return read_pipe(&info, buf, size);
 	
 	mount_t mount;
 	if(vfs_get_mount(&info, &mount) != 0)
@@ -63,12 +77,24 @@ int read(int fd, void* buf, uint32_t size) {
 	return res;
 }
 
+static int write_pipe(fsinfo_t* info, const void* buf, uint32_t size) {
+	while(1) {
+		int res = svc_call3(SYS_PIPE_WRITE, (int32_t)info, (int32_t)buf, (int32_t)size);
+		if(res != 0)
+			return res;
+		sleep(0);
+	}
+	return 0;
+}
+
 int write(int fd, const void* buf, uint32_t size) {
 	fsinfo_t info;
-
 	if(vfs_get_by_fd(fd, &info) != 0)
 		return -1;
 	
+	if(info.type == FS_TYPE_PIPE) 
+		return write_pipe(&info, buf, size);
+
 	mount_t mount;
 	if(vfs_get_mount(&info, &mount) != 0)
 		return -1;
@@ -97,7 +123,6 @@ int write(int fd, const void* buf, uint32_t size) {
 	}
 	proto_clear(&in);
 	proto_clear(&out);
-
 	return res;
 }
 
@@ -151,4 +176,12 @@ int chdir(const char* path) {
 
 int dup2(int from, int to) {
 	return vfs_dup2(from, to);
+}
+
+int dup(int from) {
+	return vfs_dup(from);
+}
+
+int pipe(int fds[2]) {
+	return svc_call2(SYS_PIPE_OPEN, (int32_t)&fds[0], (int32_t)&fds[1]);
 }

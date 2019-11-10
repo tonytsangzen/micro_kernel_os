@@ -5,11 +5,13 @@
 #include <kernel/proc.h>
 #include <kernel/hw_info.h>
 #include <mm/kalloc.h>
+#include <mm/kmalloc.h>
 #include <sysinfo.h>
 #include <vfs.h>
 #include <syscalls.h>
 #include <kstring.h>
 #include <kprintf.h>
+#include <buffer.h>
 #include <dev/kdevice.h>
 
 static void sys_exit(context_t* ctx, int32_t res) {
@@ -40,10 +42,9 @@ static void sys_dev_read(context_t* ctx, uint32_t type, void* data, uint32_t sz)
 	}
 
 	int32_t rd = dev_read(dev, data, sz);
-	if(rd > 0) {
-		ctx->gpr[0] = rd;
+	ctx->gpr[0] = rd;
+	if(rd != 0)
 		return;
-	}
 
 	proc_t* proc = _current_proc;
 	proc_sleep_on(ctx, (uint32_t)dev);
@@ -291,6 +292,72 @@ static void	sys_get_sysinfo(sysinfo_t* info) {
 	info->total_mem = _hw_info.phy_mem_size;
 }
 
+static int32_t sys_pipe_open(int32_t* fd0, int32_t* fd1) {
+	if(fd0 == NULL || fd1 == NULL)
+		return -1;
+
+	vfs_node_t* node = vfs_new_node();
+	if(node == NULL)
+		return -1;
+	node->fsinfo.type = FS_TYPE_PIPE;
+
+	int fd = vfs_open(_current_proc->pid, node, 1);
+	if(fd < 0) {
+		kfree(node);
+		return -1;
+	}
+	*fd0 = fd;
+	
+	fd = vfs_open(_current_proc->pid, node, 1);
+	if(fd < 0) {
+		vfs_close(_current_proc, *fd0);
+		kfree(node);
+		return -1;
+	}
+	*fd1 = fd;
+
+	buffer_t* buf = (buffer_t*)kmalloc(sizeof(buffer_t));
+	memset(buf, 0, sizeof(buffer_t));
+	node->fsinfo.data = (int32_t)buf;
+	return 0;
+}
+
+static int32_t sys_pipe_write(fsinfo_t* info, const void* data, uint32_t sz) {
+	if(info == NULL || info->type != FS_TYPE_PIPE)
+		return -1;
+
+	buffer_t* buffer = (buffer_t*)info->data;
+	if(buffer == NULL)
+		return -1;
+
+	int32_t res = buffer_write(buffer, data, sz);
+	if(res > 0)
+		return res;
+
+	vfs_node_t* node = (vfs_node_t*)info->node;
+	if(node->refs >= 2)
+		return 0;
+	return -1; //closed
+}
+
+static int32_t sys_pipe_read(fsinfo_t* info, void* data, uint32_t sz) {
+	if(info == NULL || info->type != FS_TYPE_PIPE)
+		return -1;
+
+	buffer_t* buffer = (buffer_t*)info->data;
+	if(buffer == NULL)
+		return -1;
+
+	int32_t res =  buffer_read(buffer, data, sz);
+	if(res > 0)
+		return res;
+
+	vfs_node_t* node = (vfs_node_t*)info->node;
+	if(node->refs >= 2)
+		return 0;
+	return -1; //closed.
+}
+
 void svc_handler(int32_t code, int32_t arg0, int32_t arg1, int32_t arg2, context_t* ctx, int32_t processor_mode) {
 	(void)arg1;
 	(void)arg2;
@@ -393,6 +460,9 @@ void svc_handler(int32_t code, int32_t arg0, int32_t arg1, int32_t arg2, context
 	case SYS_VFS_PROC_GET_BY_FD:
 		ctx->gpr[0] = sys_vfs_get_by_fd(arg0, (fsinfo_t*)arg1);
 		return;
+	case SYS_VFS_PROC_DUP:
+		ctx->gpr[0] = vfs_dup(arg0);
+		return;
 	case SYS_VFS_PROC_DUP2:
 		ctx->gpr[0] = vfs_dup2(arg0, arg1);
 		return;
@@ -413,6 +483,15 @@ void svc_handler(int32_t code, int32_t arg0, int32_t arg1, int32_t arg2, context
 		return;
 	case SYS_GET_PROCS: 
 		ctx->gpr[0] = (int32_t)get_procs((int32_t*)arg0);
+		return;
+	case SYS_PIPE_OPEN: 
+		ctx->gpr[0] = sys_pipe_open((int32_t*)arg0, (int32_t*)arg1);
+		return;
+	case SYS_PIPE_READ: 
+		ctx->gpr[0] = sys_pipe_read((fsinfo_t*)arg0, (void*)arg1, (int32_t)arg2);
+		return;
+	case SYS_PIPE_WRITE: 
+		ctx->gpr[0] = sys_pipe_write((fsinfo_t*)arg0, (const void*)arg1, (int32_t)arg2);
 		return;
 	}
 	printf("pid:%d, code(%d) error!\n", _current_proc->pid, code);

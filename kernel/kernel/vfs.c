@@ -3,6 +3,7 @@
 #include <mm/kmalloc.h>
 #include <kernel/proc.h>
 #include <kstring.h>
+#include <buffer.h>
 
 static vfs_node_t* _vfs_root = NULL;
 static mount_t _vfs_mounts[FS_MOUNT_MAX];
@@ -291,7 +292,31 @@ void vfs_close(proc_t* proc, int32_t fd) {
 		node->refs--;
 	if(file->wr != 0 && node->refs_w > 0)
 		node->refs_w--;
+
+	if(node->fsinfo.type == FS_TYPE_PIPE && node->refs <= 0) {
+		buffer_t* buffer = (buffer_t*)node->fsinfo.data;
+		kfree(buffer);
+		kfree(node);
+	}
 	memset(file, 0, sizeof(kfile_t));
+}
+
+int32_t vfs_dup(int32_t from) {
+	if(from < 0 || from > PROC_FILE_MAX)
+		return -1;
+	int32_t to = get_free_fd(_current_proc);
+	if(to < 0)
+		return -1;
+
+	kfile_t *f = &_current_proc->space->files[from]; 
+	vfs_node_t* node = 	(vfs_node_t*)f->node;
+	if(node != NULL) {
+		memcpy(&_current_proc->space->files[to], f, sizeof(kfile_t));
+		node->refs++;
+		if(f->wr != 0)
+			node->refs_w++;
+	}
+	return to;
 }
 
 int32_t vfs_dup2(int32_t from, int32_t to) {
@@ -301,7 +326,8 @@ int32_t vfs_dup2(int32_t from, int32_t to) {
 	if(from < 0 || from > PROC_FILE_MAX ||
 			to < 0 || to > PROC_FILE_MAX)
 		return -1;
-	vfs_close(_current_proc, to);	
+
+	vfs_close(_current_proc, to);
 
 	kfile_t *f = &_current_proc->space->files[from]; 
 	vfs_node_t* node = 	(vfs_node_t*)f->node;

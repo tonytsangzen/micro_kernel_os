@@ -50,7 +50,7 @@ int main(int argc, char* argv[]) {
 			}
 		}
 		else {
-			if(i != 0) {
+			if(i > 0) {
 				printf("%s", out);
 				str[i] = 0;
 				for(; i< 16; ++i)

@@ -2,6 +2,7 @@
 #define UNISTD_H
 
 #include <stdint.h>
+#include <errno.h>
 
 int getpid(void);
 int fork(void);
@@ -17,5 +18,8 @@ char* getcwd(char* buf, uint32_t size);
 int chdir(const char* path);
 
 int dup2(int from, int to);
+int dup(int from);
+
+int pipe(int fds[2]);
 
 #endif

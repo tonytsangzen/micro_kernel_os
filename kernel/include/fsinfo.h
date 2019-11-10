@@ -11,6 +11,7 @@
 enum {
 	FS_TYPE_DIR = 0,
 	FS_TYPE_FILE,
+	FS_TYPE_PIPE,
 	FS_TYPE_DEV
 };
 

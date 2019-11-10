@@ -22,9 +22,11 @@ int main(int argc, char** argv) {
 	while(1) {
 		char buf[128];
 		int sz = read(fd, buf, 128);
-		if(sz <= 0)
+		if(sz == 0)
 			break;
-		write(1, buf, sz);
+
+		if(sz > 0)
+			write(1, buf, sz);
 	}
 
 	return 0;

@@ -1,14 +1,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <sys/wait.h>
-#include <debug.h>
 #include <cmain.h>
 #include <string.h>
-#include <ipc.h>
 #include <vfs.h>
 #include <vdevice.h>
-#include <ramfs.h>
 #include <svc_call.h>
 #include <dev/device.h>
 

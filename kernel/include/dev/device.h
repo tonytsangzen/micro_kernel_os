@@ -9,6 +9,8 @@ enum {
 enum {
 	DEV_NULL = 0,
 	DEV_UART0,
+	DEV_KEYB,
+	DEV_MOUSE,
 	DEV_FRAMEBUFFER,
 	DEV_NUM
 };

@@ -1,4 +1,4 @@
-#include <dev/uart_basic.h>
+#include <dev/uart.h>
 #include <mm/mmu.h>
 
 /* memory mapping for the serial port */
@@ -14,7 +14,7 @@
 #define UART_RECEIVE  0x10
 #define UART_TRANSMIT 0x20
 
-int32_t uart_basic_init(void) {
+int32_t uart_init(void) {
 	put32(UART0+UART_INT_ENABLE, UART_RECEIVE);
 	return 0;
 }
@@ -26,20 +26,27 @@ static void uart_basic_trans(char c) {
 	put8(UART0+UART_DATA, c);
 }
 
-int32_t uart_basic_putch(int32_t c) {
+int32_t uart_inputch(dev_t* dev, int32_t loop) {
+	if(dev == NULL)
+		return -1;
+
+	char c = get32(UART0 + UART_DATA);
+	charbuf_push(&dev->buffer, c, loop);
+	return 0;
+}
+
+int32_t uart_outputch(dev_t* dev, int32_t c) {
+	(void)dev;
 	if(c == '\r')
 		c = '\n';
 	uart_basic_trans(c);
 	return 0;
 }
 
-int32_t uart_basic_ready_to_recv(void) {
+int32_t uart_ready(dev_t* dev) {
+	(void)dev;
 	if((get8(UART0+UART_INT_TARGET) &  UART_RECEIVE) != 0)
 		return 0;
 	return -1;
-}
-
-int32_t uart_basic_recv(void) {
-	return get32(UART0 + UART_DATA);
 }
 

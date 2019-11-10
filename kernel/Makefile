@@ -35,7 +35,8 @@ ARCH_OBJS = \
 	${ARCH_DIR}/arm/common/system.o \
 	${ARCH_DIR}/arm/common/memcpy.o \
 	${ARCH_DIR}/${ARCH}/hw_info.o \
-	${ARCH_DIR}/${ARCH}/uart_basic.o \
+	${ARCH_DIR}/${ARCH}/uart.o \
+	${ARCH_DIR}/${ARCH}/keyb.o \
 	${ARCH_DIR}/${ARCH}/gic.o \
 	${ARCH_DIR}/${ARCH}/framebuffer.o \
 	${ARCH_DIR}/${ARCH}/timer.o 
@@ -43,6 +44,7 @@ ARCH_OBJS = \
 LIB_DIR = lib
 LIB_OBJS = \
 	${LIB_DIR}/kstring.o \
+	${LIB_DIR}/buffer.o \
 	${LIB_DIR}/vprintf.o \
 	${LIB_DIR}/trunk.o \
 	${LIB_DIR}/tstr.o \

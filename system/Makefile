@@ -50,7 +50,6 @@ LIB_OBJS = $(LIB_DIR)/svc_call.o \
 	$(LIB_DIR)/proto.o \
 	$(LIB_DIR)/stdio.o \
 	$(LIB_DIR)/sys/wait.o \
-	$(LIB_DIR)/debug.o \
 	$(GRAPH_OBJS)
 
 CLEAN = $(LIB_OBJS)
@@ -58,11 +57,13 @@ CLEAN = $(LIB_OBJS)
 TARGET_DIR = build
 
 all: mkdirs $(LIB_OBJS) apps 
+	cp Makefile  ${TARGET_DIR}/initfs
 	mkramfs/mkramfs ${TARGET_DIR}/initfs.img ${TARGET_DIR}/initfs
 
 include mkramfs/build.mk
 include initfs/initfsd/build.mk
 include initfs/ttyd/build.mk
+include initfs/keybd/build.mk
 include initfs/nulld/build.mk
 include initfs/init/build.mk
 include initfs/shell/build.mk
@@ -72,6 +73,7 @@ include initfs/ps/build.mk
 include initfs/echo/build.mk
 include initfs/ls/build.mk
 include initfs/dump/build.mk
+include initfs/test/build.mk
 
 mkdirs:
 	mkdir -p ${TARGET_DIR}/initfs

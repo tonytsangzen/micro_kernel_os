@@ -46,6 +46,8 @@ int32_t vfs_del(vfs_node_t* node);
 
 int32_t vfs_dup2(int32_t from, int32_t to);
 
+int32_t vfs_dup(int32_t from);
+
 void vfs_init(void);
 
 vfs_node_t* vfs_root(void);

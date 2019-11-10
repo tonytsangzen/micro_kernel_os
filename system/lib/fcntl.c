@@ -34,21 +34,20 @@ int open(const char* fname, int oflag) {
 
 void close(int fd) {
 	fsinfo_t info;
-
 	if(vfs_get_by_fd(fd, &info) != 0)
 		return;
 	
 	mount_t mount;
-	if(vfs_get_mount(&info, &mount) != 0)
-		return;
-	
-	proto_t in;
-	proto_init(&in, NULL, 0);
+	if(vfs_get_mount(&info, &mount) == 0) {
+		proto_t in;
+		proto_init(&in, NULL, 0);
 
-	proto_add_int(&in, FS_CMD_CLOSE);
-	proto_add(&in, &info, sizeof(fsinfo_t));
+		proto_add_int(&in, FS_CMD_CLOSE);
+		proto_add(&in, &info, sizeof(fsinfo_t));
 
-	ipc_call(mount.pid, &in, NULL);
-	proto_clear(&in);
+		ipc_call(mount.pid, &in, NULL);
+		proto_clear(&in);
+	}
+
 	vfs_close(fd);
 }

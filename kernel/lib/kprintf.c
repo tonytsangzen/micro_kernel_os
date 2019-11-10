@@ -1,10 +1,10 @@
 #include "kprintf.h"
 #include "vprintf.h"
-#include "dev/uart_basic.h"
+#include "dev/uart.h"
 
 static void outc(char c, void* p) {
 	(void)p;
-	uart_basic_putch(c);
+	uart_outputch(NULL, c);
 }
 
 void printf(const char *format, ...) {

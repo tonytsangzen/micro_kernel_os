@@ -1,13 +1,14 @@
 #include <kstring.h>
 #include <unistd.h>
 #include <stdlib.h>
-#include <sys/wait.h>
 #include <stdio.h>
 #include <vfs.h>
 #include <vprintf.h>
 #include <tstr.h>
-#include <debug.h>
 #include <fcntl.h>
+#include <svc_call.h>
+#include <dev/device.h>
+#include <sys/wait.h>
 
 #define KEY_BACKSPACE 127
 #define KEY_LEFT 0x8
@@ -89,9 +90,9 @@ static int cd(const char* dir) {
 
 	fsinfo_t info;
 	if(vfs_get(cwd, &info) != 0)
-		debug("[%s] not exist!\n", dir);	
+		printf("[%s] not exist!\n", dir);	
 	else if(info.type != FS_TYPE_DIR)
-		debug("[%s] is not a directory!\n", dir);	
+		printf("[%s] is not a directory!\n", dir);	
 	else 
 		chdir(cwd);
 	return 0;
@@ -254,9 +255,7 @@ static int do_cmd(char* cmd) {
 	return 0;
 }
 
-/*
 static int run_cmd(char* cmd);
-
 static int do_pipe_cmd(char* p1, char* p2) {
 	int fds[2];
 	if(pipe(fds) != 0) {
@@ -296,43 +295,10 @@ static int run_cmd(char* cmd) {
 			redir(cmd, 1); //redir in.
 			return do_cmd(proc);
 		}
-		else if(c == '|') { //redirection
+		else if(c == '|') { //pipe
 			*(cmd-1) = 0;	
 			return do_pipe_cmd(proc, cmd);
 		}
-		else if(proc == NULL)
-			proc = cmd-1;
-	}
-
-	if(proc != NULL)
-		do_cmd(proc);
-	return 0;
-}
-*/
-
-static int run_cmd(char* cmd) {
-	char* proc = NULL;
-	while(*cmd != 0) {
-		char c = *cmd++;
-		if(proc == NULL && c == ' ')
-			continue;
-
-		if(c == '>') { //redirection
-			*(cmd-1) = 0;	
-			redir(cmd, 0); //redir OUT.
-			return do_cmd(proc);
-		}
-		else if(c == '<') { //redirection
-			*(cmd-1) = 0;	
-			redir(cmd, 1); //redir in.
-			return do_cmd(proc);
-		}
-		/*
-		else if(c == '|') { //redirection
-			*(cmd-1) = 0;	
-			return do_pipe_cmd(proc, cmd);
-		}
-		*/
 		else if(proc == NULL)
 			proc = cmd-1;
 	}

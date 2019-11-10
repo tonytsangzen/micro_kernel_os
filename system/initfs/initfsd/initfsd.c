@@ -1,7 +1,6 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <sys/wait.h>
-#include <debug.h>
 #include <cmain.h>
 #include <string.h>
 #include <ipc.h>

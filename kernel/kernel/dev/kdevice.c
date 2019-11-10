@@ -1,29 +1,11 @@
 #include <dev/device.h>
 #include <dev/kdevice.h>
-#include <dev/uart_basic.h>
+#include <dev/uart.h>
+#include <dev/keyb.h>
 #include <dev/framebuffer.h>
 #include <kstring.h>
 
 static dev_t _devs[DEV_NUM];
-
-static int32_t uart_inputch(dev_t* dev, int32_t loop) {
-	if(dev == NULL)
-		return -1;
-	char c = uart_basic_recv();
-	charbuf_push(&dev->buffer, c, loop);
-	return 0;
-}
-
-static int32_t uart_outputch(dev_t* dev, int32_t c) {
-	(void)dev;
-	uart_basic_putch(c);
-	return 0;
-}
-
-static int32_t uart_ready(dev_t* dev) {
-	(void)dev;
-	return uart_basic_ready_to_recv();
-}
 
 static int32_t char_dev_read(dev_t* dev, void* data, uint32_t size) {
 	if(dev == NULL || dev->write == NULL)
@@ -52,7 +34,8 @@ static int32_t char_dev_write(dev_t* dev, const void* data, uint32_t size) {
 }
 
 void dev_init(void) {
-	uart_basic_init();
+	uart_init();
+	keyb_init();
 
 	dev_t* dev;
 
@@ -62,6 +45,13 @@ void dev_init(void) {
 	dev->ready = uart_ready;
 	dev->inputch = uart_inputch;
 	dev->outputch = uart_outputch;
+	dev->read = char_dev_read;
+	dev->write = char_dev_write;
+
+	dev = &_devs[DEV_KEYB];
+	memset(dev, 0, sizeof(dev_t));
+	dev->type = DEV_TYPE_CHAR;
+	dev->inputch = keyb_inputch;
 	dev->read = char_dev_read;
 	dev->write = char_dev_write;
 
