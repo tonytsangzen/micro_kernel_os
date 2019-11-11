@@ -4,6 +4,8 @@
 #include <stdint.h>
 #include <errno.h>
 
+#define ERR_RETRY -2
+
 int getpid(void);
 int fork(void);
 unsigned int sleep(unsigned int seconds);

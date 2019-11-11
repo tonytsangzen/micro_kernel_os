@@ -49,6 +49,8 @@ LIB_OBJS = $(LIB_DIR)/svc_call.o \
 	$(LIB_DIR)/fcntl.o \
 	$(LIB_DIR)/proto.o \
 	$(LIB_DIR)/stdio.o \
+	$(LIB_DIR)/basic_math.o \
+	$(LIB_DIR)/console.o \
 	$(LIB_DIR)/sys/wait.o \
 	$(GRAPH_OBJS)
 
@@ -76,6 +78,7 @@ include initfs/ls/build.mk
 include initfs/dump/build.mk
 include initfs/test/build.mk
 include initfs/gtest/build.mk
+include initfs/gconsole/build.mk
 
 mkdirs:
 	mkdir -p ${TARGET_DIR}/initfs

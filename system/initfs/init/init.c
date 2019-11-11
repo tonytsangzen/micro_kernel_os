@@ -56,6 +56,12 @@ int main(int argc, char** argv) {
 	pid = fork();
 	if(pid == 0) {
 		init_stdio();
+		exec("/sbin/gconsole");
+	}
+
+	pid = fork();
+	if(pid == 0) {
+		init_stdio();
 		exec("/sbin/shell");
 	}
 

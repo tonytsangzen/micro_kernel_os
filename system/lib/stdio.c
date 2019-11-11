@@ -48,10 +48,10 @@ int getch(void) {
 		if(i == 1)
 			return c;
 
-		if(i < 0)
+		if(i <= 0 && errno != EAGAIN)
 			break;
 	}
-	return -1;
+	return 0;
 }
 
 void putch(int c) {

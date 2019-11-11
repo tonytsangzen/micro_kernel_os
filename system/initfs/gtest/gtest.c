@@ -2,7 +2,7 @@
 #include <fcntl.h>
 #include <stdio.h>
 #include <string.h>
-#include <graph/graph.h>
+#include <console.h>
 #include <vprintf.h>
 
 int main(int argc, char* argv[]) {
@@ -24,14 +24,11 @@ int main(int argc, char* argv[]) {
 			read(fd, &x, 1);
 			read(fd, &y, 1);
 			read(fd, &z, 1);
-
 			snprintf(str, 31, "bt:%d,rx:%d,ry:%d,rz:%d", b, x, y, z);
 		}
 		sleep(0);
 	}
-
 	close(fd);
-	graph_free(g);
 
 	return 0;
 } 

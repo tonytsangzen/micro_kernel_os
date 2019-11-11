@@ -50,14 +50,17 @@ int main(int argc, char* argv[]) {
 			}
 		}
 		else {
-			if(i > 0) {
-				printf("%s", out);
-				str[i] = 0;
-				for(; i< 16; ++i)
-					printf("   ");
-				printf("| %s", str);
+			if(errno != EAGAIN) {
+				if(i > 0) {
+					printf("%s", out);
+					str[i] = 0;
+					for(; i< 16; ++i)
+						printf("   ");
+					printf("| %s", str);
+				}
+				break;
 			}
-			break;
+			sleep(0);
 		}
 	}
 	printf("\n");

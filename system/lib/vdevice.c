@@ -4,6 +4,7 @@
 #include <stddef.h>
 #include <string.h>
 #include <stdlib.h>
+#include <errno.h>
 
 static void do_open(vdevice_t* dev, int from_pid, proto_t *in, void* p) {
 	fsinfo_t info;

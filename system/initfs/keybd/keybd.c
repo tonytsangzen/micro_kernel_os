@@ -28,7 +28,10 @@ static int keyb_mount(fsinfo_t* mnt_point, mount_info_t* mnt_info, void* p) {
 static int keyb_read(fsinfo_t* info, void* buf, int size, int offset, void* p) {
 	(void)offset;
 	(void)p;
-	return svc_call3(SYS_DEV_READ, (int32_t)info->data, (int32_t)buf, size);
+	int res = svc_call3(SYS_DEV_READ, (int32_t)info->data, (int32_t)buf, size);
+	if(res == 0) 
+		return ERR_RETRY;
+	return res;
 }
 
 static int keyb_umount(fsinfo_t* info, void* p) {

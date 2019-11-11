@@ -74,12 +74,14 @@ int32_t dev_ready(dev_t* dev) {
 	return dev->ready(dev);
 }
 
+/*return : -1 for error/closed, 0 for retry*/
 int32_t dev_read(dev_t* dev, void* data, uint32_t size) {
 	if(dev->read == NULL)
 		return -1;
 	return dev->read(dev, data, size);
 }
 
+/*return : -1 for error/closed, 0 for retry*/
 int32_t dev_write(dev_t* dev, void* data, uint32_t size) {
 	if(dev->write == NULL)
 		return -1;

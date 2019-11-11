@@ -20,7 +20,10 @@ extern void    dev_init(void);
 extern dev_t*  get_dev(uint32_t type);
 extern int32_t dev_ready(dev_t* dev);
 extern int32_t dev_op(dev_t* dev, int32_t opcode, int32_t arg);
+
+/*return : -1 for error/closed, 0 for retry*/
 extern int32_t dev_read(dev_t* dev, void* data, uint32_t size);
+/*return : -1 for error/closed, 0 for retry*/
 extern int32_t dev_write(dev_t* dev, void* data, uint32_t size);
 
 #endif

@@ -9,6 +9,7 @@
 #include <string.h>
 #include <tstr.h>
 #include <ramfs.h>
+#include <errno.h>
 
 int errno = ENONE;
 
@@ -27,16 +28,18 @@ unsigned int sleep(unsigned int seconds) {
 }
 
 static int read_pipe(fsinfo_t* info, void* buf, uint32_t size) {
-	while(1) {
-		int res = svc_call3(SYS_PIPE_READ, (int32_t)info, (int32_t)buf, (int32_t)size);
-		if(res != 0)
-			return res;
-		sleep(0);
+	int res = svc_call3(SYS_PIPE_READ, (int32_t)info, (int32_t)buf, (int32_t)size);
+	if(res == 0) { // pipe empty, do retry
+		errno = EAGAIN;
+		return -1;
 	}
-	return 0;
+	if(res > 0)
+		return res;
+	return 0; //res < 0 , pipe closed, return 0.
 }
 
 int read(int fd, void* buf, uint32_t size) {
+	errno = ENONE;
 	fsinfo_t info;
 	if(vfs_get_by_fd(fd, &info) != 0)
 		return -1;
@@ -69,6 +72,10 @@ int read(int fd, void* buf, uint32_t size) {
 			memcpy(buf, proto_read(&out, NULL), rd);
 			offset += rd;
 			svc_call2(SYS_VFS_PROC_SEEK, fd, offset);
+		}
+		if(res == ERR_RETRY) {
+			errno = EAGAIN;
+			res = -1;
 		}
 	}
 	proto_clear(&in);
@@ -119,6 +126,10 @@ int write(int fd, const void* buf, uint32_t size) {
 		if(r > 0) {
 			offset += r;
 			svc_call2(SYS_VFS_PROC_SEEK, fd, offset);
+		}
+		if(res == -2) {
+			errno = EAGAIN;
+			res = -1;
 		}
 	}
 	proto_clear(&in);
