@@ -25,7 +25,7 @@ SECTIONS
 		*(.bss COMMON)
 	}
 	. = ALIGN(8);
-	. = . + 0x1000;
+	. = . + 0x10000;
 	_irq_stack = .;
 
 	. = . + 0x10000;
@@ -37,6 +37,7 @@ SECTIONS
 	. = ALIGN(8);
 	PROVIDE(_framebuffer_base = .); 
 	. += framebuffer_size;
+	PROVIDE(_framebuffer_end = .); 
 
 	. = ALIGN(4096);
 	_initrd = .;

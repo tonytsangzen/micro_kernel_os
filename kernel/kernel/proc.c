@@ -32,7 +32,7 @@ proc_t* proc_get(int32_t pid) {
 
 static inline  uint32_t proc_get_user_stack(proc_t* proc) {
 	(void)proc;
-  return USER_STACK_BOTTOM;
+  return USER_STACK_TOP - STACK_PAGES*PAGE_SIZE;
 }
 
 static void* proc_get_mem_tail(void* p) {
@@ -144,7 +144,7 @@ static void proc_free_space(proc_t *proc) {
 	proc_close_files(proc);
 
 	/*free file info*/
-	proc_shrink_mem(proc, proc->space->heap_size / PAGE_SIZE);
+	//proc_shrink_mem(proc, proc->space->heap_size / PAGE_SIZE);
 	free_page_tables(proc->space->vm);
 	kfree(proc->space);
 }
@@ -199,12 +199,17 @@ static void proc_wakeup_waiting(int32_t pid) {
 void proc_exit(context_t* ctx, proc_t *proc, int32_t res) {
 	(void)res;
 	int32_t pid = proc->pid;
-
 	uint32_t cpsr = __int_off();
 
+/*
+	int32_t i;
+	for(i=0; i<STACK_PAGES; i++) {
+		kfree4k(proc->user_stack[i]);
+	}
+	*/
+
 	proc_free_space(proc);
-	uint32_t kernel_addr = resolve_kernel_address(proc->space->vm, proc->user_stack);
-	kfree4k((void *) kernel_addr);
+
 	proc_wakeup_waiting(pid);
 	proc->state = UNUSED;
 	proc_unready(ctx, proc);
@@ -249,17 +254,17 @@ proc_t *proc_create(void) {
 	proc->state = CREATED;
 	proc_init_space(proc);
 
-	char *stack = kalloc4k();
-  uint32_t user_stack =  proc_get_user_stack(proc);
-  map_page(proc->space->vm,
-		user_stack,
-    V2P(stack),
-    AP_RW_RW);
-
+	uint32_t user_stack =  proc_get_user_stack(proc);
+	for(i=0; i<STACK_PAGES; i++) {
+		proc->user_stack[i] = kalloc4k();
+		map_page(proc->space->vm,
+			user_stack+PAGE_SIZE*i,
+			V2P(proc->user_stack[i]),
+			AP_RW_RW);
+	}
 	proc->cmd = tstr_new("");
 	proc->cwd = tstr_new("/");
-  proc->user_stack = user_stack;
-	proc->ctx.sp = ((uint32_t)proc->user_stack)+PAGE_SIZE;
+	proc->ctx.sp = user_stack + STACK_PAGES*PAGE_SIZE;
 	proc->ctx.cpsr = 0x50;
 	return proc;
 }
@@ -309,7 +314,9 @@ int32_t proc_load_elf(proc_t *proc, const char *image, uint32_t size) {
 
 	proc->space->malloc_man.head = 0;
 	proc->space->malloc_man.tail = 0;
-	proc->ctx.sp = ((uint32_t)proc->user_stack)+PAGE_SIZE;
+
+	uint32_t user_stack =  proc_get_user_stack(proc);
+	proc->ctx.sp = user_stack + STACK_PAGES*PAGE_SIZE;
 	proc->ctx.pc = header->entry;
 	proc->ctx.lr = header->entry;
 	proc_ready(proc);
@@ -396,7 +403,12 @@ static int32_t proc_clone(proc_t* child, proc_t* parent) {
 	/*set father*/
 	child->father_pid = parent->pid;
 	/* copy parent's stack to child's stack */
-	proc_page_clone(child, child->user_stack, parent, parent->user_stack);
+	//proc_page_clone(child, child->user_stack, parent, parent->user_stack);
+	int32_t i;
+	for(i=0; i<STACK_PAGES; i++) {
+		memcpy(child->user_stack[i], parent->user_stack[i], PAGE_SIZE);
+	}
+
 	proc_clone_files(child, parent);
 
 	tstr_cpy(child->cmd, CS(parent->cmd));

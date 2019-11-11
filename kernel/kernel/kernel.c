@@ -34,7 +34,9 @@ static void set_kernel_init_vm(page_dir_entry_t* vm) {
 	map_pages(vm, (uint32_t)_initrd, V2P(_initrd), V2P(_initrd)+_initrd_size, AP_RW_R); 
 
   uint32_t fb_base = (uint32_t)V2P(_framebuffer_base); //framebuffer addr
-  map_pages(vm, fb_base, fb_base, fb_base+fb_dev_get_size(), AP_RW_D);
+  uint32_t fb_end = (uint32_t)V2P(_framebuffer_end); //framebuffer addr
+  //map_pages(vm, fb_base, fb_base, base+fb_dev_get_size(), AP_RW_D);
+  map_pages(vm, fb_base, fb_base, fb_end, AP_RW_D);
 }
 
 void set_kernel_vm(page_dir_entry_t* vm) {
