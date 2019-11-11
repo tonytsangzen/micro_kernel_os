@@ -6,7 +6,7 @@
 #define FS_MOUNT_MAX 32
 
 #define FS_NODE_NAME_MAX 64
-#define FS_FULL_NAME_MAX 256
+#define FS_FULL_NAME_MAX 512
 
 enum {
 	FS_TYPE_DIR = 0,

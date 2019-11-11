@@ -29,12 +29,12 @@ void map_pages(page_dir_entry_t *vm, uint32_t vaddr, uint32_t pstart, uint32_t p
  * to a physical page.
  * Notice: virtual and physical address inputed must be all aliend by PAGE_SIZE !
  */
-void map_page(page_dir_entry_t *vm, uint32_t virtualAddr,
+void map_page(page_dir_entry_t *vm, uint32_t virtual_addr,
 		     uint32_t physical, uint32_t permissions) {
 	page_table_entry_t *page_table = 0;
 
-	uint32_t page_dir_index = PAGE_DIR_INDEX(virtualAddr);
-	uint32_t page_index = PAGE_INDEX(virtualAddr);
+	uint32_t page_dir_index = PAGE_DIR_INDEX(virtual_addr);
+	uint32_t page_index = PAGE_INDEX(virtual_addr);
 
 	/* if this page_dirEntry is not mapped before, map it to a new page table */
 	if (vm[page_dir_index].type == 0) {
@@ -59,12 +59,19 @@ void map_page(page_dir_entry_t *vm, uint32_t virtualAddr,
 }
 
 /* unmap_page clears the mapping for the given virtual address */
-void unmap_page(page_dir_entry_t *vm, uint32_t virtualAddr) {
+void unmap_page(page_dir_entry_t *vm, uint32_t virtual_addr) {
 	page_table_entry_t *page_table = 0;
-	uint32_t page_dir_index = PAGE_DIR_INDEX(virtualAddr);
-	uint32_t page_index = PAGE_INDEX(virtualAddr);
+	uint32_t page_dir_index = PAGE_DIR_INDEX(virtual_addr);
+	uint32_t page_index = PAGE_INDEX(virtual_addr);
 	page_table = (void *) P2V(BASE_TO_PAGE_TABLE(vm[page_dir_index].base));
 	page_table[page_index].type = 0;
+}
+
+void unmap_pages(page_dir_entry_t *vm, uint32_t virtual_addr, uint32_t pages) {
+	uint32_t i;
+	for(i=0; i<pages; i++) {
+		unmap_page(vm, virtual_addr + PAGE_SIZE*i);
+	}
 }
 
 /*

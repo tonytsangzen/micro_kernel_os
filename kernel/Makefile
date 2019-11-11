@@ -83,8 +83,14 @@ INITFS = ${SYS_DIR}/build/initfs.img
 run: ${INITFS}
 	qemu-system-arm $(QEMU_FLAGS) -kernel ${BUILD_DIR}/$(OS).bin -initrd ${INITFS}
 
+runnog: ${INITFS}
+	qemu-system-arm $(QEMU_FLAGS) -kernel ${BUILD_DIR}/$(OS).bin -initrd ${INITFS} -nographic
+
 debug: ${INITFS}
 	qemu-system-arm $(QEMU_FLAGS) -gdb tcp::26000 -S -kernel ${BUILD_DIR}/$(OS).bin -initrd  ${INITFS}
+
+debugnog: ${INITFS}
+	qemu-system-arm $(QEMU_FLAGS) -gdb tcp::26000 -S -kernel ${BUILD_DIR}/$(OS).bin -initrd  ${INITFS} -nographic
 
 debugasm: ${INITFS}
 	qemu-system-arm $(QEMU_FLAGS) -d in_asm -gdb tcp::26000 -S -kernel ${BUILD_DIR}/$(OS).bin -initrd ${INITFS}

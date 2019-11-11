@@ -36,7 +36,7 @@ typedef struct st_proc_msg {
 	struct st_proc_msg* next;
 } proc_msg_t;
 
-#define STACK_PAGES 4
+#define STACK_PAGES 6
 
 typedef struct st_proc {
 	int32_t pid;
@@ -49,7 +49,7 @@ typedef struct st_proc {
 	int32_t wait_pid;
 
 	proc_space_t* space;
-	char *user_stack[STACK_PAGES];
+	void* user_stack[STACK_PAGES];
 
 	proc_msg_t *msg_queue_head;
 	proc_msg_t *msg_queue_tail;

@@ -30,7 +30,7 @@ proc_t* proc_get(int32_t pid) {
 	return &_proc_table[pid];
 }
 
-static inline  uint32_t proc_get_user_stack(proc_t* proc) {
+static inline  uint32_t proc_get_user_stack_base(proc_t* proc) {
 	(void)proc;
   return USER_STACK_TOP - STACK_PAGES*PAGE_SIZE;
 }
@@ -144,7 +144,15 @@ static void proc_free_space(proc_t *proc) {
 	proc_close_files(proc);
 
 	/*free file info*/
-	//proc_shrink_mem(proc, proc->space->heap_size / PAGE_SIZE);
+	proc_shrink_mem(proc, proc->space->heap_size / PAGE_SIZE);
+
+	/*free user_stack*/
+	uint32_t user_stack_base = proc_get_user_stack_base(proc);
+	for(int i=0; i<STACK_PAGES; i++) {
+		unmap_page(proc->space->vm, user_stack_base + PAGE_SIZE*i);
+		kfree4k(proc->user_stack[i]);
+	}
+
 	free_page_tables(proc->space->vm);
 	kfree(proc->space);
 }
@@ -201,13 +209,6 @@ void proc_exit(context_t* ctx, proc_t *proc, int32_t res) {
 	int32_t pid = proc->pid;
 	uint32_t cpsr = __int_off();
 
-/*
-	int32_t i;
-	for(i=0; i<STACK_PAGES; i++) {
-		kfree4k(proc->user_stack[i]);
-	}
-	*/
-
 	proc_free_space(proc);
 
 	proc_wakeup_waiting(pid);
@@ -254,17 +255,17 @@ proc_t *proc_create(void) {
 	proc->state = CREATED;
 	proc_init_space(proc);
 
-	uint32_t user_stack =  proc_get_user_stack(proc);
+	uint32_t user_stack_base =  proc_get_user_stack_base(proc);
 	for(i=0; i<STACK_PAGES; i++) {
 		proc->user_stack[i] = kalloc4k();
 		map_page(proc->space->vm,
-			user_stack+PAGE_SIZE*i,
+			user_stack_base + PAGE_SIZE*i,
 			V2P(proc->user_stack[i]),
 			AP_RW_RW);
 	}
 	proc->cmd = tstr_new("");
 	proc->cwd = tstr_new("/");
-	proc->ctx.sp = user_stack + STACK_PAGES*PAGE_SIZE;
+	proc->ctx.sp = user_stack_base + STACK_PAGES*PAGE_SIZE;
 	proc->ctx.cpsr = 0x50;
 	return proc;
 }
@@ -315,8 +316,8 @@ int32_t proc_load_elf(proc_t *proc, const char *image, uint32_t size) {
 	proc->space->malloc_man.head = 0;
 	proc->space->malloc_man.tail = 0;
 
-	uint32_t user_stack =  proc_get_user_stack(proc);
-	proc->ctx.sp = user_stack + STACK_PAGES*PAGE_SIZE;
+	uint32_t user_stack_base =  proc_get_user_stack_base(proc);
+	proc->ctx.sp = user_stack_base + STACK_PAGES*PAGE_SIZE;
 	proc->ctx.pc = header->entry;
 	proc->ctx.lr = header->entry;
 	proc_ready(proc);

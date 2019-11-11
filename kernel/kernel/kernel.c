@@ -73,6 +73,7 @@ static void load_initrd(void) {
 	uint32_t initrd = 0x08000000;
 	map_pages(_kernel_vm, initrd, initrd, initrd+_initrd_size, AP_RW_D);
 	memcpy(_initrd, (char*)initrd, _initrd_size);
+	unmap_pages(_kernel_vm, initrd, _initrd_size/PAGE_SIZE);
 	ramfs_open(_initrd, &_initfs);
 }
 
