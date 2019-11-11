@@ -43,9 +43,9 @@ static void sys_dev_read(context_t* ctx, uint32_t type, void* data, uint32_t sz)
 
 	int32_t rd = dev_read(dev, data, sz);
 	ctx->gpr[0] = rd;
-	if(rd != 0)
-		return;
 
+	if(rd != DEV_SLEEP) //not sleep for
+		return;
 	proc_t* proc = _current_proc;
 	proc_sleep_on(ctx, (uint32_t)dev);
 	proc->ctx.gpr[0] = 0;

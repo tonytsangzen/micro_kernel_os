@@ -44,7 +44,14 @@ int main(int argc, char** argv) {
 		exec("/sbin/keybd");
 	}
 	vfs_mount_wait("/dev/keyb0", pid);
-	uprintf("device keyboard mounted to /dev/keyb.\n\n");
+	uprintf("device keyboard mounted to /dev/keyb0.\n");
+
+	pid = fork();
+	if(pid == 0) {
+		exec("/sbin/moused");
+	}
+	vfs_mount_wait("/dev/mouse0", pid);
+	uprintf("device mouse mounted to /dev/mouse0.\n\n");
 
 	pid = fork();
 	if(pid == 0) {

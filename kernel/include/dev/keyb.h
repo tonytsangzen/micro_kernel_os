@@ -5,6 +5,5 @@
 
 int32_t keyb_init(void);
 int32_t keyb_inputch(dev_t* dev, int32_t loop);
-int32_t keyb_outputch(dev_t* dev, int32_t c);
 
 #endif

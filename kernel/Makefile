@@ -37,6 +37,7 @@ ARCH_OBJS = \
 	${ARCH_DIR}/${ARCH}/hw_info.o \
 	${ARCH_DIR}/${ARCH}/uart.o \
 	${ARCH_DIR}/${ARCH}/keyb.o \
+	${ARCH_DIR}/${ARCH}/mouse.o \
 	${ARCH_DIR}/${ARCH}/gic.o \
 	${ARCH_DIR}/${ARCH}/framebuffer.o \
 	${ARCH_DIR}/${ARCH}/timer.o 
@@ -50,6 +51,7 @@ LIB_OBJS = \
 	${LIB_DIR}/tstr.o \
 	${LIB_DIR}/ramfs.o \
 	${LIB_DIR}/charbuf.o \
+	${LIB_DIR}/basic_math.o \
 	${LIB_DIR}/kprintf.o
 
 KERNEL_DIR = kernel

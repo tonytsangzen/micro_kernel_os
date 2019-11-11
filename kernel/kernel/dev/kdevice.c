@@ -1,6 +1,7 @@
 #include <dev/device.h>
 #include <dev/kdevice.h>
 #include <dev/uart.h>
+#include <dev/mouse.h>
 #include <dev/keyb.h>
 #include <dev/framebuffer.h>
 #include <kstring.h>
@@ -8,7 +9,7 @@
 static dev_t _devs[DEV_NUM];
 
 static int32_t char_dev_read(dev_t* dev, void* data, uint32_t size) {
-	if(dev == NULL || dev->write == NULL)
+	if(dev == NULL)
 		return -1;
 
 	int32_t i;
@@ -24,6 +25,7 @@ static int32_t char_dev_read(dev_t* dev, void* data, uint32_t size) {
 void dev_init(void) {
 	uart_init();
 	keyb_init();
+	mouse_init();
 
 	dev_t* dev;
 
@@ -39,6 +41,11 @@ void dev_init(void) {
 	memset(dev, 0, sizeof(dev_t));
 	dev->type = DEV_TYPE_CHAR;
 	dev->inputch = keyb_inputch;
+	dev->read = char_dev_read;
+
+	dev = &_devs[DEV_MOUSE];
+	memset(dev, 0, sizeof(dev_t));
+	dev->type = DEV_TYPE_CHAR;
 	dev->read = char_dev_read;
 
 	fb_dev_init(RES_1024x768);

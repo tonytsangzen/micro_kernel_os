@@ -8,13 +8,13 @@
 #include <svc_call.h>
 #include <dev/device.h>
 
-static int keyb_mount(fsinfo_t* mnt_point, mount_info_t* mnt_info, void* p) {
+static int mouse_mount(fsinfo_t* mnt_point, mount_info_t* mnt_info, void* p) {
 	(void)p;
 	fsinfo_t info;
 	memset(&info, 0, sizeof(fsinfo_t));
 	strcpy(info.name, mnt_point->name);
 	info.type = FS_TYPE_DEV;
-	info.data = DEV_KEYB;
+	info.data = DEV_MOUSE;
 	vfs_new_node(&info);
 
 	if(vfs_mount(mnt_point, &info, mnt_info) != 0) {
@@ -25,13 +25,13 @@ static int keyb_mount(fsinfo_t* mnt_point, mount_info_t* mnt_info, void* p) {
 	return 0;
 }
 
-static int keyb_read(fsinfo_t* info, void* buf, int size, int offset, void* p) {
+static int mouse_read(fsinfo_t* info, void* buf, int size, int offset, void* p) {
 	(void)offset;
 	(void)p;
 	return svc_call3(SYS_DEV_READ, (int32_t)info->data, (int32_t)buf, size);
 }
 
-static int keyb_umount(fsinfo_t* info, void* p) {
+static int mouse_umount(fsinfo_t* info, void* p) {
 	(void)p;
 	vfs_umount(info);
 	return 0;
@@ -43,17 +43,17 @@ int main(int argc, char** argv) {
 
 	vdevice_t dev;
 	memset(&dev, 0, sizeof(vdevice_t));
-	strcpy(dev.name, "keyb");
-	dev.mount = keyb_mount;
-	dev.read = keyb_read;
-	dev.umount = keyb_umount;
+	strcpy(dev.name, "mouse");
+	dev.mount = mouse_mount;
+	dev.read = mouse_read;
+	dev.umount = mouse_umount;
 
 	fsinfo_t dev_info;
 	vfs_get("/dev", &dev_info);
 
 	fsinfo_t mnt_point;
 	memset(&mnt_point, 0, sizeof(fsinfo_t));
-	strcpy(mnt_point.name, "keyb0");
+	strcpy(mnt_point.name, "mouse0");
 	mnt_point.type = FS_TYPE_DEV;
 
 	vfs_new_node(&mnt_point);

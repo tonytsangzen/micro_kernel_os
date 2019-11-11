@@ -2,6 +2,7 @@
 #include <dev/timer.h>
 #include <dev/uart.h>
 #include <dev/kdevice.h>
+#include <dev/mouse.h>
 #include <kernel/irq.h>
 #include <kernel/system.h>
 #include <kernel/schedule.h>
@@ -47,6 +48,10 @@ void irq_handler(context_t* ctx) {
 	if((irqs & IRQ_KEY) != 0) {
 		keyb_handler();
 	}
+
+	if((irqs & IRQ_MOUSE) != 0) {
+		mouse_handler();
+	}
 }
 
 void prefetch_abort_handler(context_t* ctx) {
@@ -62,7 +67,7 @@ void data_abort_handler(context_t* ctx) {
 }
 
 void irq_init(void) {
-	gic_set_irqs( IRQ_UART0 | IRQ_TIMER0 | IRQ_KEY);
+	gic_set_irqs( IRQ_UART0 | IRQ_TIMER0 | IRQ_KEY | IRQ_MOUSE);
 	__irq_enable();
 }
 

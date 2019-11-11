@@ -16,10 +16,9 @@ int vfs_get(const char* fname, fsinfo_t* info) {
 		tstr_cpy(fullname, fname);
 	}
 	else {
-		char* pwd = (char*)malloc(FS_FULL_NAME_MAX);
+		char pwd[FS_FULL_NAME_MAX];
 		getcwd(pwd, FS_FULL_NAME_MAX-1);
 		tstr_cpy(fullname, pwd);
-		free(pwd);
 		if(pwd[1] != 0)
 			tstr_addc(fullname, '/');
 		tstr_add(fullname, fname);

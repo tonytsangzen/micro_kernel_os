@@ -1,6 +1,8 @@
 #ifndef KDEVICE_TYPE_H
 #define KDEVICE_TYPE_H
 
+#define DEV_SLEEP -2
+
 enum {
 	DEV_TYPE_CHAR = 0,
 	DEV_TYPE_MEM
