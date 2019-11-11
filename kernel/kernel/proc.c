@@ -68,7 +68,7 @@ void proc_switch(context_t* ctx, proc_t* to){
 	if(to == NULL)
 		return;
 
-	if(_current_proc != NULL) {
+	if(_current_proc != NULL && _current_proc->state != UNUSED) {
 		memcpy(&_current_proc->ctx, ctx, sizeof(context_t));
 	}
 

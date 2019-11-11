@@ -63,7 +63,9 @@ void prefetch_abort_handler(context_t* ctx) {
 void data_abort_handler(context_t* ctx) {
 	(void)ctx;
 	printf("pid: %d(%s), data abort!!\n", _current_proc->pid, CS(_current_proc->cmd));
-	while(1);
+	proc_exit(ctx, _current_proc, -1);
+	_current_proc = NULL;
+	schedule(ctx);
 }
 
 void irq_init(void) {
