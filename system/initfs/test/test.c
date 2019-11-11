@@ -8,7 +8,7 @@ int main(int argc, char* argv[]) {
 	(void)argv;
 
 	int i = 0;
-	while(1) {
+	while(i < 1000) {
 		int fds[2];
 		pipe(fds);
 

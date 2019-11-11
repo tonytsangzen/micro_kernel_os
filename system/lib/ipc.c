@@ -25,6 +25,7 @@ int ipc_get(int* from_pid,  proto_t* pkg, uint8_t block) {
 	if(pkg != NULL) {
 		proto_clear(pkg);
 		proto_init(pkg, data, size);
+		pkg->read_only = 0;
 	}
 	return 0;	
 }
