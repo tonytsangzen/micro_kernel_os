@@ -19,3 +19,13 @@ int execl(const char* fname, const char* arg, ...) {
 
 	return 0;
 }
+
+const char* getenv(const char* name) {
+	static char ret[1024];
+	svc_call3(SYS_PROC_GET_ENV, (int32_t)name, (int32_t)ret, 1023);
+	return ret;
+}
+
+int setenv(const char* name, const char* value) {
+	return svc_call2(SYS_PROC_SET_ENV, (int32_t)name, (int32_t)value);
+}

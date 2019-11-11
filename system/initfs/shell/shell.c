@@ -98,23 +98,23 @@ static int cd(const char* dir) {
 	return 0;
 }
 
-/*
+
 static void export_all(void) {
 	char name[64], value[1024];
 	int32_t i=0;
 	while(1) {
-		if(syscall3(SYSCALL_GET_ENV_NAME, i, (int32_t)name, 63) != 0 || name[0] == 0)
+		if(svc_call3(SYS_PROC_GET_ENV_NAME, i, (int32_t)name, 63) != 0 || name[0] == 0)
 			break;
-		if(syscall3(SYSCALL_GET_ENV_VALUE, i, (int32_t)value, 1023) != 0)
+		if(svc_call3(SYS_PROC_GET_ENV_VALUE, i, (int32_t)value, 1023) != 0)
 			break;
-		printf("%s=%s\n", name, value);
+		printf("declare -x %s=%s\n", name, value);
 		i++;
 	}
 }
 
 static void export_get(const char* arg) {
 	char value[1024];
-	if(syscall3(SYSCALL_GET_ENV, (int32_t)arg, (int32_t)value, 127) != 0) 
+	if(svc_call3(SYS_PROC_GET_ENV, (int32_t)arg, (int32_t)value, 127) != 0) 
 		return;
 	printf("%s=%s\n", arg, value);
 }
@@ -126,7 +126,7 @@ static void export_set(const char* arg) {
 		return;
 	strncpy(name, arg, v-arg);
 
-	syscall2(SYSCALL_SET_ENV, (int32_t)name, (int32_t)(v+1));
+	svc_call2(SYS_PROC_SET_ENV, (int32_t)name, (int32_t)(v+1));
 }
 
 static int export(const char* arg) {
@@ -137,7 +137,6 @@ static int export(const char* arg) {
 		export_set(arg);
 	return 0;
 }
-*/
 
 static int _terminated = 0;
 
@@ -152,7 +151,6 @@ static int handle(const char* cmd) {
 	else if(strncmp(cmd, "cd ", 3) == 0) {
 		return cd(cmd + 3);
 	}
-	/*
 	else if(strcmp(cmd, "export") == 0) {
 		export_all();
 		return 0;
@@ -160,7 +158,6 @@ static int handle(const char* cmd) {
 	else if(strncmp(cmd, "export ", 7) == 0) {
 		return export(cmd+7);
 	}
-	*/
 	return -1; /*not shell internal command*/
 }
 

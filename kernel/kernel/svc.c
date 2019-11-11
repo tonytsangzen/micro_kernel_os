@@ -358,6 +358,32 @@ static int32_t sys_pipe_read(fsinfo_t* info, void* data, uint32_t sz) {
 	return -1; //closed.
 }
 
+static int32_t sys_get_env(const char* name, char* value, int32_t size) {
+	const char* v = proc_get_env(name);
+	if(v == NULL)
+		value[0] = 0;
+	else
+		strncpy(value, v, size);
+	return 0;
+}
+
+static int32_t sys_get_env_name(int32_t index, char* name, int32_t size) {
+	const char* n = proc_get_env_name(index);
+	if(n[0] == 0)
+		return -1;
+	strncpy(name, n, size);
+	return 0;
+}
+
+static int32_t sys_get_env_value(int32_t index, char* value, int32_t size) {
+	const char* v = proc_get_env_value(index);
+	if(v == NULL)
+		value[0] = 0;
+	else
+		strncpy(value, v, size);
+	return 0;
+}
+
 void svc_handler(int32_t code, int32_t arg0, int32_t arg1, int32_t arg2, context_t* ctx, int32_t processor_mode) {
 	(void)arg1;
 	(void)arg2;
@@ -492,6 +518,18 @@ void svc_handler(int32_t code, int32_t arg0, int32_t arg1, int32_t arg2, context
 		return;
 	case SYS_PIPE_WRITE: 
 		ctx->gpr[0] = sys_pipe_write((fsinfo_t*)arg0, (const void*)arg1, (int32_t)arg2);
+		return;
+	case SYS_PROC_SET_ENV: 
+		ctx->gpr[0] = proc_set_env((const char*)arg0, (const char*)arg1);
+		return;
+	case SYS_PROC_GET_ENV: 
+		ctx->gpr[0] = sys_get_env((const char*)arg0, (char*)arg1, arg2);
+		return;
+	case SYS_PROC_GET_ENV_NAME: 
+		ctx->gpr[0] = sys_get_env_name(arg0, (char*)arg1, arg2);
+		return;
+	case SYS_PROC_GET_ENV_VALUE: 
+		ctx->gpr[0] = sys_get_env_value(arg0, (char*)arg1, arg2);
 		return;
 	}
 	printf("pid:%d, code(%d) error!\n", _current_proc->pid, code);

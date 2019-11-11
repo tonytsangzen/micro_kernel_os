@@ -62,6 +62,7 @@ static void proc_init_space(proc_t* proc) {
 	proc->space->malloc_man.expand = proc_expand;
 	proc->space->malloc_man.shrink = proc_shrink;
 	proc->space->malloc_man.get_mem_tail = proc_get_mem_tail;
+	memset(&proc->space->envs, 0, sizeof(proc_env_t)*ENV_MAX);
 }
 
 void proc_switch(context_t* ctx, proc_t* to){
@@ -140,6 +141,15 @@ static void proc_clone_files(proc_t *proc_to, proc_t* from) {
 }
 
 static void proc_free_space(proc_t *proc) {
+	int32_t i;
+	for(i=0; i<ENV_MAX; i++) {
+		proc_env_t* env = &proc->space->envs[i];
+		if(env->name) 
+			tstr_free(env->name);
+		if(env->value) 
+			tstr_free(env->value);
+	}
+
 	/*close files*/
 	proc_close_files(proc);
 
@@ -366,6 +376,71 @@ void proc_wakeup(uint32_t event) {
 	__int_on(cpsr);
 }
 
+static inline proc_env_t* find_env(proc_t* proc, const char* name) {
+	int32_t i=0;
+	for(i=0; i<ENV_MAX; i++) {
+		if(proc->space->envs[i].name == NULL)
+			break;
+		if(strcmp(CS(proc->space->envs[i].name), name) == 0)
+			return &proc->space->envs[i];
+	}
+	return NULL;
+}
+	
+const char* proc_get_env(const char* name) {
+	proc_env_t* env = find_env(_current_proc, name);
+	return env == NULL ? "":CS(env->value);
+}
+	
+const char* proc_get_env_name(int32_t index) {
+	if(index < 0 || index >= ENV_MAX)
+		return "";
+	return CS(_current_proc->space->envs[index].name);
+}
+	
+const char* proc_get_env_value(int32_t index) {
+	if(index < 0 || index >= ENV_MAX)
+		return "";
+	return CS(_current_proc->space->envs[index].value);
+}
+
+int32_t proc_set_env(const char* name, const char* value) {
+	proc_env_t* env = NULL;	
+	int32_t i=0;
+	for(i=0; i<ENV_MAX; i++) {
+		if(_current_proc->space->envs[i].name == NULL ||
+				strcmp(CS(_current_proc->space->envs[i].name), name) == 0) {
+			env = &_current_proc->space->envs[i];
+			if(env->name == NULL) {
+				env->name = tstr_new("");
+				tstr_cpy(env->name, name);
+			}
+			break;
+		}
+	}
+	if(env == NULL)
+		return -1;
+	if(env->value == NULL)
+		env->value = tstr_new("");
+	tstr_cpy(env->value, value);
+	return 0;
+}
+
+static inline void proc_clone_envs(proc_t* child, proc_t* parent) {
+	int32_t i=0;
+	for(i=0; i<ENV_MAX; i++) {
+		if(parent->space->envs[i].name == NULL)
+			break;
+		proc_env_t* env = &child->space->envs[i];
+		if(env->name == NULL)
+			env->name = tstr_new("");
+		if(env->value == NULL)
+			env->value = tstr_new("");
+		tstr_cpy(env->name, CS(parent->space->envs[i].name));
+		tstr_cpy(env->value, CS(parent->space->envs[i].value));
+	}
+}
+
 static void proc_page_clone(proc_t* to, uint32_t to_addr, proc_t* from, uint32_t from_addr) {
 	char *to_ptr = (char*)resolve_kernel_address(to->space->vm, to_addr);
 	char *from_ptr = (char*)resolve_kernel_address(from->space->vm, from_addr);
@@ -411,6 +486,7 @@ static int32_t proc_clone(proc_t* child, proc_t* parent) {
 	}
 
 	proc_clone_files(child, parent);
+	proc_clone_envs(child, parent);
 
 	tstr_cpy(child->cmd, CS(parent->cmd));
 	tstr_cpy(child->cwd, CS(parent->cwd));

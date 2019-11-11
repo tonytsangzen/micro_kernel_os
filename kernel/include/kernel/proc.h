@@ -20,6 +20,12 @@ enum {
 };
 
 #define PROC_FILE_MAX 128
+#define ENV_MAX 32
+
+typedef struct {
+	tstr_t* name;
+	tstr_t* value;
+} proc_env_t;
 
 typedef struct {
 	page_dir_entry_t *vm;
@@ -27,6 +33,7 @@ typedef struct {
 	uint32_t heap_size;
 	
 	kfile_t files[PROC_FILE_MAX];
+	proc_env_t envs[ENV_MAX];
 } proc_space_t;
 
 typedef struct st_proc_msg {
@@ -36,8 +43,8 @@ typedef struct st_proc_msg {
 	struct st_proc_msg* next;
 } proc_msg_t;
 
-#define STACK_PAGES 32
 
+#define STACK_PAGES 32
 typedef struct st_proc {
 	int32_t pid;
 	int32_t father_pid;
@@ -89,6 +96,11 @@ extern int32_t proc_send_msg(int32_t to_pid, void* data, uint32_t size);
 extern void*   proc_get_msg(int32_t *pid, uint32_t* size);
 
 extern procinfo_t* get_procs(int32_t* num);
+
+extern const char* proc_get_env(const char* name);
+extern const char* proc_get_env_name(int32_t index);
+extern const char* proc_get_env_value(int32_t index);
+extern int32_t proc_set_env(const char* name, const char* value);
 
 #define PROC_MAX 128
 
