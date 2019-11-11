@@ -36,7 +36,7 @@ typedef struct st_proc_msg {
 	struct st_proc_msg* next;
 } proc_msg_t;
 
-#define STACK_PAGES 4
+#define STACK_PAGES 32
 
 typedef struct st_proc {
 	int32_t pid;
