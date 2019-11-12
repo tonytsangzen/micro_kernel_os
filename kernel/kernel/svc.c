@@ -5,6 +5,7 @@
 #include <kernel/proc.h>
 #include <kernel/hw_info.h>
 #include <mm/kalloc.h>
+#include <mm/shm.h>
 #include <mm/kmalloc.h>
 #include <sysinfo.h>
 #include <vfs.h>
@@ -392,6 +393,18 @@ static int32_t sys_get_env_value(int32_t index, char* value, int32_t size) {
 	return 0;
 }
 
+static int32_t sys_shm_alloc(uint32_t size, int32_t flag) {
+	return shm_alloc(size, flag);
+}
+
+static void* sys_shm_map(int32_t id) {
+	return shm_proc_map(_current_proc->pid, id);
+}
+
+static int32_t sys_shm_unmap(int32_t id) {
+	return shm_proc_unmap(_current_proc->pid, id);
+}
+
 void svc_handler(int32_t code, int32_t arg0, int32_t arg1, int32_t arg2, context_t* ctx, int32_t processor_mode) {
 	(void)arg1;
 	(void)arg2;
@@ -538,6 +551,15 @@ void svc_handler(int32_t code, int32_t arg0, int32_t arg1, int32_t arg2, context
 		return;
 	case SYS_PROC_GET_ENV_VALUE: 
 		ctx->gpr[0] = sys_get_env_value(arg0, (char*)arg1, arg2);
+		return;
+	case SYS_PROC_SHM_ALLOC:
+		ctx->gpr[0] = sys_shm_alloc(arg0, arg1);
+		return;
+	case SYS_PROC_SHM_MAP:
+		ctx->gpr[0] = (int32_t)sys_shm_map(arg0);
+		return;
+	case SYS_PROC_SHM_UNMAP:
+		ctx->gpr[0] = sys_shm_unmap(arg0);
 		return;
 	}
 	printf("pid:%d, code(%d) error!\n", _current_proc->pid, code);

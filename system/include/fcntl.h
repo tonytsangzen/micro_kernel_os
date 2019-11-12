@@ -13,5 +13,7 @@
 
 int  open(const char* name, int oflag);
 void close(int fd);
+int  dma(int fd, int* size);
+void flush(int fd);
 
 #endif

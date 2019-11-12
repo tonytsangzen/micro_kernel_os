@@ -3,6 +3,7 @@
 #include <mm/mmu.h>
 #include <mm/kalloc.h>
 #include <mm/kmalloc.h>
+#include <mm/shm.h>
 #include <kstring.h>
 #include <kernel/kernel.h>
 #include <kernel/system.h>
@@ -107,6 +108,8 @@ void _kernel_entry_c(context_t* ctx) {
 	load_initrd();
 
 	init_allocable_mem(); /*init the rest allocable memory VM*/
+
+	shm_init();
 
 	irq_init();
 

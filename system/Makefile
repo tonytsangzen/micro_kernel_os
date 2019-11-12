@@ -12,7 +12,10 @@ CFLAGS = -Wstrict-prototypes \
 				 -I ../kernel/include \
 				 -marm \
 				 -pedantic -Wall -Wextra -msoft-float -fPIC -mapcs-frame \
-         -fno-builtin-printf -Wno-overlength-strings \
+         -fno-builtin-printf \
+         -fno-builtin-snprintf \
+         -fno-builtin-sprintf \
+				 -Wno-overlength-strings \
          -fno-builtin-exit -fno-builtin-stdio \
 				 -std=c99 
 
@@ -51,6 +54,7 @@ LIB_OBJS = $(LIB_DIR)/svc_call.o \
 	$(LIB_DIR)/stdio.o \
 	$(LIB_DIR)/basic_math.o \
 	$(LIB_DIR)/console.o \
+	$(LIB_DIR)/shm.o \
 	$(LIB_DIR)/sys/wait.o \
 	$(GRAPH_OBJS)
 
@@ -66,6 +70,7 @@ include mkramfs/build.mk
 include $(ROOT_DIR)/sbin/init/build.mk
 include $(ROOT_DIR)/sbin/initfsd/build.mk
 include $(ROOT_DIR)/sbin/ttyd/build.mk
+include $(ROOT_DIR)/sbin/fbd/build.mk
 include $(ROOT_DIR)/sbin/keybd/build.mk
 include $(ROOT_DIR)/sbin/moused/build.mk
 include $(ROOT_DIR)/sbin/nulld/build.mk

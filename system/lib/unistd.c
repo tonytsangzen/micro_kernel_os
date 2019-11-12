@@ -191,11 +191,11 @@ int chdir(const char* path) {
 }
 
 int dup2(int from, int to) {
-	return vfs_dup2(from, to);
+	return svc_call2(SYS_VFS_PROC_DUP2, (int32_t)from, (int32_t)to);
 }
 
 int dup(int from) {
-	return vfs_dup(from);
+	return svc_call1(SYS_VFS_PROC_DUP, (int32_t)from);
 }
 
 int pipe(int fds[2]) {

@@ -5,6 +5,7 @@
 #include <kernel/schedule.h>
 #include <mm/kalloc.h>
 #include <mm/kmalloc.h>
+#include <mm/shm.h>
 #include <kstring.h>
 #include <kprintf.h>
 #include <elf.h>
@@ -126,6 +127,15 @@ static void proc_close_files(proc_t *proc) {
 	}
 }
 
+static void proc_unmap_shms(proc_t *proc) {
+	int32_t i;
+	for(i=0; i<SHM_MAX; i++) {
+		int32_t shm = proc->space->shms[i];
+		if(shm > 0)
+			shm_proc_unmap(proc->pid, shm);
+	}
+}
+
 static void proc_clone_files(proc_t *proc_to, proc_t* from) {
 	int32_t i;
 	for(i=0; i<PROC_FILE_MAX; i++) {
@@ -152,6 +162,9 @@ static void proc_free_space(proc_t *proc) {
 
 	/*close files*/
 	proc_close_files(proc);
+
+	/*unmap share mems*/
+	proc_unmap_shms(proc);
 
 	/*free file info*/
 	proc_shrink_mem(proc, proc->space->heap_size / PAGE_SIZE);

@@ -43,6 +43,13 @@ int main(int argc, char** argv) {
 
 	pid = fork();
 	if(pid == 0) {
+		exec("/initrd/sbin/fbd");
+	}
+	vfs_mount_wait("/dev/fb0", pid);
+	uprintf("device framebuffer mounted to /dev/fb0.\n");
+
+	pid = fork();
+	if(pid == 0) {
 		exec("/initrd/sbin/keybd");
 	}
 	vfs_mount_wait("/dev/keyb0", pid);
@@ -54,6 +61,12 @@ int main(int argc, char** argv) {
 	}
 	vfs_mount_wait("/dev/mouse0", pid);
 	uprintf("device mouse mounted to /dev/mouse0.\n\n");
+
+	pid = fork();
+	if(pid == 0) {
+		init_stdio();
+		exec("/initrd/bin/gconsole");
+	}
 
 	pid = fork();
 	if(pid == 0) {

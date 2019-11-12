@@ -10,7 +10,8 @@ enum {
 	FS_CMD_READ,
 	FS_CMD_WRITE,
 	FS_CMD_SEEK,
-	FS_CMD_REF
+	FS_CMD_DMA,
+	FS_CMD_FLUSH
 };
 
 int vfs_new_node(fsinfo_t* info);
@@ -27,11 +28,5 @@ int vfs_get_mount(fsinfo_t* info, mount_t* mount);
 int vfs_mount(fsinfo_t* mount_to, fsinfo_t* info, mount_info_t* mnt_info);
 void vfs_mount_wait(const char* fname, int pid);
 int vfs_umount(fsinfo_t* info);
-
-int vfs_open(int pid, fsinfo_t* info, int wr);
-int vfs_close(int fd);
-int vfs_seek(int fd, int offset, int whence);
-int vfs_dup(int from);
-int vfs_dup2(int from, int to);
 
 #endif

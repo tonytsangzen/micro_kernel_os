@@ -5,6 +5,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <errno.h>
+#include <svc_call.h>
 
 static void do_open(vdevice_t* dev, int from_pid, proto_t *in, void* p) {
 	fsinfo_t info;
@@ -12,13 +13,13 @@ static void do_open(vdevice_t* dev, int from_pid, proto_t *in, void* p) {
 	memcpy(&info, proto_read(in, NULL), sizeof(fsinfo_t));
 	oflag = proto_read_int(in);
 
-	int fd = -1;
+	int32_t fd = -1;
 	if(dev != NULL && dev->open != NULL) {
 		if(dev->open(&info, oflag, p) == 0)
-			fd = vfs_open(from_pid, &info, oflag);
+			fd = svc_call3(SYS_VFS_OPEN, from_pid, (int32_t)&info, oflag);
 	}
 	else 
-		fd = vfs_open(from_pid, &info, oflag);
+			fd = svc_call3(SYS_VFS_OPEN, from_pid, (int32_t)&info, oflag);
 
 	proto_t out;
 	proto_init(&out, NULL, 0);
@@ -83,6 +84,38 @@ static void do_write(vdevice_t* dev, int from_pid, proto_t *in, void* p) {
 	proto_clear(&out);
 }
 
+static void do_dma(vdevice_t* dev, int from_pid, proto_t *in, void* p) {
+	fsinfo_t info;
+	memcpy(&info, proto_read(in, NULL), sizeof(fsinfo_t));
+
+	proto_t out;
+	proto_init(&out, NULL, 0);
+
+	int id = -1;	
+	int size = 0;
+	if(dev != NULL && dev->dma != NULL) {
+		id = dev->dma(&info, &size, p);
+	}
+	proto_add_int(&out, id);
+	proto_add_int(&out, size);
+	ipc_send(from_pid, &out);
+	proto_clear(&out);
+}
+
+static void do_flush(vdevice_t* dev, int from_pid, proto_t *in, void* p) {
+	fsinfo_t info;
+	memcpy(&info, proto_read(in, NULL), sizeof(fsinfo_t));
+
+	if(dev != NULL && dev->flush != NULL) {
+		dev->flush(&info, p);
+	}
+
+	proto_t out;
+	proto_init(&out, NULL, 0);
+	proto_add_int(&out, 0);
+	ipc_send(from_pid, &out);
+	proto_clear(&out);
+}
 
 static void handle(vdevice_t* dev, int from_pid, proto_t *in, void* p) {
 	if(dev == NULL)
@@ -101,6 +134,12 @@ static void handle(vdevice_t* dev, int from_pid, proto_t *in, void* p) {
 		return;
 	case FS_CMD_WRITE:
 		do_write(dev, from_pid, in, p);
+		return;
+	case FS_CMD_DMA:
+		do_dma(dev, from_pid, in, p);
+		return;
+	case FS_CMD_FLUSH:
+		do_flush(dev, from_pid, in, p);
 		return;
 	}
 }

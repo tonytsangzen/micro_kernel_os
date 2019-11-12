@@ -64,6 +64,7 @@ OBJS = ${ARCH_OBJS} \
 	${KERNEL_DIR}/mm/mmu.o \
 	${KERNEL_DIR}/mm/trunkmalloc.o \
 	${KERNEL_DIR}/mm/kmalloc.o \
+	${KERNEL_DIR}/mm/shm.o \
 	${KERNEL_DIR}/init.o \
 	${KERNEL_DIR}/irq.o \
 	${KERNEL_DIR}/svc.o \

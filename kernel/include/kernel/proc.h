@@ -21,6 +21,7 @@ enum {
 
 #define PROC_FILE_MAX 128
 #define ENV_MAX 32
+#define SHM_MAX 128
 
 typedef struct {
 	tstr_t* name;
@@ -32,6 +33,7 @@ typedef struct {
 	malloc_t malloc_man;
 	uint32_t heap_size;
 	
+	int32_t shms[SHM_MAX];
 	kfile_t files[PROC_FILE_MAX];
 	proc_env_t envs[ENV_MAX];
 } proc_space_t;
