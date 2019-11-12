@@ -56,13 +56,13 @@ int main(int argc, char** argv) {
 	pid = fork();
 	if(pid == 0) {
 		init_stdio();
-		exec("/initrd/sbin/gconsole");
+		exec("/initrd/bin/gconsole");
 	}
 
 	pid = fork();
 	if(pid == 0) {
 		init_stdio();
-		exec("/initrd/sbin/shell");
+		exec("/initrd/bin/shell");
 	}
 
 	while(1) {

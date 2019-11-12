@@ -139,10 +139,17 @@ static int32_t sys_vfs_add(fsinfo_t* info_to, fsinfo_t* info) {
 		return -1;
 	
 	vfs_node_t* node_to = (vfs_node_t*)info_to->node;
-	vfs_node_t* node = (vfs_node_t*)info->node;
-	if(node_to == NULL || node == NULL)
+	if(node_to == NULL)
 		return -1;
+	vfs_node_t* node = vfs_get(node_to, info->name);
+	if(node != NULL) {
+		get_fsinfo(node, info);
+		return 0;
+	}
 
+	node = (vfs_node_t*)info->node;
+	if(node == NULL)
+		return -1;
 	return vfs_add(node_to, node);
 }
 

@@ -125,6 +125,7 @@ int32_t keyb_inputch(dev_t* dev, int32_t loop) {
 		return 0;
 
 	charbuf_push(&dev->buffer, c, loop);
+	return 0;
 }
 
 #endif

@@ -78,5 +78,5 @@ int main(int argc, char* argv[]) {
 	close(fds1[1]);
 	close(fds2[0]);
 	close(fds2[1]);
-	return exec("/sbin/shell");
+	return exec("/initrd/bin/shell");
 }

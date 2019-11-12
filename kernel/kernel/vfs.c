@@ -32,6 +32,20 @@ static inline int32_t check_mount(vfs_node_t* node) {
 	return 0;
 }
 
+static vfs_node_t* vfs_simple_get(vfs_node_t* father, const char* name) {
+	if(father == NULL || strchr(name, '/') != NULL)
+		return NULL;
+
+	vfs_node_t* node = father->first_kid;
+	while(node != NULL) {
+		if(strcmp(node->fsinfo.name, name) == 0) {
+			return node;
+		}
+		node = node->next;
+	}
+	return NULL;
+}
+
 int32_t vfs_add(vfs_node_t* father, vfs_node_t* node) {
 	if(father == NULL || node == NULL)
 		return -1;
@@ -191,20 +205,6 @@ vfs_node_t* vfs_new_node(void) {
 	vfs_node_t* ret = (vfs_node_t*)kmalloc(sizeof(vfs_node_t));
 	vfs_node_init(ret);
 	return ret;
-}
-
-static vfs_node_t* vfs_simple_get(vfs_node_t* father, const char* name) {
-	if(father == NULL || strchr(name, '/') != NULL)
-		return NULL;
-
-	vfs_node_t* node = father->first_kid;
-	while(node != NULL) {
-		if(strcmp(node->fsinfo.name, name) == 0) {
-			return node;
-		}
-		node = node->next;
-	}
-	return NULL;
 }
 
 vfs_node_t* vfs_get(vfs_node_t* father, const char* name) {
