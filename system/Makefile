@@ -57,31 +57,32 @@ LIB_OBJS = $(LIB_DIR)/svc_call.o \
 CLEAN = $(LIB_OBJS)
 
 TARGET_DIR = build
+ROOT_DIR = initfs
 
 all: mkdirs $(LIB_OBJS) apps 
-	cp Makefile  ${TARGET_DIR}/initfs
-	mkramfs/mkramfs ${TARGET_DIR}/initfs.img ${TARGET_DIR}/initfs
+	mkramfs/mkramfs ${TARGET_DIR}/$(ROOT_DIR).img ${TARGET_DIR}/$(ROOT_DIR)
 
 include mkramfs/build.mk
-include initfs/initfsd/build.mk
-include initfs/ttyd/build.mk
-include initfs/keybd/build.mk
-include initfs/moused/build.mk
-include initfs/nulld/build.mk
-include initfs/init/build.mk
-include initfs/shell/build.mk
-include initfs/pwd/build.mk
-include initfs/cat/build.mk
-include initfs/ps/build.mk
-include initfs/echo/build.mk
-include initfs/ls/build.mk
-include initfs/dump/build.mk
-include initfs/test/build.mk
-include initfs/gtest/build.mk
-include initfs/gconsole/build.mk
+include $(ROOT_DIR)/sbin/init/build.mk
+include $(ROOT_DIR)/sbin/initfsd/build.mk
+include $(ROOT_DIR)/sbin/ttyd/build.mk
+include $(ROOT_DIR)/sbin/keybd/build.mk
+include $(ROOT_DIR)/sbin/moused/build.mk
+include $(ROOT_DIR)/sbin/nulld/build.mk
+include $(ROOT_DIR)/bin/shell/build.mk
+include $(ROOT_DIR)/bin/pwd/build.mk
+include $(ROOT_DIR)/bin/cat/build.mk
+include $(ROOT_DIR)/bin/ps/build.mk
+include $(ROOT_DIR)/bin/echo/build.mk
+include $(ROOT_DIR)/bin/ls/build.mk
+include $(ROOT_DIR)/bin/dump/build.mk
+include $(ROOT_DIR)/bin/test/build.mk
+include $(ROOT_DIR)/bin/gtest/build.mk
+include $(ROOT_DIR)/bin/gconsole/build.mk
 
 mkdirs:
-	mkdir -p ${TARGET_DIR}/initfs
+	mkdir -p ${TARGET_DIR}/$(ROOT_DIR)/sbin
+	mkdir -p ${TARGET_DIR}/$(ROOT_DIR)/bin
 	mkdir -p ${TARGET_DIR}/asm
 
 apps: ${PROGS}

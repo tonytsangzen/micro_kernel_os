@@ -4,9 +4,11 @@
 #include <string.h>
 #include <stdlib.h>
 
+#define FULL_MAX 256
+
 void dump(FILE* out, const char*dname, const char* fname) {
-	char full[256];
-	snprintf(full, 256, "%s/%s", dname, fname);
+	char full[FULL_MAX];
+	snprintf(full, FULL_MAX-1, "%s/%s", dname, fname);
 	FILE* f = fopen(full, "r");
 	if(f == NULL)
 		return;
@@ -31,6 +33,38 @@ void dump(FILE* out, const char*dname, const char* fname) {
 }
 
 
+int dump_dir(FILE* fp, const char* root, const char* dn) {
+	char fname[FULL_MAX];
+	if(dn[0] == 0)
+		strncpy(fname, root, FULL_MAX-1);
+	else
+		snprintf(fname, FULL_MAX-1, "%s/%s", root, dn);
+
+	DIR* dir = opendir(fname);
+	if(dir == NULL)
+		return -2;
+
+	while(1) {
+		struct dirent* r = readdir(dir);
+		if(r == NULL)
+			break;
+
+		if(r->d_name[0] == '.')
+			continue;
+		if(dn[0] == 0)
+			strncpy(fname, r->d_name, FULL_MAX-1);
+		else
+			snprintf(fname, FULL_MAX-1, "%s/%s", dn, r->d_name);
+
+		if(r->d_type == DT_DIR)
+			dump_dir(fp, root, fname);
+		else 
+			dump(fp, root, fname);
+	}
+
+	closedir(dir);
+	return 0;
+}
 /*
 mkramfs [output_file] [source_dir]
 */
@@ -40,31 +74,15 @@ int main(int argc, char** argv) {
 		return -1;
 	}
 
-	DIR* dir = opendir(argv[2]);
-	if(dir == NULL)
-		return -2;
-
 	FILE* fp = fopen(argv[1], "w");
 	if(fp == NULL) {
-		closedir(dir);
-		return -3;
+		return -1;
 	}
 
-	while(1) {
-		struct dirent* r = readdir(dir);
-		if(r == NULL)
-			break;
-
-		if(r->d_name[0] == '.')
-			continue;
-		dump(fp, argv[2], r->d_name);
-	}
+	dump_dir(fp, argv[2], "");
 
 	int32_t end = 0;
 	fwrite(&end, 1, 4, fp);
-	
-	closedir(dir);
 	fclose(fp);
-
 	return 0;
 }

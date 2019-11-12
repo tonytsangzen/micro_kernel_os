@@ -82,7 +82,7 @@ static void free_initrd(void) {
 }
 
 static void load_init(void) {
-	const char* prog = "init";
+	const char* prog = "sbin/init";
 	int32_t sz;
 	const char* elf = ramfs_read(&_initfs, prog, &sz);
 	if(elf != NULL) {
