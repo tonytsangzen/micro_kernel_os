@@ -23,8 +23,9 @@ CFLAGS = \
 	-fno-builtin-exit -fno-builtin-stdio \
 	-std=c99 \
 	-g \
-	-D CONFIG_KEYMAP2 \
 	-mcpu=$(CPU)
+	
+#CFLAGS += CONFIG_KEYMAP2
 
 ASFLAGS = -g -I. -Iinclude -mcpu=$(CPU)
 

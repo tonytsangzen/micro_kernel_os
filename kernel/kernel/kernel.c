@@ -118,6 +118,9 @@ void _kernel_entry_c(context_t* ctx) {
 
 	load_init();
 
-	timer_set_interval(0, 1000000);
-	while(1);
+	timer_set_interval(0, 0x40); //0.001 sec sequence
+
+	while(1) {
+		__asm__("MOV r0, #0; MCR p15,0,R0,c7,c0,4"); // CPU enter WFI state
+	}
 }

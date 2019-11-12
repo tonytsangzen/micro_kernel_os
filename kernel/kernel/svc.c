@@ -297,6 +297,7 @@ static void	sys_get_sysinfo(sysinfo_t* info) {
 
 	info->free_mem = get_free_mem_size();
 	info->total_mem = _hw_info.phy_mem_size;
+	info->kernel_tic = _kernel_tic;
 }
 
 static int32_t sys_pipe_open(int32_t* fd0, int32_t* fd1) {

@@ -31,12 +31,22 @@ static void keyb_handler(void) {
 	proc_wakeup((uint32_t)dev);
 }
 
+uint32_t _kernel_tic = 0;
+static uint32_t _timer_count = 0;
+
 void irq_handler(context_t* ctx) {
 	__irq_disable();
 
 	uint32_t irqs = gic_get_irqs();
 	if((irqs & IRQ_TIMER0) != 0) {
 		timer_clear_interrupt(0);
+
+		if(_timer_count == 1000) {
+			_kernel_tic++;
+			_timer_count = 0;
+		}
+		_timer_count++;
+
 		schedule(ctx);
 		return;
 	}
