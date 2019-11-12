@@ -24,6 +24,9 @@ int32_t console_reset(console_t* console) {
 	console->content.line = 0;
 	console->content.line_w = div_u32(console->g->w, console->font->w)-1;
 	console->content.line_num = div_u32(console->g->h, console->font->h)-1;
+	if(mod_u32(console->g->h, console->font->h) != 0)
+		console->content.line_num--;
+
 	console->content.total = console->content.line_num * console->content.line_w;
 
 	uint32_t data_size = console->content.line_num*console->content.line_w;

@@ -1,4 +1,5 @@
 #include <unistd.h>
+#include <stdlib.h>
 #include <fcntl.h>
 #include <stdio.h>
 #include <string.h>
@@ -13,7 +14,12 @@ static int run(void) {
 	console_t console;
 	console_init(&console);
 	console.g = graph_from_fb();
-	console.font = get_font_by_name("9x16");
+
+	const char* fnt_name = getenv("font");
+	if(fnt_name[0] == 0)
+		fnt_name = "9x16";
+	console.font = get_font_by_name(fnt_name);
+
 	console.fg_color = 0xffffffff;
 	console.bg_color = 0xff000000;
 	console_reset(&console);

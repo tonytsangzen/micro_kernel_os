@@ -25,6 +25,8 @@ int main(int argc, char** argv) {
 	vfs_mount_wait("/initrd", pid);
 	uprintf("initfs mounted to /initrd.\n");
 
+	setenv("OS", "mkos");
+
 	pid = fork();
 	if(pid == 0) {
 		exec("/initrd/sbin/nulld");
@@ -52,12 +54,6 @@ int main(int argc, char** argv) {
 	}
 	vfs_mount_wait("/dev/mouse0", pid);
 	uprintf("device mouse mounted to /dev/mouse0.\n\n");
-
-	pid = fork();
-	if(pid == 0) {
-		init_stdio();
-		exec("/initrd/bin/gconsole");
-	}
 
 	pid = fork();
 	if(pid == 0) {

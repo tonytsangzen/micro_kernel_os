@@ -45,7 +45,7 @@ int main(int argc, char* argv[]) {
 	svc_call1(SYS_GET_SYSINFO, (int32_t)&sysinfo);
 	uint32_t fr_mem = sysinfo.free_mem / 1024;
 	uint32_t t_mem = sysinfo.total_mem / (1024*1024);
-	uint32_t csec = sysinfo.sec_run;
+	uint32_t csec = sysinfo.kernel_tic;
 
 	procinfo_t* procs = (procinfo_t*)svc_call1(SYS_GET_PROCS, (int)&num);
 	if(procs != NULL) {
