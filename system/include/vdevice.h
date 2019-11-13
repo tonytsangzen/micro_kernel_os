@@ -2,6 +2,7 @@
 #define VDEVICE_H
 
 #include <fsinfo.h>
+#include <proto.h>
 
 typedef struct {
 	char name[FS_NODE_NAME_MAX];
@@ -11,6 +12,7 @@ typedef struct {
 	int (*write)(fsinfo_t* info, const void* buf, int size, int offset, void* p);
 	int (*dma)(fsinfo_t* info, int* size, void* p);
 	int (*flush)(fsinfo_t* info, void* p);
+	int (*cntl)(fsinfo_t* info, int cmd, proto_t* in, proto_t* out, void* p);
 	int (*mount)(fsinfo_t* mnt_point, mount_info_t* mnt_info, void* p);
 	int (*umount)(fsinfo_t* mnt_point, void* p);
 } vdevice_t;

@@ -77,6 +77,18 @@ void* proto_read(proto_t* proto, int32_t *size) {
 	return p+4;
 }
 
+int32_t proto_read_to(proto_t* proto, void* to, int32_t size) {
+	int32_t sz;
+	void *p = proto_read(proto, &sz);
+	if(sz > size)
+		sz = size;
+	if(to == NULL || p == NULL || sz == 0)
+		return 0;
+		
+	memcpy(to, p, sz);
+	return sz;
+}
+
 inline int32_t proto_read_int(proto_t* proto) {
 	void *p = proto_read(proto, NULL);
 	if(p == NULL)

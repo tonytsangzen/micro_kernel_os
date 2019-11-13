@@ -27,6 +27,8 @@ void proto_add_str(proto_t* proto, const char* v);
 
 void* proto_read(proto_t* proto, int32_t *size);
 
+int32_t proto_read_to(proto_t* proto, void* to, int32_t size);
+
 int32_t proto_read_int(proto_t* proto);
 
 const char* proto_read_str(proto_t* proto);

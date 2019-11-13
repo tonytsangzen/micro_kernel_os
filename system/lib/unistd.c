@@ -85,16 +85,18 @@ int read(int fd, void* buf, uint32_t size) {
 }
 
 static int write_pipe(fsinfo_t* info, const void* buf, uint32_t size) {
-	while(1) {
-		int res = svc_call3(SYS_PIPE_WRITE, (int32_t)info, (int32_t)buf, (int32_t)size);
-		if(res != 0)
-			return res;
-		sleep(0);
+	errno = ENONE;
+	int res = svc_call3(SYS_PIPE_WRITE, (int32_t)info, (int32_t)buf, (int32_t)size);
+	if(res == 0) { // pipe not empty, do retry
+		errno = EAGAIN;
+		return -1;
 	}
-	return 0;
+	if(res > 0)
+		return res;
+	return 0; //res < 0 , pipe closed, return 0.
 }
 
-int write(int fd, const void* buf, uint32_t size) {
+int write_nblock(int fd, const void* buf, uint32_t size) {
 	fsinfo_t info;
 	if(vfs_get_by_fd(fd, &info) != 0)
 		return -1;
@@ -135,6 +137,19 @@ int write(int fd, const void* buf, uint32_t size) {
 	proto_clear(&in);
 	proto_clear(&out);
 	return res;
+}
+
+int write(int fd, const void* buf, uint32_t size) {
+	while(1) {
+		int res = write_nblock(fd, buf, size);
+		if(res >= 0)
+			return res;
+
+		if(errno != EAGAIN)
+			break;
+		sleep(0);
+	}
+	return -1;
 }
 
 void exec_initfs(const char* fname) {

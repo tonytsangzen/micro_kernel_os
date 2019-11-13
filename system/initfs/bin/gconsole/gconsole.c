@@ -5,15 +5,32 @@
 #include <string.h>
 #include <console.h>
 #include <vprintf.h>
+#include <shm.h>
+#include <dev/fbinfo.h>
 
 static int run(void) {
 	int fd = open("/dev/keyb0", O_RDONLY);
 	if(fd < 0)
 		return -1;
 
+	int fd_fb = open("/dev/fb0", 0);
+	if(fd_fb < 0)
+		return -1;
+
+	int id, size;
+	id = dma(fd_fb, &size);
+	void* p = shm_map(id);
+	fbinfo_t info;
+	proto_t* out = proto_new(NULL, 0);
+	if(cntl_raw(fd_fb, CNTL_INFO, NULL, out) == 0)
+		proto_read_to(out, &info, sizeof(fbinfo_t));
+	proto_free(out);
+
+	graph_t* g = graph_new(p, info.width, info.height);
+
 	console_t console;
 	console_init(&console);
-	console.g = graph_from_fb();
+	console.g = g;
 
 	const char* fnt_name = getenv("font");
 	if(fnt_name[0] == 0)
@@ -24,10 +41,14 @@ static int run(void) {
 	console.bg_color = 0xff000000;
 	console_reset(&console);
 
+	int rd = 0;
+	char c = 0;
 	while(1) {
-		char c;
-		if(read(fd, &c, 1) == 1) {
-			write(1, &c, 1);
+		if(rd != 1)
+			rd = read(fd, &c, 1);
+		else {
+			if(write_nblock(1, &c, 1) == 1)
+				rd = 0;
 		}
 
 		char buf[256];
@@ -50,10 +71,11 @@ static int run(void) {
 			char c = p[i];
 			console_put_char(&console, c);
 		}
-		graph_flush_fb(console.g);
+		flush(fd_fb);
 	}
 
 	close(fd);
+	close(fd_fb);
 	console_close(&console);
 	return 0;
 }

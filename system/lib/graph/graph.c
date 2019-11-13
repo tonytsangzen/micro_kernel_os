@@ -35,25 +35,6 @@ graph_t* graph_new(uint32_t* buffer, uint32_t w, uint32_t h) {
 	return ret;
 }
 
-void graph_flush_fb(graph_t* g) {
-	if(g == NULL || g->buffer == NULL)
-		return;
-	uint32_t sz = g->w * g->h * 4;
-	svc_call3(SYS_DEV_WRITE, DEV_FRAMEBUFFER, (int32_t)g->buffer, sz);
-}
-
-graph_t* graph_from_fb(void) {
-	fbinfo_t fbinfo;
-	svc_call3(SYS_DEV_OP, DEV_FRAMEBUFFER, DEV_OP_INFO, (int32_t)&fbinfo);
-	uint32_t sz = fbinfo.width*fbinfo.height*4;
-	void* buf = malloc(sz);
-
-	if(buf == NULL) {
-		return NULL;
-	}
-	return graph_new(buf, fbinfo.width, fbinfo.height);
-}
-
 void graph_free(graph_t* g) {
 	if(g == NULL)
 		return;

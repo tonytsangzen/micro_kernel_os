@@ -51,6 +51,19 @@ static int fb_umount(fsinfo_t* info, void* p) {
 	return 0;
 }
 
+static int fb_cntl(fsinfo_t* info, int cmd, proto_t* in, proto_t* out, void* p) {
+	(void)info;
+	(void)in;
+	(void)p;
+
+	if(cmd == CNTL_INFO) {
+		fbinfo_t fbinfo;
+		svc_call3(SYS_DEV_OP, DEV_FRAMEBUFFER, DEV_OP_INFO, (int32_t)&fbinfo);
+		proto_add(out, &fbinfo, sizeof(fbinfo_t));	
+	}
+	return 0;
+}
+
 int main(int argc, char** argv) {
 	(void)argc;
 	(void)argv;
@@ -74,6 +87,7 @@ int main(int argc, char** argv) {
 	dev.mount = fb_mount;
 	dev.dma = fb_dma;
 	dev.flush = fb_flush;
+	dev.cntl = fb_cntl;
 	dev.umount = fb_umount;
 
 	fsinfo_t dev_info;

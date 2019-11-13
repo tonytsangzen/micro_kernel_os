@@ -11,6 +11,7 @@ enum {
 	FS_CMD_WRITE,
 	FS_CMD_SEEK,
 	FS_CMD_DMA,
+	FS_CMD_CNTL,
 	FS_CMD_FLUSH
 };
 
@@ -28,5 +29,6 @@ int vfs_get_mount(fsinfo_t* info, mount_t* mount);
 int vfs_mount(fsinfo_t* mount_to, fsinfo_t* info, mount_info_t* mnt_info);
 void vfs_mount_wait(const char* fname, int pid);
 int vfs_umount(fsinfo_t* info);
+
 
 #endif

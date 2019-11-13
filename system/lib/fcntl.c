@@ -98,4 +98,37 @@ void flush(int fd) {
 	}
 }
 
+int cntl_raw(int fd, int cmd, proto_t* arg_in, proto_t* arg_out) {
+	fsinfo_t info;
+	if(vfs_get_by_fd(fd, &info) != 0)
+		return -1;
+	
+	mount_t mount;
+	if(vfs_get_mount(&info, &mount) != 0)
+		return -1;
 
+	proto_t in, out;
+	proto_init(&in, NULL, 0);
+	proto_init(&out, NULL, 0);
+
+	proto_add_int(&in, FS_CMD_CNTL);
+	proto_add(&in, &info, sizeof(fsinfo_t));
+	proto_add_int(&in, cmd);
+	if(arg_in == NULL)
+		proto_add(&in, NULL, 0);
+	else
+		proto_add(&in, arg_in->data, arg_in->size);
+
+	int res = -1;
+	if(ipc_call(mount.pid, &in, &out) == 0) {
+		res = proto_read_int(&out);
+		if(arg_out != NULL) {
+			int32_t sz;
+			void *p = proto_read(&out, &sz);
+			proto_add(arg_out, p, sz);
+		}
+	}
+	proto_clear(&in);
+	proto_clear(&out);
+	return res;
+}
