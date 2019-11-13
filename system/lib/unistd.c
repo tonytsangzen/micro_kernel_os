@@ -60,6 +60,7 @@ int read(int fd, void* buf, uint32_t size) {
 	proto_init(&out, NULL, 0);
 
 	proto_add_int(&in, FS_CMD_READ);
+	proto_add_int(&in, fd);
 	proto_add(&in, &info, sizeof(fsinfo_t));
 	proto_add_int(&in, size);
 	proto_add_int(&in, offset);
@@ -117,6 +118,7 @@ int write_nblock(int fd, const void* buf, uint32_t size) {
 	proto_init(&out, NULL, 0);
 
 	proto_add_int(&in, FS_CMD_WRITE);
+	proto_add_int(&in, fd);
 	proto_add(&in, &info, sizeof(fsinfo_t));
 	proto_add(&in, buf, size);
 	proto_add_int(&in, offset);

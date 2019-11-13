@@ -1,6 +1,6 @@
-MOUSED_OBJS = $(ROOT_DIR)/sbin/moused/moused.o
+MOUSED_OBJS = $(ROOT_DIR)/sbin/dev/moused/moused.o
 
-MOUSED = $(TARGET_DIR)/$(ROOT_DIR)/sbin/moused
+MOUSED = $(TARGET_DIR)/$(ROOT_DIR)/sbin/dev/moused
 
 PROGS += $(MOUSED)
 CLEAN += $(MOUSED_OBJS)

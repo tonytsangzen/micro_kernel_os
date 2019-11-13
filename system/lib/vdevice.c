@@ -13,13 +13,11 @@ static void do_open(vdevice_t* dev, int from_pid, proto_t *in, void* p) {
 	memcpy(&info, proto_read(in, NULL), sizeof(fsinfo_t));
 	oflag = proto_read_int(in);
 
-	int32_t fd = -1;
-	if(dev != NULL && dev->open != NULL) {
-		if(dev->open(&info, oflag, p) == 0)
-			fd = svc_call3(SYS_VFS_OPEN, from_pid, (int32_t)&info, oflag);
+	int32_t fd = svc_call3(SYS_VFS_OPEN, from_pid, (int32_t)&info, oflag);
+	if(fd >= 0 && dev != NULL && dev->open != NULL) {
+		if(dev->open(fd, &info, oflag, p) != 0) {
+		}
 	}
-	else 
-			fd = svc_call3(SYS_VFS_OPEN, from_pid, (int32_t)&info, oflag);
 
 	proto_t out;
 	proto_init(&out, NULL, 0);
@@ -31,16 +29,18 @@ static void do_open(vdevice_t* dev, int from_pid, proto_t *in, void* p) {
 static void do_close(vdevice_t* dev, int from_pid, proto_t *in, void* p) {
 	(void)from_pid;
 	fsinfo_t info;
+	int fd = proto_read_int(in);
 	memcpy(&info, proto_read(in, NULL), sizeof(fsinfo_t));
 
 	if(dev != NULL && dev->close != NULL) {
-		dev->close(&info, p);
+		dev->close(fd, &info, p);
 	}
 }
 
 static void do_read(vdevice_t* dev, int from_pid, proto_t *in, void* p) {
 	int size, offset;
 	fsinfo_t info;
+	int fd = proto_read_int(in);
 	memcpy(&info, proto_read(in, NULL), sizeof(fsinfo_t));
 	size = proto_read_int(in);
 	offset = proto_read_int(in);
@@ -50,7 +50,7 @@ static void do_read(vdevice_t* dev, int from_pid, proto_t *in, void* p) {
 
 	if(dev != NULL && dev->read != NULL) {
 		void* buf = malloc(size);
-		size = dev->read(&info, buf, size, offset, p);
+		size = dev->read(fd, &info, buf, size, offset, p);
 		proto_add_int(&out, size);
 		if(size > 0)
 			proto_add(&out, buf, size);
@@ -66,6 +66,7 @@ static void do_read(vdevice_t* dev, int from_pid, proto_t *in, void* p) {
 static void do_write(vdevice_t* dev, int from_pid, proto_t *in, void* p) {
 	int32_t size, offset;
 	fsinfo_t info;
+	int fd = proto_read_int(in);
 	memcpy(&info, proto_read(in, NULL), sizeof(fsinfo_t));
 	void* data = proto_read(in, &size);
 	offset = proto_read_int(in);
@@ -74,7 +75,7 @@ static void do_write(vdevice_t* dev, int from_pid, proto_t *in, void* p) {
 	proto_init(&out, NULL, 0);
 
 	if(dev != NULL && dev->write != NULL) {
-		size = dev->write(&info, data, size, offset, p);
+		size = dev->write(fd, &info, data, size, offset, p);
 		proto_add_int(&out, size);
 	}
 	else {
@@ -86,6 +87,7 @@ static void do_write(vdevice_t* dev, int from_pid, proto_t *in, void* p) {
 
 static void do_dma(vdevice_t* dev, int from_pid, proto_t *in, void* p) {
 	fsinfo_t info;
+	int fd = proto_read_int(in);
 	memcpy(&info, proto_read(in, NULL), sizeof(fsinfo_t));
 
 	proto_t out;
@@ -94,7 +96,7 @@ static void do_dma(vdevice_t* dev, int from_pid, proto_t *in, void* p) {
 	int id = -1;	
 	int size = 0;
 	if(dev != NULL && dev->dma != NULL) {
-		id = dev->dma(&info, &size, p);
+		id = dev->dma(fd, &info, &size, p);
 	}
 	proto_add_int(&out, id);
 	proto_add_int(&out, size);
@@ -104,6 +106,7 @@ static void do_dma(vdevice_t* dev, int from_pid, proto_t *in, void* p) {
 
 static void do_cntl(vdevice_t* dev, int from_pid, proto_t *in, void* p) {
 	fsinfo_t info;
+	int fd = proto_read_int(in);
 	memcpy(&info, proto_read(in, NULL), sizeof(fsinfo_t));
 	int32_t cmd = proto_read_int(in);
 
@@ -117,7 +120,7 @@ static void do_cntl(vdevice_t* dev, int from_pid, proto_t *in, void* p) {
 
 	int res = -1;
 	if(dev != NULL && dev->cntl != NULL) {
-		res = dev->cntl(&info, cmd, &arg_in, &arg_out, p);
+		res = dev->cntl(fd, &info, cmd, &arg_in, &arg_out, p);
 	}
 	proto_clear(&arg_in);
 
@@ -132,10 +135,11 @@ static void do_cntl(vdevice_t* dev, int from_pid, proto_t *in, void* p) {
 
 static void do_flush(vdevice_t* dev, int from_pid, proto_t *in, void* p) {
 	fsinfo_t info;
+	int fd = proto_read_int(in);
 	memcpy(&info, proto_read(in, NULL), sizeof(fsinfo_t));
 
 	if(dev != NULL && dev->flush != NULL) {
-		dev->flush(&info, p);
+		dev->flush(fd, &info, p);
 	}
 
 	proto_t out;

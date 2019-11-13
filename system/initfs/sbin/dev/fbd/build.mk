@@ -1,6 +1,6 @@
-FBD_OBJS = $(ROOT_DIR)/sbin/fbd/fbd.o
+FBD_OBJS = $(ROOT_DIR)/sbin/dev/fbd/fbd.o
 
-FBD = $(TARGET_DIR)/$(ROOT_DIR)/sbin/fbd
+FBD = $(TARGET_DIR)/$(ROOT_DIR)/sbin/dev/fbd
 
 PROGS += $(FBD)
 CLEAN += $(FBD_OBJS)

@@ -1,6 +1,6 @@
-TTYD_OBJS = $(ROOT_DIR)/sbin/ttyd/ttyd.o
+TTYD_OBJS = $(ROOT_DIR)/sbin/dev/ttyd/ttyd.o
 
-TTYD = $(TARGET_DIR)/$(ROOT_DIR)/sbin/ttyd
+TTYD = $(TARGET_DIR)/$(ROOT_DIR)/sbin/dev/ttyd
 
 PROGS += $(TTYD)
 CLEAN += $(TTYD_OBJS)

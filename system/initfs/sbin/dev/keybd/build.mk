@@ -1,6 +1,6 @@
-KEYBD_OBJS = $(ROOT_DIR)/sbin/keybd/keybd.o
+KEYBD_OBJS = $(ROOT_DIR)/sbin/dev/keybd/keybd.o
 
-KEYBD = $(TARGET_DIR)/$(ROOT_DIR)/sbin/keybd
+KEYBD = $(TARGET_DIR)/$(ROOT_DIR)/sbin/dev/keybd
 
 PROGS += $(KEYBD)
 CLEAN += $(KEYBD_OBJS)

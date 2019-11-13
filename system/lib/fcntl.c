@@ -43,6 +43,7 @@ void close(int fd) {
 		proto_init(&in, NULL, 0);
 
 		proto_add_int(&in, FS_CMD_CLOSE);
+		proto_add_int(&in, fd);
 		proto_add(&in, &info, sizeof(fsinfo_t));
 
 		ipc_call(mount.pid, &in, NULL);
@@ -66,6 +67,7 @@ int dma(int fd, int* size) {
 	proto_init(&out, NULL, 0);
 
 	proto_add_int(&in, FS_CMD_DMA);
+	proto_add_int(&in, fd);
 	proto_add(&in, &info, sizeof(fsinfo_t));
 
 	int shm_id = -1;
@@ -91,6 +93,7 @@ void flush(int fd) {
 		proto_init(&out, NULL, 0);
 
 		proto_add_int(&in, FS_CMD_FLUSH);
+		proto_add_int(&in, fd);
 		proto_add(&in, &info, sizeof(fsinfo_t));
 		ipc_call(mount.pid, &in, &out);
 		proto_clear(&in);
@@ -112,6 +115,7 @@ int cntl_raw(int fd, int cmd, proto_t* arg_in, proto_t* arg_out) {
 	proto_init(&out, NULL, 0);
 
 	proto_add_int(&in, FS_CMD_CNTL);
+	proto_add_int(&in, fd);
 	proto_add(&in, &info, sizeof(fsinfo_t));
 	proto_add_int(&in, cmd);
 	if(arg_in == NULL)

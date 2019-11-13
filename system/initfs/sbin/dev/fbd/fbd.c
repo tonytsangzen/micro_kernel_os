@@ -33,12 +33,14 @@ static int fb_mount(fsinfo_t* mnt_point, mount_info_t* mnt_info, void* p) {
 	return 0;
 }
 
-static int fb_flush(fsinfo_t* info, void* p) {
+static int fb_flush(int fd, fsinfo_t* info, void* p) {
+	(void)fd;
 	fb_dma_t* dma = (fb_dma_t*)p;
 	return svc_call3(SYS_DEV_WRITE, (int32_t)info->data, (int32_t)dma->data, dma->size);
 }
 
-static int fb_dma(fsinfo_t* info, int* size, void* p) {
+static int fb_dma(int fd, fsinfo_t* info, int* size, void* p) {
+	(void)fd;
 	(void)info;
 	fb_dma_t* dma = (fb_dma_t*)p;
 	*size = dma->size;
@@ -51,7 +53,8 @@ static int fb_umount(fsinfo_t* info, void* p) {
 	return 0;
 }
 
-static int fb_cntl(fsinfo_t* info, int cmd, proto_t* in, proto_t* out, void* p) {
+static int fb_cntl(int fd, fsinfo_t* info, int cmd, proto_t* in, proto_t* out, void* p) {
+	(void)fd;
 	(void)info;
 	(void)in;
 	(void)p;

@@ -8,13 +8,13 @@
 #include <svc_call.h>
 #include <dev/device.h>
 
-static int keyb_mount(fsinfo_t* mnt_point, mount_info_t* mnt_info, void* p) {
+static int tty_mount(fsinfo_t* mnt_point, mount_info_t* mnt_info, void* p) {
 	(void)p;
 	fsinfo_t info;
 	memset(&info, 0, sizeof(fsinfo_t));
 	strcpy(info.name, mnt_point->name);
 	info.type = FS_TYPE_DEV;
-	info.data = DEV_KEYB;
+	info.data = DEV_UART0;
 	vfs_new_node(&info);
 
 	if(vfs_mount(mnt_point, &info, mnt_info) != 0) {
@@ -25,16 +25,29 @@ static int keyb_mount(fsinfo_t* mnt_point, mount_info_t* mnt_info, void* p) {
 	return 0;
 }
 
-static int keyb_read(fsinfo_t* info, void* buf, int size, int offset, void* p) {
+static int tty_read(int fd, fsinfo_t* info, void* buf, int size, int offset, void* p) {
+	(void)fd;
 	(void)offset;
 	(void)p;
-	int res = svc_call3(SYS_DEV_READ, (int32_t)info->data, (int32_t)buf, size);
-	if(res == 0) 
-		return ERR_RETRY;
+	int res = -1;
+	while(1) {
+		res = svc_call3(SYS_DEV_READ, (int32_t)info->data, (int32_t)buf, size);
+		if(res != 0)
+			break;
+		sleep(0);
+	}
+	return res;	
+}
+
+static int tty_write(int fd, fsinfo_t* info, const void* buf, int size, int offset, void* p) {
+	(void)fd;
+	(void)offset;
+	(void)p;
+	int res = svc_call3(SYS_DEV_WRITE, (int32_t)info->data, (int32_t)buf, size);
 	return res;
 }
 
-static int keyb_umount(fsinfo_t* info, void* p) {
+static int tty_umount(fsinfo_t* info, void* p) {
 	(void)p;
 	vfs_umount(info);
 	return 0;
@@ -46,17 +59,18 @@ int main(int argc, char** argv) {
 
 	vdevice_t dev;
 	memset(&dev, 0, sizeof(vdevice_t));
-	strcpy(dev.name, "keyb");
-	dev.mount = keyb_mount;
-	dev.read = keyb_read;
-	dev.umount = keyb_umount;
+	strcpy(dev.name, "tty");
+	dev.mount = tty_mount;
+	dev.read = tty_read;
+	dev.write = tty_write;
+	dev.umount = tty_umount;
 
 	fsinfo_t dev_info;
 	vfs_get("/dev", &dev_info);
 
 	fsinfo_t mnt_point;
 	memset(&mnt_point, 0, sizeof(fsinfo_t));
-	strcpy(mnt_point.name, "keyb0");
+	strcpy(mnt_point.name, "tty0");
 	mnt_point.type = FS_TYPE_DEV;
 
 	vfs_new_node(&mnt_point);

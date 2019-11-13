@@ -68,12 +68,14 @@ all: mkdirs $(LIB_OBJS) apps
 
 include mkramfs/build.mk
 include $(ROOT_DIR)/sbin/init/build.mk
-include $(ROOT_DIR)/sbin/initfsd/build.mk
-include $(ROOT_DIR)/sbin/ttyd/build.mk
-include $(ROOT_DIR)/sbin/fbd/build.mk
-include $(ROOT_DIR)/sbin/keybd/build.mk
-include $(ROOT_DIR)/sbin/moused/build.mk
-include $(ROOT_DIR)/sbin/nulld/build.mk
+
+include $(ROOT_DIR)/sbin/dev/initfsd/build.mk
+include $(ROOT_DIR)/sbin/dev/ttyd/build.mk
+include $(ROOT_DIR)/sbin/dev/fbd/build.mk
+include $(ROOT_DIR)/sbin/dev/keybd/build.mk
+include $(ROOT_DIR)/sbin/dev/moused/build.mk
+include $(ROOT_DIR)/sbin/dev/nulld/build.mk
+
 include $(ROOT_DIR)/bin/shell/build.mk
 include $(ROOT_DIR)/bin/pwd/build.mk
 include $(ROOT_DIR)/bin/cat/build.mk
@@ -86,7 +88,7 @@ include $(ROOT_DIR)/bin/gtest/build.mk
 include $(ROOT_DIR)/bin/gconsole/build.mk
 
 mkdirs:
-	mkdir -p ${TARGET_DIR}/$(ROOT_DIR)/sbin
+	mkdir -p ${TARGET_DIR}/$(ROOT_DIR)/sbin/dev
 	mkdir -p ${TARGET_DIR}/$(ROOT_DIR)/bin
 	mkdir -p ${TARGET_DIR}/asm
 

@@ -1,5 +1,5 @@
-INITFSD_OBJS = $(ROOT_DIR)/sbin/initfsd/initfsd.o
-INITFSD = $(TARGET_DIR)/$(ROOT_DIR)/sbin/initfsd
+INITFSD_OBJS = $(ROOT_DIR)/sbin/dev/initfsd/initfsd.o
+INITFSD = $(TARGET_DIR)/$(ROOT_DIR)/sbin/dev/initfsd
 
 PROGS += $(INITFSD)
 CLEAN += $(INITFSD_OBJS)

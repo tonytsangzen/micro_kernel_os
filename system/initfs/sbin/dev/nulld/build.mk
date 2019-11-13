@@ -1,6 +1,6 @@
-NULLD_OBJS = $(ROOT_DIR)/sbin/nulld/nulld.o
+NULLD_OBJS = $(ROOT_DIR)/sbin/dev/nulld/nulld.o
 
-NULLD = $(TARGET_DIR)/$(ROOT_DIR)/sbin/nulld
+NULLD = $(TARGET_DIR)/$(ROOT_DIR)/sbin/dev/nulld
 
 PROGS += $(NULLD)
 CLEAN += $(NULLD_OBJS)
