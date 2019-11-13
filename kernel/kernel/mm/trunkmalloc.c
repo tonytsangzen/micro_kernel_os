@@ -132,7 +132,8 @@ static void try_shrink(malloc_t* m) {
 		m->tail->next = NULL;
 	else
 		m->tail = m->head;
-	if(m->tail != m->head)
+
+	if(m->tail != m->head) /*at least keep one block for reserve*/
 		m->shrink(m->arg, pages);
 }
 
