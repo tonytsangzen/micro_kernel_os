@@ -24,9 +24,9 @@ int main(int argc, char* argv[]) {
 
 	char s[32];
 	int i = 0;
-	while(1) {
+	while(i<1000) {
 		snprintf(s, 31, "hello,dma %d", i++);
-		//clear(g, 0xffffffff);
+		clear(g, 0xffffffff);
 		draw_text(g, 100, 400, s, font, 0xff0000ff);
 		flush(fd);
 		sleep(0);

@@ -126,14 +126,14 @@ static void try_shrink(malloc_t* m) {
 		return;
 
 	int pages = (m->tail->size+block_size) / PAGE_SIZE;
+
 	m->tail = m->tail->prev;
 	if(m->tail != NULL)
 		m->tail->next = NULL;
-	//else
-	//	m->tail = m->head;
 	else
-		m->head = NULL; 
-	m->shrink(m->arg, pages);
+		m->tail = m->head;
+	if(m->tail != m->head)
+		m->shrink(m->arg, pages);
 }
 
 void trunk_free(malloc_t* m, char* p) {
@@ -143,6 +143,7 @@ void trunk_free(malloc_t* m, char* p) {
 	mem_block_t* block = (mem_block_t*)(p-block_size);
 	block->used = 0; //mark as free.
 	try_merge(m, block);
+	
 	if(m->shrink != NULL)
 		try_shrink(m);
 }

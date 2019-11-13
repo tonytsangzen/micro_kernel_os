@@ -35,8 +35,7 @@ static int fb_mount(fsinfo_t* mnt_point, mount_info_t* mnt_info, void* p) {
 
 static int fb_flush(fsinfo_t* info, void* p) {
 	fb_dma_t* dma = (fb_dma_t*)p;
-	//return = svc_call3(SYS_DEV_WRITE, (int32_t)info->data, (int32_t)dma->data, dma->size);
-	return 0;
+	return svc_call3(SYS_DEV_WRITE, (int32_t)info->data, (int32_t)dma->data, dma->size);
 }
 
 static int fb_dma(fsinfo_t* info, int* size, void* p) {

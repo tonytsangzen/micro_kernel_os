@@ -81,7 +81,7 @@ void map_pages(page_dir_entry_t *vm, uint32_t vaddr,
 	uint32_t pend,  
 	uint32_t access_permissions);
 
-void map_page(page_dir_entry_t *vm, 
+int32_t  map_page(page_dir_entry_t *vm, 
   uint32_t virtual_addr, 
 	uint32_t physical,
 	uint32_t access_permissions);

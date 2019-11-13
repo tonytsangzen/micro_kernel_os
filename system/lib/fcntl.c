@@ -88,6 +88,7 @@ void flush(int fd) {
 	if(vfs_get_mount(&info, &mount) == 0) {
 		proto_t in, out;
 		proto_init(&in, NULL, 0);
+		proto_init(&out, NULL, 0);
 
 		proto_add_int(&in, FS_CMD_FLUSH);
 		proto_add(&in, &info, sizeof(fsinfo_t));
