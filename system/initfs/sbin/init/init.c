@@ -60,16 +60,15 @@ int main(int argc, char** argv) {
 		exec("/initrd/sbin/dev/moused");
 	}
 	vfs_mount_wait("/dev/mouse0", pid);
-	uprintf("device mouse mounted to /dev/mouse0.\n\n");
+	uprintf("device mouse mounted to /dev/mouse0.\n");
 
 	pid = fork();
 	if(pid == 0) {
-		exec("/initrd/sbin/dev/gserverd");
+		exec("/initrd/sbin/dev/xserverd");
 	}
-	vfs_mount_wait("/dev/gserver", pid);
-	uprintf("device gserver mounted to /dev/gserver.\n\n");
+	vfs_mount_wait("/dev/xserver", pid);
+	uprintf("device xserver mounted to /dev/xserver.\n\n");
 
-	
 	pid = fork();
 	if(pid == 0) {
 		init_stdio();

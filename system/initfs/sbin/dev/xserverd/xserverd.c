@@ -5,19 +5,36 @@
 #include <string.h>
 #include <vfs.h>
 #include <vdevice.h>
-#include <graph/graph.h>
 #include <svc_call.h>
 #include <dev/device.h>
 #include <shm.h>
+#include <graph/graph.h>
+#include <dev/fbinfo.h>
+#include <x/xcntl.h>
+
+typedef struct st_xview {
+	int32_t fd;
+	int32_t from_pid;
+	xinfo_t xinfo;
+	int32_t dirty;
+
+	struct st_xview *next;
+	struct st_xview *prev;
+} xview_t;
 
 typedef struct {
-	int32_t fd;
-	int32_t shm_id;
-	grect_t rect;
-} xview_t;
+	int gfd;
+	int shm_id;
+	int32_t dirty;
+	graph_t* g;
+
+	xview_t* view_head;
+	xview_t* view_tail;
+} x_t;
 
 static int xserver_mount(fsinfo_t* mnt_point, mount_info_t* mnt_info, void* p) {
 	(void)p;
+
 	fsinfo_t info;
 	memset(&info, 0, sizeof(fsinfo_t));
 	strcpy(info.name, mnt_point->name);
@@ -38,15 +55,161 @@ static int xserver_umount(fsinfo_t* info, void* p) {
 	return 0;
 }
 
-static int xserver_cntl(int fd, fsinfo_t* info, int cmd, proto_t* in, proto_t* out, void* p) {
-	(void)fd;
-	(void)info;
-	(void)in;
-	(void)out;
-	(void)p;
-	(void)cmd;
+static int draw_view(x_t* x, xview_t* view) {
+	void* gbuf = shm_map(view->xinfo.shm_id);
+	if(gbuf == NULL) {
+	uprintf("!!\n");
+		return -1;
+	}
 
+	//if(x->dirty == 0 && view->dirty == 0)
+	//	return 0;
+
+	graph_t* g = graph_new(gbuf, view->xinfo.r.w, view->xinfo.r.h);
+	blt(g, 0, 0, view->xinfo.r.w, view->xinfo.r.h,
+			x->g, view->xinfo.r.x, view->xinfo.r.y, view->xinfo.r.w, view->xinfo.r.h);
+	graph_free(g);
+	shm_unmap(view->xinfo.shm_id);
+	view->dirty = 0;
 	return 0;
+}
+
+static void draw_desktop(x_t* xp) {
+	if(xp->dirty == 0)
+		return;
+
+	clear(xp->g, 0xff000000);
+	//background pattern
+	int32_t x, y;
+	for(y=10; y<(int32_t)xp->g->h; y+=10) {
+		for(x=0; x<(int32_t)xp->g->w; x+=10) {
+			pixel(xp->g, x, y, 0xff444444);
+		}
+	}
+	//xp->dirty = 0;
+}
+
+static void x_del_view(x_t* x, xview_t* view) {
+	if(view->prev != NULL)
+		view->prev->next = view->next;
+	if(view->next != NULL)
+		view->next->prev = view->prev;
+	if(x->view_tail == view)
+		x->view_tail = view->prev;
+	if(x->view_head == view)
+		x->view_head = view->next;
+}
+
+static void x_repaint(x_t* x) {
+	draw_desktop(x);
+	xview_t* view = x->view_head;
+	while(view != NULL) {
+		int res = draw_view(x, view);
+		xview_t* v = view;
+		view = view->next;
+
+		if(res != 0) //client close/broken. remove it.
+			x_del_view(x, v);
+	}
+	flush(x->gfd);
+}
+
+static xview_t* x_get_view(x_t* x, int fd, int from_pid) {
+	xview_t* view = x->view_head;
+	while(view != NULL) {
+		if(view->fd == fd && view->from_pid == from_pid)
+			return view;
+		view = view->next;
+	}
+	return NULL;
+}
+
+static int x_update(int fd, int from_pid, proto_t* in, x_t* x) {
+	xinfo_t xinfo;
+	int sz = sizeof(xinfo_t);
+	if(fd < 0 || proto_read_to(in, &xinfo, sz) != sz)
+		return -1;
+	
+	xview_t* view = x_get_view(x, fd, from_pid);
+	if(view == NULL)
+		return -1;
+
+	memcpy(&view->xinfo, &xinfo, sizeof(xinfo_t));
+	view->dirty = 1;
+	x_repaint(x);
+	return 0;
+}
+
+static int x_new_view(int fd, int from_pid, proto_t* in, x_t* x) {
+	xinfo_t xinfo;
+	int sz = sizeof(xinfo_t);
+	if(fd < 0 || proto_read_to(in, &xinfo, sz) != sz)
+		return -1;
+	xview_t* view = (xview_t*)malloc(sizeof(xview_t));
+	if(view == NULL)
+		return -1;
+	memset(view, 0, sizeof(xview_t));
+
+	memcpy(&view->xinfo, &xinfo, sizeof(xinfo_t));
+	view->dirty = 1;
+	view->fd = fd;
+	view->from_pid = from_pid;
+	if(x->view_tail != NULL) {
+		x->view_tail->next = view;
+		view->prev = x->view_tail;
+		x->view_tail = view;
+	}
+	else {
+		x->view_tail = x->view_head = view;
+	}
+	x_repaint(x);
+	return 0;
+}
+
+static int xserver_cntl(int fd, int from_pid, fsinfo_t* info, int cmd, proto_t* in, proto_t* out, void* p) {
+	(void)info;
+	(void)out;
+	x_t* x = (x_t*)p;
+	if(from_pid == 10)
+uprintf("%d, %d\n", fd, from_pid);	
+
+	if(cmd == X_CNTL_NEW) {
+		return x_new_view(fd, from_pid, in, x);
+	}
+	else if(cmd == X_CNTL_UPDATE) {
+		return x_update(fd, from_pid, in, x);
+	}
+	return 0;
+}
+
+static int x_init(x_t* x) {
+	x->view_head = NULL;	
+	x->view_tail = NULL;	
+
+	int fd = open("/dev/fb0", 0);
+	if(fd < 0)
+		return -1;
+
+	int id = dma(fd, NULL);
+	void* gbuf = shm_map(id);
+
+	fbinfo_t info;
+	proto_t* out = proto_new(NULL, 0);
+	if(cntl_raw(fd, CNTL_INFO, NULL, out) == 0)
+		proto_read_to(out, &info, sizeof(fbinfo_t));
+	proto_free(out);
+
+	x->g = graph_new(gbuf, info.width, info.height);
+	x->gfd = fd;
+	x->shm_id = id;
+	x->dirty = 1;
+	return 0;
+}	
+
+static void x_close(x_t* x) {
+	graph_free(x->g);
+	shm_unmap(x->shm_id);
+	close(x->gfd);
 }
 
 int main(int argc, char** argv) {
@@ -76,6 +239,10 @@ int main(int argc, char** argv) {
 	mnt_info.dev_index = 0;
 	mnt_info.access = 0;
 
-	device_run(&dev, &mnt_point, &mnt_info, NULL);
+	x_t x;
+	if(x_init(&x) == 0) {
+		device_run(&dev, &mnt_point, &mnt_info, &x);
+		x_close(&x);
+	}
 	return 0;
 }

@@ -25,8 +25,9 @@ static int mouse_mount(fsinfo_t* mnt_point, mount_info_t* mnt_info, void* p) {
 	return 0;
 }
 
-static int mouse_read(int fd, fsinfo_t* info, void* buf, int size, int offset, void* p) {
+static int mouse_read(int fd, int from_pid, fsinfo_t* info, void* buf, int size, int offset, void* p) {
 	(void)fd;
+	(void)from_pid;
 	(void)offset;
 	(void)p;
 	return svc_call3(SYS_DEV_READ, (int32_t)info->data, (int32_t)buf, size);

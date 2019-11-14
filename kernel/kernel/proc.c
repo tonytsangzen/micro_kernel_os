@@ -593,6 +593,36 @@ void* proc_get_msg(int32_t *pid, uint32_t* size) {
 	return ret;
 }
 
+void* proc_get_msg_from(int32_t pid, uint32_t* size) {
+	void *ret = NULL;
+	uint32_t cpsr = __int_off();
+
+	proc_msg_t* msg = _current_proc->msg_queue_head;
+
+	while(msg != NULL) {
+		if(msg->from_pid == pid) {
+			if(msg->next == NULL)
+				_current_proc->msg_queue_tail = NULL;
+			_current_proc->msg_queue_head = msg->next;
+
+			if(size != NULL)
+				*size = msg->size;
+
+			ret = proc_malloc(msg->size);
+			if(ret != NULL) 
+				memcpy(ret, msg->data, msg->size);
+
+			kfree(msg->data);
+			kfree(msg);
+			break;
+		}
+		msg = msg->next;
+	}
+
+	__int_on(cpsr);
+	return ret;
+}
+
 static int32_t get_procs_num(void) {
 	int32_t res = 0;
 	int32_t i;

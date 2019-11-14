@@ -3,6 +3,27 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include <fcntl.h>
+
+int x_update(x_t* x) {
+	proto_t in;
+	proto_init(&in, NULL, 0);
+	proto_add(&in, &x->xinfo, sizeof(xinfo_t));
+
+	int ret = cntl_raw(x->fd, X_CNTL_UPDATE, &in, NULL);
+	proto_clear(&in);
+	return ret;
+}
+
+static int x_new(x_t* x) {
+	proto_t in;
+	proto_init(&in, NULL, 0);
+	proto_add(&in, &x->xinfo, sizeof(xinfo_t));
+
+	int ret = cntl_raw(x->fd, X_CNTL_NEW, &in, NULL);
+	proto_clear(&in);
+	return ret;
+}
 
 x_t* x_open(int x, int y, int w, int h) {
 	if(w <= 0 || h <= 0)
@@ -33,6 +54,8 @@ x_t* x_open(int x, int y, int w, int h) {
 	ret->xinfo.r.w = w;
 	ret->xinfo.r.h = h;
 	ret->g = graph_new(gbuf, w, h);
+
+	x_new(ret);
 	return ret;
 }
 

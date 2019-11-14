@@ -84,8 +84,9 @@ static int initfs_mount(fsinfo_t* info, mount_info_t* mnt_info, void* p) {
 	return 0;
 }
 
-static int initfs_read(int fd, fsinfo_t* info, void* buf, int size, int offset, void* p) {
+static int initfs_read(int fd, int from_pid, fsinfo_t* info, void* buf, int size, int offset, void* p) {
 	(void)fd;
+	(void)from_pid;
 	(void)p;
 	const char* content = (const char*)info->data + offset;
 	int rsize = info->size - offset;

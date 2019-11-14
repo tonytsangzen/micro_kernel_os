@@ -7,7 +7,6 @@ OBJDUMP = arm-none-eabi-objdump
 
 # flags
 CFLAGS = -Wstrict-prototypes \
-				 -I. -g \
 				 -I include \
 				 -I ../kernel/include \
 				 -marm \
@@ -18,6 +17,9 @@ CFLAGS = -Wstrict-prototypes \
 				 -Wno-overlength-strings \
          -fno-builtin-exit -fno-builtin-stdio \
 				 -std=c99 
+
+CFLAGS += -I. -g
+#CFLAGS += -I. -O2
 
 LDFLAGS = -lc
 

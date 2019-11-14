@@ -7,26 +7,19 @@
 #include <vprintf.h>
 #include <shm.h>
 #include <dev/fbinfo.h>
+#include <x/xclient.h>
 
 static int run(void) {
 	int fd = open("/dev/keyb0", O_RDONLY);
 	if(fd < 0)
 		return -1;
 
-	int fd_fb = open("/dev/fb0", 0);
-	if(fd_fb < 0)
+	x_t* x = x_open(100, 100, 800, 600);
+	if(x == NULL) {
+		close(fd);
 		return -1;
-
-	int id, size;
-	id = dma(fd_fb, &size);
-	void* p = shm_map(id);
-	fbinfo_t info;
-	proto_t* out = proto_new(NULL, 0);
-	if(cntl_raw(fd_fb, CNTL_INFO, NULL, out) == 0)
-		proto_read_to(out, &info, sizeof(fbinfo_t));
-	proto_free(out);
-
-	graph_t* g = graph_new(p, info.width, info.height);
+	}
+	graph_t* g = x_graph(x);
 
 	console_t console;
 	console_init(&console);
@@ -71,12 +64,12 @@ static int run(void) {
 			char c = p[i];
 			console_put_char(&console, c);
 		}
-		flush(fd_fb);
+		x_update(x);
 	}
 
 	close(fd);
-	close(fd_fb);
 	console_close(&console);
+	x_close(x);
 	return 0;
 }
 

@@ -279,6 +279,23 @@ static void sys_get_msg(context_t* ctx, int32_t *pid, uint32_t* size, int32_t bl
 	proc->ctx.gpr[0] = 0;
 }
 
+static void sys_get_msg_from(context_t* ctx, int32_t pid, uint32_t* size, int32_t block) {
+	void* p = proc_get_msg_from(pid, size);
+	if(p != NULL) {
+		ctx->gpr[0] = (uint32_t)p;
+		return;
+	}
+
+	if(block == 0) { //non-block mode
+		ctx->gpr[0] = 0;
+		return;
+	}
+
+	proc_t* proc = _current_proc;
+	proc_sleep_on(ctx, (uint32_t)&proc->pid);
+	proc->ctx.gpr[0] = 0;
+}
+
 static int32_t sys_proc_set_cwd(const char* cwd) {
 	tstr_cpy(_current_proc->cwd, cwd);
 	return 0;
@@ -463,6 +480,9 @@ void svc_handler(int32_t code, int32_t arg0, int32_t arg1, int32_t arg2, context
 		return;
 	case SYS_GET_MSG:
 		sys_get_msg(ctx, (int32_t*)arg0, (uint32_t*)arg1, arg2);
+		return;
+	case SYS_GET_MSG_FROM:
+		sys_get_msg_from(ctx, arg0, (uint32_t*)arg1, arg2);
 		return;
 	case SYS_VFS_GET:
 		ctx->gpr[0] = sys_vfs_get_info((const char*)arg0, (fsinfo_t*)arg1);

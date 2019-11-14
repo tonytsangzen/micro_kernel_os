@@ -2,11 +2,7 @@
 #define XCLIENT_H
 
 #include <graph/graph.h>
-
-typedef struct {
-	int shm_id;
-	grect_t r;
-} xinfo_t;
+#include <x/xcntl.h>
 
 typedef struct {
 	int fd;
@@ -16,6 +12,7 @@ typedef struct {
 
 x_t*     x_open(int x, int y, int w, int h);
 graph_t* x_graph(x_t* x);
+int      x_update(x_t* x);
 void     x_close(x_t* x);
 
 #endif

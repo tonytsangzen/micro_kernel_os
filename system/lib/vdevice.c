@@ -2,8 +2,10 @@
 #include <vfs.h>
 #include <ipc.h>
 #include <stddef.h>
+#include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <unistd.h>
 #include <errno.h>
 #include <svc_call.h>
 
@@ -15,7 +17,7 @@ static void do_open(vdevice_t* dev, int from_pid, proto_t *in, void* p) {
 
 	int32_t fd = svc_call3(SYS_VFS_OPEN, from_pid, (int32_t)&info, oflag);
 	if(fd >= 0 && dev != NULL && dev->open != NULL) {
-		if(dev->open(fd, &info, oflag, p) != 0) {
+		if(dev->open(fd, from_pid, &info, oflag, p) != 0) {
 		}
 	}
 
@@ -33,7 +35,7 @@ static void do_close(vdevice_t* dev, int from_pid, proto_t *in, void* p) {
 	memcpy(&info, proto_read(in, NULL), sizeof(fsinfo_t));
 
 	if(dev != NULL && dev->close != NULL) {
-		dev->close(fd, &info, p);
+		dev->close(fd, from_pid, &info, p);
 	}
 }
 
@@ -50,7 +52,7 @@ static void do_read(vdevice_t* dev, int from_pid, proto_t *in, void* p) {
 
 	if(dev != NULL && dev->read != NULL) {
 		void* buf = malloc(size);
-		size = dev->read(fd, &info, buf, size, offset, p);
+		size = dev->read(fd, from_pid, &info, buf, size, offset, p);
 		proto_add_int(&out, size);
 		if(size > 0)
 			proto_add(&out, buf, size);
@@ -75,7 +77,7 @@ static void do_write(vdevice_t* dev, int from_pid, proto_t *in, void* p) {
 	proto_init(&out, NULL, 0);
 
 	if(dev != NULL && dev->write != NULL) {
-		size = dev->write(fd, &info, data, size, offset, p);
+		size = dev->write(fd, from_pid, &info, data, size, offset, p);
 		proto_add_int(&out, size);
 	}
 	else {
@@ -96,7 +98,7 @@ static void do_dma(vdevice_t* dev, int from_pid, proto_t *in, void* p) {
 	int id = -1;	
 	int size = 0;
 	if(dev != NULL && dev->dma != NULL) {
-		id = dev->dma(fd, &info, &size, p);
+		id = dev->dma(fd, from_pid, &info, &size, p);
 	}
 	proto_add_int(&out, id);
 	proto_add_int(&out, size);
@@ -120,7 +122,7 @@ static void do_cntl(vdevice_t* dev, int from_pid, proto_t *in, void* p) {
 
 	int res = -1;
 	if(dev != NULL && dev->cntl != NULL) {
-		res = dev->cntl(fd, &info, cmd, &arg_in, &arg_out, p);
+		res = dev->cntl(fd, from_pid, &info, cmd, &arg_in, &arg_out, p);
 	}
 	proto_clear(&arg_in);
 
@@ -139,7 +141,7 @@ static void do_flush(vdevice_t* dev, int from_pid, proto_t *in, void* p) {
 	memcpy(&info, proto_read(in, NULL), sizeof(fsinfo_t));
 
 	if(dev != NULL && dev->flush != NULL) {
-		dev->flush(fd, &info, p);
+		dev->flush(fd, from_pid, &info, p);
 	}
 
 	proto_t out;
@@ -154,6 +156,7 @@ static void handle(vdevice_t* dev, int from_pid, proto_t *in, void* p) {
 		return;
 
 	int cmd = proto_read_int(in);
+
 	switch(cmd) {
 	case FS_CMD_OPEN:
 		do_open(dev, from_pid, in, p);
@@ -190,10 +193,11 @@ int device_run(vdevice_t* dev, fsinfo_t* mount_point, mount_info_t* mnt_info, vo
 	proto_init(&pkg, NULL, 0);
 	while(1) {
 		int pid;
-		if(ipc_recv(&pid, &pkg) == 0) {
+		if(ipc_get(&pid, &pkg, 1) == 0) {
 			handle(dev, pid, &pkg, p);
 			proto_clear(&pkg);
 		}
+		sleep(0);
 	}
 
 	return dev->umount(mount_point, p);
