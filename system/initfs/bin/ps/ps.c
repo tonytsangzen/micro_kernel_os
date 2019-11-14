@@ -43,7 +43,8 @@ int main(int argc, char* argv[]) {
 	int num = 0;
 	sysinfo_t sysinfo;
 	svc_call1(SYS_GET_SYSINFO, (int32_t)&sysinfo);
-	uint32_t fr_mem = sysinfo.free_mem / 1024;
+	uint32_t fr_mem = sysinfo.free_mem / (1024*1024);
+	uint32_t shm_mem = sysinfo.shm_mem / (1024*1024);
 	uint32_t t_mem = sysinfo.total_mem / (1024*1024);
 	uint32_t csec = sysinfo.kernel_tic;
 
@@ -65,10 +66,7 @@ int main(int argc, char* argv[]) {
 		}
 		free(procs);
 	}
-	if(fr_mem > 1024)
-		printf("  memory: total %d MB, free %d KB (%d MB)\n", t_mem, fr_mem, fr_mem/1024);
-	else
-		printf("  memory: total %d MB, free %d KB\n", t_mem, fr_mem);
+	printf("  memory: total %d MB, free %d MB, shm %d MB\n", t_mem, fr_mem, shm_mem);
 	printf("  processes: %d\n", num);
 	return 0;
 }

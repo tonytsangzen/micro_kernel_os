@@ -56,6 +56,7 @@ LIB_OBJS = $(LIB_DIR)/svc_call.o \
 	$(LIB_DIR)/console.o \
 	$(LIB_DIR)/shm.o \
 	$(LIB_DIR)/sys/wait.o \
+	$(LIB_DIR)/x/xclient.o \
 	$(GRAPH_OBJS)
 
 CLEAN = $(LIB_OBJS)
@@ -75,6 +76,7 @@ include $(ROOT_DIR)/sbin/dev/fbd/build.mk
 include $(ROOT_DIR)/sbin/dev/keybd/build.mk
 include $(ROOT_DIR)/sbin/dev/moused/build.mk
 include $(ROOT_DIR)/sbin/dev/nulld/build.mk
+include $(ROOT_DIR)/sbin/dev/xserverd/build.mk
 
 include $(ROOT_DIR)/bin/shell/build.mk
 include $(ROOT_DIR)/bin/pwd/build.mk

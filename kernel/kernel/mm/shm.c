@@ -154,6 +154,19 @@ static share_mem_t* shm_item(int32_t id) { //get shm item by id.
 	return NULL;
 }
 
+int32_t shm_alloced_size(void) {
+	int32_t ret = 0;
+	share_mem_t* i = _shm_head;
+	while(i != NULL) {
+		if(i->used) {
+			ret += i->pages * PAGE_SIZE;
+		}
+		i = i->next;
+	}
+	return ret;
+}
+
+
 static share_mem_t* free_item(share_mem_t* it) {
 	//shm_unmap_pages(it->addr, it->pages);
 	it->used = 0;
@@ -201,6 +214,19 @@ static int32_t check_owner(proc_t* proc, share_mem_t* it) {
 	}
 	return -1; //not passed!
 }
+		
+/*map share memory to process*/
+int32_t shm_proc_ref(int32_t pid, int32_t id) {
+	share_mem_t* it = shm_item(id);
+	proc_t* proc = proc_get(pid);
+	if(it == NULL || proc == NULL)
+		return -1;
+
+	if(check_owner(proc, it) != 0)
+		return -1;
+	return it->refs;
+}
+
 	
 /*map share memory to process*/
 void* shm_proc_map(int32_t pid, int32_t id) {

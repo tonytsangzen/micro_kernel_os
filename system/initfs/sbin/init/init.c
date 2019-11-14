@@ -64,6 +64,14 @@ int main(int argc, char** argv) {
 
 	pid = fork();
 	if(pid == 0) {
+		exec("/initrd/sbin/dev/gserverd");
+	}
+	vfs_mount_wait("/dev/gserver", pid);
+	uprintf("device gserver mounted to /dev/gserver.\n\n");
+
+	
+	pid = fork();
+	if(pid == 0) {
 		init_stdio();
 		exec("/initrd/bin/gconsole");
 	}

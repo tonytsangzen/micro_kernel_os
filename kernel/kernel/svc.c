@@ -298,6 +298,7 @@ static void	sys_get_sysinfo(sysinfo_t* info) {
 
 	info->free_mem = get_free_mem_size();
 	info->total_mem = _hw_info.phy_mem_size;
+	info->shm_mem = shm_alloced_size();
 	info->kernel_tic = _kernel_tic;
 }
 
@@ -403,6 +404,10 @@ static void* sys_shm_map(int32_t id) {
 
 static int32_t sys_shm_unmap(int32_t id) {
 	return shm_proc_unmap(_current_proc->pid, id);
+}
+
+static int32_t sys_shm_ref(int32_t id) {
+	return shm_proc_ref(_current_proc->pid, id);
 }
 
 void svc_handler(int32_t code, int32_t arg0, int32_t arg1, int32_t arg2, context_t* ctx, int32_t processor_mode) {
@@ -560,6 +565,9 @@ void svc_handler(int32_t code, int32_t arg0, int32_t arg1, int32_t arg2, context
 		return;
 	case SYS_PROC_SHM_UNMAP:
 		ctx->gpr[0] = sys_shm_unmap(arg0);
+		return;
+	case SYS_PROC_SHM_REF:
+		ctx->gpr[0] = sys_shm_ref(arg0);
 		return;
 	}
 	printf("pid:%d, code(%d) error!\n", _current_proc->pid, code);

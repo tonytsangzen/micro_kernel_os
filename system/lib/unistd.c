@@ -33,8 +33,9 @@ static int read_pipe(fsinfo_t* info, void* buf, uint32_t size) {
 		errno = EAGAIN;
 		return -1;
 	}
-	if(res > 0)
+	if(res > 0) {
 		return res;
+	}
 	return 0; //res < 0 , pipe closed, return 0.
 }
 

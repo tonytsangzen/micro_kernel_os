@@ -38,7 +38,7 @@ graph_t* graph_new(uint32_t* buffer, uint32_t w, uint32_t h) {
 void graph_free(graph_t* g) {
 	if(g == NULL)
 		return;
-	if(g->buffer != NULL || g->need_free == 1)
+	if(g->buffer != NULL && g->need_free == 1)
 		free(g->buffer);
 	free(g);
 }
