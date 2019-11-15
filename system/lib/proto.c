@@ -3,6 +3,7 @@
 #include <stdlib.h>
 
 void proto_init(proto_t* proto, void* data, uint32_t size) {
+	proto->id = -1;
 	proto->data = data;
 	proto->size = size;
 	proto->total_size = size;

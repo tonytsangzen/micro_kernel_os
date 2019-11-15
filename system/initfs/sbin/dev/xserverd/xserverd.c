@@ -58,12 +58,13 @@ static int xserver_umount(fsinfo_t* info, void* p) {
 static int draw_view(x_t* x, xview_t* view) {
 	void* gbuf = shm_map(view->xinfo.shm_id);
 	if(gbuf == NULL) {
-	uprintf("!!\n");
-		return -1;
+		return 0;
 	}
 
-	//if(x->dirty == 0 && view->dirty == 0)
-	//	return 0;
+	if(x->dirty == 0 && view->dirty == 0) {
+		shm_unmap(view->xinfo.shm_id);
+		return 0;
+	}
 
 	graph_t* g = graph_new(gbuf, view->xinfo.r.w, view->xinfo.r.h);
 	blt(g, 0, 0, view->xinfo.r.w, view->xinfo.r.h,
@@ -75,9 +76,6 @@ static int draw_view(x_t* x, xview_t* view) {
 }
 
 static void draw_desktop(x_t* xp) {
-	if(xp->dirty == 0)
-		return;
-
 	clear(xp->g, 0xff000000);
 	//background pattern
 	int32_t x, y;
@@ -86,7 +84,6 @@ static void draw_desktop(x_t* xp) {
 			pixel(xp->g, x, y, 0xff444444);
 		}
 	}
-	//xp->dirty = 0;
 }
 
 static void x_del_view(x_t* x, xview_t* view) {
@@ -98,20 +95,24 @@ static void x_del_view(x_t* x, xview_t* view) {
 		x->view_tail = view->prev;
 	if(x->view_head == view)
 		x->view_head = view->next;
+	x->dirty = 1;
 }
 
 static void x_repaint(x_t* x) {
-	draw_desktop(x);
+	if(x->dirty != 0)
+		draw_desktop(x);
+
 	xview_t* view = x->view_head;
 	while(view != NULL) {
 		int res = draw_view(x, view);
 		xview_t* v = view;
 		view = view->next;
-
 		if(res != 0) //client close/broken. remove it.
 			x_del_view(x, v);
 	}
+
 	flush(x->gfd);
+	x->dirty = 0;
 }
 
 static xview_t* x_get_view(x_t* x, int fd, int from_pid) {
@@ -133,9 +134,12 @@ static int x_update(int fd, int from_pid, proto_t* in, x_t* x) {
 	xview_t* view = x_get_view(x, fd, from_pid);
 	if(view == NULL)
 		return -1;
-
 	memcpy(&view->xinfo, &xinfo, sizeof(xinfo_t));
+
 	view->dirty = 1;
+	if(view != x->view_tail)
+		x->dirty = 1;
+
 	x_repaint(x);
 	return 0;
 }
@@ -170,8 +174,6 @@ static int xserver_cntl(int fd, int from_pid, fsinfo_t* info, int cmd, proto_t* 
 	(void)info;
 	(void)out;
 	x_t* x = (x_t*)p;
-	if(from_pid == 10)
-uprintf("%d, %d\n", fd, from_pid);	
 
 	if(cmd == X_CNTL_NEW) {
 		return x_new_view(fd, from_pid, in, x);

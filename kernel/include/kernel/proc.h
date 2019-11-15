@@ -2,6 +2,7 @@
 #define PROC_H
 
 #include <kernel/context.h>
+#include <kernel/ipc.h>
 #include <mm/mmu.h>
 #include <mm/trunkmalloc.h>
 #include <kernel/kfile.h>
@@ -38,13 +39,6 @@ typedef struct {
 	proc_env_t envs[ENV_MAX];
 } proc_space_t;
 
-typedef struct st_proc_msg {
-	int32_t from_pid;
-	uint32_t size;
-	void* data;
-	struct st_proc_msg* next;
-} proc_msg_t;
-
 
 #define STACK_PAGES 32
 typedef struct st_proc {
@@ -60,8 +54,8 @@ typedef struct st_proc {
 	proc_space_t* space;
 	void* user_stack[STACK_PAGES];
 
-	proc_msg_t *msg_queue_head;
-	proc_msg_t *msg_queue_tail;
+	proc_msg_t* msg_queue_head;
+	proc_msg_t* msg_queue_tail;
 
 	tstr_t* cmd;
 	tstr_t* cwd;
@@ -93,10 +87,6 @@ extern void    proc_wakeup(uint32_t event);
 extern void    proc_waitpid(context_t* ctx, int32_t pid);
 extern proc_t* proc_get(int32_t pid);
 extern proc_t* kfork(void);
-
-extern int32_t proc_send_msg(int32_t to_pid, void* data, uint32_t size);
-extern void*   proc_get_msg(int32_t *pid, uint32_t* size);
-extern void*   proc_get_msg_from(int32_t pid, uint32_t* size);
 
 extern procinfo_t* get_procs(int32_t* num);
 

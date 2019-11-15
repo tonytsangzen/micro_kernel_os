@@ -262,38 +262,16 @@ static int32_t sys_load_elf(context_t* ctx, const char* cmd, void* elf, uint32_t
 	return 0;
 }
 
-static void sys_get_msg(context_t* ctx, int32_t *pid, uint32_t* size, int32_t block) {
-	void* p = proc_get_msg(pid, size);
-	if(p != NULL) {
-		ctx->gpr[0] = (uint32_t)p;
-		return;
-	}
-
-	if(block == 0) { //non-block mode
-		ctx->gpr[0] = 0;
+static void sys_get_msg(context_t* ctx, int32_t *pid, rawdata_t* data, int32_t id) {
+	int32_t res = proc_get_msg(pid, data, id);
+	if(res >= 0) {
+		ctx->gpr[0] = res;
 		return;
 	}
 
 	proc_t* proc = _current_proc;
 	proc_sleep_on(ctx, (uint32_t)&proc->pid);
-	proc->ctx.gpr[0] = 0;
-}
-
-static void sys_get_msg_from(context_t* ctx, int32_t pid, uint32_t* size, int32_t block) {
-	void* p = proc_get_msg_from(pid, size);
-	if(p != NULL) {
-		ctx->gpr[0] = (uint32_t)p;
-		return;
-	}
-
-	if(block == 0) { //non-block mode
-		ctx->gpr[0] = 0;
-		return;
-	}
-
-	proc_t* proc = _current_proc;
-	proc_sleep_on(ctx, (uint32_t)&proc->pid);
-	proc->ctx.gpr[0] = 0;
+	proc->ctx.gpr[0] = -1;
 }
 
 static int32_t sys_proc_set_cwd(const char* cwd) {
@@ -476,13 +454,13 @@ void svc_handler(int32_t code, int32_t arg0, int32_t arg1, int32_t arg2, context
 		sys_waitpid(ctx, arg0);
 		return;
 	case SYS_SEND_MSG:
-		ctx->gpr[0] = proc_send_msg(arg0, (void*)arg1, (uint32_t)arg2);
+		ctx->gpr[0] = proc_send_msg(arg0, (rawdata_t*)arg1, arg2);
+		return;
+	case SYS_GET_MSG_NBLOCK:
+		ctx->gpr[0] = proc_get_msg((int32_t*)arg0, (rawdata_t*)arg1, arg2);
 		return;
 	case SYS_GET_MSG:
-		sys_get_msg(ctx, (int32_t*)arg0, (uint32_t*)arg1, arg2);
-		return;
-	case SYS_GET_MSG_FROM:
-		sys_get_msg_from(ctx, arg0, (uint32_t*)arg1, arg2);
+		sys_get_msg(ctx, (int32_t*)arg0, (rawdata_t*)arg1, arg2);
 		return;
 	case SYS_VFS_GET:
 		ctx->gpr[0] = sys_vfs_get_info((const char*)arg0, (fsinfo_t*)arg1);

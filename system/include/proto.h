@@ -6,6 +6,7 @@
 #define PROTO_BUFFER 128
 
 typedef struct {
+	int32_t id;
 	void *data;
 	uint32_t size;
 	uint32_t total_size;

@@ -69,6 +69,7 @@ OBJS = ${ARCH_OBJS} \
 	${KERNEL_DIR}/irq.o \
 	${KERNEL_DIR}/svc.o \
 	${KERNEL_DIR}/proc.o \
+	${KERNEL_DIR}/ipc.o \
 	${KERNEL_DIR}/schedule.o \
 	${KERNEL_DIR}/vfs.o \
 	${KERNEL_DIR}/dev/kdevice.o \
