@@ -170,6 +170,18 @@ static int x_new_view(int fd, int from_pid, proto_t* in, x_t* x) {
 	return 0;
 }
 
+static int xserver_close(int fd, int from_pid, fsinfo_t* info, void* p) {
+	(void)info;
+	x_t* x = (x_t*)p;
+	
+	xview_t* view = x_get_view(x, fd, from_pid);
+	if(view == NULL)
+		return -1;
+
+	x_del_view(x, view);	
+	return 0;
+}
+
 static int xserver_cntl(int fd, int from_pid, fsinfo_t* info, int cmd, proto_t* in, proto_t* out, void* p) {
 	(void)info;
 	(void)out;
@@ -223,6 +235,7 @@ int main(int argc, char** argv) {
 	strcpy(dev.name, "xserver");
 	dev.mount = xserver_mount;
 	dev.cntl = xserver_cntl;
+	dev.close= xserver_close;
 	dev.umount = xserver_umount;
 
 	fsinfo_t dev_info;
