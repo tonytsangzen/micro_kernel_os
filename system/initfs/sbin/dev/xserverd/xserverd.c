@@ -58,7 +58,7 @@ static int xserver_umount(fsinfo_t* info, void* p) {
 static int draw_view(x_t* x, xview_t* view) {
 	void* gbuf = shm_map(view->xinfo.shm_id);
 	if(gbuf == NULL) {
-		return 0;
+		return -1;
 	}
 
 	if(x->dirty == 0 && view->dirty == 0) {

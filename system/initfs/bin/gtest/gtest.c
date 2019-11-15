@@ -16,7 +16,7 @@ int main(int argc, char* argv[]) {
 
 	char str[32];
 	int i=0;
-	while(1) {
+	while(i<300) {
 		snprintf(str, 31, "paint = %d", i++);
 		clear(g, 0xff0000ff);
 		draw_text(g, 30, 10, str, font, 0xffffffff);
