@@ -72,6 +72,8 @@ static void draw_win_frame(x_t* x, xview_t* view) {
 	proto_add_int(&in, x->g->h);
 
 	ipc_call(x->xwm_pid, &in, &out);
+	proto_clear(&in);
+	proto_clear(&out);
 }
 
 static int draw_view(x_t* x, xview_t* view) {
