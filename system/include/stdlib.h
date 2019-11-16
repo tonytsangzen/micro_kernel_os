@@ -10,4 +10,7 @@ int execl(const char* fname, const char* arg, ...);
 const char* getenv(const char* name);
 int setenv(const char* name, const char* value);
 
+int atoi_base(const char *s, int b);
+int atoi(const char *s);
+
 #endif

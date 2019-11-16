@@ -2,7 +2,7 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <fcntl.h>
-#include <svc_call.h>
+#include <syscall.h>
 #include <proto.h>
 #include <vfs.h>
 #include <ipc.h>
@@ -14,21 +14,21 @@
 int errno = ENONE;
 
 int getpid(void) {
-	return svc_call0(SYS_GET_PID);
+	return syscall0(SYS_GET_PID);
 }
 
 int fork(void) {
-	return svc_call0(SYS_FORK);
+	return syscall0(SYS_FORK);
 }
 
 unsigned int sleep(unsigned int seconds) {
 	if(seconds == 0)
-		svc_call0(SYS_YIELD);
+		syscall0(SYS_YIELD);
 	return 0;
 }
 
 static int read_pipe(fsinfo_t* info, void* buf, uint32_t size) {
-	int res = svc_call3(SYS_PIPE_READ, (int32_t)info, (int32_t)buf, (int32_t)size);
+	int res = syscall3(SYS_PIPE_READ, (int32_t)info, (int32_t)buf, (int32_t)size);
 	if(res == 0) { // pipe empty, do retry
 		errno = EAGAIN;
 		return -1;
@@ -52,7 +52,7 @@ int read(int fd, void* buf, uint32_t size) {
 	if(vfs_get_mount(&info, &mount) != 0)
 		return -1;
 
-	int offset = svc_call1(SYS_VFS_PROC_TELL, fd);
+	int offset = syscall1(SYS_VFS_PROC_TELL, fd);
 	if(offset < 0)
 		offset = 0;
 	
@@ -73,7 +73,7 @@ int read(int fd, void* buf, uint32_t size) {
 		if(rd > 0) {
 			memcpy(buf, proto_read(&out, NULL), rd);
 			offset += rd;
-			svc_call2(SYS_VFS_PROC_SEEK, fd, offset);
+			syscall2(SYS_VFS_PROC_SEEK, fd, offset);
 		}
 		if(res == ERR_RETRY) {
 			errno = EAGAIN;
@@ -88,7 +88,7 @@ int read(int fd, void* buf, uint32_t size) {
 
 static int write_pipe(fsinfo_t* info, const void* buf, uint32_t size) {
 	errno = ENONE;
-	int res = svc_call3(SYS_PIPE_WRITE, (int32_t)info, (int32_t)buf, (int32_t)size);
+	int res = syscall3(SYS_PIPE_WRITE, (int32_t)info, (int32_t)buf, (int32_t)size);
 	if(res == 0) { // pipe not empty, do retry
 		errno = EAGAIN;
 		return -1;
@@ -110,7 +110,7 @@ int write_nblock(int fd, const void* buf, uint32_t size) {
 	if(vfs_get_mount(&info, &mount) != 0)
 		return -1;
 
-	int offset = svc_call1(SYS_VFS_PROC_TELL, fd);
+	int offset = syscall1(SYS_VFS_PROC_TELL, fd);
 	if(offset < 0)
 		offset = 0;
 	
@@ -130,7 +130,7 @@ int write_nblock(int fd, const void* buf, uint32_t size) {
 		res = r;
 		if(r > 0) {
 			offset += r;
-			svc_call2(SYS_VFS_PROC_SEEK, fd, offset);
+			syscall2(SYS_VFS_PROC_SEEK, fd, offset);
 		}
 		if(res == -2) {
 			errno = EAGAIN;
@@ -157,11 +157,11 @@ int write(int fd, const void* buf, uint32_t size) {
 
 void exec_initfs(const char* fname) {
 	ramfs_t ramfs;
-	const char* initrd = (const char*)svc_call0(SYS_INITRD);
+	const char* initrd = (const char*)syscall0(SYS_INITRD);
 	ramfs_open(initrd, &ramfs);
 	int sz;
 	const char* elf = ramfs_read(&ramfs, fname, &sz);
-	svc_call3(SYS_EXEC_ELF, (int32_t)fname, (int32_t)elf, sz);
+	syscall3(SYS_EXEC_ELF, (int32_t)fname, (int32_t)elf, sz);
 }
 
 int exec(const char* cmd_line) {
@@ -194,28 +194,28 @@ int exec(const char* cmd_line) {
 		return -1;
 	}
 	close(fd);
-	svc_call3(SYS_EXEC_ELF, (int32_t)cmd_line, (int32_t)buf, sz);
+	syscall3(SYS_EXEC_ELF, (int32_t)cmd_line, (int32_t)buf, sz);
 	free(buf);
 	return 0;
 }
 
 char* getcwd(char* buf, uint32_t size) {
-	svc_call2(SYS_PROC_GET_CWD, (int32_t)buf, (int32_t)size);
+	syscall2(SYS_PROC_GET_CWD, (int32_t)buf, (int32_t)size);
 	return buf;
 }
 
 int chdir(const char* path) {
-	return svc_call1(SYS_PROC_SET_CWD, (int32_t)path);
+	return syscall1(SYS_PROC_SET_CWD, (int32_t)path);
 }
 
 int dup2(int from, int to) {
-	return svc_call2(SYS_VFS_PROC_DUP2, (int32_t)from, (int32_t)to);
+	return syscall2(SYS_VFS_PROC_DUP2, (int32_t)from, (int32_t)to);
 }
 
 int dup(int from) {
-	return svc_call1(SYS_VFS_PROC_DUP, (int32_t)from);
+	return syscall1(SYS_VFS_PROC_DUP, (int32_t)from);
 }
 
 int pipe(int fds[2]) {
-	return svc_call2(SYS_PIPE_OPEN, (int32_t)&fds[0], (int32_t)&fds[1]);
+	return syscall2(SYS_PIPE_OPEN, (int32_t)&fds[0], (int32_t)&fds[1]);
 }

@@ -5,11 +5,12 @@
 #include <string.h>
 #include <vfs.h>
 #include <vdevice.h>
-#include <svc_call.h>
+#include <syscall.h>
 #include <dev/device.h>
 #include <shm.h>
 #include <graph/graph.h>
 #include <dev/fbinfo.h>
+#include <ipc.h>
 #include <x/xcntl.h>
 
 typedef struct st_xview {
@@ -24,6 +25,7 @@ typedef struct st_xview {
 
 typedef struct {
 	int gfd;
+	int xwm_pid;
 	int shm_id;
 	int32_t dirty;
 	graph_t* g;
@@ -55,6 +57,23 @@ static int xserver_umount(fsinfo_t* info, void* p) {
 	return 0;
 }
 
+static void draw_win_frame(x_t* x, xview_t* view) {
+	proto_t in, out;
+	proto_init(&in, NULL, 0);
+	proto_init(&out, NULL, 0);
+
+	proto_add_int(&in, x->shm_id);
+	proto_add_int(&in, view->xinfo.r.x);
+	proto_add_int(&in, view->xinfo.r.y);
+	proto_add_int(&in, view->xinfo.r.w);
+	proto_add_int(&in, view->xinfo.r.h);
+
+	proto_add_int(&in, x->g->w);
+	proto_add_int(&in, x->g->h);
+
+	ipc_call(x->xwm_pid, &in, &out);
+}
+
 static int draw_view(x_t* x, xview_t* view) {
 	void* gbuf = shm_map(view->xinfo.shm_id);
 	if(gbuf == NULL) {
@@ -71,12 +90,14 @@ static int draw_view(x_t* x, xview_t* view) {
 			x->g, view->xinfo.r.x, view->xinfo.r.y, view->xinfo.r.w, view->xinfo.r.h);
 	graph_free(g);
 	shm_unmap(view->xinfo.shm_id);
+
+	draw_win_frame(x, view);
 	view->dirty = 0;
 	return 0;
 }
 
 static void draw_desktop(x_t* xp) {
-	clear(xp->g, 0xff000000);
+	clear(xp->g, 0xff222222);
 	//background pattern
 	int32_t x, y;
 	for(y=10; y<(int32_t)xp->g->h; y+=10) {
@@ -103,16 +124,20 @@ static void x_repaint(x_t* x) {
 		draw_desktop(x);
 
 	xview_t* view = x->view_head;
+	int rep = 0;
 	while(view != NULL) {
 		int res = draw_view(x, view);
 		xview_t* v = view;
 		view = view->next;
-		if(res != 0) //client close/broken. remove it.
+		if(res != 0) {//client close/broken. remove it.
 			x_del_view(x, v);
+			rep = 1;
+		}
 	}
 
 	flush(x->gfd);
-	x->dirty = 0;
+	if(rep == 0)
+		x->dirty = 0;
 }
 
 static xview_t* x_get_view(x_t* x, int fd, int from_pid) {
@@ -220,7 +245,9 @@ static int x_init(x_t* x) {
 
 static int xserver_loop_step(void* p) {
 	x_t* x = (x_t*)p;
-	x_repaint(x);	
+	if(x->dirty != 0) {
+		x_repaint(x);	
+	}
 	return 0;
 }
 
@@ -233,6 +260,11 @@ static void x_close(x_t* x) {
 int main(int argc, char** argv) {
 	(void)argc;
 	(void)argv;
+
+	int pid = fork();
+	if(pid == 0) {
+		exec("/initrd/sbin/x/xwm");
+	}
 
 	vdevice_t dev;
 	memset(&dev, 0, sizeof(vdevice_t));
@@ -261,6 +293,7 @@ int main(int argc, char** argv) {
 
 	x_t x;
 	if(x_init(&x) == 0) {
+		x.xwm_pid = pid;
 		device_run(&dev, &mnt_point, &mnt_info, &x);
 		x_close(&x);
 	}

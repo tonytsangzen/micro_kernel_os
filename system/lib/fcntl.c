@@ -1,5 +1,5 @@
 #include <fcntl.h>
-#include <svc_call.h>
+#include <syscall.h>
 #include <ipc.h>
 #include <vfs.h>
 #include <stddef.h>
@@ -50,7 +50,7 @@ void close(int fd) {
 		proto_clear(&in);
 	}
 
-	svc_call1(SYS_VFS_PROC_CLOSE, fd);
+	syscall1(SYS_VFS_PROC_CLOSE, fd);
 }
 
 int dma(int fd, int* size) {

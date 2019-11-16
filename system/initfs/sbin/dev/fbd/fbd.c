@@ -6,7 +6,7 @@
 #include <vfs.h>
 #include <vdevice.h>
 #include <dev/fbinfo.h>
-#include <svc_call.h>
+#include <syscall.h>
 #include <dev/device.h>
 #include <shm.h>
 
@@ -37,7 +37,7 @@ static int fb_flush(int fd, int from_pid, fsinfo_t* info, void* p) {
 	(void)fd;
 	(void)from_pid;
 	fb_dma_t* dma = (fb_dma_t*)p;
-	return svc_call3(SYS_DEV_WRITE, (int32_t)info->data, (int32_t)dma->data, dma->size);
+	return syscall3(SYS_DEV_WRITE, (int32_t)info->data, (int32_t)dma->data, dma->size);
 }
 
 static int fb_dma(int fd, int from_pid, fsinfo_t* info, int* size, void* p) {
@@ -64,7 +64,7 @@ static int fb_cntl(int fd, int from_pid, fsinfo_t* info, int cmd, proto_t* in, p
 
 	if(cmd == CNTL_INFO) {
 		fbinfo_t fbinfo;
-		svc_call3(SYS_DEV_OP, DEV_FRAMEBUFFER, DEV_OP_INFO, (int32_t)&fbinfo);
+		syscall3(SYS_DEV_OP, DEV_FRAMEBUFFER, DEV_OP_INFO, (int32_t)&fbinfo);
 		proto_add(out, &fbinfo, sizeof(fbinfo_t));	
 	}
 	return 0;
@@ -75,7 +75,7 @@ int main(int argc, char** argv) {
 	(void)argv;
 
 	fbinfo_t fbinfo;
-	svc_call3(SYS_DEV_OP, DEV_FRAMEBUFFER, DEV_OP_INFO, (int32_t)&fbinfo);
+	syscall3(SYS_DEV_OP, DEV_FRAMEBUFFER, DEV_OP_INFO, (int32_t)&fbinfo);
 	uint32_t sz = fbinfo.width*fbinfo.height*4;
 
 	fb_dma_t dma;

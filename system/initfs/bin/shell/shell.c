@@ -6,7 +6,7 @@
 #include <vprintf.h>
 #include <tstr.h>
 #include <fcntl.h>
-#include <svc_call.h>
+#include <syscall.h>
 #include <dev/device.h>
 #include <sys/wait.h>
 
@@ -103,9 +103,9 @@ static void export_all(void) {
 	char name[64], value[1024];
 	int32_t i=0;
 	while(1) {
-		if(svc_call3(SYS_PROC_GET_ENV_NAME, i, (int32_t)name, 63) != 0 || name[0] == 0)
+		if(syscall3(SYS_PROC_GET_ENV_NAME, i, (int32_t)name, 63) != 0 || name[0] == 0)
 			break;
-		if(svc_call3(SYS_PROC_GET_ENV_VALUE, i, (int32_t)value, 1023) != 0)
+		if(syscall3(SYS_PROC_GET_ENV_VALUE, i, (int32_t)value, 1023) != 0)
 			break;
 		printf("declare -x %s=%s\n", name, value);
 		i++;
@@ -114,7 +114,7 @@ static void export_all(void) {
 
 static void export_get(const char* arg) {
 	char value[1024];
-	if(svc_call3(SYS_PROC_GET_ENV, (int32_t)arg, (int32_t)value, 127) != 0) 
+	if(syscall3(SYS_PROC_GET_ENV, (int32_t)arg, (int32_t)value, 127) != 0) 
 		return;
 	printf("%s=%s\n", arg, value);
 }
@@ -126,7 +126,7 @@ static void export_set(const char* arg) {
 		return;
 	strncpy(name, arg, v-arg);
 
-	svc_call2(SYS_PROC_SET_ENV, (int32_t)name, (int32_t)(v+1));
+	syscall2(SYS_PROC_SET_ENV, (int32_t)name, (int32_t)(v+1));
 }
 
 static int export(const char* arg) {

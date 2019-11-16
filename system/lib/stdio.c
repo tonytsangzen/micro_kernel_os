@@ -3,7 +3,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <tstr.h>
-#include <svc_call.h>
+#include <syscall.h>
 #include <dev/device.h>
 
 static void outc(char c, void* p) {
@@ -37,7 +37,7 @@ void uprintf(const char *format, ...) {
 	va_start(ap, format);
 	v_printf(outc, buf, format, ap);
 	va_end(ap);
-	svc_call3(SYS_DEV_WRITE, DEV_UART0, (int32_t)buf->items, (int32_t)buf->size);
+	syscall3(SYS_DEV_WRITE, DEV_UART0, (int32_t)buf->items, (int32_t)buf->size);
 	tstr_free(buf);
 }
 

@@ -4,7 +4,7 @@
 #include <dev/device.h>
 #include <dev/fbinfo.h>
 #include <unistd.h>
-#include <svc_call.h>
+#include <syscall.h>
 
 inline uint32_t argb(uint32_t a, uint32_t r, uint32_t g, uint32_t b) {
 	return a << 24 | b << 16 | g << 8 | r;

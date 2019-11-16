@@ -5,7 +5,7 @@
 #include <string.h>
 #include <vfs.h>
 #include <vdevice.h>
-#include <svc_call.h>
+#include <syscall.h>
 #include <dev/device.h>
 
 static int keyb_mount(fsinfo_t* mnt_point, mount_info_t* mnt_info, void* p) {
@@ -30,7 +30,7 @@ static int keyb_read(int fd, int from_pid, fsinfo_t* info, void* buf, int size, 
 	(void)from_pid;
 	(void)offset;
 	(void)p;
-	int res = svc_call3(SYS_DEV_READ, (int32_t)info->data, (int32_t)buf, size);
+	int res = syscall3(SYS_DEV_READ, (int32_t)info->data, (int32_t)buf, size);
 	if(res == 0) 
 		return ERR_RETRY;
 	return res;

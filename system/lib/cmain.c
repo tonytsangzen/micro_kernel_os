@@ -4,7 +4,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <svc_call.h>
+#include <syscall.h>
 
 static char _cmd[1024];
 static int _off_cmd;
@@ -48,7 +48,7 @@ static void close_stdio(void) {
 static void init_cmd(void) {
 	_cmd[0] = 0;
 	_off_cmd = 0;
-	svc_call2(SYS_PROC_GET_CMD, (int32_t)_cmd, 1023);
+	syscall2(SYS_PROC_GET_CMD, (int32_t)_cmd, 1023);
 }
 
 #define ARG_MAX 16

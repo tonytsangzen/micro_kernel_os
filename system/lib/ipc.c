@@ -1,19 +1,20 @@
 #include <ipc.h>
 #include <stddef.h>
-#include <svc_call.h>
+#include <syscall.h>
 #include <rawdata.h>
+#include <unistd.h>
 
 static int ipc_send_raw(int pid, void* data, uint32_t size, int32_t id) {
 	rawdata_t rawdata;
 	rawdata.data = data;
 	rawdata.size = size;
-	return svc_call3(SYS_SEND_MSG, (int32_t)pid, (int32_t)&rawdata, id);
+	return syscall3(SYS_SEND_MSG, (int32_t)pid, (int32_t)&rawdata, id);
 }
 
 static int ipc_get_raw(int* from_pid,  rawdata_t* data, int32_t id, uint8_t block) {
 	if(block == 1) 
-		return svc_call3(SYS_GET_MSG, (int32_t)from_pid, (int32_t)data, id);
-	return svc_call3(SYS_GET_MSG_NBLOCK, (int32_t)from_pid, (int32_t)data, id);
+		return syscall3(SYS_GET_MSG, (int32_t)from_pid, (int32_t)data, id);
+	return syscall3(SYS_GET_MSG_NBLOCK, (int32_t)from_pid, (int32_t)data, id);
 }
 
 int ipc_send(int to_pid, const proto_t* pkg, int32_t id) {
@@ -56,10 +57,23 @@ int ipc_call(int to_pid,  const proto_t* ipkg, proto_t* opkg) {
 	int32_t id = ipc_send(to_pid, ipkg, -1);
 	if(id < 0)
 		return -1;
-
 	if(opkg == NULL)
 		return 0;
+
 	if(ipc_recv(NULL, opkg, id) == 0)
 		return 0;
 	return -1;
+}
+
+int ipc_server(ipc_handle_t handle, void* p) {
+	proto_t pkg;
+	proto_init(&pkg, NULL, 0);
+	while(1) {
+		int pid;
+		if(ipc_get(&pid, &pkg, -1, 1) >= 0) {
+			handle(pid, &pkg, p);
+			proto_clear(&pkg);
+		}
+		sleep(0);
+	}
 }

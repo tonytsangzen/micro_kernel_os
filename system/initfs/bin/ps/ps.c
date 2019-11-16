@@ -2,7 +2,7 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <svc_call.h>
+#include <syscall.h>
 #include <sysinfo.h>
 #include <string.h>
 #include <cmain.h>
@@ -42,13 +42,13 @@ int main(int argc, char* argv[]) {
 
 	int num = 0;
 	sysinfo_t sysinfo;
-	svc_call1(SYS_GET_SYSINFO, (int32_t)&sysinfo);
+	syscall1(SYS_GET_SYSINFO, (int32_t)&sysinfo);
 	uint32_t fr_mem = sysinfo.free_mem / (1024*1024);
 	uint32_t shm_mem = sysinfo.shm_mem / (1024*1024);
 	uint32_t t_mem = sysinfo.total_mem / (1024*1024);
 	uint32_t csec = sysinfo.kernel_tic;
 
-	procinfo_t* procs = (procinfo_t*)svc_call1(SYS_GET_PROCS, (int)&num);
+	procinfo_t* procs = (procinfo_t*)syscall1(SYS_GET_PROCS, (int)&num);
 	if(procs != NULL) {
 		printf("  PID    FATHER OWNER   STATE TIME       HEAP(k)  PROC\n"); 
 		for(int i=0; i<num; i++) {

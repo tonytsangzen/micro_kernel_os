@@ -1,5 +1,5 @@
-#include <svc_call.h>
+#include <syscall.h>
 
 int waitpid(int pid) {
-	return svc_call1(SYS_WAIT_PID, pid);
+	return syscall1(SYS_WAIT_PID, pid);
 }

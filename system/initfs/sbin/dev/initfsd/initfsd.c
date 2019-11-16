@@ -7,7 +7,7 @@
 #include <vfs.h>
 #include <vdevice.h>
 #include <ramfs.h>
-#include <svc_call.h>
+#include <syscall.h>
 
 static void add_file(fsinfo_t* node_to, const char* name, ram_file_t* rf) {
 	fsinfo_t f;
@@ -118,7 +118,7 @@ int main(int argc, char** argv) {
 	dev.umount = initfs_umount;
 
 	ramfs_t ramfs;
-	const char* initrd = (const char*)svc_call0(SYS_INITRD);
+	const char* initrd = (const char*)syscall0(SYS_INITRD);
 	ramfs_open(initrd, &ramfs);
 
 	fsinfo_t root_info;

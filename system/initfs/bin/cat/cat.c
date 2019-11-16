@@ -4,8 +4,6 @@
 #include <cmain.h>
 #include <string.h>
 #include <fcntl.h>
-#include <vfs.h>
-#include <svc_call.h>
 
 int main(int argc, char** argv) {
 	if(argc != 2) {

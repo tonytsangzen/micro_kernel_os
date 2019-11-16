@@ -5,7 +5,7 @@
 #include <string.h>
 #include <vfs.h>
 #include <vdevice.h>
-#include <svc_call.h>
+#include <syscall.h>
 #include <dev/device.h>
 
 static int mount(fsinfo_t* mnt_point, mount_info_t* mnt_info, void* p) {

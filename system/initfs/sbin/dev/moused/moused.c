@@ -5,7 +5,7 @@
 #include <string.h>
 #include <vfs.h>
 #include <vdevice.h>
-#include <svc_call.h>
+#include <syscall.h>
 #include <dev/device.h>
 
 static int mouse_mount(fsinfo_t* mnt_point, mount_info_t* mnt_info, void* p) {
@@ -30,7 +30,7 @@ static int mouse_read(int fd, int from_pid, fsinfo_t* info, void* buf, int size,
 	(void)from_pid;
 	(void)offset;
 	(void)p;
-	return svc_call3(SYS_DEV_READ, (int32_t)info->data, (int32_t)buf, size);
+	return syscall3(SYS_DEV_READ, (int32_t)info->data, (int32_t)buf, size);
 }
 
 static int mouse_umount(fsinfo_t* info, void* p) {

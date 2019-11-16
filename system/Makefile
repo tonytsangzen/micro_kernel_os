@@ -40,7 +40,7 @@ GRAPH_OBJS =	$(LIB_DIR)/graph/graph.o \
 	$(LIB_DIR)/graph/font12x24.o \
 	$(LIB_DIR)/graph/font16x32.o
 
-LIB_OBJS = $(LIB_DIR)/svc_call.o \
+LIB_OBJS = $(LIB_DIR)/syscall.o \
 	$(LIB_DIR)/cmain.o \
 	$(LIB_DIR)/trunk.o \
 	$(LIB_DIR)/tstr.o \
@@ -79,6 +79,7 @@ include $(ROOT_DIR)/sbin/dev/keybd/build.mk
 include $(ROOT_DIR)/sbin/dev/moused/build.mk
 include $(ROOT_DIR)/sbin/dev/nulld/build.mk
 include $(ROOT_DIR)/sbin/dev/xserverd/build.mk
+include $(ROOT_DIR)/sbin/x/xwm/build.mk
 
 include $(ROOT_DIR)/bin/shell/build.mk
 include $(ROOT_DIR)/bin/pwd/build.mk
@@ -93,6 +94,7 @@ include $(ROOT_DIR)/bin/gconsole/build.mk
 
 mkdirs:
 	mkdir -p ${TARGET_DIR}/$(ROOT_DIR)/sbin/dev
+	mkdir -p ${TARGET_DIR}/$(ROOT_DIR)/sbin/x
 	mkdir -p ${TARGET_DIR}/$(ROOT_DIR)/bin
 	mkdir -p ${TARGET_DIR}/asm
 

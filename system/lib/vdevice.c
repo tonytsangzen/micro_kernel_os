@@ -7,7 +7,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <errno.h>
-#include <svc_call.h>
+#include <syscall.h>
 
 static void do_open(vdevice_t* dev, int from_pid, proto_t *in, void* p) {
 	fsinfo_t info;
@@ -15,7 +15,7 @@ static void do_open(vdevice_t* dev, int from_pid, proto_t *in, void* p) {
 	memcpy(&info, proto_read(in, NULL), sizeof(fsinfo_t));
 	oflag = proto_read_int(in);
 
-	int32_t fd = svc_call3(SYS_VFS_OPEN, from_pid, (int32_t)&info, oflag);
+	int32_t fd = syscall3(SYS_VFS_OPEN, from_pid, (int32_t)&info, oflag);
 	if(fd >= 0 && dev != NULL && dev->open != NULL) {
 		if(dev->open(fd, from_pid, &info, oflag, p) != 0) {
 		}

@@ -9,17 +9,25 @@
 #include <dev/fbinfo.h>
 #include <x/xclient.h>
 
-static int run(void) {
+static int run(int argc, char* argv[]) {
 	int fd = open("/dev/keyb0", O_RDONLY);
 	if(fd < 0)
 		return -1;
 
-	x_t* x = x_open(100, 100, 800, 600);
-	if(x == NULL) {
+	int x = 100;
+	int y = 100;
+
+	if(argc >= 3) {
+		x = atoi(argv[1]);
+		y = atoi(argv[2]);
+	}
+	
+	x_t* xp = x_open(x, y, 800, 600);
+	if(xp == NULL) {
 		close(fd);
 		return -1;
 	}
-	graph_t* g = x_graph(x);
+	graph_t* g = x_graph(xp);
 
 	console_t console;
 	console_init(&console);
@@ -64,12 +72,12 @@ static int run(void) {
 			char c = p[i];
 			console_put_char(&console, c);
 		}
-		x_update(x);
+		x_update(xp);
 	}
 
 	close(fd);
 	console_close(&console);
-	x_close(x);
+	x_close(xp);
 	return 0;
 }
 
@@ -90,7 +98,7 @@ int main(int argc, char* argv[]) {
 		close(fds1[1]);
 		close(fds2[0]);
 		close(fds2[1]);
-		return run();
+		return run(argc, argv);
 	}
 	//child proc for p1 writer
 	dup2(fds1[1], 1);
