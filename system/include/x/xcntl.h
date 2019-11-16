@@ -4,7 +4,8 @@
 enum {
 	X_CNTL_NONE = 0,
 	X_CNTL_NEW,
-	X_CNTL_UPDATE
+	X_CNTL_UPDATE,
+	X_CNTL_GET_EVT
 };
 
 #define X_TITLE_MAX 64

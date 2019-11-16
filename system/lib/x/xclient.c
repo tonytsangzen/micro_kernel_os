@@ -77,3 +77,13 @@ void x_close(x_t* x) {
 	free(x);
 }
 
+int x_get_event(x_t* x, xevent_t* ev) {
+	proto_t out;
+	proto_init(&out, NULL, 0);
+
+	int ret = cntl_raw(x->fd, X_CNTL_GET_EVT, NULL, &out);
+	if(ret == 0)
+		proto_read_to(&out, ev, sizeof(xevent_t));
+	proto_clear(&out);
+	return ret;
+}

@@ -60,14 +60,19 @@ static int run(int argc, char* argv[]) {
 	console.bg_color = conf.bg_color;
 	console_reset(&console);
 
-	int rd = 0;
-	char c = 0;
+	int krd = 0;
+	xevent_t xev;
 	while(1) {
-		if(rd != 1)
-			rd = read(fd, &c, 1);
+		if(krd != 1) {
+			if(x_get_event(xp, &xev) == 0) {
+				if(xev.type == XEVT_KEYB)
+					krd = 1;
+			}
+		}
 		else {
+			char c = xev.value.keyboard.value;
 			if(write_nblock(1, &c, 1) == 1)
-				rd = 0;
+				krd = 0;
 		}
 
 		char buf[256];

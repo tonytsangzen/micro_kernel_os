@@ -12,6 +12,7 @@
 #include <dev/fbinfo.h>
 #include <ipc.h>
 #include <x/xcntl.h>
+#include <x/xevent.h>
 
 typedef struct st_xview {
 	int32_t fd;
@@ -25,6 +26,8 @@ typedef struct st_xview {
 
 typedef struct {
 	int gfd;
+	int keyb_fd;
+	int mouse_fd;
 	int xwm_pid;
 	int shm_id;
 	int32_t dirty;
@@ -196,6 +199,56 @@ static int x_new_view(int fd, int from_pid, proto_t* in, x_t* x) {
 	return 0;
 }
 
+
+static int x_get_event(int fd, int from_pid, x_t* x, proto_t* out) {
+	xview_t* view = x_get_view(x, fd, from_pid);
+	if(view != x->view_tail)
+		return -1;
+
+	int8_t v;
+	//read keyb
+	int rd = read(x->keyb_fd, &v, 1);
+	if(rd == 1) {
+		xevent_t ev;
+		ev.type = XEVT_KEYB;
+		ev.value.keyboard.value = v;
+		proto_add(out, &ev, sizeof(xevent_t));
+		return 0;
+	}
+
+	//read mouse
+	if(read(x->mouse_fd, &v, 1) == 1) {
+		xevent_t ev;
+		ev.type = XEVT_MOUSE;
+		ev.value.mouse.button = v;
+
+		read(x->mouse_fd, &v, 1);
+		ev.value.mouse.rx = v;
+		read(x->mouse_fd, &v, 1);
+		ev.value.mouse.ry = v;
+		read(x->mouse_fd, &v, 1); //z ...
+		proto_add(out, &ev, sizeof(xevent_t));
+		return 0;
+	}
+	return -1;
+}
+
+static int xserver_cntl(int fd, int from_pid, fsinfo_t* info, int cmd, proto_t* in, proto_t* out, void* p) {
+	(void)info;
+	x_t* x = (x_t*)p;
+
+	if(cmd == X_CNTL_NEW) {
+		return x_new_view(fd, from_pid, in, x);
+	}
+	else if(cmd == X_CNTL_UPDATE) {
+		return x_update(fd, from_pid, in, x);
+	}
+	else if(cmd == X_CNTL_GET_EVT) {
+		return x_get_event(fd, from_pid, x, out);
+	}
+	return 0;
+}
+
 static int xserver_close(int fd, int from_pid, fsinfo_t* info, void* p) {
 	(void)info;
 	x_t* x = (x_t*)p;
@@ -207,26 +260,21 @@ static int xserver_close(int fd, int from_pid, fsinfo_t* info, void* p) {
 	x_del_view(x, view);	
 	return 0;
 }
-
-static int xserver_cntl(int fd, int from_pid, fsinfo_t* info, int cmd, proto_t* in, proto_t* out, void* p) {
-	(void)info;
-	(void)out;
-	x_t* x = (x_t*)p;
-
-	if(cmd == X_CNTL_NEW) {
-		return x_new_view(fd, from_pid, in, x);
-	}
-	else if(cmd == X_CNTL_UPDATE) {
-		return x_update(fd, from_pid, in, x);
-	}
-	return 0;
-}
-
 static int x_init(x_t* x) {
 	x->view_head = NULL;	
 	x->view_tail = NULL;	
 
-	int fd = open("/dev/fb0", 0);
+	int fd = open("/dev/keyb0", O_RDONLY);
+	if(fd < 0)
+		return -1;
+	x->keyb_fd = fd;
+
+	fd = open("/dev/mouse0", O_RDONLY);
+	if(fd < 0)
+		return -1;
+	x->mouse_fd = fd;
+
+	fd = open("/dev/fb0", O_RDONLY);
 	if(fd < 0)
 		return -1;
 
@@ -255,6 +303,8 @@ static int xserver_loop_step(void* p) {
 }
 
 static void x_close(x_t* x) {
+	close(x->keyb_fd);
+	close(x->mouse_fd);
 	graph_free(x->g);
 	shm_unmap(x->shm_id);
 	close(x->gfd);
