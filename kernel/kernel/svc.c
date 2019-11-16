@@ -161,8 +161,13 @@ static int32_t sys_vfs_get_mount(fsinfo_t* info, mount_t* mount) {
 	vfs_node_t* node = (vfs_node_t*)info->node;
 	if(node == NULL)
 		return -1;
-	
 	return vfs_get_mount(node, mount);
+}
+
+static int32_t sys_vfs_get_mount_by_id(int32_t id, mount_t* mount) {
+	if(id < 0 || mount == NULL)
+		return -1;
+	return vfs_get_mount_by_id(id, mount);
 }
 
 static int32_t sys_vfs_mount(fsinfo_t* info_to, fsinfo_t* info, mount_info_t* mnt_info) {
@@ -488,6 +493,9 @@ void svc_handler(int32_t code, int32_t arg0, int32_t arg1, int32_t arg2, context
 		return;
 	case SYS_VFS_GET_MOUNT:
 		ctx->gpr[0] = sys_vfs_get_mount((fsinfo_t*)arg0, (mount_t*)arg1);
+		return;
+	case SYS_VFS_GET_MOUNT_BY_ID:
+		ctx->gpr[0] = sys_vfs_get_mount_by_id(arg0, (mount_t*)arg1);
 		return;
 	case SYS_VFS_MOUNT:
 		ctx->gpr[0] = sys_vfs_mount((fsinfo_t*)arg0, (fsinfo_t*)arg1, (mount_info_t*)arg2);

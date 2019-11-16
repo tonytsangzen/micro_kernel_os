@@ -25,10 +25,15 @@ void vfs_init(void) {
 }
 
 static inline int32_t check_mount(vfs_node_t* node) {
+	if(_current_proc->owner <= 0)
+		return 0;
+
 	mount_t mount;	
 	int32_t res = vfs_get_mount(node, &mount);
-	if(res == 0 && mount.pid != _current_proc->pid) //current proc not the mounting one.
-		return -1;
+	if(res == 0) {
+		if(mount.pid != _current_proc->pid) //current proc not the mounting one.
+			return -1;
+	}
 	return 0;
 }
 
@@ -104,6 +109,17 @@ static int32_t vfs_get_mount_id(vfs_node_t* node) {
 		node = node->father;
 	}
 	return -1;
+}
+
+int32_t vfs_get_mount_by_id(int32_t id, mount_t* mount) {
+	if(mount == NULL)
+		return -1;
+
+	if(id < 0 || id >= FS_MOUNT_MAX || 
+			_vfs_mounts[id].org_node == 0)
+		return -1;
+	memcpy(mount, &_vfs_mounts[id], sizeof(mount_t));
+	return 0;
 }
 
 int32_t vfs_get_mount(vfs_node_t* node, mount_t* mount) {

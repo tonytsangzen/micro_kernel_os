@@ -65,6 +65,13 @@ static int mount(fsinfo_t* mnt_point, mount_info_t* mnt_info, ramfs_t* ramfs) {
 	info.type = FS_TYPE_DIR;
 	vfs_new_node(&info);
 
+	fsinfo_t dev_dir;
+	memset(&dev_dir, 0, sizeof(fsinfo_t));
+	strcpy(dev_dir.name, "dev");
+	dev_dir.type = FS_TYPE_DIR;
+	vfs_new_node(&dev_dir);
+	vfs_add(&info, &dev_dir);
+
 	ram_file_t* rf = ramfs->head;
 	while(rf != NULL) {
 		add_node(&info, rf);
@@ -124,6 +131,7 @@ int main(int argc, char** argv) {
 	fsinfo_t root_info;
 	vfs_get("/", &root_info);
 
+/*
 	fsinfo_t dev_dir;
 	memset(&dev_dir, 0, sizeof(fsinfo_t));
 	strcpy(dev_dir.name, "dev");
@@ -135,16 +143,17 @@ int main(int argc, char** argv) {
 	memset(&mnt_point, 0, sizeof(fsinfo_t));
 	strcpy(mnt_point.name, "initrd");
 	mnt_point.type = FS_TYPE_DIR;
-
 	vfs_new_node(&mnt_point);
 	vfs_add(&root_info, &mnt_point);
+	*/
 
 	mount_info_t mnt_info;
 	strcpy(mnt_info.dev_name, dev.name);
 	mnt_info.dev_index = 0;
 	mnt_info.access = 0;
 
-	device_run(&dev, &mnt_point, &mnt_info, &ramfs);
+	//device_run(&dev, &mnt_point, &mnt_info, &ramfs);
+	device_run(&dev, &root_info, &mnt_info, &ramfs);
 	ramfs_close(&ramfs);
 	return 0;
 }

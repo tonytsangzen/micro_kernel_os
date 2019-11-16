@@ -45,6 +45,7 @@ LIB_OBJS = $(LIB_DIR)/syscall.o \
 	$(LIB_DIR)/trunk.o \
 	$(LIB_DIR)/tstr.o \
 	$(LIB_DIR)/vfs.o \
+	$(LIB_DIR)/sconf.o \
 	$(LIB_DIR)/ramfs.o \
 	$(LIB_DIR)/vprintf.o \
 	$(LIB_DIR)/unistd.o \
@@ -64,15 +65,15 @@ LIB_OBJS = $(LIB_DIR)/syscall.o \
 CLEAN = $(LIB_OBJS)
 
 TARGET_DIR = build
-ROOT_DIR = initfs
+ROOT_DIR = rootfs
 
 all: mkdirs $(LIB_OBJS) apps 
+	cp -r ${ROOT_DIR}/etc ${TARGET_DIR}/$(ROOT_DIR)
 	mkramfs/mkramfs ${TARGET_DIR}/$(ROOT_DIR).img ${TARGET_DIR}/$(ROOT_DIR)
 
 include mkramfs/build.mk
 include $(ROOT_DIR)/sbin/init/build.mk
-
-include $(ROOT_DIR)/sbin/dev/initfsd/build.mk
+include $(ROOT_DIR)/sbin/dev/initrd/build.mk
 include $(ROOT_DIR)/sbin/dev/ttyd/build.mk
 include $(ROOT_DIR)/sbin/dev/fbd/build.mk
 include $(ROOT_DIR)/sbin/dev/keybd/build.mk
@@ -88,9 +89,10 @@ include $(ROOT_DIR)/bin/ps/build.mk
 include $(ROOT_DIR)/bin/echo/build.mk
 include $(ROOT_DIR)/bin/ls/build.mk
 include $(ROOT_DIR)/bin/dump/build.mk
+include $(ROOT_DIR)/bin/mount/build.mk
 include $(ROOT_DIR)/bin/test/build.mk
 include $(ROOT_DIR)/bin/gtest/build.mk
-include $(ROOT_DIR)/bin/gconsole/build.mk
+include $(ROOT_DIR)/bin/xconsole/build.mk
 
 mkdirs:
 	mkdir -p ${TARGET_DIR}/$(ROOT_DIR)/sbin/dev

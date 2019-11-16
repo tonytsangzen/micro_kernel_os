@@ -7,9 +7,11 @@ enum {
 	X_CNTL_UPDATE
 };
 
+#define X_TITLE_MAX 64
 typedef struct {
 	int shm_id;
 	grect_t r;
+	char title[X_TITLE_MAX];
 } xinfo_t;
 
 #endif

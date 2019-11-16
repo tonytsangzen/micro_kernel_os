@@ -62,12 +62,24 @@ static void draw_win_frame(x_t* x, xview_t* view) {
 	proto_init(&in, NULL, 0);
 	proto_init(&out, NULL, 0);
 
+	proto_add_int(&in, 0); // 0 for draw view frame
 	proto_add_int(&in, x->shm_id);
-	proto_add_int(&in, view->xinfo.r.x);
-	proto_add_int(&in, view->xinfo.r.y);
-	proto_add_int(&in, view->xinfo.r.w);
-	proto_add_int(&in, view->xinfo.r.h);
+	proto_add_int(&in, x->g->w);
+	proto_add_int(&in, x->g->h);
+	proto_add(&in, &view->xinfo, sizeof(xinfo_t));
 
+	ipc_call(x->xwm_pid, &in, &out);
+	proto_clear(&in);
+	proto_clear(&out);
+}
+
+static void draw_desktop(x_t* x) {
+	proto_t in, out;
+	proto_init(&in, NULL, 0);
+	proto_init(&out, NULL, 0);
+
+	proto_add_int(&in, 1); // 1 for draw desktop
+	proto_add_int(&in, x->shm_id);
 	proto_add_int(&in, x->g->w);
 	proto_add_int(&in, x->g->h);
 
@@ -96,17 +108,6 @@ static int draw_view(x_t* x, xview_t* view) {
 	draw_win_frame(x, view);
 	view->dirty = 0;
 	return 0;
-}
-
-static void draw_desktop(x_t* xp) {
-	clear(xp->g, 0xff222222);
-	//background pattern
-	int32_t x, y;
-	for(y=10; y<(int32_t)xp->g->h; y+=10) {
-		for(x=0; x<(int32_t)xp->g->w; x+=10) {
-			pixel(xp->g, x, y, 0xff444444);
-		}
-	}
 }
 
 static void x_del_view(x_t* x, xview_t* view) {
@@ -265,7 +266,7 @@ int main(int argc, char** argv) {
 
 	int pid = fork();
 	if(pid == 0) {
-		exec("/initrd/sbin/x/xwm");
+		exec("/sbin/x/xwm");
 	}
 
 	vdevice_t dev;

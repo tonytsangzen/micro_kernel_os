@@ -25,12 +25,16 @@ int main(int argc, char* argv[]) {
 
 	printf("  NAME                     TYPE  OWNER  SIZE\n");
 	while(1) {
+		int sz = (info.size/1024);
+		if(info.size != 0 && sz == 0)
+			sz++;
+
 		if(info.type == FS_TYPE_FILE)
-			printf("  %24s  f    %4d   %dK\n", info.name, info.owner, info.size/1024);
+			printf("  %24s  f    %4d   %dK\n", info.name, info.owner, sz);
 		else if(info.type == FS_TYPE_DIR)
-			printf("  %24s  r    %4d   %dK\n", info.name, info.owner, info.size/1024);
+			printf("  %24s  r    %4d   %dK\n", info.name, info.owner, sz);
 		else //if(info.type == FS_TYPE_DEV)
-			printf("  %24s  d    %4d   %dK\n", info.name, info.owner, info.size/1024);
+			printf("  %24s  d    %4d   %dK\n", info.name, info.owner, sz);
 
 		if(vfs_next(&info, &info) != 0)
 			break;

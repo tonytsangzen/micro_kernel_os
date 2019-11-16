@@ -84,7 +84,7 @@ $(OS).bin: $(OBJS) mkos.lds.S
 	$(OBJCOPY) -O binary ${BUILD_DIR}/$(OS).elf ${BUILD_DIR}/$(OS).bin
 	$(OBJDUMP) -D ${BUILD_DIR}/$(OS).elf > ${BUILD_DIR}/$(OS).asm
 
-INITFS = ${SYS_DIR}/build/initfs.img
+INITFS = ${SYS_DIR}/build/rootfs.img
 
 run: ${INITFS}
 	qemu-system-arm $(QEMU_FLAGS) -kernel ${BUILD_DIR}/$(OS).bin -initrd ${INITFS}

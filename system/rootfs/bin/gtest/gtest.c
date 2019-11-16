@@ -10,7 +10,7 @@ int main(int argc, char* argv[]) {
 	(void)argc;
 	(void)argv;
 
-	x_t* x = x_open(100+(getpid()-6)*40, 100+(getpid()-6)*40, 600, 200);
+	x_t* x = x_open(100+(getpid()-6)*40, 100+(getpid()-6)*40, 600, 200, "gtest");
 	graph_t* g = x_graph(x);
 	font_t* font = get_font_by_name("16x32");
 

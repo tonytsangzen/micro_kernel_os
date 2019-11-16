@@ -20,51 +20,52 @@ int main(int argc, char** argv) {
 	uprintf("\n------ mkos -------\n");
 	int pid = fork();
 	if(pid == 0) {
-		exec_initfs("sbin/dev/initfsd");
+		exec_initfs("sbin/dev/initrd");
 	}
-	vfs_mount_wait("/initrd", pid);
-	uprintf("initfs mounted to /initrd.\n");
+	vfs_mount_wait("/dev", pid);
+	uprintf("initfs mounted to /.\n");
 
 	setenv("OS", "mkos");
+	setenv("PATH", "/sbin:/bin");
 
 	pid = fork();
 	if(pid == 0) {
-		exec("/initrd/sbin/dev/nulld");
+		exec("/sbin/dev/nulld");
 	}
 	vfs_mount_wait("/dev/null", pid);
 	uprintf("device null mounted to /dev/null.\n");
 
 	pid = fork();
 	if(pid == 0) {
-		exec("/initrd/sbin/dev/ttyd");
+		exec("/sbin/dev/ttyd");
 	}
 	vfs_mount_wait("/dev/tty0", pid);
 	uprintf("device uart mounted to /dev/tty0.\n");
 
 	pid = fork();
 	if(pid == 0) {
-		exec("/initrd/sbin/dev/fbd");
+		exec("/sbin/dev/fbd");
 	}
 	vfs_mount_wait("/dev/fb0", pid);
 	uprintf("device framebuffer mounted to /dev/fb0.\n");
 
 	pid = fork();
 	if(pid == 0) {
-		exec("/initrd/sbin/dev/keybd");
+		exec("/sbin/dev/keybd");
 	}
 	vfs_mount_wait("/dev/keyb0", pid);
 	uprintf("device keyboard mounted to /dev/keyb0.\n");
 
 	pid = fork();
 	if(pid == 0) {
-		exec("/initrd/sbin/dev/moused");
+		exec("/sbin/dev/moused");
 	}
 	vfs_mount_wait("/dev/mouse0", pid);
 	uprintf("device mouse mounted to /dev/mouse0.\n");
 
 	pid = fork();
 	if(pid == 0) {
-		exec("/initrd/sbin/dev/xserverd");
+		exec("/sbin/dev/xserverd");
 	}
 	vfs_mount_wait("/dev/xserver", pid);
 	uprintf("device xserver mounted to /dev/xserver.\n\n");
@@ -72,13 +73,13 @@ int main(int argc, char** argv) {
 	pid = fork();
 	if(pid == 0) {
 		init_stdio();
-		exec("/initrd/bin/gconsole");
+		exec("/bin/xconsole");
 	}
 
 	pid = fork();
 	if(pid == 0) {
 		init_stdio();
-		exec("/initrd/bin/shell");
+		exec("/bin/shell");
 	}
 
 	while(1) {

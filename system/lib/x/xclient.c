@@ -4,6 +4,7 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <fcntl.h>
+#include <string.h>
 
 int x_update(x_t* x) {
 	proto_t in;
@@ -25,7 +26,7 @@ static int x_new(x_t* x) {
 	return ret;
 }
 
-x_t* x_open(int x, int y, int w, int h) {
+x_t* x_open(int x, int y, int w, int h, const char* title) {
 	if(w <= 0 || h <= 0)
 		return NULL;
 
@@ -53,6 +54,7 @@ x_t* x_open(int x, int y, int w, int h) {
 	ret->xinfo.r.y = y;
 	ret->xinfo.r.w = w;
 	ret->xinfo.r.h = h;
+	strncpy(ret->xinfo.title, title, X_TITLE_MAX-1);
 	ret->g = graph_new(gbuf, w, h);
 
 	x_new(ret);

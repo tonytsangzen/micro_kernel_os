@@ -6,23 +6,45 @@
 #include <console.h>
 #include <vprintf.h>
 #include <shm.h>
+#include <sconf.h>
 #include <dev/fbinfo.h>
 #include <x/xclient.h>
 
+typedef struct {
+	font_t* font;
+	uint32_t fg_color;
+	uint32_t bg_color;
+} conf_t;
+
+static int32_t read_config(conf_t* conf, const char* fname) {
+	sconf_t *sconf = sconf_load(fname);	
+	if(sconf == NULL)
+		return -1;
+
+	const char* v = sconf_get(sconf, "bg_color");
+	if(v[0] != 0) 
+		conf->bg_color = argb_int(atoi_base(v, 16));
+	v = sconf_get(sconf, "fg_color");
+	if(v[0] != 0) 
+		conf->fg_color = argb_int(atoi_base(v, 16));
+	v = sconf_get(sconf, "font");
+	if(v[0] != 0) 
+		conf->font = get_font_by_name(v);
+	sconf_free(sconf);
+	return 0;
+}
+
 static int run(int argc, char* argv[]) {
+	(void)argc;
+	(void)argv;
+	conf_t conf;
+	read_config(&conf, "/etc/x/gconsole.conf");
+
 	int fd = open("/dev/keyb0", O_RDONLY);
 	if(fd < 0)
 		return -1;
 
-	int x = 100;
-	int y = 100;
-
-	if(argc >= 3) {
-		x = atoi(argv[1]);
-		y = atoi(argv[2]);
-	}
-	
-	x_t* xp = x_open(x, y, 800, 600);
+	x_t* xp = x_open(10, 100, 800, 600, "gconsole");
 	if(xp == NULL) {
 		close(fd);
 		return -1;
@@ -33,13 +55,9 @@ static int run(int argc, char* argv[]) {
 	console_init(&console);
 	console.g = g;
 
-	const char* fnt_name = getenv("font");
-	if(fnt_name[0] == 0)
-		fnt_name = "9x16";
-	console.font = get_font_by_name(fnt_name);
-
-	console.fg_color = 0xffffffff;
-	console.bg_color = 0xff000000;
+	console.font = conf.font;
+	console.fg_color = conf.fg_color;
+	console.bg_color = conf.bg_color;
 	console_reset(&console);
 
 	int rd = 0;
@@ -107,5 +125,5 @@ int main(int argc, char* argv[]) {
 	close(fds1[1]);
 	close(fds2[0]);
 	close(fds2[1]);
-	return exec("/initrd/bin/shell");
+	return exec("/bin/shell");
 }

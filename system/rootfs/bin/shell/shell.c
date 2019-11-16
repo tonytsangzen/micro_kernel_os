@@ -189,8 +189,7 @@ static int32_t find_exec(char* fname, char* cmd) {
 		}
 	}
 	//search executable file in PATH dirs.
-	//const char* paths = getenv(ENV_PATH);
-	const char* paths = "/initrd/sbin:/initrd/bin";
+	const char* paths = getenv(ENV_PATH);
 	char path[FS_FULL_NAME_MAX];
 	i = 0;
 	while(1) {
