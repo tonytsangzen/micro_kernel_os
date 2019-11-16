@@ -197,6 +197,8 @@ int device_run(vdevice_t* dev, fsinfo_t* mount_point, mount_info_t* mnt_info, vo
 			handle(dev, pid, &pkg, p);
 			proto_clear(&pkg);
 		}
+		if(dev->loop_step != NULL)
+			dev->loop_step(p);
 		sleep(0);
 	}
 

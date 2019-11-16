@@ -139,7 +139,6 @@ static int x_update(int fd, int from_pid, proto_t* in, x_t* x) {
 	view->dirty = 1;
 	if(view != x->view_tail)
 		x->dirty = 1;
-
 	x_repaint(x);
 	return 0;
 }
@@ -166,7 +165,6 @@ static int x_new_view(int fd, int from_pid, proto_t* in, x_t* x) {
 	else {
 		x->view_tail = x->view_head = view;
 	}
-	x_repaint(x);
 	return 0;
 }
 
@@ -220,6 +218,12 @@ static int x_init(x_t* x) {
 	return 0;
 }	
 
+static int xserver_loop_step(void* p) {
+	x_t* x = (x_t*)p;
+	x_repaint(x);	
+	return 0;
+}
+
 static void x_close(x_t* x) {
 	graph_free(x->g);
 	shm_unmap(x->shm_id);
@@ -236,6 +240,7 @@ int main(int argc, char** argv) {
 	dev.mount = xserver_mount;
 	dev.cntl = xserver_cntl;
 	dev.close= xserver_close;
+	dev.loop_step= xserver_loop_step;
 	dev.umount = xserver_umount;
 
 	fsinfo_t dev_info;

@@ -23,7 +23,6 @@ int ipc_send(int to_pid, const proto_t* pkg, int32_t id) {
 }
 
 int ipc_get(int* from_pid,  proto_t* pkg, int32_t id, uint8_t block) {
-	uint32_t size;
 	rawdata_t rawdata = { 0 };
 	id = ipc_get_raw(from_pid, &rawdata, id, block);
 	if(id < 0)
