@@ -104,9 +104,7 @@ void _kernel_entry_c(context_t* ctx) {
 
 	init_kernel_vm();  
 	km_init();
-
 	load_initrd();
-
 	init_allocable_mem(); /*init the rest allocable memory VM*/
 
 	shm_init();

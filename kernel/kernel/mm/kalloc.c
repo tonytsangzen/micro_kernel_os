@@ -1,5 +1,6 @@
 #include <mm/kalloc.h>
 #include <mm/mmu.h>
+#include <kernel/system.h>
 
 /*physical memory split to pages for paging mmu, managed by kalloc/kfree, phymem page state must be occupied or free*/
 
@@ -31,29 +32,28 @@ void kalloc_init(uint32_t start, uint32_t end) {
 
 /* kalloc allocates and returns a single available page. and removed from free list*/
 void *kalloc4k() {
-	//cli();
-
+	uint32_t cpsr = __int_off();
 	void *result = 0;
 	if (_free_list4k != 0) {
 		result = _free_list4k;
 		_free_list4k = _free_list4k->next;
 	}
-
-	//sti();
+	__int_on(cpsr);
 	return result;
 }
 
 /* kfree adds the given page to the 4k free list. */
 void kfree4k(void *page) {
-	//cli();
+	uint32_t cpsr = __int_off();
 	_free_list4k = page_list_prepend(_free_list4k, page);
-	//sti();
+	__int_on(cpsr);
 }
 
 /* kalloc1k allocates 1k sized and aligned chuncks of memory. */
 void *kalloc1k() {
 	void *result = 0;
 
+	uint32_t cpsr = __int_off();
 	/*
 	 * if we don't have any free 1k chunks, convert a 4k page into four
 	 * 1k chunks.
@@ -73,14 +73,15 @@ void *kalloc1k() {
 		_free_list1k = _free_list1k->next;
 	}
 
+	__int_on(cpsr);
 	return result;
 }
 
 /* kfree1k adds the given chunk to the 1k free list. */
 void kfree1k(void *mem) {
-	//cli();
+	uint32_t cpsr = __int_off();
 	_free_list1k = page_list_prepend(_free_list1k, mem);
-	//sti();
+	__int_on(cpsr);
 }
 
 /*

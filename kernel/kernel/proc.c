@@ -85,11 +85,13 @@ void proc_switch(context_t* ctx, proc_t* to){
 
 /* proc_exapnad_memory expands the heap size of the given process. */
 int32_t proc_expand_mem(proc_t *proc, int32_t page_num) {
+	uint32_t cpsr = __int_off();
 	int32_t i;
 	for (i = 0; i < page_num; i++) {
 		char *page = kalloc4k();
 		if(page == NULL) {
 			printf("proc expand failed!! free mem size: (%x), pid:%d, pages ask:%d\n", get_free_mem_size(), proc->pid, page_num);
+			__int_on(cpsr);
 			//proc_shrink_mem(proc, i);
 			return -1;
 		}
@@ -100,11 +102,13 @@ int32_t proc_expand_mem(proc_t *proc, int32_t page_num) {
 				AP_RW_RW);
 		proc->space->heap_size += PAGE_SIZE;
 	}
+	__int_on(cpsr);
 	return 0;
 }
 
 /* proc_shrink_memory shrinks the heap size of the given process. */
 void proc_shrink_mem(proc_t* proc, int32_t page_num) {
+	uint32_t cpsr = __int_off();
 	int32_t i;
 	for (i = 0; i < page_num; i++) {
 		uint32_t virtual_addr = proc->space->heap_size - PAGE_SIZE;
@@ -117,6 +121,7 @@ void proc_shrink_mem(proc_t* proc, int32_t page_num) {
 		if (proc->space->heap_size == 0)
 			break;
 	}
+	__int_on(cpsr);
 }
 
 static void proc_close_files(proc_t *proc) {
@@ -232,8 +237,6 @@ void proc_exit(context_t* ctx, proc_t *proc, int32_t res) {
 	int32_t pid = proc->pid;
 	uint32_t cpsr = __int_off();
 
-	proc_free_space(proc);
-
 	proc_wakeup_waiting(pid);
 	proc->state = UNUSED;
 	proc_unready(ctx, proc);
@@ -241,6 +244,7 @@ void proc_exit(context_t* ctx, proc_t *proc, int32_t res) {
 	tstr_free(proc->cmd);
 	tstr_free(proc->cwd);
 
+	proc_free_space(proc);
 	memset(proc, 0, sizeof(proc_t));
 	__int_on(cpsr);
 }
