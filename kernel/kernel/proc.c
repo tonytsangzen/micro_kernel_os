@@ -58,10 +58,10 @@ static void proc_init_space(proc_t* proc) {
 	proc->space->vm = vm;
 	proc->space->heap_size = 0;
 	proc->space->malloc_man.arg = (void*)proc;
-	proc->space->malloc_man.head = 0;
-	proc->space->malloc_man.tail = 0;
+	proc->space->malloc_man.head = NULL;
+	proc->space->malloc_man.tail = NULL;
 	proc->space->malloc_man.expand = proc_expand;
-	//proc->space->malloc_man.shrink = proc_shrink;
+	proc->space->malloc_man.shrink = proc_shrink;
 	proc->space->malloc_man.get_mem_tail = proc_get_mem_tail;
 	memset(&proc->space->envs, 0, sizeof(proc_env_t)*ENV_MAX);
 }
@@ -108,6 +108,9 @@ int32_t proc_expand_mem(proc_t *proc, int32_t page_num) {
 
 /* proc_shrink_memory shrinks the heap size of the given process. */
 void proc_shrink_mem(proc_t* proc, int32_t page_num) {
+	if(page_num <= 0)
+		return;
+
 	uint32_t cpsr = __int_off();
 	int32_t i;
 	for (i = 0; i < page_num; i++) {
@@ -297,6 +300,12 @@ proc_t *proc_create(void) {
 	return proc;
 }
 
+static void proc_free_heap(proc_t* proc) {
+	proc_shrink_mem(proc, proc->space->heap_size/PAGE_SIZE);
+	proc->space->malloc_man.head = NULL;
+	proc->space->malloc_man.tail = NULL;
+}
+
 /* proc_load loads the given ELF process image into the given process. */
 int32_t proc_load_elf(proc_t *proc, const char *image, uint32_t size) {
 	uint32_t prog_header_offset = 0;
@@ -305,8 +314,7 @@ int32_t proc_load_elf(proc_t *proc, const char *image, uint32_t size) {
 
 	char* proc_image = kmalloc(size);
 	memcpy(proc_image, image, size);
-
-	proc_shrink_mem(proc, proc->space->heap_size/PAGE_SIZE);
+	proc_free_heap(proc);
 
 	/*read elf format from saved proc image*/
 	struct elf_header *header = (struct elf_header *) proc_image;
@@ -339,9 +347,6 @@ int32_t proc_load_elf(proc_t *proc, const char *image, uint32_t size) {
 		}
 		prog_header_offset += sizeof(struct elf_program_header);
 	}
-
-	proc->space->malloc_man.head = 0;
-	proc->space->malloc_man.tail = 0;
 
 	uint32_t user_stack_base =  proc_get_user_stack_base(proc);
 	proc->ctx.sp = user_stack_base + STACK_PAGES*PAGE_SIZE;

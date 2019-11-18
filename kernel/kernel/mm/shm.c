@@ -258,7 +258,6 @@ void* shm_proc_map(int32_t pid, int32_t id) {
 		addr += PAGE_SIZE;
 	}
 	it->refs++;
-	
 	return (void*)it->addr;
 }
 

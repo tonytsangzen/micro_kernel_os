@@ -35,6 +35,7 @@ void km_init() {
 	_kmalloc.expand = km_expand;
 	_kmalloc.shrink = km_shrink;
 	_kmalloc.get_mem_tail = km_get_mem_tail;
+	_kmalloc.arg = NULL;
 }
 
 void *kmalloc(uint32_t size) {

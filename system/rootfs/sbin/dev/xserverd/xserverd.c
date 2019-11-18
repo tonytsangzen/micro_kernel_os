@@ -25,7 +25,7 @@ typedef struct st_xview {
 } xview_t;
 
 typedef struct {
-	int gfd;
+	int fb_fd;
 	int keyb_fd;
 	int mouse_fd;
 	int xwm_pid;
@@ -141,7 +141,7 @@ static void x_repaint(x_t* x) {
 		}
 	}
 
-	flush(x->gfd);
+	flush(x->fb_fd);
 	if(rep == 0)
 		x->dirty = 0;
 }
@@ -260,6 +260,7 @@ static int xserver_close(int fd, int from_pid, fsinfo_t* info, void* p) {
 	x_del_view(x, view);	
 	return 0;
 }
+
 static int x_init(x_t* x) {
 	x->view_head = NULL;	
 	x->view_tail = NULL;	
@@ -270,25 +271,49 @@ static int x_init(x_t* x) {
 	x->keyb_fd = fd;
 
 	fd = open("/dev/mouse0", O_RDONLY);
-	if(fd < 0)
+	if(fd < 0) {
+		close(x->keyb_fd);
 		return -1;
+	}
 	x->mouse_fd = fd;
 
 	fd = open("/dev/fb0", O_RDONLY);
-	if(fd < 0)
+	if(fd < 0) {
+		close(x->keyb_fd);
+		close(x->mouse_fd);
 		return -1;
+	}
+	x->fb_fd = fd;
 
 	int id = dma(fd, NULL);
+	if(id <= 0) {
+		close(x->keyb_fd);
+		close(x->mouse_fd);
+		close(x->fb_fd);
+	}
+
 	void* gbuf = shm_map(id);
+	if(gbuf == NULL) {
+		close(x->keyb_fd);
+		close(x->mouse_fd);
+		close(x->fb_fd);
+	}
 
 	fbinfo_t info;
-	proto_t* out = proto_new(NULL, 0);
-	if(cntl_raw(fd, CNTL_INFO, NULL, out) == 0)
-		proto_read_to(out, &info, sizeof(fbinfo_t));
-	proto_free(out);
+	proto_t out;
+	proto_init(&out, NULL, 0);
 
+	if(cntl_raw(fd, CNTL_INFO, NULL, &out) != 0) {
+		shm_unmap(id);
+		close(x->keyb_fd);
+		close(x->mouse_fd);
+		close(x->fb_fd);
+		return -1;
+	}
+
+	proto_read_to(&out, &info, sizeof(fbinfo_t));
 	x->g = graph_new(gbuf, info.width, info.height);
-	x->gfd = fd;
+	proto_clear(&out);
 	x->shm_id = id;
 	x->dirty = 1;
 	return 0;
@@ -307,7 +332,7 @@ static void x_close(x_t* x) {
 	close(x->mouse_fd);
 	graph_free(x->g);
 	shm_unmap(x->shm_id);
-	close(x->gfd);
+	close(x->fb_fd);
 }
 
 int main(int argc, char** argv) {

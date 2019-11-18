@@ -38,13 +38,13 @@ static int run(int argc, char* argv[]) {
 	(void)argc;
 	(void)argv;
 	conf_t conf;
-	read_config(&conf, "/etc/x/gconsole.conf");
+	read_config(&conf, "/etc/x/console.conf");
 
 	int fd = open("/dev/keyb0", O_RDONLY);
 	if(fd < 0)
 		return -1;
 
-	x_t* xp = x_open(10, 100, 800, 600, "gconsole");
+	x_t* xp = x_open(10, 100, 800, 600, "console");
 	if(xp == NULL) {
 		close(fd);
 		return -1;
