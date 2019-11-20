@@ -15,7 +15,7 @@
 #include <vfs.h>
 
 page_dir_entry_t* _kernel_vm = NULL;
-static uint32_t _initrd_size = 4*MB;
+static uint32_t _initrd_size = 8*MB;
 
 static void set_kernel_init_vm(page_dir_entry_t* vm) {
 	memset(vm, 0, PAGE_DIR_SIZE);

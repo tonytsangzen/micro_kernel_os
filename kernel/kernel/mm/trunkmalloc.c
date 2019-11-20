@@ -118,13 +118,13 @@ static void try_merge(malloc_t* m, mem_block_t* block) {
 /*
 try to shrink the pages.
 */
+/*
 static void try_shrink(malloc_t* m) {
 	uint32_t block_size = sizeof(mem_block_t);
 	uint32_t addr = (uint32_t)m->tail;
 	//check if page aligned.	
 	if(m->tail == NULL || m->tail->used == 1 || (addr % PAGE_SIZE) != 0)
 		return;
-
 	int pages = (m->tail->size+block_size) / PAGE_SIZE;
 
 	m->tail = m->tail->prev;
@@ -135,15 +135,14 @@ static void try_shrink(malloc_t* m) {
 	if(m->tail != m->head) //at least keep one block for reserve
 		m->shrink(m->arg, pages);
 }
+*/
 
-/*
 static void try_shrink(malloc_t* m) {
 	uint32_t block_size = sizeof(mem_block_t);
 	uint32_t addr = (uint32_t)m->tail;
 	//check if page aligned.	
 	if(m->tail == NULL || m->tail->used == 1 || (addr % PAGE_SIZE) != 0)
 		return;
-
 	int pages = (m->tail->size+block_size) / PAGE_SIZE;
 
 	m->tail = m->tail->prev;
@@ -153,7 +152,6 @@ static void try_shrink(malloc_t* m) {
 		m->head = NULL;
 	m->shrink(m->arg, pages);
 }
-*/
 
 void trunk_free(malloc_t* m, char* p) {
 	uint32_t block_size = sizeof(mem_block_t);

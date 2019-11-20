@@ -45,9 +45,11 @@ static int32_t proc_expand(void* p, int32_t page_num) {
 	return proc_expand_mem((proc_t*)p, page_num);
 }
 
+/* TODO
 static void proc_shrink(void* p, int32_t page_num) {
 	proc_shrink_mem((proc_t*)p, page_num);
 }
+*/
 
 static void proc_init_space(proc_t* proc) {
 	page_dir_entry_t *vm = _proc_vm[proc->pid];
@@ -61,7 +63,7 @@ static void proc_init_space(proc_t* proc) {
 	proc->space->malloc_man.head = NULL;
 	proc->space->malloc_man.tail = NULL;
 	proc->space->malloc_man.expand = proc_expand;
-	proc->space->malloc_man.shrink = proc_shrink;
+	//proc->space->malloc_man.shrink = proc_shrink; //TODO
 	proc->space->malloc_man.get_mem_tail = proc_get_mem_tail;
 	memset(&proc->space->envs, 0, sizeof(proc_env_t)*ENV_MAX);
 }
