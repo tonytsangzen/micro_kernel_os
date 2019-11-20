@@ -7,8 +7,10 @@
 #include <graph/tga.h>
 
 int main(int argc, char* argv[]) {
-	if(argc < 2)
+	if(argc < 2) {
+		printf("Usage: tga <tga filename>\n");
 		return -1;
+	}
 
 	printf("loading...");
 	graph_t* img = tga_image_new(argv[1]);
