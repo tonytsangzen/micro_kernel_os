@@ -16,13 +16,21 @@ int main(int argc, char* argv[]) {
 
 	char str[32];
 	int i=0;
-	while(i<300) {
+
+	xevent_t xev;
+	while(1) {
+		if(x_get_event(x, &xev) == 0) {
+			if(xev.type == XEVT_KEYB)
+				break;
+		}
 		snprintf(str, 31, "paint = %d", i++);
 		clear(g, 0xff0000ff);
 		draw_text(g, 30, 10, str, font, 0xffffffff);
+		draw_text(g, 30, g->h-20, "press anykey to quit......", get_font_by_name("8x16"), 0xffffffff);
 		x_update(x);
 		sleep(0);
 	}
+
 	x_close(x);
 	return 0;
 } 

@@ -15,6 +15,8 @@ enum {
 	FS_CMD_FLUSH
 };
 
+const char* vfs_fullname(const char* fname);
+
 int vfs_new_node(fsinfo_t* info);
 int vfs_add(fsinfo_t* to, fsinfo_t* info);
 int vfs_del(fsinfo_t* info);
@@ -30,5 +32,6 @@ int vfs_mount(fsinfo_t* mount_to, fsinfo_t* info, mount_info_t* mnt_info);
 void vfs_mount_wait(const char* fname, int pid);
 int vfs_umount(fsinfo_t* info);
 
+void* vfs_readfile(const char* fname, int* sz);
 
 #endif

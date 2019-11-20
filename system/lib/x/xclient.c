@@ -30,7 +30,7 @@ x_t* x_open(int x, int y, int w, int h, const char* title) {
 	if(w <= 0 || h <= 0)
 		return NULL;
 
-	int fd = open("/dev/xserver", O_RDWR);
+	int fd = open("/dev/x", O_RDWR);
 	if(fd < 0)
 		return NULL;
 	int sz = w * h * 4;	

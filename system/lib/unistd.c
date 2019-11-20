@@ -165,8 +165,6 @@ void exec_initfs(const char* fname) {
 }
 
 int exec(const char* cmd_line) {
-	fsinfo_t info;
-
 	tstr_t* cmd = tstr_new("");
 	const char *p = cmd_line;
 	while(*p != 0 && *p != ' ') {
@@ -174,26 +172,12 @@ int exec(const char* cmd_line) {
 		p++;
 	}
 	tstr_addc(cmd, 0);
-
-	if(vfs_get(CS(cmd), &info) != 0 || info.size == 0) {
-		tstr_free(cmd);
-		return -1;
-	}
-
-	void* buf = malloc(info.size);
+	int sz;
+	void* buf = vfs_readfile(CS(cmd), &sz);
 	if(buf == NULL) {
 		tstr_free(cmd);
 		return -1;
 	}
-
-	int fd = open(CS(cmd), 0);
-	tstr_free(cmd);
-	int sz = read(fd, buf, info.size);
-	if(sz != (int)info.size) {
-		free(buf);
-		return -1;
-	}
-	close(fd);
 	syscall3(SYS_EXEC_ELF, (int32_t)cmd_line, (int32_t)buf, sz);
 	free(buf);
 	return 0;

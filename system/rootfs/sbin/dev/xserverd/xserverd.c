@@ -358,7 +358,7 @@ int main(int argc, char** argv) {
 
 	fsinfo_t mnt_point;
 	memset(&mnt_point, 0, sizeof(fsinfo_t));
-	strcpy(mnt_point.name, "xserver");
+	strcpy(mnt_point.name, "x");
 	mnt_point.type = FS_TYPE_DEV;
 
 	vfs_new_node(&mnt_point);

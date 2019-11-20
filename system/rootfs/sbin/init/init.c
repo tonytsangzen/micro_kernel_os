@@ -23,7 +23,7 @@ int main(int argc, char** argv) {
 		exec_initfs("sbin/dev/initrd");
 	}
 	vfs_mount_wait("/dev", pid);
-	uprintf("initfs mounted to /.\n");
+	uprintf("rootfs(initrd) mounted to /.\n");
 
 	setenv("OS", "mkos");
 	setenv("PATH", "/sbin:/bin");
@@ -67,8 +67,8 @@ int main(int argc, char** argv) {
 	if(pid == 0) {
 		exec("/sbin/dev/xserverd");
 	}
-	vfs_mount_wait("/dev/xserver", pid);
-	uprintf("device xserver mounted to /dev/xserver.\n\n");
+	vfs_mount_wait("/dev/x", pid);
+	uprintf("device xserver mounted to /dev/x.\n\n");
 
 	pid = fork();
 	if(pid == 0) {

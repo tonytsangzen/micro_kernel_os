@@ -25,6 +25,7 @@ LDFLAGS = -lc
 
 LIB_DIR = lib
 GRAPH_OBJS =	$(LIB_DIR)/graph/graph.o \
+	$(LIB_DIR)/graph/tga.o \
 	$(LIB_DIR)/graph/font.o \
 	$(LIB_DIR)/graph/font4x6.o \
 	$(LIB_DIR)/graph/font5x12.o \
@@ -69,6 +70,7 @@ ROOT_DIR = rootfs
 
 all: mkdirs $(LIB_OBJS) apps 
 	cp -r ${ROOT_DIR}/etc ${TARGET_DIR}/$(ROOT_DIR)
+	cp -r ${ROOT_DIR}/data ${TARGET_DIR}/$(ROOT_DIR)
 	mkramfs/mkramfs ${TARGET_DIR}/$(ROOT_DIR).img ${TARGET_DIR}/$(ROOT_DIR)
 
 include mkramfs/build.mk
@@ -92,6 +94,7 @@ include $(ROOT_DIR)/bin/dump/build.mk
 include $(ROOT_DIR)/bin/mount/build.mk
 include $(ROOT_DIR)/bin/test/build.mk
 include $(ROOT_DIR)/bin/uname/build.mk
+include $(ROOT_DIR)/bin/tga/build.mk
 include $(ROOT_DIR)/bin/gtest/build.mk
 include $(ROOT_DIR)/bin/grep/build.mk
 include $(ROOT_DIR)/bin/xconsole/build.mk

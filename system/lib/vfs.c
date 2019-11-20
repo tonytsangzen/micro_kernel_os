@@ -10,7 +10,7 @@ int vfs_new_node(fsinfo_t* info) {
 	return syscall1(SYS_VFS_NEW_NODE, (int32_t)info);
 }
 
-int vfs_get(const char* fname, fsinfo_t* info) {
+const char* vfs_fullname(const char* fname) {
 	tstr_t* fullname = tstr_new("");
 	if(fname[0] == '/') {
 		tstr_cpy(fullname, fname);
@@ -24,9 +24,15 @@ int vfs_get(const char* fname, fsinfo_t* info) {
 		tstr_add(fullname, fname);
 	}
 
-	fname = CS(fullname);
-	int res = syscall2(SYS_VFS_GET, (int32_t)fname, (int32_t)info);
+	static char ret[FS_FULL_NAME_MAX];
+	strncpy(ret, CS(fullname), FS_FULL_NAME_MAX-1);
 	tstr_free(fullname);
+	return ret;
+}
+
+int vfs_get(const char* fname, fsinfo_t* info) {
+	fname = vfs_fullname(fname);
+	int res = syscall2(SYS_VFS_GET, (int32_t)fname, (int32_t)info);
 	return res;
 }
 
@@ -84,6 +90,40 @@ int vfs_umount(fsinfo_t* info) {
 
 int vfs_get_by_fd(int fd, fsinfo_t* info) {
 	return syscall2(SYS_VFS_PROC_GET_BY_FD, (int32_t)fd, (int32_t)info);
+}
+
+void* vfs_readfile(const char* fname, int* rsz) {
+	fname = vfs_fullname(fname);
+	fsinfo_t info;
+	if(vfs_get(fname, &info) != 0 || info.size == 0)
+		return NULL;
+	void* buf = malloc(info.size);
+	if(buf == NULL)
+		return NULL;
+	char* p = (char*)buf;
+
+	int fd = open(fname, O_RDONLY);
+	int fsize = info.size;
+	while(1) {
+		int sz = read(fd, p, fsize);
+		if(sz <= 0 && errno != EAGAIN)
+			break;
+		if(sz > 0) {
+			fsize -= sz;
+			p += sz;
+		}
+		sleep(0);
+	}
+	close(fd);
+
+	if(fsize != 0) {
+		free(buf);
+		return NULL;
+	}
+
+	if(rsz != NULL)
+		*rsz = info.size;
+	return buf;
 }
 
 /*
