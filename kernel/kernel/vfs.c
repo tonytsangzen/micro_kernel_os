@@ -133,6 +133,28 @@ int32_t vfs_get_mount(vfs_node_t* node, mount_t* mount) {
 	return 0;
 }
 
+static const char* fullname(vfs_node_t* node) {
+	tstr_t* s1 = tstr_new("");
+	while(node != NULL) {
+		tstr_t* s2 = tstr_new("");
+		tstr_cpy(s2, node->fsinfo.name);
+		if(strlen(CS(s1)) != 0) {
+			if(node->fsinfo.name[0] != '/')
+				tstr_addc(s2, '/');
+			tstr_add(s2, CS(s1));
+		}
+		tstr_cpy(s1, CS(s2));
+		tstr_free(s2);
+		node = node->father;
+	}
+
+	static char ret[FS_FULL_NAME_MAX];
+	strncpy(ret, CS(s1), FS_FULL_NAME_MAX-1);
+	tstr_free(s1);
+	return ret;
+}
+
+
 int32_t vfs_mount(vfs_node_t* org, vfs_node_t* node, mount_info_t* mnt_info) {
 	if(org == NULL || node == NULL)
 		return -1;
@@ -146,7 +168,7 @@ int32_t vfs_mount(vfs_node_t* org, vfs_node_t* node, mount_info_t* mnt_info) {
 
 	_vfs_mounts[id].pid = _current_proc->pid;
 	_vfs_mounts[id].org_node = (uint32_t)org;
-	strcpy(_vfs_mounts[id].org_name, node->fsinfo.name);
+	strcpy(_vfs_mounts[id].org_name, fullname(org));
 	strcpy(node->fsinfo.name, org->fsinfo.name);
 	node->fsinfo.mount_id =  id;
 	memcpy(&_vfs_mounts[id].info, mnt_info, sizeof(mount_info_t));
@@ -166,7 +188,6 @@ void vfs_umount(vfs_node_t* node) {
 	if(node == NULL || node->fsinfo.mount_id < 0 || check_mount(node) != 0)
 		return;
 
-	strcpy(node->fsinfo.name, _vfs_mounts[node->fsinfo.mount_id].org_name);
 	vfs_node_t* org = (vfs_node_t*)_vfs_mounts[node->fsinfo.mount_id].org_node;
 	if(org == NULL)
 		return;

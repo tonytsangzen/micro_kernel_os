@@ -24,7 +24,7 @@ typedef struct {
 typedef struct {
 	int32_t pid;
 	uint32_t org_node;
-	char org_name[FS_NODE_NAME_MAX];
+	char org_name[FS_FULL_NAME_MAX];
 
 	mount_info_t info;
 } mount_t;
