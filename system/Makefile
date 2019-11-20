@@ -91,7 +91,9 @@ include $(ROOT_DIR)/bin/ls/build.mk
 include $(ROOT_DIR)/bin/dump/build.mk
 include $(ROOT_DIR)/bin/mount/build.mk
 include $(ROOT_DIR)/bin/test/build.mk
+include $(ROOT_DIR)/bin/uname/build.mk
 include $(ROOT_DIR)/bin/gtest/build.mk
+include $(ROOT_DIR)/bin/grep/build.mk
 include $(ROOT_DIR)/bin/xconsole/build.mk
 
 mkdirs:
