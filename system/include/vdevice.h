@@ -18,6 +18,6 @@ typedef struct {
 	int (*loop_step)(void* p);
 } vdevice_t;
 
-extern int device_run(vdevice_t* dev, fsinfo_t* mnt_point, mount_info_t* mnt_info, void* p);
+extern int device_run(vdevice_t* dev, fsinfo_t* mnt_point, mount_info_t* mnt_info, void* p, int block);
 
 #endif

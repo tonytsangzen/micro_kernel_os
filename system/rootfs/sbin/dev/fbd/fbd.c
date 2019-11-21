@@ -112,7 +112,7 @@ int main(int argc, char** argv) {
 	mnt_info.dev_index = 0;
 	mnt_info.access = 0;
 
-	device_run(&dev, &mnt_point, &mnt_info, &dma);
+	device_run(&dev, &mnt_point, &mnt_info, &dma, 1);
 
 	shm_unmap(dma.shm_id);
 	return 0;

@@ -25,6 +25,13 @@ typedef struct st_xview {
 } xview_t;
 
 typedef struct {
+	gpos_t old_pos;
+	gpos_t cpos;
+	gsize_t size;
+	graph_t* g;
+} cursor_t;
+
+typedef struct {
 	int fb_fd;
 	int keyb_fd;
 	int mouse_fd;
@@ -32,6 +39,7 @@ typedef struct {
 	int shm_id;
 	int32_t dirty;
 	graph_t* g;
+	cursor_t cursor;
 
 	xview_t* view_head;
 	xview_t* view_tail;
@@ -113,7 +121,7 @@ static int draw_view(x_t* x, xview_t* view) {
 	return 0;
 }
 
-static void x_del_view(x_t* x, xview_t* view) {
+static void remove_view(x_t* x, xview_t* view) {
 	if(view->prev != NULL)
 		view->prev->next = view->next;
 	if(view->next != NULL)
@@ -122,10 +130,55 @@ static void x_del_view(x_t* x, xview_t* view) {
 		x->view_tail = view->prev;
 	if(x->view_head == view)
 		x->view_head = view->next;
+	view->next = view->prev = NULL;
+}
+
+static void x_del_view(x_t* x, xview_t* view) {
+	remove_view(x, view);
+	free(view);
 	x->dirty = 1;
 }
 
+static void hide_cursor(x_t* x) {
+	if(x->cursor.g == NULL) {
+		x->cursor.g = graph_new(NULL, x->cursor.size.w, x->cursor.size.h);
+		blt(x->g, x->cursor.old_pos.x, x->cursor.old_pos.y, x->cursor.size.w, x->cursor.size.h,
+				x->cursor.g, 0, 0, x->cursor.size.w, x->cursor.size.h);
+	}
+	else  {
+		blt(x->cursor.g, 0, 0, x->cursor.size.w, x->cursor.size.h,
+				x->g, x->cursor.old_pos.x, x->cursor.old_pos.y, x->cursor.size.w, x->cursor.size.h);
+	}
+}
+
+static inline void draw_cursor(x_t* x) {
+	int32_t mx = x->cursor.cpos.x;
+	int32_t my = x->cursor.cpos.y;
+	int32_t mw = x->cursor.size.w;
+	int32_t mh = x->cursor.size.h;
+
+	if(x->cursor.g == NULL)
+		return;
+
+	//blt(x->g, x->cursor.old_pos.x, x->cursor.old_pos.y, mw, mh,
+	//		x->cursor.g, 0, 0, mw, mh);
+	blt(x->g, mx, my, mw, mh,
+			x->cursor.g, 0, 0, mw, mh);
+
+	line(x->g, mx+1, my, mx+mw-1, my+mh-2, 0xffffffff);
+	line(x->g, mx, my, mx+mw-1, my+mh-1, 0xff000000);
+	line(x->g, mx, my+1, mx+mw-2, my+mh-1, 0xffffffff);
+
+	line(x->g, mx, my+mh-2, mx+mw-2, my, 0xffffffff);
+	line(x->g, mx, my+mh-1, mx+mw-1, my, 0xff000000);
+	line(x->g, mx+1, my+mh-1, mx+mw-1, my+1, 0xffffffff);
+	x->cursor.old_pos.x = mx;
+	x->cursor.old_pos.y = my;
+}
+
 static void x_repaint(x_t* x) {
+	hide_cursor(x);
+
 	if(x->dirty != 0)
 		draw_desktop(x);
 
@@ -140,6 +193,8 @@ static void x_repaint(x_t* x) {
 			rep = 1;
 		}
 	}
+
+	draw_cursor(x);
 
 	flush(x->fb_fd);
 	if(rep == 0)
@@ -174,6 +229,17 @@ static int x_update(int fd, int from_pid, proto_t* in, x_t* x) {
 	return 0;
 }
 
+static void push_view(x_t* x, xview_t* view) {
+	if(x->view_tail != NULL) {
+		x->view_tail->next = view;
+		view->prev = x->view_tail;
+		x->view_tail = view;
+	}
+	else {
+		x->view_tail = x->view_head = view;
+	}
+}
+
 static int x_new_view(int fd, int from_pid, proto_t* in, x_t* x) {
 	xinfo_t xinfo;
 	int sz = sizeof(xinfo_t);
@@ -188,48 +254,59 @@ static int x_new_view(int fd, int from_pid, proto_t* in, x_t* x) {
 	view->dirty = 1;
 	view->fd = fd;
 	view->from_pid = from_pid;
-	if(x->view_tail != NULL) {
-		x->view_tail->next = view;
-		view->prev = x->view_tail;
-		x->view_tail = view;
-	}
-	else {
-		x->view_tail = x->view_head = view;
-	}
+	push_view(x, view);
 	return 0;
 }
 
+static xview_t* get_mouse_owner(x_t* x) {
+	xview_t* view = x->view_tail;
+	while(view != NULL) {
+		if(x->cursor.cpos.x >= view->xinfo.r.x && x->cursor.cpos.x < (view->xinfo.r.x+view->xinfo.r.w) &&
+				x->cursor.cpos.y >= view->xinfo.r.y && x->cursor.cpos.y < (view->xinfo.r.y+view->xinfo.r.h))
+			return view;
+		view = view->prev;
+	}
+	return NULL;
+}
+
+static int mouse_handle(x_t* x, int8_t button, int32_t rx, int32_t ry) {
+	x->cursor.cpos.x += rx;
+	x->cursor.cpos.y += ry;
+	if(x->cursor.cpos.x < 0)
+		x->cursor.cpos.x = 0;
+	if(x->cursor.cpos.x >= (int32_t)x->g->w)
+		x->cursor.cpos.x = x->g->w;
+	if(x->cursor.cpos.y < 0)
+		x->cursor.cpos.y = 0;
+	if(x->cursor.cpos.y >= (int32_t)x->g->h)
+		x->cursor.cpos.y = x->g->h;
+
+	if(button == 1) {//mouse button down
+		xview_t* view = get_mouse_owner(x);
+		if(view != NULL && view == x->view_tail) {
+			remove_view(x, view);
+			push_view(x, view);
+		}
+	}
+	x_repaint(x);
+	return -1;
+}
 
 static int x_get_event(int fd, int from_pid, x_t* x, proto_t* out) {
-	xview_t* view = x_get_view(x, fd, from_pid);
-	if(view != x->view_tail)
-		return -1;
-
 	int8_t v;
 	//read keyb
 	int rd = read(x->keyb_fd, &v, 1);
 	if(rd == 1) {
-		xevent_t ev;
-		ev.type = XEVT_KEYB;
-		ev.value.keyboard.value = v;
-		proto_add(out, &ev, sizeof(xevent_t));
-		return 0;
+		xview_t* view = x_get_view(x, fd, from_pid);
+		if(view != NULL && view == x->view_tail) {
+			xevent_t ev;
+			ev.type = XEVT_KEYB;
+			ev.value.keyboard.value = v;
+			proto_add(out, &ev, sizeof(xevent_t));
+			return 0;
+		}
 	}
 
-	//read mouse
-	if(read(x->mouse_fd, &v, 1) == 1) {
-		xevent_t ev;
-		ev.type = XEVT_MOUSE;
-		ev.value.mouse.button = v;
-
-		read(x->mouse_fd, &v, 1);
-		ev.value.mouse.rx = v;
-		read(x->mouse_fd, &v, 1);
-		ev.value.mouse.ry = v;
-		read(x->mouse_fd, &v, 1); //z ...
-		proto_add(out, &ev, sizeof(xevent_t));
-		return 0;
-	}
 	return -1;
 }
 
@@ -316,11 +393,26 @@ static int x_init(x_t* x) {
 	proto_clear(&out);
 	x->shm_id = id;
 	x->dirty = 1;
+
+	x->cursor.size.w = 15;
+	x->cursor.size.h = 15;
 	return 0;
 }	
 
 static int xserver_loop_step(void* p) {
 	x_t* x = (x_t*)p;
+	int8_t v;
+	//read mouse
+	if(read(x->mouse_fd, &v, 1) == 1) {
+		int8_t button, rx, ry, rz;
+		button = v;
+
+		read(x->mouse_fd, &rx, 1);
+		read(x->mouse_fd, &ry, 1);
+		read(x->mouse_fd, &rz, 1); //z ...
+		return mouse_handle(x, button, rx, ry);
+	}
+
 	if(x->dirty != 0) {
 		x_repaint(x);	
 	}
@@ -372,7 +464,7 @@ int main(int argc, char** argv) {
 	x_t x;
 	if(x_init(&x) == 0) {
 		x.xwm_pid = pid;
-		device_run(&dev, &mnt_point, &mnt_info, &x);
+		device_run(&dev, &mnt_point, &mnt_info, &x, 0);
 		x_close(&x);
 	}
 	return 0;

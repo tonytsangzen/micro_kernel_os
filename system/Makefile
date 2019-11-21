@@ -18,8 +18,8 @@ CFLAGS = -Wstrict-prototypes \
          -fno-builtin-exit -fno-builtin-stdio \
 				 -std=c99 
 
-CFLAGS += -I. -g
-#CFLAGS += -I. -O2
+CFLAGS +=  -g
+#CFLAGS +=  -O2
 
 LDFLAGS = -lc
 

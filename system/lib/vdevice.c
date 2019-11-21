@@ -182,7 +182,7 @@ static void handle(vdevice_t* dev, int from_pid, proto_t *in, void* p) {
 	}
 }
 
-int device_run(vdevice_t* dev, fsinfo_t* mount_point, mount_info_t* mnt_info, void* p) {
+int device_run(vdevice_t* dev, fsinfo_t* mount_point, mount_info_t* mnt_info, void* p, int block) {
 	if(dev == NULL)
 		return -1;
 
@@ -193,7 +193,7 @@ int device_run(vdevice_t* dev, fsinfo_t* mount_point, mount_info_t* mnt_info, vo
 	proto_init(&pkg, NULL, 0);
 	while(1) {
 		int pid;
-		if(ipc_get(&pid, &pkg, -1, 1) >= 0) {
+		if(ipc_get(&pid, &pkg, -1, block) >= 0) {
 			handle(dev, pid, &pkg, p);
 			proto_clear(&pkg);
 		}

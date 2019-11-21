@@ -153,7 +153,7 @@ int main(int argc, char** argv) {
 	mnt_info.access = 0;
 
 	//device_run(&dev, &mnt_point, &mnt_info, &ramfs);
-	device_run(&dev, &root_info, &mnt_info, &ramfs);
+	device_run(&dev, &root_info, &mnt_info, &ramfs, 1);
 	ramfs_close(&ramfs);
 	return 0;
 }

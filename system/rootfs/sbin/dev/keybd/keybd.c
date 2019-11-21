@@ -69,6 +69,6 @@ int main(int argc, char** argv) {
 	mnt_info.dev_index = 0;
 	mnt_info.access = 0;
 
-	device_run(&dev, &mnt_point, &mnt_info, NULL);
+	device_run(&dev, &mnt_point, &mnt_info, NULL, 1);
 	return 0;
 }
