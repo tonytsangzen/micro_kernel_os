@@ -76,6 +76,9 @@ static int xserver_umount(fsinfo_t* info, void* p) {
 }
 
 static void draw_win_frame(x_t* x, xview_t* view) {
+	if((view->xinfo.style & X_STYLE_NO_FRAME) != 0)
+		return;
+
 	proto_t in, out;
 	proto_init(&in, NULL, 0);
 	proto_init(&out, NULL, 0);
@@ -197,7 +200,6 @@ static inline void draw_cursor(x_t* x) {
 
 static void x_repaint(x_t* x) {
 	hide_cursor(x);
-
 	if(x->dirty != 0)
 		draw_desktop(x);
 
@@ -212,7 +214,6 @@ static void x_repaint(x_t* x) {
 			rep = 1;
 		}
 	}
-
 	draw_cursor(x);
 
 	flush(x->fb_fd);
@@ -286,6 +287,16 @@ static int x_get_event(int fd, int from_pid, x_t* x, proto_t* out) {
 	return 0;
 }
 
+static int x_scr_info(x_t* x, proto_t* out) {
+	xscreen_t scr;	
+	scr.id = 0;
+	scr.size.w = x->g->w;
+	scr.size.h = x->g->h;
+	proto_add(out, &scr, sizeof(xscreen_t));
+	return 0;
+}
+
+
 static int xserver_cntl(int fd, int from_pid, fsinfo_t* info, int cmd, proto_t* in, proto_t* out, void* p) {
 	(void)info;
 	x_t* x = (x_t*)p;
@@ -298,6 +309,9 @@ static int xserver_cntl(int fd, int from_pid, fsinfo_t* info, int cmd, proto_t* 
 	}
 	else if(cmd == X_CNTL_GET_EVT) {
 		return x_get_event(fd, from_pid, x, out);
+	}
+	else if(cmd == X_CNTL_SCR_INFO) {
+		return x_scr_info(x, out);
 	}
 	return 0;
 }

@@ -44,7 +44,7 @@ static int run(int argc, char* argv[]) {
 	if(fd < 0)
 		return -1;
 
-	x_t* xp = x_open(10, 100, 800, 600, "console");
+	x_t* xp = x_open(10, 100, 800, 600, "console", 0);
 	if(xp == NULL) {
 		close(fd);
 		return -1;

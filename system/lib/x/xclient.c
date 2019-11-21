@@ -26,7 +26,7 @@ static int x_new(x_t* x) {
 	return ret;
 }
 
-x_t* x_open(int x, int y, int w, int h, const char* title) {
+x_t* x_open(int x, int y, int w, int h, const char* title, int style) {
 	if(w <= 0 || h <= 0)
 		return NULL;
 
@@ -50,6 +50,7 @@ x_t* x_open(int x, int y, int w, int h, const char* title) {
 
 	ret->fd = fd;
 	ret->xinfo.shm_id = shm_id;
+	ret->xinfo.style = style;
 	ret->xinfo.r.x = x;
 	ret->xinfo.r.y = y;
 	ret->xinfo.r.w = w;
@@ -84,6 +85,17 @@ int x_get_event(x_t* x, xevent_t* ev) {
 	int ret = cntl_raw(x->fd, X_CNTL_GET_EVT, NULL, &out);
 	if(ret == 0)
 		proto_read_to(&out, ev, sizeof(xevent_t));
+	proto_clear(&out);
+	return ret;
+}
+
+int x_screen_info(x_t* x, xscreen_t* scr) {
+	proto_t out;
+	proto_init(&out, NULL, 0);
+
+	int ret = cntl_raw(x->fd, X_CNTL_SCR_INFO, NULL, &out);
+	if(ret == 0)
+		proto_read_to(&out, scr, sizeof(xscreen_t));
 	proto_clear(&out);
 	return ret;
 }

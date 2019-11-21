@@ -68,6 +68,8 @@ static void draw_desktop(graph_t* g) {
 			pixel(g, x, y, _xwm.desk_fg_color);
 		}
 	}
+	draw_text(g, 12, 12, "Ewok micro-kernel OS", _xwm.font, _xwm.bg_color);
+	draw_text(g, 10, 10, "Ewok micro-kernel OS", _xwm.font, _xwm.fg_color);
 }
 
 static void draw_frame(graph_t* g, proto_t* in) {
@@ -75,10 +77,12 @@ static void draw_frame(graph_t* g, proto_t* in) {
 	proto_read_to(in, &info, sizeof(xinfo_t));
 
 	box(g, info.r.x, info.r.y, info.r.w, info.r.h, _xwm.fg_color);//win box
-	fill(g, info.r.x, info.r.y-20, info.r.w, 20, _xwm.bg_color);//title box
-	box(g, info.r.x, info.r.y-20, info.r.w, 20, _xwm.fg_color);//title box
-	box(g, info.r.x+info.r.w-20, info.r.y-20, 20, 20, _xwm.fg_color);//close box
-	draw_text(g, info.r.x+10, info.r.y-20+2, info.title, _xwm.font, _xwm.fg_color);//title
+	if((info.style & X_STYLE_NO_TITLE) == 0) {
+		fill(g, info.r.x, info.r.y-20, info.r.w, 20, _xwm.bg_color);//title box
+		box(g, info.r.x, info.r.y-20, info.r.w, 20, _xwm.fg_color);//title box
+		box(g, info.r.x+info.r.w-20, info.r.y-20, 20, 20, _xwm.fg_color);//close box
+		draw_text(g, info.r.x+10, info.r.y-20+2, info.title, _xwm.font, _xwm.fg_color);//title
+	}
 }
 
 void handle(int from_pid, proto_t* in, void* p) {

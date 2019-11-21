@@ -10,7 +10,13 @@ int main(int argc, char* argv[]) {
 	(void)argc;
 	(void)argv;
 
-	x_t* x = x_open(100+(getpid()-6)*40, 100+(getpid()-6)*40, 600, 200, "gtest");
+	x_t* x = x_open(100+(getpid()-6)*40, 100+(getpid()-6)*40, 600, 200, "gtest", X_STYLE_NO_TITLE);
+
+	xscreen_t scr;
+	x_screen_info(x, &scr);
+	x->xinfo.r.x = (scr.size.w - x->xinfo.r.w) / 2;
+	x->xinfo.r.y = (scr.size.h - x->xinfo.r.h) / 2;
+
 	graph_t* g = x_graph(x);
 	font_t* font = get_font_by_name("16x32");
 
@@ -29,12 +35,6 @@ int main(int argc, char* argv[]) {
 		draw_text(g, 30, g->h-20, "press anykey to quit......", get_font_by_name("8x16"), 0xffffffff);
 		x_update(x);
 
-		if(i > 100) {
-			x->xinfo.r.x = 200;
-			x->xinfo.r.y = 200;
-			strcpy(x->xinfo.title, "hahaha");
-			x_update(x);
-		}
 		sleep(0);
 	}
 
