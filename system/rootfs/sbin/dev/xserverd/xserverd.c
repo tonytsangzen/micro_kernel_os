@@ -131,12 +131,24 @@ static void remove_view(x_t* x, xview_t* view) {
 	if(x->view_head == view)
 		x->view_head = view->next;
 	view->next = view->prev = NULL;
+	x->dirty = 1;
+}
+
+static void push_view(x_t* x, xview_t* view) {
+	if(x->view_tail != NULL) {
+		x->view_tail->next = view;
+		view->prev = x->view_tail;
+		x->view_tail = view;
+	}
+	else {
+		x->view_tail = x->view_head = view;
+	}
+	x->dirty = 1;
 }
 
 static void x_del_view(x_t* x, xview_t* view) {
 	remove_view(x, view);
 	free(view);
-	x->dirty = 1;
 }
 
 static void hide_cursor(x_t* x) {
@@ -229,17 +241,6 @@ static int x_update(int fd, int from_pid, proto_t* in, x_t* x) {
 	return 0;
 }
 
-static void push_view(x_t* x, xview_t* view) {
-	if(x->view_tail != NULL) {
-		x->view_tail->next = view;
-		view->prev = x->view_tail;
-		x->view_tail = view;
-	}
-	else {
-		x->view_tail = x->view_head = view;
-	}
-}
-
 static int x_new_view(int fd, int from_pid, proto_t* in, x_t* x) {
 	xinfo_t xinfo;
 	int sz = sizeof(xinfo_t);
@@ -283,7 +284,7 @@ static int mouse_handle(x_t* x, int8_t button, int32_t rx, int32_t ry) {
 
 	if(button == 1) {//mouse button down
 		xview_t* view = get_mouse_owner(x);
-		if(view != NULL && view == x->view_tail) {
+		if(view != NULL && view != x->view_tail) {
 			remove_view(x, view);
 			push_view(x, view);
 		}
@@ -293,18 +294,19 @@ static int mouse_handle(x_t* x, int8_t button, int32_t rx, int32_t ry) {
 }
 
 static int x_get_event(int fd, int from_pid, x_t* x, proto_t* out) {
+	xview_t* view = x_get_view(x, fd, from_pid);
+	if(view == NULL || view != x->view_tail)
+		return -1;
+
 	int8_t v;
 	//read keyb
 	int rd = read(x->keyb_fd, &v, 1);
 	if(rd == 1) {
-		xview_t* view = x_get_view(x, fd, from_pid);
-		if(view != NULL && view == x->view_tail) {
-			xevent_t ev;
-			ev.type = XEVT_KEYB;
-			ev.value.keyboard.value = v;
-			proto_add(out, &ev, sizeof(xevent_t));
-			return 0;
-		}
+		xevent_t ev;
+		ev.type = XEVT_KEYB;
+		ev.value.keyboard.value = v;
+		proto_add(out, &ev, sizeof(xevent_t));
+		return 0;
 	}
 
 	return -1;
@@ -339,6 +341,7 @@ static int xserver_close(int fd, int from_pid, fsinfo_t* info, void* p) {
 }
 
 static int x_init(x_t* x) {
+	memset(x, 0, sizeof(x_t));
 	x->view_head = NULL;	
 	x->view_tail = NULL;	
 
