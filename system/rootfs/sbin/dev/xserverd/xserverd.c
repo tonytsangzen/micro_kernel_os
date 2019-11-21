@@ -14,6 +14,11 @@
 #include <x/xcntl.h>
 #include <x/xevent.h>
 
+typedef struct st_xview_ev {
+	xevent_t event;
+	struct st_xview_ev* next;
+} xview_event_t;
+
 typedef struct st_xview {
 	int32_t fd;
 	int32_t from_pid;
@@ -22,6 +27,8 @@ typedef struct st_xview {
 
 	struct st_xview *next;
 	struct st_xview *prev;
+	xview_event_t* event_head;
+	xview_event_t* event_tail;
 } xview_t;
 
 typedef struct {
@@ -232,11 +239,16 @@ static int x_update(int fd, int from_pid, proto_t* in, x_t* x) {
 	xview_t* view = x_get_view(x, fd, from_pid);
 	if(view == NULL)
 		return -1;
-	memcpy(&view->xinfo, &xinfo, sizeof(xinfo_t));
 
-	view->dirty = 1;
-	if(view != x->view_tail)
+	if(view != x->view_tail ||
+			view->xinfo.r.x != xinfo.r.x ||
+			view->xinfo.r.y != xinfo.r.y ||
+			view->xinfo.r.w != xinfo.r.w ||
+			view->xinfo.r.h != xinfo.r.h)
 		x->dirty = 1;
+	
+	memcpy(&view->xinfo, &xinfo, sizeof(xinfo_t));
+	view->dirty = 1;
 	x_repaint(x);
 	return 0;
 }
@@ -259,57 +271,19 @@ static int x_new_view(int fd, int from_pid, proto_t* in, x_t* x) {
 	return 0;
 }
 
-static xview_t* get_mouse_owner(x_t* x) {
-	xview_t* view = x->view_tail;
-	while(view != NULL) {
-		if(x->cursor.cpos.x >= view->xinfo.r.x && x->cursor.cpos.x < (view->xinfo.r.x+view->xinfo.r.w) &&
-				x->cursor.cpos.y >= view->xinfo.r.y && x->cursor.cpos.y < (view->xinfo.r.y+view->xinfo.r.h))
-			return view;
-		view = view->prev;
-	}
-	return NULL;
-}
-
-static int mouse_handle(x_t* x, int8_t button, int32_t rx, int32_t ry) {
-	x->cursor.cpos.x += rx;
-	x->cursor.cpos.y += ry;
-	if(x->cursor.cpos.x < 0)
-		x->cursor.cpos.x = 0;
-	if(x->cursor.cpos.x >= (int32_t)x->g->w)
-		x->cursor.cpos.x = x->g->w;
-	if(x->cursor.cpos.y < 0)
-		x->cursor.cpos.y = 0;
-	if(x->cursor.cpos.y >= (int32_t)x->g->h)
-		x->cursor.cpos.y = x->g->h;
-
-	if(button == 1) {//mouse button down
-		xview_t* view = get_mouse_owner(x);
-		if(view != NULL && view != x->view_tail) {
-			remove_view(x, view);
-			push_view(x, view);
-		}
-	}
-	x_repaint(x);
-	return -1;
-}
-
 static int x_get_event(int fd, int from_pid, x_t* x, proto_t* out) {
 	xview_t* view = x_get_view(x, fd, from_pid);
-	if(view == NULL || view != x->view_tail)
+	if(view == NULL || view->event_head == NULL)
 		return -1;
 
-	int8_t v;
-	//read keyb
-	int rd = read(x->keyb_fd, &v, 1);
-	if(rd == 1) {
-		xevent_t ev;
-		ev.type = XEVT_KEYB;
-		ev.value.keyboard.value = v;
-		proto_add(out, &ev, sizeof(xevent_t));
-		return 0;
-	}
+	xview_event_t* e = view->event_head;
+	view->event_head = view->event_head->next;
+	if(view->event_head == NULL)
+		view->event_tail = NULL;
 
-	return -1;
+	proto_add(out, &e->event, sizeof(xevent_t));
+	free(e);
+	return 0;
 }
 
 static int xserver_cntl(int fd, int from_pid, fsinfo_t* info, int cmd, proto_t* in, proto_t* out, void* p) {
@@ -399,17 +373,85 @@ static int x_init(x_t* x) {
 
 	x->cursor.size.w = 15;
 	x->cursor.size.h = 15;
+	x->cursor.cpos.x = info.width/2;
+	x->cursor.cpos.y = info.height/2; 
 	return 0;
 }	
+
+static xview_t* get_mouse_owner(x_t* x) {
+	xview_t* view = x->view_tail;
+	while(view != NULL) {
+		if(x->cursor.cpos.x >= view->xinfo.r.x && x->cursor.cpos.x < (view->xinfo.r.x+view->xinfo.r.w) &&
+				x->cursor.cpos.y >= view->xinfo.r.y && x->cursor.cpos.y < (view->xinfo.r.y+view->xinfo.r.h))
+			return view;
+		view = view->prev;
+	}
+	return NULL;
+}
+
+static void x_push_event(xview_t* view, xview_event_t* e) {
+	if(view->event_tail != NULL)
+		view->event_tail->next = e;
+	else
+		view->event_head = e;
+	view->event_tail = e;
+}
+
+static int mouse_handle(x_t* x, int8_t button, int32_t rx, int32_t ry) {
+	x->cursor.cpos.x += rx;
+	x->cursor.cpos.y += ry;
+	if(x->cursor.cpos.x < 0)
+		x->cursor.cpos.x = 0;
+	if(x->cursor.cpos.x >= (int32_t)x->g->w)
+		x->cursor.cpos.x = x->g->w;
+	if(x->cursor.cpos.y < 0)
+		x->cursor.cpos.y = 0;
+	if(x->cursor.cpos.y >= (int32_t)x->g->h)
+		x->cursor.cpos.y = x->g->h;
+
+	xview_t* view = get_mouse_owner(x);
+	if(view != NULL) {
+		xview_event_t* e = (xview_event_t*)malloc(sizeof(xview_event_t));
+		e->next = NULL;
+		e->event.type = XEVT_MOUSE;
+		e->event.state = XEVT_MOUSE_MOVE;
+		e->event.value.mouse.x = x->cursor.cpos.x;
+		e->event.value.mouse.y = x->cursor.cpos.y;
+		e->event.value.mouse.rx = rx;
+		e->event.value.mouse.ry = ry;
+		if(button == 1) {//mouse button down
+			e->event.state = XEVT_MOUSE_DOWN;
+			if(view != x->view_tail) {
+				remove_view(x, view);
+				push_view(x, view);
+			}
+		}
+		x_push_event(view, e);
+	}
+	x_repaint(x);
+	return -1;
+}
 
 static int xserver_loop_step(void* p) {
 	x_t* x = (x_t*)p;
 	int8_t v;
+	//read keyb
+	int rd = read(x->keyb_fd, &v, 1);
+	if(rd == 1) {
+		xview_t* topv = x->view_tail; 
+		if(topv != NULL) {
+			xview_event_t* e = (xview_event_t*)malloc(sizeof(xview_event_t));
+			e->next = NULL;
+			e->event.type = XEVT_KEYB;
+			e->event.value.keyboard.value = v;
+			x_push_event(topv, e);
+		}
+	}
+
 	//read mouse
 	if(read(x->mouse_fd, &v, 1) == 1) {
 		int8_t button, rx, ry, rz;
 		button = v;
-
 		read(x->mouse_fd, &rx, 1);
 		read(x->mouse_fd, &ry, 1);
 		read(x->mouse_fd, &rz, 1); //z ...

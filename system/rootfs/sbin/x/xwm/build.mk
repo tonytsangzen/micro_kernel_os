@@ -7,5 +7,3 @@ CLEAN += $(XWM_OBJS)
 
 $(XWM): $(XWM_OBJS) $(LIB_OBJS)
 	$(LD) -Ttext=100 $(XWM_OBJS) $(LIB_OBJS) -o $(XWM) $(LDFLAGS)
-	$(OBJDUMP) -D $(XWM) > $(TARGET_DIR)/asm/xwm.asm
-

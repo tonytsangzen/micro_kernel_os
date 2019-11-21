@@ -7,5 +7,3 @@ CLEAN += $(UNAME_OBJS)
 
 $(UNAME): $(UNAME_OBJS) $(LIB_OBJS)
 	$(LD) -Ttext=100 $(UNAME_OBJS) $(LIB_OBJS) -o $(UNAME) $(LDFLAGS)
-	$(OBJDUMP) -D $(UNAME) > $(TARGET_DIR)/asm/uname.asm
-

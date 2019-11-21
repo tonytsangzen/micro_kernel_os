@@ -7,5 +7,3 @@ CLEAN += $(FBD_OBJS)
 
 $(FBD): $(FBD_OBJS) $(LIB_OBJS)
 	$(LD) -Ttext=100 $(FBD_OBJS) $(LIB_OBJS) -o $(FBD) $(LDFLAGS)
-	$(OBJDUMP) -D $(FBD) > $(TARGET_DIR)/asm/fbd.asm
-

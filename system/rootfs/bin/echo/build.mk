@@ -7,5 +7,3 @@ CLEAN += $(ECHO_OBJS)
 
 $(ECHO): $(ECHO_OBJS) $(LIB_OBJS)
 	$(LD) -Ttext=100 $(ECHO_OBJS) $(LIB_OBJS) -o $(ECHO) $(LDFLAGS)
-	$(OBJDUMP) -D $(ECHO) > $(TARGET_DIR)/asm/echo.asm
-

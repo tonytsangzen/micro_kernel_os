@@ -7,5 +7,3 @@ CLEAN += $(MOUNT_OBJS)
 
 $(MOUNT): $(MOUNT_OBJS) $(LIB_OBJS)
 	$(LD) -Ttext=100 $(MOUNT_OBJS) $(LIB_OBJS) -o $(MOUNT) $(LDFLAGS)
-	$(OBJDUMP) -D $(MOUNT) > $(TARGET_DIR)/asm/mount.asm
-

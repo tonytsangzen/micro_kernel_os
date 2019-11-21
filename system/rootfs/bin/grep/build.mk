@@ -7,5 +7,3 @@ CLEAN += $(GREP_OBJS)
 
 $(GREP): $(GREP_OBJS) $(LIB_OBJS)
 	$(LD) -Ttext=100 $(GREP_OBJS) $(LIB_OBJS) -o $(GREP) $(LDFLAGS)
-	$(OBJDUMP) -D $(GREP) > $(TARGET_DIR)/asm/grep.asm
-

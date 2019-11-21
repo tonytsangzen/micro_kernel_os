@@ -28,6 +28,13 @@ int main(int argc, char* argv[]) {
 		draw_text(g, 30, 10, str, font, 0xffffffff);
 		draw_text(g, 30, g->h-20, "press anykey to quit......", get_font_by_name("8x16"), 0xffffffff);
 		x_update(x);
+
+		if(i > 100) {
+			x->xinfo.r.x = 200;
+			x->xinfo.r.y = 200;
+			strcpy(x->xinfo.title, "hahaha");
+			x_update(x);
+		}
 		sleep(0);
 	}
 
