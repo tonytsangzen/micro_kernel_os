@@ -8,6 +8,7 @@
 #include <graph/graph.h>
 #include <sconf.h>
 #include <x/xcntl.h>
+#include <x/xwm.h>
 
 typedef struct {
 	font_t* font;
@@ -85,6 +86,24 @@ static void draw_frame(graph_t* g, proto_t* in) {
 	}
 }
 
+static int get_pos(proto_t* in) {
+	xinfo_t info;
+	int x = proto_read_int(in);
+	int y = proto_read_int(in);
+	proto_read_to(in, &info, sizeof(xinfo_t));
+
+	int res = -1;
+	if((info.style & X_STYLE_NO_TITLE) == 0) {
+		if(x >= info.r.x && y >= info.r.y-20 &&
+				x <= info.r.x+info.r.w-20 && y <= info.r.y)
+			res = XWM_FRAME_TITLE;
+		else if(x >= info.r.x+info.r.w-20 && y >= info.r.y-20 &&
+				x <= info.r.x+info.r.w && y <= info.r.y)
+			res = XWM_FRAME_CLOSE;
+	}
+	return res;
+}
+
 void handle(int from_pid, proto_t* in, void* p) {
 	(void)p;
 
@@ -98,16 +117,20 @@ void handle(int from_pid, proto_t* in, void* p) {
 	if(gbuf != NULL) {
 		graph_t* g = graph_new(gbuf, xw, xh);
 
-		if(cmd == 0) { //draw frame
+		if(cmd == XWM_CNTL_DRAW_FRAME) { //draw frame
 			draw_frame(g, in);
+			res = 0;
 		}
-		else if(cmd == 1) {
+		else if(cmd == XWM_CNTL_DRAW_DESKTOP) { //draw desktop
 			draw_desktop(g);
+			res = 0;
+		}
+		else if(cmd == XWM_CNTL_GET_POS) { //get pos
+			res = get_pos(in);
 		}
 
 		graph_free(g);
 		shm_unmap(shm_id);
-		res = 0;
 	}
 
 	proto_t out;

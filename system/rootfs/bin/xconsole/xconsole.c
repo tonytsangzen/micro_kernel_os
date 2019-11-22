@@ -38,6 +38,7 @@ static int run(int argc, char* argv[]) {
 	(void)argc;
 	(void)argv;
 	conf_t conf;
+	memset(&conf, 0, sizeof(conf_t));
 	read_config(&conf, "/etc/x/console.conf");
 
 	int fd = open("/dev/keyb0", O_RDONLY);
@@ -67,6 +68,8 @@ static int run(int argc, char* argv[]) {
 			if(x_get_event(xp, &xev) == 0) {
 				if(xev.type == XEVT_KEYB)
 					krd = 1;
+				if(xev.type == XEVT_WIN && xev.value.window.value == XEVT_WIN_CLOSE)
+					break;
 			}
 		}
 		else {

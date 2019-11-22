@@ -13,6 +13,7 @@
 #include <ipc.h>
 #include <x/xcntl.h>
 #include <x/xevent.h>
+#include <x/xwm.h>
 
 typedef struct st_xview_ev {
 	xevent_t event;
@@ -83,7 +84,7 @@ static void draw_win_frame(x_t* x, xview_t* view) {
 	proto_init(&in, NULL, 0);
 	proto_init(&out, NULL, 0);
 
-	proto_add_int(&in, 0); // 0 for draw view frame
+	proto_add_int(&in, XWM_CNTL_DRAW_FRAME); // 0 for draw view frame
 	proto_add_int(&in, x->shm_id);
 	proto_add_int(&in, x->g->w);
 	proto_add_int(&in, x->g->h);
@@ -99,7 +100,7 @@ static void draw_desktop(x_t* x) {
 	proto_init(&in, NULL, 0);
 	proto_init(&out, NULL, 0);
 
-	proto_add_int(&in, 1); // 1 for draw desktop
+	proto_add_int(&in, XWM_CNTL_DRAW_DESKTOP); // 1 for draw desktop
 	proto_add_int(&in, x->shm_id);
 	proto_add_int(&in, x->g->w);
 	proto_add_int(&in, x->g->h);
@@ -392,12 +393,44 @@ static int x_init(x_t* x) {
 	return 0;
 }	
 
-static xview_t* get_mouse_owner(x_t* x) {
+static int get_win_frame_pos(x_t* x, xview_t* view) {
+	if((view->xinfo.style & X_STYLE_NO_FRAME) != 0)
+		return -1;
+
+	proto_t in, out;
+	proto_init(&in, NULL, 0);
+	proto_init(&out, NULL, 0);
+
+	proto_add_int(&in, XWM_CNTL_GET_POS); // 2 for get_win_frame_posos
+	proto_add_int(&in, x->shm_id);
+	proto_add_int(&in, x->g->w);
+	proto_add_int(&in, x->g->h);
+	proto_add_int(&in, x->cursor.cpos.x);
+	proto_add_int(&in, x->cursor.cpos.y);
+	proto_add(&in, &view->xinfo, sizeof(xinfo_t));
+	ipc_call(x->xwm_pid, &in, &out);
+	proto_clear(&in);
+
+	int res = proto_read_int(&out);
+	proto_clear(&out);
+	return res;
+}
+
+static xview_t* get_mouse_owner(x_t* x, int* win_frame_pos) {
 	xview_t* view = x->view_tail;
+	if(win_frame_pos != NULL)
+		*win_frame_pos = -1;
+
 	while(view != NULL) {
 		if(x->cursor.cpos.x >= view->xinfo.r.x && x->cursor.cpos.x < (view->xinfo.r.x+view->xinfo.r.w) &&
 				x->cursor.cpos.y >= view->xinfo.r.y && x->cursor.cpos.y < (view->xinfo.r.y+view->xinfo.r.h))
 			return view;
+		int pos = get_win_frame_pos(x, view);
+		if(pos >= 0) {
+			if(win_frame_pos != NULL)
+				*win_frame_pos = pos;
+			return view;
+		}
 		view = view->prev;
 	}
 	return NULL;
@@ -423,8 +456,16 @@ static int mouse_handle(x_t* x, int8_t button, int32_t rx, int32_t ry) {
 	if(x->cursor.cpos.y >= (int32_t)x->g->h)
 		x->cursor.cpos.y = x->g->h;
 
-	xview_t* view = get_mouse_owner(x);
-	if(view != NULL) {
+	int pos;
+	xview_t* view = get_mouse_owner(x, &pos);
+	if(pos == XWM_FRAME_CLOSE && button == 1) {
+		xview_event_t* e = (xview_event_t*)malloc(sizeof(xview_event_t));
+		e->next = NULL;
+		e->event.type = XEVT_WIN;
+		e->event.value.window.value = XEVT_WIN_CLOSE;
+		x_push_event(view, e);
+	}
+	else if(view != NULL) {
 		xview_event_t* e = (xview_event_t*)malloc(sizeof(xview_event_t));
 		e->next = NULL;
 		e->event.type = XEVT_MOUSE;
@@ -433,6 +474,7 @@ static int mouse_handle(x_t* x, int8_t button, int32_t rx, int32_t ry) {
 		e->event.value.mouse.y = x->cursor.cpos.y;
 		e->event.value.mouse.rx = rx;
 		e->event.value.mouse.ry = ry;
+
 		if(button == 1) {//mouse button down
 			e->event.state = XEVT_MOUSE_DOWN;
 			if(view != x->view_tail) {
