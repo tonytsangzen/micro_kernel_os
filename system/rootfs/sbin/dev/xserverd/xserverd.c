@@ -444,7 +444,7 @@ static void x_push_event(xview_t* view, xview_event_t* e) {
 	view->event_tail = e;
 }
 
-static int mouse_handle(x_t* x, int8_t button, int32_t rx, int32_t ry) {
+static void mouse_cxy(x_t* x, int32_t rx, int32_t ry) {
 	x->cursor.cpos.x += rx;
 	x->cursor.cpos.y += ry;
 	if(x->cursor.cpos.x < 0)
@@ -455,35 +455,46 @@ static int mouse_handle(x_t* x, int8_t button, int32_t rx, int32_t ry) {
 		x->cursor.cpos.y = 0;
 	if(x->cursor.cpos.y >= (int32_t)x->g->h)
 		x->cursor.cpos.y = x->g->h;
+}
+
+static int mouse_handle(x_t* x, int8_t button, int32_t rx, int32_t ry) {
+	mouse_cxy(x, rx, ry);
+
+	xview_event_t* e = (xview_event_t*)malloc(sizeof(xview_event_t));
+	e->next = NULL;
+	e->event.type = XEVT_MOUSE;
+	e->event.state = XEVT_MOUSE_MOVE;
+	e->event.value.mouse.x = x->cursor.cpos.x;
+	e->event.value.mouse.y = x->cursor.cpos.y;
+	e->event.value.mouse.rx = rx;
+	e->event.value.mouse.ry = ry;
 
 	int pos;
 	xview_t* view = get_mouse_owner(x, &pos);
-	if(pos == XWM_FRAME_CLOSE && button == 1) {
-		xview_event_t* e = (xview_event_t*)malloc(sizeof(xview_event_t));
-		e->next = NULL;
-		e->event.type = XEVT_WIN;
-		e->event.value.window.value = XEVT_WIN_CLOSE;
-		x_push_event(view, e);
+	if(view == NULL) {
+		free(e);
+		x_repaint(x);
+		return -1;
 	}
-	else if(view != NULL) {
-		xview_event_t* e = (xview_event_t*)malloc(sizeof(xview_event_t));
-		e->next = NULL;
-		e->event.type = XEVT_MOUSE;
-		e->event.state = XEVT_MOUSE_MOVE;
-		e->event.value.mouse.x = x->cursor.cpos.x;
-		e->event.value.mouse.y = x->cursor.cpos.y;
-		e->event.value.mouse.rx = rx;
-		e->event.value.mouse.ry = ry;
 
-		if(button == 1) {//mouse button down
+	if(button == 1) {
+		if(pos == XWM_FRAME_CLOSE) { //window close
+			e->event.type = XEVT_WIN;
+			e->event.value.window.value = XEVT_WIN_CLOSE;
+		}
+		else { // mouse down
 			e->event.state = XEVT_MOUSE_DOWN;
 			if(view != x->view_tail) {
 				remove_view(x, view);
 				push_view(x, view);
 			}
 		}
-		x_push_event(view, e);
 	}
+	else if(button == 2) {
+		e->event.state = XEVT_MOUSE_UP;
+	}
+
+	x_push_event(view, e);
 	x_repaint(x);
 	return -1;
 }
