@@ -98,6 +98,7 @@ include $(ROOT_DIR)/bin/tga/build.mk
 include $(ROOT_DIR)/bin/gtest/build.mk
 include $(ROOT_DIR)/bin/grep/build.mk
 include $(ROOT_DIR)/bin/xconsole/build.mk
+include $(ROOT_DIR)/bin/launcher/build.mk
 
 mkdirs:
 	mkdir -p ${TARGET_DIR}/$(ROOT_DIR)/sbin/dev
@@ -106,6 +107,14 @@ mkdirs:
 	mkdir -p ${TARGET_DIR}/asm
 
 apps: ${PROGS}
+
+ARCH_DIR=../kernel/arch
+ARCH=arm/versatilepb
+KERNEL=../kernel/build/mkos.bin
+include ${ARCH_DIR}/${ARCH}/config.mk
+
+run: 
+	qemu-system-arm $(QEMU_FLAGS) -kernel ${KERNEL} -initrd ${TARGET_DIR}/$(ROOT_DIR).img
 
 clean:
 	rm -f $(CLEAN)

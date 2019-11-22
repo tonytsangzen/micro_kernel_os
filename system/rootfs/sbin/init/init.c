@@ -73,7 +73,7 @@ int main(int argc, char** argv) {
 	pid = fork();
 	if(pid == 0) {
 		init_stdio();
-		exec("/bin/xconsole");
+		exec("/bin/launcher");
 	}
 
 	pid = fork();

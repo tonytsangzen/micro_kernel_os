@@ -20,7 +20,7 @@ int main(int argc, char* argv[]) {
 	}
 	printf("ok.\n");
 
-	x_t* x = x_open(100, 100, img->w, img->h+20, "tga", X_STYLE_NO_FRAME);
+	x_t* x = x_open(100, 100, img->w, img->h+20, "tga", 0);
 	if(x == NULL) {
 		graph_free(img);
 		return -1;
@@ -34,7 +34,7 @@ int main(int argc, char* argv[]) {
 	x_update(x);
 
 	xevent_t xev;
-	while(1) {
+	while(x->closed == 0) {
 		if(x_get_event(x, &xev) == 0) {
 			if(xev.type == XEVT_KEYB)
 				break;

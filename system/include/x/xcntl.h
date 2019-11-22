@@ -9,6 +9,7 @@ enum {
 	X_CNTL_GET_EVT
 };
 
+#define X_STYLE_NORMAL    0x0
 #define X_STYLE_NO_FRAME  0x1
 #define X_STYLE_NO_TITLE  0x2
 

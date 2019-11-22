@@ -17,6 +17,7 @@ typedef struct {
 sconf_t* sconf_parse(const char* str);
 void sconf_free(sconf_t* conf);
 const char* sconf_get(sconf_t *conf, const char*name);
+sconf_item_t* sconf_get_at(sconf_t *conf, int index);
 sconf_t* sconf_load(const char* fname);
 
 #endif

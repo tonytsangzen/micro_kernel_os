@@ -76,13 +76,24 @@ static void draw_desktop(graph_t* g) {
 static void draw_frame(graph_t* g, proto_t* in) {
 	xinfo_t info;
 	proto_read_to(in, &info, sizeof(xinfo_t));
+	int top = proto_read_int(in);
 
-	box(g, info.r.x, info.r.y, info.r.w, info.r.h, _xwm.fg_color);//win box
+	uint32_t fg, bg;
+	if(top == 0) {
+		fg = _xwm.fg_color;
+		bg = _xwm.bg_color;
+	}
+	else {
+		fg = _xwm.top_fg_color;
+		bg = _xwm.top_bg_color;
+	}
+
+	box(g, info.r.x, info.r.y, info.r.w, info.r.h, fg);//win box
 	if((info.style & X_STYLE_NO_TITLE) == 0) {
-		fill(g, info.r.x, info.r.y-20, info.r.w, 20, _xwm.bg_color);//title box
-		box(g, info.r.x, info.r.y-20, info.r.w, 20, _xwm.fg_color);//title box
-		box(g, info.r.x+info.r.w-20, info.r.y-20, 20, 20, _xwm.fg_color);//close box
-		draw_text(g, info.r.x+10, info.r.y-20+2, info.title, _xwm.font, _xwm.fg_color);//title
+		fill(g, info.r.x, info.r.y-20, info.r.w, 20, bg);//title box
+		box(g, info.r.x, info.r.y-20, info.r.w, 20, fg);//title box
+		box(g, info.r.x+info.r.w-20, info.r.y-20, 20, 20, fg);//close box
+		draw_text(g, info.r.x+10, info.r.y-20+2, info.title, _xwm.font, fg);//title
 	}
 }
 

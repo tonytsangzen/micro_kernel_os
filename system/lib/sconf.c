@@ -115,6 +115,12 @@ void sconf_free(sconf_t* conf) {
 	free(conf);
 }
 
+sconf_item_t* sconf_get_at(sconf_t *conf, int index) {
+	if(index >= S_CONF_ITEM_MAX)
+		return NULL;
+	return &conf->items[index];
+}
+
 const char* sconf_get(sconf_t *conf, const char*name) {
 	if(name == NULL || conf == NULL)
 		return "";
@@ -129,48 +135,9 @@ const char* sconf_get(sconf_t *conf, const char*name) {
 	return "";
 }
 
-static int read_all(int fd, char* buf, uint32_t size) {
-	char* p = buf;
-	int32_t sz = 0;
-	while(sz < (int32_t)size) {
-		int32_t res = read(fd, p, size-sz);	
-		if(res <= 0) {
-			break;
-		}
-		sz += res;
-		p += res;
-	}
-	return sz;
-}
-
-static char* read_file(const char* fname, int32_t *size) {
-	fsinfo_t info;
-	if(vfs_get(fname, &info) != 0 || info.size <= 0) {
-		return NULL;
-	}
-
-	int fd = open(fname, O_RDONLY);
-	if(fd < 0) 
-		return NULL;
-
-	char* buf = (char*)malloc(info.size);
-	int sz = read_all(fd, buf, info.size);	
-	close(fd);
-
-	if(sz != (int32_t)info.size) {
-		free(buf);
-		buf = NULL;
-		if(size != NULL)
-			*size = 0;
-	}
-	if(size != NULL)
-		*size = info.size;
-	return buf;
-}
-
 sconf_t* sconf_load(const char* fname) {
-	int32_t size;
-	char* str = read_file(fname, &size);
+	int size;
+	char* str = vfs_readfile(fname, &size);
 	if(str == NULL || size == 0)
 		return NULL;
 	sconf_t* ret = sconf_parse(str);

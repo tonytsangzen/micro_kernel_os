@@ -49,6 +49,7 @@ x_t* x_open(int x, int y, int w, int h, const char* title, int style) {
 	x_t* ret = (x_t*)malloc(sizeof(x_t));
 
 	ret->fd = fd;
+	ret->closed = 0;
 	ret->xinfo.shm_id = shm_id;
 	ret->xinfo.style = style;
 	ret->xinfo.r.x = x;
@@ -78,22 +79,44 @@ void x_close(x_t* x) {
 	free(x);
 }
 
+static int win_event_handle(x_t* x, xevent_t* ev) {
+	if(ev->value.window.event == XEVT_WIN_MOVE_TO) {
+		x->xinfo.r.x += ev->value.window.v0;
+		x->xinfo.r.y += ev->value.window.v1;
+		x_update(x);
+	}
+	else if(ev->value.window.event == XEVT_WIN_CLOSE) {
+		x->closed = 1;
+	}
+	return 0;
+}
+
 int x_get_event(x_t* x, xevent_t* ev) {
 	proto_t out;
 	proto_init(&out, NULL, 0);
 
-	int ret = cntl_raw(x->fd, X_CNTL_GET_EVT, NULL, &out);
-	if(ret == 0)
+	int res = -1;
+	if(cntl_raw(x->fd, X_CNTL_GET_EVT, NULL, &out) == 0) {
 		proto_read_to(&out, ev, sizeof(xevent_t));
+		if(ev->type == XEVT_WIN) 
+			res = win_event_handle(x, ev);
+		else
+			res = 0;
+	}
 	proto_clear(&out);
-	return ret;
+	return res;
 }
 
-int x_screen_info(x_t* x, xscreen_t* scr) {
+int x_screen_info(xscreen_t* scr) {
+	int fd = open("/dev/x", O_RDWR);
+	if(fd < 0)
+		return -1;
+
 	proto_t out;
 	proto_init(&out, NULL, 0);
+	int ret = cntl_raw(fd, X_CNTL_SCR_INFO, NULL, &out);
+	close(fd);
 
-	int ret = cntl_raw(x->fd, X_CNTL_SCR_INFO, NULL, &out);
 	if(ret == 0)
 		proto_read_to(&out, scr, sizeof(xscreen_t));
 	proto_clear(&out);

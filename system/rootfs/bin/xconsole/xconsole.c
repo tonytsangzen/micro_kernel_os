@@ -63,13 +63,11 @@ static int run(int argc, char* argv[]) {
 
 	int krd = 0;
 	xevent_t xev;
-	while(1) {
+	while(xp->closed == 0) {
 		if(krd != 1) {
 			if(x_get_event(xp, &xev) == 0) {
 				if(xev.type == XEVT_KEYB)
 					krd = 1;
-				if(xev.type == XEVT_WIN && xev.value.window.value == XEVT_WIN_CLOSE)
-					break;
 			}
 		}
 		else {

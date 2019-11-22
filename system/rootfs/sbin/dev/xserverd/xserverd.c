@@ -21,10 +21,10 @@ typedef struct st_xview_ev {
 } xview_event_t;
 
 typedef struct st_xview {
-	int32_t fd;
-	int32_t from_pid;
+	int fd;
+	int from_pid;
 	xinfo_t xinfo;
-	int32_t dirty;
+	int dirty;
 
 	struct st_xview *next;
 	struct st_xview *prev;
@@ -40,17 +40,24 @@ typedef struct {
 } cursor_t;
 
 typedef struct {
+	xview_t* view; //moving or resizing;
+	gpos_t old_pos;
+} x_current_t;
+
+typedef struct {
 	int fb_fd;
 	int keyb_fd;
 	int mouse_fd;
 	int xwm_pid;
 	int shm_id;
-	int32_t dirty;
+	int dirty;
 	graph_t* g;
 	cursor_t cursor;
 
 	xview_t* view_head;
 	xview_t* view_tail;
+
+	x_current_t current;
 } x_t;
 
 static int xserver_mount(fsinfo_t* mnt_point, mount_info_t* mnt_info, void* p) {
@@ -89,6 +96,10 @@ static void draw_win_frame(x_t* x, xview_t* view) {
 	proto_add_int(&in, x->g->w);
 	proto_add_int(&in, x->g->h);
 	proto_add(&in, &view->xinfo, sizeof(xinfo_t));
+	if(view == x->view_tail)
+		proto_add_int(&in, 1); //top win
+	else
+		proto_add_int(&in, 0);
 
 	ipc_call(x->xwm_pid, &in, &out);
 	proto_clear(&in);
@@ -246,8 +257,9 @@ static int x_update(int fd, int from_pid, proto_t* in, x_t* x) {
 			view->xinfo.r.x != xinfo.r.x ||
 			view->xinfo.r.y != xinfo.r.y ||
 			view->xinfo.r.w != xinfo.r.w ||
-			view->xinfo.r.h != xinfo.r.h)
+			view->xinfo.r.h != xinfo.r.h) {
 		x->dirty = 1;
+	}
 	
 	memcpy(&view->xinfo, &xinfo, sizeof(xinfo_t));
 	view->dirty = 1;
@@ -457,7 +469,7 @@ static void mouse_cxy(x_t* x, int32_t rx, int32_t ry) {
 		x->cursor.cpos.y = x->g->h;
 }
 
-static int mouse_handle(x_t* x, int8_t button, int32_t rx, int32_t ry) {
+static int mouse_handle(x_t* x, int8_t state, int32_t rx, int32_t ry) {
 	mouse_cxy(x, rx, ry);
 
 	xview_event_t* e = (xview_event_t*)malloc(sizeof(xview_event_t));
@@ -469,30 +481,55 @@ static int mouse_handle(x_t* x, int8_t button, int32_t rx, int32_t ry) {
 	e->event.value.mouse.rx = rx;
 	e->event.value.mouse.ry = ry;
 
-	int pos;
-	xview_t* view = get_mouse_owner(x, &pos);
+	int pos = -1;
+	xview_t* view;
+	if(x->current.view != NULL)
+		view = x->current.view;
+	else
+		view = get_mouse_owner(x, &pos);
+
 	if(view == NULL) {
 		free(e);
 		x_repaint(x);
 		return -1;
 	}
 
-	if(button == 1) {
+	if(state == 2) { //down
 		if(pos == XWM_FRAME_CLOSE) { //window close
 			e->event.type = XEVT_WIN;
-			e->event.value.window.value = XEVT_WIN_CLOSE;
+			e->event.value.window.event = XEVT_WIN_CLOSE;
 		}
 		else { // mouse down
-			e->event.state = XEVT_MOUSE_DOWN;
 			if(view != x->view_tail) {
 				remove_view(x, view);
 				push_view(x, view);
 			}
+			if(pos == XWM_FRAME_TITLE) {//window title 
+				x->current.view = view;
+				x->current.old_pos.x = x->cursor.cpos.x;
+				x->current.old_pos.y = x->cursor.cpos.y;
+			}
+			e->event.state = XEVT_MOUSE_DOWN;
 		}
 	}
-	else if(button == 2) {
+	else if(state == 1) {
 		e->event.state = XEVT_MOUSE_UP;
+		if(x->current.view == view) {
+			e->event.type = XEVT_WIN;
+			e->event.value.window.event = XEVT_WIN_MOVE_TO;
+			e->event.value.window.v0 = x->cursor.cpos.x - x->current.old_pos.x;
+			e->event.value.window.v1 = x->cursor.cpos.y - x->current.old_pos.y;
+		}
+		x->current.view = NULL;
 	}
+/*
+	if(x->current.view == view) {
+		e->event.type = XEVT_WIN;
+		e->event.value.window.event = XEVT_WIN_MOVE;
+		e->event.value.window.v0 = rx;
+		e->event.value.window.v1 = ry;
+	}
+	*/
 
 	x_push_event(view, e);
 	x_repaint(x);
@@ -517,12 +554,12 @@ static int xserver_loop_step(void* p) {
 
 	//read mouse
 	if(read(x->mouse_fd, &v, 1) == 1) {
-		int8_t button, rx, ry, rz;
-		button = v;
+		int8_t state, rx, ry, rz;
+		state = v;
 		read(x->mouse_fd, &rx, 1);
 		read(x->mouse_fd, &ry, 1);
 		read(x->mouse_fd, &rz, 1); //z ...
-		return mouse_handle(x, button, rx, ry);
+		return mouse_handle(x, state, rx, ry);
 	}
 
 	if(x->dirty != 0) {

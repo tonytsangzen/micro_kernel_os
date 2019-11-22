@@ -24,6 +24,8 @@ enum {
 
 enum {
 	XEVT_WIN_CLOSE = 0,
+	XEVT_WIN_MOVE,
+	XEVT_WIN_MOVE_TO,
 	XEVT_WIN_FOCUS,
 	XEVT_WIN_UNFOCUS
 };
@@ -43,7 +45,9 @@ typedef struct {
 		} keyboard;
 
 		struct {
-			int32_t value;
+			int32_t event;
+			int32_t v0;
+			int32_t v1;
 		} window;
 	} value;
 } xevent_t;

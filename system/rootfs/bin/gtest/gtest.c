@@ -10,12 +10,9 @@ int main(int argc, char* argv[]) {
 	(void)argc;
 	(void)argv;
 
-	x_t* x = x_open(100+(getpid()-6)*40, 100+(getpid()-6)*40, 600, 200, "gtest", X_STYLE_NO_TITLE);
-
 	xscreen_t scr;
-	x_screen_info(x, &scr);
-	x->xinfo.r.x = (scr.size.w - x->xinfo.r.w) / 2;
-	x->xinfo.r.y = (scr.size.h - x->xinfo.r.h) / 2;
+	x_screen_info(&scr);
+	x_t* x = x_open(100, 100, 600, 200, "gtest", X_STYLE_NORMAL);
 
 	graph_t* g = x_graph(x);
 	font_t* font = get_font_by_name("16x32");
@@ -24,7 +21,7 @@ int main(int argc, char* argv[]) {
 	int i=0;
 
 	xevent_t xev;
-	while(1) {
+	while(x->closed == 0) {
 		if(x_get_event(x, &xev) == 0) {
 			if(xev.type == XEVT_KEYB)
 				break;
