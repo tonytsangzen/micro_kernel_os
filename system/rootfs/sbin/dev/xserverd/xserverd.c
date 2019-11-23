@@ -431,9 +431,6 @@ static int get_win_frame_pos(x_t* x, xview_t* view) {
 	proto_init(&out, NULL, 0);
 
 	proto_add_int(&in, XWM_CNTL_GET_POS); // 2 for get_win_frame_posos
-	proto_add_int(&in, x->shm_id);
-	proto_add_int(&in, x->g->w);
-	proto_add_int(&in, x->g->h);
 	proto_add_int(&in, x->cursor.cpos.x);
 	proto_add_int(&in, x->cursor.cpos.y);
 	proto_add(&in, &view->xinfo, sizeof(xinfo_t));

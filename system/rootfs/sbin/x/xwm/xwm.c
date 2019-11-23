@@ -18,6 +18,8 @@ typedef struct {
 	uint32_t bg_color;
 	uint32_t top_bg_color;
 	uint32_t top_fg_color;
+
+	int32_t title_h;
 } xwm_t;
 
 static xwm_t _xwm;
@@ -60,44 +62,67 @@ static int32_t read_config(xwm_t* xwm, const char* fname) {
 	return 0;
 }
 
-static void draw_desktop(graph_t* g) {
-	clear(g, _xwm.desk_bg_color);
-	//background pattern
-	int32_t x, y;
-	for(y=10; y<(int32_t)g->h; y+=10) {
-		for(x=0; x<(int32_t)g->w; x+=10) {
-			pixel(g, x, y, _xwm.desk_fg_color);
+static void draw_desktop(proto_t* in, proto_t* out) {
+	int shm_id = proto_read_int(in);
+	int xw = proto_read_int(in);
+	int xh = proto_read_int(in);
+
+	void* gbuf = shm_map(shm_id);
+	if(gbuf != NULL) {
+		graph_t* g = graph_new(gbuf, xw, xh);
+		clear(g, _xwm.desk_bg_color);
+		//background pattern
+		int32_t x, y;
+		for(y=10; y<(int32_t)g->h; y+=10) {
+			for(x=0; x<(int32_t)g->w; x+=10) {
+				pixel(g, x, y, _xwm.desk_fg_color);
+			}
 		}
+		draw_text(g, 12, 12, "Ewok micro-kernel OS", _xwm.font, _xwm.bg_color);
+		draw_text(g, 10, 10, "Ewok micro-kernel OS", _xwm.font, _xwm.fg_color);
+
+		graph_free(g);
+		shm_unmap(shm_id);
 	}
-	draw_text(g, 12, 12, "Ewok micro-kernel OS", _xwm.font, _xwm.bg_color);
-	draw_text(g, 10, 10, "Ewok micro-kernel OS", _xwm.font, _xwm.fg_color);
+	proto_add_int(out, 0);
 }
 
-static void draw_frame(graph_t* g, proto_t* in) {
+static void draw_frame(proto_t* in, proto_t* out) {
 	xinfo_t info;
+	int shm_id = proto_read_int(in);
+	int xw = proto_read_int(in);
+	int xh = proto_read_int(in);
 	proto_read_to(in, &info, sizeof(xinfo_t));
 	int top = proto_read_int(in);
 
-	uint32_t fg, bg;
-	if(top == 0) {
-		fg = _xwm.fg_color;
-		bg = _xwm.bg_color;
-	}
-	else {
-		fg = _xwm.top_fg_color;
-		bg = _xwm.top_bg_color;
-	}
+	void* gbuf = shm_map(shm_id);
+	if(gbuf != NULL) {
+		graph_t* g = graph_new(gbuf, xw, xh);
 
-	box(g, info.r.x, info.r.y, info.r.w, info.r.h, fg);//win box
-	if((info.style & X_STYLE_NO_TITLE) == 0) {
-		fill(g, info.r.x, info.r.y-20, info.r.w, 20, bg);//title box
-		box(g, info.r.x, info.r.y-20, info.r.w, 20, fg);//title box
-		box(g, info.r.x+info.r.w-20, info.r.y-20, 20, 20, fg);//close box
-		draw_text(g, info.r.x+10, info.r.y-20+2, info.title, _xwm.font, fg);//title
+		uint32_t fg, bg;
+		if(top == 0) {
+			fg = _xwm.fg_color;
+			bg = _xwm.bg_color;
+		}
+		else {
+			fg = _xwm.top_fg_color;
+			bg = _xwm.top_bg_color;
+		}
+
+		box(g, info.r.x, info.r.y, info.r.w, info.r.h, fg);//win box
+		if((info.style & X_STYLE_NO_TITLE) == 0) {
+			fill(g, info.r.x, info.r.y-_xwm.title_h, info.r.w, _xwm.title_h, bg);//title box
+			box(g, info.r.x, info.r.y-_xwm.title_h, info.r.w, _xwm.title_h, fg);//title box
+			box(g, info.r.x+info.r.w-_xwm.title_h, info.r.y-_xwm.title_h, _xwm.title_h, _xwm.title_h, fg);//close box
+			draw_text(g, info.r.x+10, info.r.y-_xwm.title_h+2, info.title, _xwm.font, fg);//title
+		}
+		graph_free(g);
+		shm_unmap(shm_id);
 	}
+	proto_add_int(out, 0);
 }
 
-static int get_pos(proto_t* in) {
+static void get_pos(proto_t* in, proto_t* out) {
 	xinfo_t info;
 	int x = proto_read_int(in);
 	int y = proto_read_int(in);
@@ -105,48 +130,32 @@ static int get_pos(proto_t* in) {
 
 	int res = -1;
 	if((info.style & X_STYLE_NO_TITLE) == 0) {
-		if(x >= info.r.x && y >= info.r.y-20 &&
-				x <= info.r.x+info.r.w-20 && y <= info.r.y)
+		if(x >= info.r.x && y >= info.r.y-_xwm.title_h &&
+				x <= info.r.x+info.r.w-_xwm.title_h && y <= info.r.y)
 			res = XWM_FRAME_TITLE;
-		else if(x >= info.r.x+info.r.w-20 && y >= info.r.y-20 &&
+		else if(x >= info.r.x+info.r.w-_xwm.title_h && y >= info.r.y-_xwm.title_h &&
 				x <= info.r.x+info.r.w && y <= info.r.y)
 			res = XWM_FRAME_CLOSE;
 	}
-	return res;
+	proto_add_int(out, res);
 }
 
 void handle(int from_pid, proto_t* in, void* p) {
 	(void)p;
-
 	int cmd = proto_read_int(in);
-	int shm_id = proto_read_int(in);
-	int xw = proto_read_int(in);
-	int xh = proto_read_int(in);
-
-	void* gbuf = shm_map(shm_id);
-	int res = -1;
-	if(gbuf != NULL) {
-		graph_t* g = graph_new(gbuf, xw, xh);
-
-		if(cmd == XWM_CNTL_DRAW_FRAME) { //draw frame
-			draw_frame(g, in);
-			res = 0;
-		}
-		else if(cmd == XWM_CNTL_DRAW_DESKTOP) { //draw desktop
-			draw_desktop(g);
-			res = 0;
-		}
-		else if(cmd == XWM_CNTL_GET_POS) { //get pos
-			res = get_pos(in);
-		}
-
-		graph_free(g);
-		shm_unmap(shm_id);
-	}
-
 	proto_t out;
 	proto_init(&out, NULL, 0);
-	proto_add_int(&out, res);
+
+	if(cmd == XWM_CNTL_DRAW_FRAME) { //draw frame
+		draw_frame(in, &out);
+	}
+	else if(cmd == XWM_CNTL_DRAW_DESKTOP) { //draw desktop
+		draw_desktop(in, &out);
+	}
+	else if(cmd == XWM_CNTL_GET_POS) { //get pos
+		get_pos(in, &out);
+	}
+
 	ipc_send(from_pid, &out, in->id);
 	proto_clear(&out);
 }
@@ -156,6 +165,7 @@ int main(int argc, char** argv) {
 	(void)argv;
 
 	read_config(&_xwm, "/etc/x/xwm.conf");
+	_xwm.title_h = 24;
 	ipc_server(handle, NULL);
 	return 0;
 }
