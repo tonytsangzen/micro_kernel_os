@@ -5,11 +5,16 @@
 #include <x/xcntl.h>
 #include <x/xevent.h>
 
-typedef struct {
+typedef struct st_x {
 	int fd;
 	xinfo_t xinfo;
 	graph_t* g;
 	int closed;
+
+	void* data;
+	void (*on_max)(struct st_x* x, void* p);
+	void (*on_close)(struct st_x* x, void* p);
+	void (*on_min)(struct st_x* x, void* p);
 } x_t;
 
 x_t*     x_open(int x, int y, int w, int h, const char* title, int style);

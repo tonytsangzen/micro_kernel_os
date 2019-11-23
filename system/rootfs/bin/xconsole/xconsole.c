@@ -34,6 +34,12 @@ static int32_t read_config(conf_t* conf, const char* fname) {
 	return 0;
 }
 
+static void console_max(x_t* x, void* p) {
+	console_t* console = (console_t*)p;
+	console->g = x_graph(x);
+	console_reset(console);
+}
+
 static int run(int argc, char* argv[]) {
 	(void)argc;
 	(void)argv;
@@ -45,11 +51,12 @@ static int run(int argc, char* argv[]) {
 	if(fd < 0)
 		return -1;
 
-	x_t* xp = x_open(10, 100, 800, 600, "console", 0);
+	x_t* xp = x_open(0, 0, 800, 600, "console", 0);
 	if(xp == NULL) {
 		close(fd);
 		return -1;
 	}
+
 	graph_t* g = x_graph(xp);
 
 	console_t console;
@@ -60,6 +67,9 @@ static int run(int argc, char* argv[]) {
 	console.fg_color = conf.fg_color;
 	console.bg_color = conf.bg_color;
 	console_reset(&console);
+
+	xp->data = &console;
+	xp->on_max = console_max;
 
 	int krd = 0;
 	xevent_t xev;

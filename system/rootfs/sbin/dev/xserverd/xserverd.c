@@ -324,6 +324,31 @@ static int x_scr_info(x_t* x, proto_t* out) {
 	return 0;
 }
 
+static int get_xwm_workspace(x_t* x, int style, grect_t* rin, grect_t* rout) {
+	proto_t in, out;
+	proto_init(&in, NULL, 0);
+	proto_init(&out, NULL, 0);
+
+	proto_add_int(&in, XWM_CNTL_GET_WORKSPACE); 
+	proto_add_int(&in, style);
+	proto_add(&in, rin, sizeof(grect_t));
+
+	ipc_call(x->xwm_pid, &in, &out);
+
+	proto_clear(&in);
+	proto_read_to(&out, rout, sizeof(grect_t));
+	proto_clear(&out);
+	return 0;
+}
+
+static int x_workspace(x_t* x, proto_t* in, proto_t* out) {
+	grect_t r;
+	int style = proto_read_int(in);
+	proto_read_to(in, &r, sizeof(grect_t));
+	get_xwm_workspace(x, style, &r, &r);
+	proto_add(out, &r, sizeof(grect_t));
+	return 0;
+}
 
 static int xserver_cntl(int fd, int from_pid, fsinfo_t* info, int cmd, proto_t* in, proto_t* out, void* p) {
 	(void)info;
@@ -340,6 +365,9 @@ static int xserver_cntl(int fd, int from_pid, fsinfo_t* info, int cmd, proto_t* 
 	}
 	else if(cmd == X_CNTL_SCR_INFO) {
 		return x_scr_info(x, out);
+	}
+	else if(cmd == X_CNTL_WORKSPACE) {
+		return x_workspace(x, in, out);
 	}
 	return 0;
 }
@@ -512,6 +540,10 @@ static int mouse_handle(x_t* x, int8_t state, int32_t rx, int32_t ry) {
 		if(pos == XWM_FRAME_CLOSE) { //window close
 			e->event.type = XEVT_WIN;
 			e->event.value.window.event = XEVT_WIN_CLOSE;
+		}
+		else if(pos == XWM_FRAME_MAX) {
+			e->event.type = XEVT_WIN;
+			e->event.value.window.event = XEVT_WIN_MAX;
 		}
 		else { // mouse down
 			if(view != x->view_tail) {

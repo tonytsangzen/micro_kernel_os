@@ -155,10 +155,10 @@ void box(graph_t* g, int32_t x, int32_t y, int32_t w, int32_t h, uint32_t color)
 	if(g == NULL || w <= 0 || h <= 0)
 		return;
 
-	line(g, x, y, x+w, y, color);
-	line(g, x, y+1, x, y+h, color);
-	line(g, x+1, y+h, x+w, y+h, color);
-	line(g, x+w, y+1, x+w, y+h, color);
+	line(g, x, y, x+w-1, y, color);
+	line(g, x, y+1, x, y+h-1, color);
+	line(g, x+1, y+h-1, x+w-1, y+h-1, color);
+	line(g, x+w-1, y+1, x+w-1, y+h-1, color);
 }
 
 /*will change the value of sr, dr.
@@ -443,4 +443,11 @@ inline void blt_alpha(graph_t* src, int32_t sx, int32_t sy, int32_t sw, int32_t 
 					color & 0xff);
 		}
 	}
+}
+
+int32_t check_in_rect(int32_t x, int32_t y, grect_t* rect) {
+	if(x >= rect->x && x < (rect->x+rect->w) && 
+			y >= rect->y && y < (rect->y+rect->h))
+		return 0;
+	return -1;
 }

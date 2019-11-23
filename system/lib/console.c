@@ -49,10 +49,6 @@ int32_t console_init(console_t* console) {
 }
 
 void console_close(console_t* console) {
-	if(console->g != NULL) {
-		graph_free(console->g);
-		console->g = NULL;
-	}
 	free(console->content.data);
 	console->content.size = 0;
 	console->content.data = NULL;

@@ -39,15 +39,19 @@ static int32_t read_config(const char* fname, items_t* items) {
 }
 
 static void draw(graph_t *g, items_t* items) {
-	font_t* font = get_font_by_name("8x16");
-	clear(g, argb_int(0x880000ff));
+	//font_t* font = get_font_by_name("8x16");
+	clear(g, argb_int(0xff222222));
 	int i;
 	for(i=0; i<items->num; i++) {
 		box(g, 0, i*items->icon_size,
 			items->icon_size,
 			items->icon_size,
 			0xffaaaaaa);
-		draw_text(g, 0, i*items->icon_size + 4, items->items[i], font, 0xff888888);
+		box(g, 4, i*items->icon_size+4,
+			items->icon_size-8,
+			items->icon_size-8,
+			0xffaaaaaa);
+		//draw_text(g, 0, i*items->icon_size + 4, items->items[i], font, 0xff888888);
 	}
 }
 
@@ -61,7 +65,8 @@ int main(int argc, char* argv[]) {
 
 	xscreen_t scr;
 	x_screen_info(&scr);
-	x_t* x = x_open(scr.size.w-items.icon_size-1, 0, 
+	x_t* x = x_open(0,
+			scr.size.h-items.icon_size*items.num,
 			items.icon_size, 
 			items.icon_size * items.num,
 			"launcher", X_STYLE_NO_FRAME);
