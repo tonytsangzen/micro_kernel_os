@@ -35,6 +35,7 @@ typedef struct st_xview {
 typedef struct {
 	gpos_t old_pos;
 	gpos_t cpos;
+	gpos_t offset;
 	gsize_t size;
 	graph_t* g;
 } cursor_t;
@@ -176,18 +177,34 @@ static void x_del_view(x_t* x, xview_t* view) {
 static void hide_cursor(x_t* x) {
 	if(x->cursor.g == NULL) {
 		x->cursor.g = graph_new(NULL, x->cursor.size.w, x->cursor.size.h);
-		blt(x->g, x->cursor.old_pos.x, x->cursor.old_pos.y, x->cursor.size.w, x->cursor.size.h,
-				x->cursor.g, 0, 0, x->cursor.size.w, x->cursor.size.h);
+		blt(x->g,
+				x->cursor.old_pos.x - x->cursor.offset.x,
+				x->cursor.old_pos.y - x->cursor.offset.y,
+				x->cursor.size.w,
+				x->cursor.size.h,
+				x->cursor.g,
+				0,
+				0, 
+				x->cursor.size.w,
+				x->cursor.size.h);
 	}
 	else  {
-		blt(x->cursor.g, 0, 0, x->cursor.size.w, x->cursor.size.h,
-				x->g, x->cursor.old_pos.x, x->cursor.old_pos.y, x->cursor.size.w, x->cursor.size.h);
+		blt(x->cursor.g,
+				0,
+				0,
+				x->cursor.size.w,
+				x->cursor.size.h,
+				x->g,
+				x->cursor.old_pos.x - x->cursor.offset.x,
+				x->cursor.old_pos.y - x->cursor.offset.x,
+				x->cursor.size.w,
+				x->cursor.size.h);
 	}
 }
 
 static inline void draw_cursor(x_t* x) {
-	int32_t mx = x->cursor.cpos.x;
-	int32_t my = x->cursor.cpos.y;
+	int32_t mx = x->cursor.cpos.x - x->cursor.offset.x;
+	int32_t my = x->cursor.cpos.y - x->cursor.offset.y;
 	int32_t mw = x->cursor.size.w;
 	int32_t mh = x->cursor.size.h;
 
@@ -206,8 +223,8 @@ static inline void draw_cursor(x_t* x) {
 	line(x->g, mx, my+mh-2, mx+mw-2, my, 0xffffffff);
 	line(x->g, mx, my+mh-1, mx+mw-1, my, 0xff000000);
 	line(x->g, mx+1, my+mh-1, mx+mw-1, my+1, 0xffffffff);
-	x->cursor.old_pos.x = mx;
-	x->cursor.old_pos.y = my;
+	x->cursor.old_pos.x = x->cursor.cpos.x;
+	x->cursor.old_pos.y = x->cursor.cpos.y;
 }
 
 static void x_repaint(x_t* x) {
@@ -400,6 +417,8 @@ static int x_init(x_t* x) {
 
 	x->cursor.size.w = 15;
 	x->cursor.size.h = 15;
+	x->cursor.offset.x = 8;
+	x->cursor.offset.y = 8;
 	x->cursor.cpos.x = info.width/2;
 	x->cursor.cpos.y = info.height/2; 
 	return 0;
@@ -459,10 +478,14 @@ static void x_push_event(xview_t* view, xview_event_t* e) {
 static void mouse_cxy(x_t* x, int32_t rx, int32_t ry) {
 	x->cursor.cpos.x += rx;
 	x->cursor.cpos.y += ry;
+	//if(x->cursor.cpos.x < x->cursor.offset.x)
+	//	x->cursor.cpos.x = x->cursor.offset.x;
 	if(x->cursor.cpos.x < 0)
 		x->cursor.cpos.x = 0;
 	if(x->cursor.cpos.x >= (int32_t)x->g->w)
 		x->cursor.cpos.x = x->g->w;
+	//if(x->cursor.cpos.y < x->cursor.offset.y)
+	//	x->cursor.cpos.y = x->cursor.offset.y;
 	if(x->cursor.cpos.y < 0)
 		x->cursor.cpos.y = 0;
 	if(x->cursor.cpos.y >= (int32_t)x->g->h)
@@ -526,7 +549,7 @@ static int mouse_handle(x_t* x, int8_t state, int32_t rx, int32_t ry) {
 	if(x->current.view == view) {
 		int mrx = x->cursor.cpos.x - x->current.old_pos.x;
 		int mry = x->cursor.cpos.y - x->current.old_pos.y;
-		if(abs(mrx) > 24 || abs(mry) > 16) {
+		if(abs32(mrx) > 24 || abs32(mry) > 24) {
 			e->event.type = XEVT_WIN;
 			e->event.value.window.event = XEVT_WIN_MOVE;
 			e->event.value.window.v0 = mrx;

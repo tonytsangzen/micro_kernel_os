@@ -197,23 +197,31 @@ static int32_t graph_insect(graph_t* g, grect_t* r) {
 */
 
 static int32_t insect(graph_t* src, grect_t* sr, graph_t* dst, grect_t* dr) {
+	int32_t dx = sr->x < dr->x ? sr->x:dr->x;
+	int32_t dy = sr->y < dr->y ? sr->y:dr->y;
+
+	if(dx < 0) {
+		sr->x -= dx;
+		dr->x -= dx;
+		sr->w += dx;
+		dr->w += dx;
+	}
+
+	if(dy < 0) {
+		sr->y -= dy;
+		dr->y -= dy;
+		sr->h += dy;
+		dr->h += dy;
+	}
+
 	//insect src;
-	int32_t dx = dr->x;
-	int32_t dy = dr->y;
 	if(!graph_insect(src, sr))
 		return 0;
 	if(!graph_insect(dst, dr))
 		return 0;
 
-	if(dx < 0) {
-		sr->x -= dx;
-		sr->w += dx;
-	}
-	if(dy < 0) {
-		sr->y -= dy;
-		sr->h += dy;
-	}
-	if(sr->w <= 0 || sr->h <= 0)
+	if(sr->w <= 0 || sr->h <= 0 ||
+			dr->w <= 0 || dr->h <= 0)
 		return 0;
 
 	if(sr->w > dr->w)
@@ -388,46 +396,46 @@ void draw_text(graph_t* g, int32_t x, int32_t y, const char* str, font_t* font, 
 	}
 }
 
-void blt(graph_t* src, int32_t sx, int32_t sy, int32_t sw, int32_t sh,
+inline void blt(graph_t* src, int32_t sx, int32_t sy, int32_t sw, int32_t sh,
 		graph_t* dst, int32_t dx, int32_t dy, int32_t dw, int32_t dh) {
 	grect_t sr = {sx, sy, sw, sh};
 	grect_t dr = {dx, dy, dw, dh};
 	if(!insect(src, &sr, dst, &dr))
 		return;
 
-	int32_t ex, ey;
+	register int32_t ex, ey;
 	sy = sr.y;
 	dy = dr.y;
 	ex = sr.x + sr.w;
 	ey = sr.y + sr.h;
 
 	for(; sy < ey; sy++, dy++) {
-		int32_t sx = sr.x;
-		int32_t dx = dr.x;
+		sx = sr.x;
+		dx = dr.x;
 		for(; sx < ex; sx++, dx++) {
 			dst->buffer[dy * dst->w + dx] = src->buffer[sy * src->w + sx];
 		}
 	}
 }
 
-void blt_alpha(graph_t* src, int32_t sx, int32_t sy, int32_t sw, int32_t sh,
+inline void blt_alpha(graph_t* src, int32_t sx, int32_t sy, int32_t sw, int32_t sh,
 		graph_t* dst, int32_t dx, int32_t dy, int32_t dw, int32_t dh, uint8_t alpha) {
 	grect_t sr = {sx, sy, sw, sh};
 	grect_t dr = {dx, dy, dw, dh};
 	if(!insect(src, &sr, dst, &dr))
 		return;
 
-	int32_t ex, ey;
+	register int32_t ex, ey;
 	sy = sr.y;
 	dy = dr.y;
 	ex = sr.x + sr.w;
 	ey = sr.y + sr.h;
 
 	for(; sy < ey; sy++, dy++) {
-		int32_t sx = sr.x;
-		int32_t dx = dr.x;
+		register int32_t sx = sr.x;
+		register int32_t dx = dr.x;
 		for(; sx < ex; sx++, dx++) {
-			uint32_t color = argb_int(src->buffer[sy * src->w + sx]);
+			register uint32_t color = argb_int(src->buffer[sy * src->w + sx]);
 			pixel_argb(dst, dx, dy,
 					(((color >> 24) & 0xff) * alpha)/0xff,
 					(color >> 16) & 0xff,
