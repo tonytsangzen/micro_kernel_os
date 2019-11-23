@@ -211,8 +211,6 @@ static inline void draw_cursor(x_t* x) {
 	if(x->cursor.g == NULL)
 		return;
 
-	//blt(x->g, x->cursor.old_pos.x, x->cursor.old_pos.y, mw, mh,
-	//		x->cursor.g, 0, 0, mw, mh);
 	blt(x->g, mx, my, mw, mh,
 			x->cursor.g, 0, 0, mw, mh);
 
@@ -478,14 +476,10 @@ static void x_push_event(xview_t* view, xview_event_t* e) {
 static void mouse_cxy(x_t* x, int32_t rx, int32_t ry) {
 	x->cursor.cpos.x += rx;
 	x->cursor.cpos.y += ry;
-	//if(x->cursor.cpos.x < x->cursor.offset.x)
-	//	x->cursor.cpos.x = x->cursor.offset.x;
 	if(x->cursor.cpos.x < 0)
 		x->cursor.cpos.x = 0;
 	if(x->cursor.cpos.x >= (int32_t)x->g->w)
 		x->cursor.cpos.x = x->g->w;
-	//if(x->cursor.cpos.y < x->cursor.offset.y)
-	//	x->cursor.cpos.y = x->cursor.offset.y;
 	if(x->cursor.cpos.y < 0)
 		x->cursor.cpos.y = 0;
 	if(x->cursor.cpos.y >= (int32_t)x->g->h)
@@ -513,7 +507,7 @@ static int mouse_handle(x_t* x, int8_t state, int32_t rx, int32_t ry) {
 
 	if(view == NULL) {
 		free(e);
-		x_repaint(x);
+		x_repaint(x);	
 		return -1;
 	}
 
@@ -560,7 +554,7 @@ static int mouse_handle(x_t* x, int8_t state, int32_t rx, int32_t ry) {
 	}
 
 	x_push_event(view, e);
-	x_repaint(x);
+	x_repaint(x);	
 	return -1;
 }
 
@@ -581,13 +575,9 @@ static int xserver_loop_step(void* p) {
 	}
 
 	//read mouse
-	if(read(x->mouse_fd, &v, 1) == 1) {
-		int8_t state, rx, ry, rz;
-		state = v;
-		read(x->mouse_fd, &rx, 1);
-		read(x->mouse_fd, &ry, 1);
-		read(x->mouse_fd, &rz, 1); //z ...
-		return mouse_handle(x, state, rx, ry);
+	int8_t mv[4];
+	if(read(x->mouse_fd, mv, 4) == 4) {
+		mouse_handle(x, mv[0], mv[1], mv[2]);
 	}
 
 	if(x->dirty != 0) {
