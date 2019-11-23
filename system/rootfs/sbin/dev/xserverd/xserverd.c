@@ -516,20 +516,25 @@ static int mouse_handle(x_t* x, int8_t state, int32_t rx, int32_t ry) {
 		e->event.state = XEVT_MOUSE_UP;
 		if(x->current.view == view) {
 			e->event.type = XEVT_WIN;
-			e->event.value.window.event = XEVT_WIN_MOVE_TO;
+			e->event.value.window.event = XEVT_WIN_MOVE;
 			e->event.value.window.v0 = x->cursor.cpos.x - x->current.old_pos.x;
 			e->event.value.window.v1 = x->cursor.cpos.y - x->current.old_pos.y;
 		}
 		x->current.view = NULL;
 	}
-/*
+
 	if(x->current.view == view) {
-		e->event.type = XEVT_WIN;
-		e->event.value.window.event = XEVT_WIN_MOVE;
-		e->event.value.window.v0 = rx;
-		e->event.value.window.v1 = ry;
+		int mrx = x->cursor.cpos.x - x->current.old_pos.x;
+		int mry = x->cursor.cpos.y - x->current.old_pos.y;
+		if(abs(mrx) > 16 || abs(mry) > 16) {
+			e->event.type = XEVT_WIN;
+			e->event.value.window.event = XEVT_WIN_MOVE;
+			e->event.value.window.v0 = mrx;
+			e->event.value.window.v1 = mry;
+			x->current.old_pos.x = x->cursor.cpos.x;
+			x->current.old_pos.y = x->cursor.cpos.y;
+		}
 	}
-	*/
 
 	x_push_event(view, e);
 	x_repaint(x);

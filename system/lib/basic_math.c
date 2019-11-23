@@ -82,3 +82,9 @@ inline uint32_t mod_u32(uint32_t v, uint32_t by) {
 	uint32_t div = div_u32(v, by);
 	return v - (div*by);
 }
+
+inline uint32_t abs(int32_t v) {
+	if(v < 0)
+		return -v;
+	return v;
+}

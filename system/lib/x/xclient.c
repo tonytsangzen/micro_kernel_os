@@ -80,7 +80,7 @@ void x_close(x_t* x) {
 }
 
 static int win_event_handle(x_t* x, xevent_t* ev) {
-	if(ev->value.window.event == XEVT_WIN_MOVE_TO) {
+	if(ev->value.window.event == XEVT_WIN_MOVE) {
 		x->xinfo.r.x += ev->value.window.v0;
 		x->xinfo.r.y += ev->value.window.v1;
 		x_update(x);
