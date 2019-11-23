@@ -14,6 +14,7 @@
 #include <kprintf.h>
 #include <buffer.h>
 #include <dev/kdevice.h>
+#include <dev/framebuffer.h>
 
 static void sys_exit(context_t* ctx, int32_t res) {
 	if(_current_proc == NULL)
@@ -410,6 +411,16 @@ static int32_t sys_shm_ref(int32_t id) {
 	return shm_proc_ref(_current_proc->pid, id);
 }
 
+static int32_t sys_framebuffer(void) {
+	if(_current_proc->owner != 0)
+		return -1;
+
+  uint32_t fb_base = (uint32_t)V2P(_framebuffer_base); //framebuffer addr
+  uint32_t fb_end = (uint32_t)V2P(_framebuffer_end); //framebuffer addr
+  map_pages(_current_proc->space->vm, fb_base, fb_base, fb_end, AP_RW_RW);
+	return fb_base;
+}
+
 void svc_handler(int32_t code, int32_t arg0, int32_t arg1, int32_t arg2, context_t* ctx, int32_t processor_mode) {
 	(void)arg1;
 	(void)arg2;
@@ -430,6 +441,9 @@ void svc_handler(int32_t code, int32_t arg0, int32_t arg1, int32_t arg2, context
 		return;
 	case SYS_INITRD:
 		ctx->gpr[0] = (int32_t)_initrd;
+		return;
+	case SYS_FRAMEBUFFER:
+		ctx->gpr[0] = (int32_t)sys_framebuffer();
 		return;
 	case SYS_EXIT:
 		sys_exit(ctx, arg0);

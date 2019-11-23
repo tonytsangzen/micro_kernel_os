@@ -526,7 +526,7 @@ static int mouse_handle(x_t* x, int8_t state, int32_t rx, int32_t ry) {
 	if(x->current.view == view) {
 		int mrx = x->cursor.cpos.x - x->current.old_pos.x;
 		int mry = x->cursor.cpos.y - x->current.old_pos.y;
-		if(abs(mrx) > 16 || abs(mry) > 16) {
+		if(abs(mrx) > 24 || abs(mry) > 16) {
 			e->event.type = XEVT_WIN;
 			e->event.value.window.event = XEVT_WIN_MOVE;
 			e->event.value.window.v0 = mrx;
