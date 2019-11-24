@@ -104,19 +104,18 @@ static void x_resize_to(x_t* xp, int x, int y, int w, int h) {
 	if(x == xp->xinfo.r.x && y == xp->xinfo.r.y)
 			if(w == xp->xinfo.r.w && h == xp->xinfo.r.h)
 		return;
-	
-	shm_unmap(xp->xinfo.shm_id);
-	graph_free(xp->g);
 
 	int sz = w * h * 4;	
 	int shm_id = shm_alloc(sz, SHM_PUBLIC);
-	if(shm_id <= 0) {
+	if(shm_id <= 0)
 		return;
-	}
 	void* gbuf = shm_map(shm_id);
-	if(gbuf == NULL) {
+	if(gbuf == NULL)
 		return;
-	}	
+
+	int old_shm_id = xp->xinfo.shm_id;
+	graph_t* old_g = xp->g;
+
 	xp->xinfo.shm_id = shm_id;
 	xp->xinfo.r.x = x;
 	xp->xinfo.r.y = y;
@@ -126,6 +125,9 @@ static void x_resize_to(x_t* xp, int x, int y, int w, int h) {
 	x_update(xp);
 	if(xp->on_resize != NULL)
 		xp->on_resize(xp, xp->data);
+
+	graph_free(old_g);
+	shm_unmap(old_shm_id);
 }
 
 static int win_event_handle(x_t* x, xevent_t* ev) {
