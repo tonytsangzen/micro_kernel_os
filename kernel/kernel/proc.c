@@ -236,19 +236,34 @@ static void proc_wakeup_waiting(int32_t pid) {
 	}
 }
 
+static void proc_terminate(context_t* ctx, proc_t* proc) {
+	if(proc->state == ZOMBIE || proc->state == UNUSED)
+		return;
+	proc->state = ZOMBIE;
+	proc_unready(ctx, proc);
+
+	int32_t i;
+	for (i = 0; i < PROC_MAX; i++) {
+		proc_t *p = &_proc_table[i];
+		/*terminate forked from this proc*/
+		if(p->father_pid == proc->pid) { //terminate forked children, skip reloaded ones
+			proc_exit(ctx, p, 0);
+		}
+	}
+
+	proc_wakeup_waiting(proc->pid);
+}
+
+
 /* proc_free frees all resources allocated by proc. */
 void proc_exit(context_t* ctx, proc_t *proc, int32_t res) {
 	(void)res;
-	int32_t pid = proc->pid;
 	uint32_t cpsr = __int_off();
 
-	proc_wakeup_waiting(pid);
+	proc_terminate(ctx, proc);
 	proc->state = UNUSED;
-	proc_unready(ctx, proc);
-
 	tstr_free(proc->cmd);
 	tstr_free(proc->cwd);
-
 	proc_free_space(proc);
 	memset(proc, 0, sizeof(proc_t));
 	__int_on(cpsr);

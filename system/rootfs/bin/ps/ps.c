@@ -15,7 +15,7 @@ static const char* _states[] = {
 	"blk",
 	"rdy",
 	"run",
-	"tmn"
+	"zmb"
 };
 
 static const char* get_cmd(char* cmd, int full) {

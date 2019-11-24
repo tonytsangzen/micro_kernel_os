@@ -17,7 +17,7 @@ enum {
 	BLOCK,
 	READY,
 	RUNNING,
-	TERMINATED
+	ZOMBIE
 };
 
 #define PROC_FILE_MAX 128
