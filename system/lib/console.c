@@ -43,6 +43,11 @@ int32_t console_reset(console_t* console) {
 	cons_clear(console);
 
 	//restore old data
+	if(old_start_line > 0 && old_size > old_line_w) {
+		old_start_line++;
+		old_size -= old_line_w;
+	}
+
 	int i = 0;
 	while(i < old_size) {
 		int at = (old_line_w * old_start_line) + (i++);
