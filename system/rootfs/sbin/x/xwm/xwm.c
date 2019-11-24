@@ -89,9 +89,14 @@ static void draw_desktop(proto_t* in, proto_t* out) {
 
 static void get_frame_rect(xinfo_t* info, grect_t* rect) {
 	rect->x = info->r.x;
-	rect->y = info->r.y - _xwm.title_h;
+	rect->y = info->r.y;
 	rect->w = info->r.w;
-	rect->h = info->r.h +_xwm.title_h;
+	rect->h = info->r.h;
+
+	if((info->style & X_STYLE_NO_TITLE) == 0) {
+		rect->h += _xwm.title_h;
+		rect->y -= _xwm.title_h;
+	}
 }
 
 static void draw_win_frame(graph_t* g, xinfo_t* info, uint32_t fg, uint32_t bg) {

@@ -20,7 +20,7 @@ int main(int argc, char* argv[]) {
 	}
 	printf("ok.\n");
 
-	x_t* x = x_open(100, 100, img->w, img->h+20, "tga", 0);
+	x_t* x = x_open(100, 100, img->w, img->h+20, "tga", X_STYLE_NO_TITLE);
 	if(x == NULL) {
 		graph_free(img);
 		return -1;
