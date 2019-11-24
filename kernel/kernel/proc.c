@@ -239,8 +239,9 @@ static void proc_wakeup_waiting(int32_t pid) {
 static void proc_terminate(context_t* ctx, proc_t* proc) {
 	if(proc->state == ZOMBIE || proc->state == UNUSED)
 		return;
+	if(proc->state == READY)
+		proc_unready(ctx, proc);
 	proc->state = ZOMBIE;
-	proc_unready(ctx, proc);
 
 	int32_t i;
 	for (i = 0; i < PROC_MAX; i++) {

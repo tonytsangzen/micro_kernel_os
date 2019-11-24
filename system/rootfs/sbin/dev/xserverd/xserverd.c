@@ -223,7 +223,22 @@ static inline void draw_cursor(x_t* x) {
 	x->cursor.old_pos.y = x->cursor.cpos.y;
 }
 
+static void x_check_views(x_t* x) {
+	xview_t* view = x->view_head;
+	while(view != NULL) {
+		xview_t* v = view;
+		view = view->next;
+
+		void* gbuf = shm_map(v->xinfo.shm_id);
+		if(gbuf != NULL) 
+			shm_unmap(v->xinfo.shm_id);
+		else //view closed or terminated
+			x_del_view(x, v);
+	}
+}
+
 static void x_repaint(x_t* x) {
+	x_check_views(x);
 	if(x->need_repaint == 0 && x->dirty == 0)
 		return;
 	x->need_repaint = 0;
@@ -232,21 +247,14 @@ static void x_repaint(x_t* x) {
 	if(x->dirty != 0)
 		draw_desktop(x);
 
-
 	xview_t* view = x->view_head;
 	while(view != NULL) {
-		int res = draw_view(x, view);
-		xview_t* v = view;
+		draw_view(x, view);
 		view = view->next;
-		if(res != 0) {//client close/broken. remove it.
-			x_del_view(x, v);
-			x->need_repaint = 1;
-		}
 	}
 	draw_cursor(x);
 	flush(x->fb_fd);
-	if(x->need_repaint == 0)
-		x->dirty = 0;
+	x->dirty = 0;
 }
 
 static xview_t* x_get_view(x_t* x, int fd, int from_pid) {
