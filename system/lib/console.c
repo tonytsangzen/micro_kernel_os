@@ -19,6 +19,14 @@ int32_t console_reset(console_t* console) {
 	if(console->g == NULL)
 		return -1;
 
+	//save content data
+	int old_size = console->content.size;
+	int old_total = console->content.total;
+	int old_line_w = console->content.line_w;
+	int old_start_line = console->content.start_line;
+	char* old_data = (char*)malloc(old_total);
+	memcpy(old_data, console->content.data, old_total);
+
 	console->content.size = 0;
 	console->content.start_line = 0;
 	console->content.line = 0;
@@ -26,16 +34,27 @@ int32_t console_reset(console_t* console) {
 	console->content.line_num = div_u32(console->g->h, console->font->h)-1;
 	if(mod_u32(console->g->h, console->font->h) != 0)
 		console->content.line_num--;
-
-	console->content.total = console->content.line_num * console->content.line_w;
-
 	uint32_t data_size = console->content.line_num*console->content.line_w;
+	console->content.total = data_size;
 	if(console->content.data != NULL)
 		free(console->content.data);
 	console->content.data = (char*)malloc(data_size);
 	memset(console->content.data, 0, data_size);
-
 	cons_clear(console);
+
+	//restore old data
+	int i = 0;
+	while(i < old_size) {
+		int at = (old_line_w * old_start_line) + (i++);
+		if(at >= old_total)
+			at -= old_total;
+		char c = old_data[at];
+		console_put_char(console, c);
+		if(mod_u32(i, old_line_w) == 0) {
+			console_put_char(console, '\n');
+		}
+	}
+	free(old_data);
 	return 0;
 }
 
