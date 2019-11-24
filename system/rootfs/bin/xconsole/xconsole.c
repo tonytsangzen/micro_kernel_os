@@ -34,7 +34,7 @@ static int32_t read_config(conf_t* conf, const char* fname) {
 	return 0;
 }
 
-static void console_max(x_t* x, void* p) {
+static void console_resize(x_t* x, void* p) {
 	console_t* console = (console_t*)p;
 	console->g = x_graph(x);
 	console_reset(console);
@@ -69,7 +69,7 @@ static int run(int argc, char* argv[]) {
 	console_reset(&console);
 
 	xp->data = &console;
-	xp->on_max = console_max;
+	xp->on_resize = console_resize;
 
 	int krd = 0;
 	xevent_t xev;

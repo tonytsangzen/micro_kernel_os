@@ -10,6 +10,13 @@ enum {
 	X_CNTL_GET_EVT
 };
 
+enum {
+	X_STATE_NORMAL = 0,
+	X_STATE_MAX,
+	X_STATE_MIN,
+	X_STATE_FULL_SCREEN
+};
+
 #define X_STYLE_NORMAL    0x0
 #define X_STYLE_NO_FRAME  0x1
 #define X_STYLE_NO_TITLE  0x2
@@ -18,6 +25,7 @@ enum {
 typedef struct {
 	int shm_id;
 	int style;
+	int state;
 	grect_t r;
 	char title[X_TITLE_MAX];
 } xinfo_t;

@@ -70,6 +70,7 @@ x_t* x_open(int x, int y, int w, int h, const char* title, int style) {
 	}	
 
 	x_t* ret = (x_t*)malloc(sizeof(x_t));
+	memset(ret, 0, sizeof(x_t));
 
 	ret->fd = fd;
 	ret->closed = 0;
@@ -123,6 +124,8 @@ static void x_resize_to(x_t* xp, int x, int y, int w, int h) {
 	xp->xinfo.r.h = h;
 	xp->g = graph_new(gbuf, w, h);
 	x_update(xp);
+	if(xp->on_resize != NULL)
+		xp->on_resize(xp, xp->data);
 }
 
 static int win_event_handle(x_t* x, xevent_t* ev) {
@@ -135,17 +138,30 @@ static int win_event_handle(x_t* x, xevent_t* ev) {
 		x->closed = 1;
 	}
 	else if(ev->value.window.event == XEVT_WIN_MAX) {
-		xscreen_t scr;
-		if(x_screen_info(&scr) == 0) {
-			grect_t r;
-			r.x = 0;
-			r.y = 0;
-			r.w = scr.size.w;
-			r.h = scr.size.h;
-			x_get_workspace(x->fd, x->xinfo.style, &r, &r);
-			x_resize_to(x, r.x, r.y, r.w, r.h);
-			if(x->on_max != NULL)
-				x->on_max(x, x->data);
+		if(x->xinfo.state == X_STATE_MAX) {
+			x_resize_to(x, x->xinfo_prev.r.x, 
+					x->xinfo_prev.r.y,
+					x->xinfo_prev.r.w,
+					x->xinfo_prev.r.h);
+			if(x->on_restore != NULL)
+				x->on_restore(x, x->data);
+			x->xinfo.state = x->xinfo_prev.state;
+		}
+		else {
+			xscreen_t scr;
+			if(x_screen_info(&scr) == 0) {
+				memcpy(&x->xinfo_prev, &x->xinfo, sizeof(xinfo_t));
+				grect_t r;
+				r.x = 0;
+				r.y = 0;
+				r.w = scr.size.w;
+				r.h = scr.size.h;
+				x_get_workspace(x->fd, x->xinfo.style, &r, &r);
+				x_resize_to(x, r.x, r.y, r.w, r.h);
+				if(x->on_max != NULL)
+					x->on_max(x, x->data);
+				x->xinfo.state = X_STATE_MAX;
+			}
 		}
 	}
 	return 0;

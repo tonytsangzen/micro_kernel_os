@@ -52,6 +52,7 @@ typedef struct {
 	int xwm_pid;
 	int shm_id;
 	int dirty;
+	int need_repaint;
 	graph_t* g;
 	cursor_t cursor;
 
@@ -123,15 +124,12 @@ static void draw_desktop(x_t* x) {
 }
 
 static int draw_view(x_t* x, xview_t* view) {
-	void* gbuf = shm_map(view->xinfo.shm_id);
-	if(gbuf == NULL) {
-		return -1;
-	}
-
-	if(x->dirty == 0 && view->dirty == 0) {
-		shm_unmap(view->xinfo.shm_id);
+	if(x->dirty == 0 && view->dirty == 0)
 		return 0;
-	}
+
+	void* gbuf = shm_map(view->xinfo.shm_id);
+	if(gbuf == NULL)
+		return -1;
 
 	graph_t* g = graph_new(gbuf, view->xinfo.r.w, view->xinfo.r.h);
 	blt(g, 0, 0, view->xinfo.r.w, view->xinfo.r.h,
@@ -226,25 +224,28 @@ static inline void draw_cursor(x_t* x) {
 }
 
 static void x_repaint(x_t* x) {
+	if(x->need_repaint == 0 && x->dirty == 0)
+		return;
+	x->need_repaint = 0;
+
 	hide_cursor(x);
 	if(x->dirty != 0)
 		draw_desktop(x);
 
+
 	xview_t* view = x->view_head;
-	int rep = 0;
 	while(view != NULL) {
 		int res = draw_view(x, view);
 		xview_t* v = view;
 		view = view->next;
 		if(res != 0) {//client close/broken. remove it.
 			x_del_view(x, v);
-			rep = 1;
+			x->need_repaint = 1;
 		}
 	}
 	draw_cursor(x);
-
 	flush(x->fb_fd);
-	if(rep == 0)
+	if(x->need_repaint == 0)
 		x->dirty = 0;
 }
 
@@ -278,7 +279,7 @@ static int x_update(int fd, int from_pid, proto_t* in, x_t* x) {
 	
 	memcpy(&view->xinfo, &xinfo, sizeof(xinfo_t));
 	view->dirty = 1;
-	x_repaint(x);
+	x->need_repaint = 1;
 	return 0;
 }
 
@@ -524,7 +525,7 @@ static int mouse_handle(x_t* x, int8_t state, int32_t rx, int32_t ry) {
 	e->event.value.mouse.ry = ry;
 
 	int pos = -1;
-	xview_t* view;
+	xview_t* view = NULL;
 	if(x->current.view != NULL)
 		view = x->current.view;
 	else
@@ -532,7 +533,6 @@ static int mouse_handle(x_t* x, int8_t state, int32_t rx, int32_t ry) {
 
 	if(view == NULL) {
 		free(e);
-		x_repaint(x);	
 		return -1;
 	}
 
@@ -581,9 +581,7 @@ static int mouse_handle(x_t* x, int8_t state, int32_t rx, int32_t ry) {
 			x->current.old_pos.y = x->cursor.cpos.y;
 		}
 	}
-
 	x_push_event(view, e);
-	x_repaint(x);	
 	return -1;
 }
 
@@ -607,11 +605,10 @@ static int xserver_loop_step(void* p) {
 	int8_t mv[4];
 	if(read(x->mouse_fd, mv, 4) == 4) {
 		mouse_handle(x, mv[0], mv[1], mv[2]);
+		x->need_repaint = 1;
 	}
 
-	if(x->dirty != 0) {
-		x_repaint(x);	
-	}
+	x_repaint(x);	
 	return 0;
 }
 

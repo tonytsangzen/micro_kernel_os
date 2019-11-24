@@ -14,7 +14,6 @@ int main(int argc, char* argv[]) {
 	x_screen_info(&scr);
 	x_t* x = x_open(100, 100, 600, 200, "gtest", X_STYLE_NORMAL);
 
-	graph_t* g = x_graph(x);
 	font_t* font = get_font_by_name("16x32");
 
 	char str[32];
@@ -27,11 +26,11 @@ int main(int argc, char* argv[]) {
 				break;
 		}
 		snprintf(str, 31, "paint = %d", i++);
-		clear(g, 0xff0000ff);
+		graph_t* g = x_graph(x);
+		clear(g, argb_int(0xff0000ff));
 		draw_text(g, 30, 10, str, font, 0xffffffff);
 		draw_text(g, 30, g->h-20, "press anykey to quit......", get_font_by_name("8x16"), 0xffffffff);
 		x_update(x);
-
 		sleep(0);
 	}
 
