@@ -67,6 +67,16 @@ static void sys_wakeup(uint32_t event) {
 	proc_wakeup(event);
 }
 
+static void sys_kill(context_t* ctx, int32_t pid) {
+	proc_t* proc = proc_get(pid);
+	if(proc == NULL)
+		return;
+
+	if(_current_proc->owner == 0 || proc->owner == _current_proc->owner) {
+		proc_exit(ctx, proc, 0);
+	}
+}
+
 static int32_t sys_malloc(int32_t size) {
 	return (int32_t)proc_malloc(size);
 }
@@ -462,6 +472,9 @@ void svc_handler(int32_t code, int32_t arg0, int32_t arg1, int32_t arg2, context
 		return;
 	case SYS_WAKEUP:
 		sys_wakeup((uint32_t)arg0);
+		return;
+	case SYS_KILL:
+		sys_kill(ctx, arg0);
 		return;
 	case SYS_EXEC_ELF:
 		ctx->gpr[0] = sys_load_elf(ctx, (const char*)arg0, (void*)arg1, (uint32_t)arg2);

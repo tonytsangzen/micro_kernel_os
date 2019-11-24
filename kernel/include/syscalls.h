@@ -20,6 +20,7 @@ enum {
 	SYS_SLEEP_ON,
 	SYS_WAKEUP,
 	SYS_EXIT,
+	SYS_KILL,
 
 	SYS_EXEC_ELF,
 
