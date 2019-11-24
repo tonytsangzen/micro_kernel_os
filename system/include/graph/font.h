@@ -15,7 +15,7 @@ typedef struct {
 	font_t* font;
 } font_item_t;
 
-font_t* get_font_by_name(const char* name);
-font_item_t* get_font_by_index(uint32_t index);
+font_t* font_by_name(const char* name);
+font_item_t* font_by_index(uint32_t index);
 
 #endif

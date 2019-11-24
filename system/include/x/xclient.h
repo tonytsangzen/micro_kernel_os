@@ -18,6 +18,8 @@ typedef struct st_x {
 	void (*on_min)(struct st_x* x, void* p);
 	void (*on_restore)(struct st_x* x, void* p);
 	void (*on_resize)(struct st_x* x, void* p);
+	void (*on_focus)(struct st_x* x, void* p);
+	void (*on_unfocus)(struct st_x* x, void* p);
 } x_t;
 
 x_t*     x_open(int x, int y, int w, int h, const char* title, int style);
@@ -26,5 +28,6 @@ int      x_update(x_t* x);
 void     x_close(x_t* x);
 int      x_get_event(x_t* x, xevent_t* ev);
 int      x_screen_info(xscreen_t* scr);
+int      x_is_top(x_t* x);
 
 #endif

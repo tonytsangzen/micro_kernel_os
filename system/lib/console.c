@@ -43,7 +43,7 @@ int32_t console_init(console_t* console) {
 	console->g = NULL;
 	console->bg_color = argb(0xff, 0x22, 0x22, 0x66);
 	console->fg_color = argb(0xff, 0xaa, 0xbb, 0xaa);
-	console->font = get_font_by_name("8x16");
+	console->font = font_by_name("8x16");
 	memset(&console->content, 0, sizeof(content_t));
 	return 0;
 }

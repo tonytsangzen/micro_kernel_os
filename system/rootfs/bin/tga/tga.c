@@ -30,7 +30,7 @@ int main(int argc, char* argv[]) {
 	clear(g, 0x0);
 	blt_alpha(img, 0, 0, img->w, img->h,
 			g, 0, 0, img->w, img->h, 0xff);
-	draw_text(g, 30, g->h-20, "press anykey to quit......", get_font_by_name("8x16"), 0xffffffff);
+	draw_text(g, 30, g->h-20, "press anykey to quit......", font_by_name("8x16"), 0xffffffff);
 	x_update(x);
 
 	xevent_t xev;

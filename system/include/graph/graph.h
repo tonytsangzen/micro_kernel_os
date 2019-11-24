@@ -61,4 +61,6 @@ void blt_alpha(graph_t* src, int32_t sx, int32_t sy, int32_t sw, int32_t sh,
 	
 int32_t check_in_rect(int32_t x, int32_t y, grect_t* rect);
 
+int32_t get_text_size(const char* s, font_t* font, gsize_t* size);
+
 #endif

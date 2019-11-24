@@ -451,3 +451,11 @@ int32_t check_in_rect(int32_t x, int32_t y, grect_t* rect) {
 		return 0;
 	return -1;
 }
+
+int32_t get_text_size(const char* s, font_t* font, gsize_t* size) {
+	if(font == NULL || size == NULL)
+		return -1;
+	size->w = strlen(s) * font->w;
+	size->h = font->h;
+	return 0;
+}

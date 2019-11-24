@@ -34,7 +34,7 @@ static font_item_t _fonts[] ={
 
 static uint32_t _font_num = 14;
 
-font_t* get_font_by_name(const char* name) {
+font_t* font_by_name(const char* name) {
 	int32_t i = 0;
 	while(1) {
 		if(_fonts[i].name[0] == 0)
@@ -46,7 +46,7 @@ font_t* get_font_by_name(const char* name) {
 	return NULL;
 }
 
-font_item_t* get_font_by_index(uint32_t index) {
+font_item_t* font_by_index(uint32_t index) {
 	if(index >= _font_num)
 		return NULL;
 	return &_fonts[index];

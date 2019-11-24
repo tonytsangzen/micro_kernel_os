@@ -139,6 +139,14 @@ static int win_event_handle(x_t* x, xevent_t* ev) {
 	else if(ev->value.window.event == XEVT_WIN_CLOSE) {
 		x->closed = 1;
 	}
+	else if(ev->value.window.event == XEVT_WIN_FOCUS) {
+		if(x->on_focus) 
+			x->on_focus(x, x->data);
+	}
+	else if(ev->value.window.event == XEVT_WIN_UNFOCUS) {
+		if(x->on_unfocus) 
+			x->on_unfocus(x, x->data);
+	}
 	else if(ev->value.window.event == XEVT_WIN_MAX) {
 		if(x->xinfo.state == X_STATE_MAX) {
 			x_resize_to(x, x->xinfo_prev.r.x, 
@@ -180,6 +188,18 @@ int x_get_event(x_t* x, xevent_t* ev) {
 			res = win_event_handle(x, ev);
 		else
 			res = 0;
+	}
+	proto_clear(&out);
+	return res;
+}
+
+int x_is_top(x_t* x) {
+	proto_t out;
+	proto_init(&out, NULL, 0);
+
+	int res = -1;
+	if(cntl_raw(x->fd, X_CNTL_IS_TOP, NULL, &out) == 0) {
+		res = proto_read_int(&out);
 	}
 	proto_clear(&out);
 	return res;

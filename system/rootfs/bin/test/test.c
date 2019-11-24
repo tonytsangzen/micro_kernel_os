@@ -27,7 +27,7 @@ int main(int argc, char* argv[]) {
 	proto_free(out);
 
 	graph_t* g = graph_new(p, info.width, info.height);
-	font_t* font = get_font_by_name("16x32");
+	font_t* font = font_by_name("16x32");
 
 	char s[32];
 	int i = 0;

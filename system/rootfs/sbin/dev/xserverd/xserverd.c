@@ -123,21 +123,65 @@ static void draw_desktop(x_t* x) {
 	proto_clear(&out);
 }
 
-static int draw_view(x_t* x, xview_t* view) {
-	if(x->dirty == 0 && view->dirty == 0)
+static void draw_mask(graph_t* g, int x, int y, int w, int h) {
+	if(x < 0) {
+		w += x;
+		x = 0;
+	}
+	if(y < 0) {
+		h += y;
+		y = 0;
+	}
+	if((x+w) >= (int)g->w)
+		w = g->w - x - 1;
+	if((y+h) >= (int)g->h) 
+		h = g->h - y - 1;
+
+	int i, j;
+	int step = 4;
+	for(j=0; j<h; j+=step) {
+		for(i=0; i<w; i+=step) {
+			pixel(g, 
+					i + x,
+					j + y,
+					0xff000000);
+			pixel(g, 
+					i + x + 1,
+					j + y + 1,
+					0xffffffff);
+		}
+	}
+}
+
+static int draw_view(x_t* xp, xview_t* view) {
+	if(xp->dirty == 0 && view->dirty == 0)
 		return 0;
 
 	void* gbuf = shm_map(view->xinfo.shm_id);
-	if(gbuf == NULL)
-		return -1;
+	if(gbuf != NULL) {
+		graph_t* g = graph_new(gbuf, view->xinfo.r.w, view->xinfo.r.h);
+		if(xp->current.view != view) { //drag and moving
+			blt(g, 0, 0, 
+					view->xinfo.r.w,
+					view->xinfo.r.h,
+					xp->g,
+					view->xinfo.r.x,
+					view->xinfo.r.y,
+					view->xinfo.r.w,
+					view->xinfo.r.h);
+		}
+		else {
+			draw_mask(xp->g, 
+					view->xinfo.r.x,
+					view->xinfo.r.y,
+					view->xinfo.r.w,
+					view->xinfo.r.h);
+		}
+		graph_free(g);
+		shm_unmap(view->xinfo.shm_id);
+	}
 
-	graph_t* g = graph_new(gbuf, view->xinfo.r.w, view->xinfo.r.h);
-	blt(g, 0, 0, view->xinfo.r.w, view->xinfo.r.h,
-			x->g, view->xinfo.r.x, view->xinfo.r.y, view->xinfo.r.w, view->xinfo.r.h);
-	graph_free(g);
-	shm_unmap(view->xinfo.shm_id);
-
-	draw_win_frame(x, view);
+	draw_win_frame(xp, view);
 	view->dirty = 0;
 	return 0;
 }
@@ -155,8 +199,22 @@ static void remove_view(x_t* x, xview_t* view) {
 	x->dirty = 1;
 }
 
+static void x_push_event(xview_t* view, xview_event_t* e) {
+	if(view->event_tail != NULL)
+		view->event_tail->next = e;
+	else
+		view->event_head = e;
+	view->event_tail = e;
+}
+
 static void push_view(x_t* x, xview_t* view) {
 	if(x->view_tail != NULL) {
+		xview_event_t* e = (xview_event_t*)malloc(sizeof(xview_event_t));
+		e->next = NULL;
+		e->event.type = XEVT_WIN;
+		e->event.value.window.event = XEVT_WIN_UNFOCUS;
+		x_push_event(x->view_tail, e);
+
 		x->view_tail->next = view;
 		view->prev = x->view_tail;
 		x->view_tail = view;
@@ -164,12 +222,27 @@ static void push_view(x_t* x, xview_t* view) {
 	else {
 		x->view_tail = x->view_head = view;
 	}
+
+	xview_event_t* e = (xview_event_t*)malloc(sizeof(xview_event_t));
+	e->next = NULL;
+	e->event.type = XEVT_WIN;
+	e->event.value.window.event = XEVT_WIN_FOCUS;
+	x_push_event(view, e);
+
 	x->dirty = 1;
 }
 
 static void x_del_view(x_t* x, xview_t* view) {
 	remove_view(x, view);
 	free(view);
+
+	if(x->view_tail != NULL) {
+		xview_event_t* e = (xview_event_t*)malloc(sizeof(xview_event_t));
+		e->next = NULL;
+		e->event.type = XEVT_WIN;
+		e->event.value.window.event = XEVT_WIN_FOCUS;
+		x_push_event(x->view_tail, e);
+	}
 }
 
 static void hide_cursor(x_t* x) {
@@ -324,6 +397,18 @@ static int x_get_event(int fd, int from_pid, x_t* x, proto_t* out) {
 	return 0;
 }
 
+static int x_is_top(int fd, int from_pid, x_t* x, proto_t* out) {
+	xview_t* view = x_get_view(x, fd, from_pid);
+	if(view == NULL || view->event_tail == NULL)
+		return -1;
+
+	if(view == x->view_tail)
+		proto_add_int(out, 0);
+	else
+		proto_add_int(out, -1);
+	return 0;
+}
+
 static int x_scr_info(x_t* x, proto_t* out) {
 	xscreen_t scr;	
 	scr.id = 0;
@@ -378,6 +463,10 @@ static int xserver_cntl(int fd, int from_pid, fsinfo_t* info, int cmd, proto_t* 
 	else if(cmd == X_CNTL_WORKSPACE) {
 		return x_workspace(x, in, out);
 	}
+	else if(cmd == X_CNTL_IS_TOP) {
+		return x_is_top(fd, from_pid, x, out);
+	}
+
 	return 0;
 }
 
@@ -499,14 +588,6 @@ static xview_t* get_mouse_owner(x_t* x, int* win_frame_pos) {
 	return NULL;
 }
 
-static void x_push_event(xview_t* view, xview_event_t* e) {
-	if(view->event_tail != NULL)
-		view->event_tail->next = e;
-	else
-		view->event_head = e;
-	view->event_tail = e;
-}
-
 static void mouse_cxy(x_t* x, int32_t rx, int32_t ry) {
 	x->cursor.cpos.x += rx;
 	x->cursor.cpos.y += ry;
@@ -545,6 +626,11 @@ static int mouse_handle(x_t* x, int8_t state, int32_t rx, int32_t ry) {
 	}
 
 	if(state == 2) { //down
+		if(view != x->view_tail) {
+			remove_view(x, view);
+			push_view(x, view);
+		}
+
 		if(pos == XWM_FRAME_CLOSE) { //window close
 			e->event.type = XEVT_WIN;
 			e->event.value.window.event = XEVT_WIN_CLOSE;
@@ -554,10 +640,6 @@ static int mouse_handle(x_t* x, int8_t state, int32_t rx, int32_t ry) {
 			e->event.value.window.event = XEVT_WIN_MAX;
 		}
 		else { // mouse down
-			if(view != x->view_tail) {
-				remove_view(x, view);
-				push_view(x, view);
-			}
 			if(pos == XWM_FRAME_TITLE) {//window title 
 				x->current.view = view;
 				x->current.old_pos.x = x->cursor.cpos.x;
@@ -580,7 +662,7 @@ static int mouse_handle(x_t* x, int8_t state, int32_t rx, int32_t ry) {
 	if(x->current.view == view) {
 		int mrx = x->cursor.cpos.x - x->current.old_pos.x;
 		int mry = x->cursor.cpos.y - x->current.old_pos.y;
-		if(abs32(mrx) > 24 || abs32(mry) > 24) {
+		if(abs32(mrx) > 16 || abs32(mry) > 16) {
 			e->event.type = XEVT_WIN;
 			e->event.value.window.event = XEVT_WIN_MOVE;
 			e->event.value.window.v0 = mrx;

@@ -14,7 +14,11 @@ typedef struct {
 	font_t* font;
 	uint32_t fg_color;
 	uint32_t bg_color;
+	uint32_t unfocus_fg_color;
+	uint32_t unfocus_bg_color;
 } conf_t;
+
+static conf_t _conf;
 
 static int32_t read_config(conf_t* conf, const char* fname) {
 	sconf_t *sconf = sconf_load(fname);	
@@ -27,9 +31,15 @@ static int32_t read_config(conf_t* conf, const char* fname) {
 	v = sconf_get(sconf, "fg_color");
 	if(v[0] != 0) 
 		conf->fg_color = argb_int(atoi_base(v, 16));
+	v = sconf_get(sconf, "unfocus_fg_color");
+	if(v[0] != 0) 
+		conf->unfocus_fg_color = argb_int(atoi_base(v, 16));
+	v = sconf_get(sconf, "unfocus_bg_color");
+	if(v[0] != 0) 
+		conf->unfocus_bg_color = argb_int(atoi_base(v, 16));
 	v = sconf_get(sconf, "font");
 	if(v[0] != 0) 
-		conf->font = get_font_by_name(v);
+		conf->font = font_by_name(v);
 	sconf_free(sconf);
 	return 0;
 }
@@ -40,12 +50,29 @@ static void console_resize(x_t* x, void* p) {
 	console_reset(console);
 }
 
+static void console_focus(x_t* x, void* p) {
+	(void)x;
+	console_t* console = (console_t*)p;
+	console->fg_color = _conf.fg_color;
+	console->bg_color = _conf.bg_color;
+	console_refresh(console);
+	x_update(x);
+}
+
+static void console_unfocus(x_t* x, void* p) {
+	(void)x;
+	console_t* console = (console_t*)p;
+	console->fg_color = _conf.unfocus_fg_color;
+	console->bg_color = _conf.unfocus_bg_color;
+	console_refresh(console);
+	x_update(x);
+}
+
 static int run(int argc, char* argv[]) {
 	(void)argc;
 	(void)argv;
-	conf_t conf;
-	memset(&conf, 0, sizeof(conf_t));
-	read_config(&conf, "/etc/x/console.conf");
+	memset(&_conf, 0, sizeof(conf_t));
+	read_config(&_conf, "/etc/x/console.conf");
 
 	int fd = open("/dev/keyb0", O_RDONLY);
 	if(fd < 0)
@@ -63,13 +90,15 @@ static int run(int argc, char* argv[]) {
 	console_init(&console);
 	console.g = g;
 
-	console.font = conf.font;
-	console.fg_color = conf.fg_color;
-	console.bg_color = conf.bg_color;
+	console.font = _conf.font;
+	console.fg_color = _conf.fg_color;
+	console.bg_color = _conf.bg_color;
 	console_reset(&console);
 
 	xp->data = &console;
 	xp->on_resize = console_resize;
+	xp->on_focus = console_focus;
+	xp->on_unfocus = console_unfocus;
 
 	int krd = 0;
 	xevent_t xev;

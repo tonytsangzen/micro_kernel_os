@@ -56,7 +56,7 @@ static int32_t read_config(xwm_t* xwm, const char* fname) {
 
 	v = sconf_get(conf, "font");
 	if(v[0] != 0) 
-		xwm->font = get_font_by_name(v);
+		xwm->font = font_by_name(v);
 
 	sconf_free(conf);
 	return 0;
@@ -78,8 +78,8 @@ static void draw_desktop(proto_t* in, proto_t* out) {
 				pixel(g, x, y, _xwm.desk_fg_color);
 			}
 		}
-		draw_text(g, 12, 12, "Ewok micro-kernel OS", _xwm.font, 0xff000000);
-		draw_text(g, 10, 10, "Ewok micro-kernel OS", _xwm.font, 0xff888888);
+		//draw_text(g, 12, 12, "Ewok micro-kernel OS", _xwm.font, 0xff000000);
+		//draw_text(g, 10, 10, "Ewok micro-kernel OS", _xwm.font, 0xff888888);
 
 		graph_free(g);
 		shm_unmap(shm_id);
@@ -95,10 +95,10 @@ static void get_frame_rect(xinfo_t* info, grect_t* rect) {
 }
 
 static void draw_win_frame(graph_t* g, xinfo_t* info, uint32_t fg, uint32_t bg) {
-	(void)bg;
+	(void)fg;
 	grect_t r;
 	get_frame_rect(info, &r);
-	box(g, r.x, r.y, r.w, r.h, fg);//win box
+	box(g, r.x, r.y, r.w, r.h, bg);//win box
 }
 
 static void get_title_rect(xinfo_t* info, grect_t* rect) {
@@ -108,14 +108,24 @@ static void get_title_rect(xinfo_t* info, grect_t* rect) {
 	rect->h = _xwm.title_h;
 }
 
-static void draw_title(graph_t* g, xinfo_t* info, uint32_t fg, uint32_t bg) {
-	(void)bg;
+static void draw_title(graph_t* g, xinfo_t* info, uint32_t fg, uint32_t bg, int8_t top) {
+	(void)top;
 	grect_t r;
 	get_title_rect(info, &r);
 
 	fill(g, r.x, r.y, r.w, _xwm.title_h, bg);//title box
-	box(g, r.x, r.y, r.w, r.h, fg);//title box
 	draw_text(g, r.x+10, r.y+2, info->title, _xwm.font, fg);//title
+
+	gsize_t sz;
+	get_text_size(info->title, _xwm.font, &sz);
+	int step = 4;
+	int y = r.y + step;
+	while(1) {
+		line(g, r.x+20+sz.w, y, r.x+r.w-10, y, fg);
+		y += step;
+		if(y >= (r.y + r.h))
+			break;
+	}
 }
 
 static void get_min_rect(xinfo_t* info, grect_t* rect) {
@@ -131,7 +141,6 @@ static void draw_min(graph_t* g, xinfo_t* info, uint32_t fg, uint32_t bg) {
 	get_min_rect(info, &r);
 
 	fill(g, r.x, r.y, r.w, r.h, bg);
-	box(g, r.x, r.y, r.w, r.h, fg);
 	box(g, r.x+4, r.y+r.h-8, r.w-8, 4, fg);
 }
 
@@ -148,7 +157,6 @@ static void draw_max(graph_t* g, xinfo_t* info, uint32_t fg, uint32_t bg) {
 	get_max_rect(info, &r);
 
 	fill(g, r.x, r.y, r.w, r.h, bg);
-	box(g, r.x, r.y, r.w, r.h, fg);
 	box(g, r.x+4, r.y+4, r.w-8, r.h-8, fg);
 }
 
@@ -165,9 +173,8 @@ static void draw_close(graph_t* g, xinfo_t* info, uint32_t fg, uint32_t bg) {
 	get_close_rect(info, &r);
 
 	fill(g, r.x, r.y, r.w, r.h, bg);
-	box(g, r.x, r.y, r.w, r.h, fg);
-	line(g, r.x, r.y, r.x+r.w-1, r.y+r.h-1, fg);
-	line(g, r.x, r.y+r.h-1, r.x+r.w-1, r.y, fg);
+	line(g, r.x+4, r.y+4, r.x+r.w-5, r.y+r.h-5, fg);
+	line(g, r.x+4, r.y+r.h-5, r.x+r.w-5, r.y+4, fg);
 }
 
 static void draw_frame(proto_t* in, proto_t* out) {
@@ -192,13 +199,14 @@ static void draw_frame(proto_t* in, proto_t* out) {
 			bg = _xwm.top_bg_color;
 		}
 
-		draw_win_frame(g, &info, fg, bg);
 		if((info.style & X_STYLE_NO_TITLE) == 0) {
-			draw_title(g, &info, fg, bg);
+			draw_title(g, &info, fg, bg, top);
 			draw_min(g, &info, fg, bg);
 			draw_max(g, &info, fg, bg);
 			draw_close(g, &info, fg, bg);
 		}
+		draw_win_frame(g, &info, fg, bg);
+
 		graph_free(g);
 		shm_unmap(shm_id);
 	}
