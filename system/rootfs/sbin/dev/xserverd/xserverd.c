@@ -399,7 +399,7 @@ static int x_get_event(int fd, int from_pid, x_t* x, proto_t* out) {
 
 static int x_is_top(int fd, int from_pid, x_t* x, proto_t* out) {
 	xview_t* view = x_get_view(x, fd, from_pid);
-	if(view == NULL || view->event_tail == NULL)
+	if(view == NULL || x->view_tail == NULL)
 		return -1;
 
 	if(view == x->view_tail)

@@ -25,12 +25,15 @@ int main(int argc, char* argv[]) {
 			if(xev.type == XEVT_KEYB)
 				break;
 		}
-		snprintf(str, 31, "paint = %d", i++);
-		graph_t* g = x_graph(x);
-		clear(g, argb_int(0xff0000ff));
-		draw_text(g, 30, 10, str, font, 0xffffffff);
-		draw_text(g, 30, g->h-20, "press anykey to quit......", font_by_name("8x16"), 0xffffffff);
-		x_update(x);
+		int res = x_is_top(x);
+		if(res == 0) {
+			snprintf(str, 31, "paint = %d", i++);
+			graph_t* g = x_graph(x);
+			clear(g, argb_int(0xff0000ff));
+			draw_text(g, 30, 10, str, font, 0xffffffff);
+			draw_text(g, 30, g->h-20, "press anykey to quit......", font_by_name("8x16"), 0xffffffff);
+			x_update(x);
+		}
 		sleep(0);
 	}
 
