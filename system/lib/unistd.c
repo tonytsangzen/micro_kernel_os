@@ -21,9 +21,16 @@ int fork(void) {
 	return syscall0(SYS_FORK);
 }
 
-unsigned int sleep(unsigned int seconds) {
-	if(seconds == 0)
+int usleep(unsigned int usecs) {
+	if(usecs == 0)
 		syscall0(SYS_YIELD);
+	else
+		syscall1(SYS_SLEEP, usecs / 1000);
+	return 0;
+}
+
+unsigned int sleep(unsigned int seconds) {
+	usleep(seconds * 1000 * 1000);
 	return 0;
 }
 

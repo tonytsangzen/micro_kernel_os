@@ -46,7 +46,7 @@ static int32_t read_config(conf_t* conf, const char* fname) {
 
 static void console_resize(x_t* x, void* p) {
 	console_t* console = (console_t*)p;
-	console->g = x_graph(x);
+	console->g = x_get_graph(x);
 	console_reset(console);
 }
 
@@ -56,10 +56,6 @@ static void console_focus(x_t* x, void* p) {
 	console->fg_color = _conf.fg_color;
 	console->bg_color = _conf.bg_color;
 	console_refresh(console);
-	if(((console->bg_color >> 24) & 0xff) != 0xff)
-		x->xinfo.style |= X_STYLE_ALPHA;
-	else
-		x->xinfo.style = X_STYLE_NORMAL;
 	x_update(x);
 }
 
@@ -69,10 +65,6 @@ static void console_unfocus(x_t* x, void* p) {
 	console->fg_color = _conf.unfocus_fg_color;
 	console->bg_color = _conf.unfocus_bg_color;
 	console_refresh(console);
-	if(((console->bg_color >> 24) & 0xff) != 0xff)
-		x->xinfo.style |= X_STYLE_ALPHA;
-	else
-		x->xinfo.style = X_STYLE_NORMAL;
 	x_update(x);
 }
 
@@ -92,8 +84,7 @@ static int run(int argc, char* argv[]) {
 		return -1;
 	}
 
-	graph_t* g = x_graph(xp);
-
+	graph_t* g = x_get_graph(xp);
 	console_t console;
 	console_init(&console);
 	console.g = g;
@@ -148,6 +139,7 @@ static int run(int argc, char* argv[]) {
 
 	close(fd);
 	console_close(&console);
+	x_release_graph(xp, g);
 	x_close(xp);
 	return 0;
 }

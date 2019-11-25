@@ -7,21 +7,15 @@
 #include <string.h>
 
 int x_update(x_t* x) {
-	proto_t in;
-	proto_init(&in, NULL, 0);
-	proto_add(&in, &x->xinfo, sizeof(xinfo_t));
-
-	int ret = cntl_raw(x->fd, X_CNTL_UPDATE, &in, NULL);
-	proto_clear(&in);
+	int ret = cntl_raw(x->fd, X_CNTL_UPDATE, NULL, NULL);
 	return ret;
 }
 
-static int x_new(x_t* x) {
+int x_update_info(x_t* x, xinfo_t* info) {
 	proto_t in;
 	proto_init(&in, NULL, 0);
-	proto_add(&in, &x->xinfo, sizeof(xinfo_t));
-
-	int ret = cntl_raw(x->fd, X_CNTL_NEW, &in, NULL);
+	proto_add(&in, info, sizeof(xinfo_t));
+	int ret = cntl_raw(x->fd, X_CNTL_UPDATE_INFO, &in, NULL);
 	proto_clear(&in);
 	return ret;
 }
@@ -55,86 +49,65 @@ x_t* x_open(int x, int y, int w, int h, const char* title, int style) {
 	r.w = w;
 	r.h = h;
 	x_get_workspace(fd, style, &r, &r);
-		
-	int sz = r.w * r.h * 4;	
-	int shm_id = shm_alloc(sz, SHM_PUBLIC);
-	if(shm_id <= 0) {
-		close(fd);
-		return NULL;
-	}
-
-	void* gbuf = shm_map(shm_id);
-	if(gbuf == NULL) {
-		close(fd);
-		return NULL;
-	}	
 
 	x_t* ret = (x_t*)malloc(sizeof(x_t));
 	memset(ret, 0, sizeof(x_t));
 
 	ret->fd = fd;
 	ret->closed = 0;
-	ret->xinfo.shm_id = shm_id;
-	ret->xinfo.style = style;
-	memcpy(&ret->xinfo.r, &r, sizeof(grect_t));
-	strncpy(ret->xinfo.title, title, X_TITLE_MAX-1);
-	ret->g = graph_new(gbuf, r.w, r.h);
 
-	x_new(ret);
+	xinfo_t xinfo;
+	xinfo.style = style;
+	xinfo.state = X_STATE_NORMAL;
+	memcpy(&xinfo.r, &r, sizeof(grect_t));
+	strncpy(xinfo.title, title, X_TITLE_MAX-1);
+	x_update_info(ret, &xinfo);
 	return ret;
 }
 
-graph_t* x_graph(x_t* x) {
+int x_get_info(x_t* x, xinfo_t* info) {
+	if(x == NULL || info == NULL)
+		return -1;
+	
+	proto_t out;
+	proto_init(&out, NULL, 0);
+	if(cntl_raw(x->fd, X_CNTL_GET_INFO, NULL, &out) != 0)
+		return -1;
+	proto_read_to(&out, info, sizeof(xinfo_t));
+	proto_clear(&out);
+	return 0;
+}
+
+graph_t* x_get_graph(x_t* x) {
 	if(x == NULL)
 		return NULL;
-	return x->g;
+
+	xinfo_t info;
+	if(x_get_info(x, &info) != 0)
+		return NULL;
+	void* gbuf = shm_map(info.shm_id);
+	if(gbuf == NULL)
+		return NULL;
+	return graph_new(gbuf, info.r.w, info.r.h);
+}
+
+void  x_release_graph(x_t* x, graph_t* g) {
+	xinfo_t info;
+	if(x_get_info(x, &info) != 0)
+		return;
+	graph_free(g);
+	shm_unmap(info.shm_id);
 }
 
 void x_close(x_t* x) {
 	if(x == NULL)
 		return;
-
-	shm_unmap(x->xinfo.shm_id);
 	close(x->fd);
-	graph_free(x->g);
 	free(x);
-}
-
-static void x_resize_to(x_t* xp, int x, int y, int w, int h) {
-	if(x == xp->xinfo.r.x && y == xp->xinfo.r.y)
-			if(w == xp->xinfo.r.w && h == xp->xinfo.r.h)
-		return;
-
-	int sz = w * h * 4;	
-	int shm_id = shm_alloc(sz, SHM_PUBLIC);
-	if(shm_id <= 0)
-		return;
-	void* gbuf = shm_map(shm_id);
-	if(gbuf == NULL)
-		return;
-
-	int old_shm_id = xp->xinfo.shm_id;
-	graph_t* old_g = xp->g;
-
-	xp->xinfo.shm_id = shm_id;
-	xp->xinfo.r.x = x;
-	xp->xinfo.r.y = y;
-	xp->xinfo.r.w = w;
-	xp->xinfo.r.h = h;
-	xp->g = graph_new(gbuf, w, h);
-	x_update(xp);
-	if(xp->on_resize != NULL)
-		xp->on_resize(xp, xp->data);
-
-	graph_free(old_g);
-	shm_unmap(old_shm_id);
 }
 
 static int win_event_handle(x_t* x, xevent_t* ev) {
 	if(ev->value.window.event == XEVT_WIN_MOVE) {
-		x->xinfo.r.x += ev->value.window.v0;
-		x->xinfo.r.y += ev->value.window.v1;
-		x_update(x);
 	}
 	else if(ev->value.window.event == XEVT_WIN_CLOSE) {
 		x->closed = 1;
@@ -148,6 +121,7 @@ static int win_event_handle(x_t* x, xevent_t* ev) {
 			x->on_unfocus(x, x->data);
 	}
 	else if(ev->value.window.event == XEVT_WIN_MAX) {
+	/*
 		if(x->xinfo.state == X_STATE_MAX) {
 			x_resize_to(x, x->xinfo_prev.r.x, 
 					x->xinfo_prev.r.y,
@@ -173,6 +147,7 @@ static int win_event_handle(x_t* x, xevent_t* ev) {
 				x->xinfo.state = X_STATE_MAX;
 			}
 		}
+		*/
 	}
 	return 0;
 }

@@ -41,13 +41,14 @@ int main(int argc, char* argv[]) {
 		}
 		if(top == 1) {
 			snprintf(str, 31, "paint = %d", i++);
-			graph_t* g = x_graph(x);
+			graph_t* g = x_get_graph(x);
 			clear(g, argb_int(0xff0000ff));
 			draw_text(g, 30, 10, str, font, 0xffffffff);
 			draw_text(g, 30, g->h-20, "press anykey to quit......", font_by_name("8x16"), 0xffffffff);
+			x_release_graph(x, g);
 			x_update(x);
 		}
-		sleep(0);
+		usleep(0);
 	}
 
 	x_close(x);

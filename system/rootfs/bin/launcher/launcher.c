@@ -58,7 +58,8 @@ static void draw_icon(graph_t* g, const char* item, int icon_size, int i) {
 	graph_free(img);
 }
 
-static void draw(x_t* x, graph_t *g, items_t* items) {
+static void draw(x_t* x, items_t* items) {
+	graph_t* g = x_get_graph(x);
 	//font_t* font = get_font_by_name("8x16");
 	clear(g, argb_int(0x0));
 	int i;
@@ -71,6 +72,7 @@ static void draw(x_t* x, graph_t *g, items_t* items) {
 		draw_icon(g, items->items[i]->cstr, items->icon_size, i);
 		//draw_text(g, 0, i*items->icon_size + 4, items->items[i], font, 0xff888888);
 	}
+	x_release_graph(x, g);
 	x_update(x);
 }
 
@@ -96,15 +98,16 @@ int main(int argc, char* argv[]) {
 			items.icon_size, 
 			items.icon_size * items.num,
 			"launcher", X_STYLE_NO_FRAME | X_STYLE_ALPHA);
+	draw(x, &items);
 
-	graph_t* g = x_graph(x);
-	draw(x, g, &items);
+	xinfo_t xinfo;
+	x_get_info(x, &xinfo);
 
 	xevent_t xev;
 	while(1) {
 		if(x_get_event(x, &xev) == 0) {
 			if(xev.type == XEVT_MOUSE && xev.state == XEVT_MOUSE_DOWN) {
-				int i = div_u32(xev.value.mouse.y - x->xinfo.r.y, items.icon_size);
+				int i = div_u32(xev.value.mouse.y - xinfo.r.y, items.icon_size);
 				if(i < items.num) {
 					int pid = fork();
 					if(pid == 0)

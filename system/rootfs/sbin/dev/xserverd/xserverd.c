@@ -23,6 +23,7 @@ typedef struct st_xview_ev {
 typedef struct st_xview {
 	int fd;
 	int from_pid;
+	graph_t* g;
 	xinfo_t xinfo;
 	int dirty;
 
@@ -141,14 +142,8 @@ static void draw_mask(graph_t* g, int x, int y, int w, int h) {
 	int step = 4;
 	for(j=0; j<h; j+=step) {
 		for(i=0; i<w; i+=step) {
-			pixel(g, 
-					i + x,
-					j + y,
-					0xff000000);
-			pixel(g, 
-					i + x + 1,
-					j + y + 1,
-					0xffffffff);
+			pixel(g, i+x, j+y, 0xff000000);
+			pixel(g, i+x+1, j+y+1, 0xffffffff);
 		}
 	}
 }
@@ -157,12 +152,10 @@ static int draw_view(x_t* xp, xview_t* view) {
 	if(xp->dirty == 0 && view->dirty == 0)
 		return 0;
 
-	void* gbuf = shm_map(view->xinfo.shm_id);
-	if(gbuf != NULL) {
-		graph_t* g = graph_new(gbuf, view->xinfo.r.w, view->xinfo.r.h);
+	if(view->g != NULL) {
 		if(xp->current.view != view) { //drag and moving
 			if((view->xinfo.style & X_STYLE_ALPHA) != 0) {
-				blt_alpha(g, 0, 0, 
+				blt_alpha(view->g, 0, 0, 
 						view->xinfo.r.w,
 						view->xinfo.r.h,
 						xp->g,
@@ -172,7 +165,7 @@ static int draw_view(x_t* xp, xview_t* view) {
 						view->xinfo.r.h, 0xff);
 			}
 			else {
-				blt(g, 0, 0, 
+				blt(view->g, 0, 0, 
 						view->xinfo.r.w,
 						view->xinfo.r.h,
 						xp->g,
@@ -189,8 +182,6 @@ static int draw_view(x_t* xp, xview_t* view) {
 					view->xinfo.r.w,
 					view->xinfo.r.h);
 		}
-		graph_free(g);
-		shm_unmap(view->xinfo.shm_id);
 	}
 
 	draw_win_frame(xp, view);
@@ -308,6 +299,7 @@ static inline void draw_cursor(x_t* x) {
 	x->cursor.old_pos.y = x->cursor.cpos.y;
 }
 
+/*
 static void x_check_views(x_t* x) {
 	xview_t* view = x->view_head;
 	while(view != NULL) {
@@ -321,9 +313,10 @@ static void x_check_views(x_t* x) {
 			x_del_view(x, v);
 	}
 }
+*/
 
 static void x_repaint(x_t* x) {
-	x_check_views(x);
+	//x_check_views(x);
 	if(x->need_repaint == 0 && x->dirty == 0)
 		return;
 	x->need_repaint = 0;
@@ -352,7 +345,24 @@ static xview_t* x_get_view(x_t* x, int fd, int from_pid) {
 	return NULL;
 }
 
-static int x_update(int fd, int from_pid, proto_t* in, x_t* x) {
+static int x_update(int fd, int from_pid, x_t* x) {
+	if(fd < 0)
+		return -1;
+	
+	xview_t* view = x_get_view(x, fd, from_pid);
+	if(view == NULL)
+		return -1;
+
+	view->dirty = 1;
+	if(view != x->view_tail ||
+			(view->xinfo.style & X_STYLE_ALPHA) != 0) {
+		x->dirty = 1;
+	}
+	x->need_repaint = 1;
+	return 0;
+}
+
+static int x_update_info(int fd, int from_pid, proto_t* in, x_t* x) {
 	xinfo_t xinfo;
 	int sz = sizeof(xinfo_t);
 	if(fd < 0 || proto_read_to(in, &xinfo, sz) != sz)
@@ -361,6 +371,24 @@ static int x_update(int fd, int from_pid, proto_t* in, x_t* x) {
 	xview_t* view = x_get_view(x, fd, from_pid);
 	if(view == NULL)
 		return -1;
+	
+	int shm_id = view->xinfo.shm_id;
+	if(shm_id == 0 ||
+			view->g == NULL ||
+			view->xinfo.r.w != xinfo.r.w ||
+			view->xinfo.r.h != xinfo.r.h) {
+		if(view->g != NULL && shm_id > 0) {
+			graph_free(view->g);
+			shm_unmap(shm_id);
+		}
+		shm_id = shm_alloc(xinfo.r.w * xinfo.r.h * 4, 1);
+		void* p = shm_map(shm_id);
+		if(p == NULL) 
+			return -1;
+		view->g = graph_new(p, xinfo.r.w, xinfo.r.h);
+	}
+	view->dirty = 1;
+	x->need_repaint = 1;
 
 	if(view != x->view_tail ||
 			view->xinfo.r.x != xinfo.r.x ||
@@ -370,28 +398,9 @@ static int x_update(int fd, int from_pid, proto_t* in, x_t* x) {
 			(view->xinfo.style & X_STYLE_ALPHA) != 0) {
 		x->dirty = 1;
 	}
-	
 	memcpy(&view->xinfo, &xinfo, sizeof(xinfo_t));
-	view->dirty = 1;
-	x->need_repaint = 1;
-	return 0;
-}
+	view->xinfo.shm_id = shm_id;
 
-static int x_new_view(int fd, int from_pid, proto_t* in, x_t* x) {
-	xinfo_t xinfo;
-	int sz = sizeof(xinfo_t);
-	if(fd < 0 || proto_read_to(in, &xinfo, sz) != sz)
-		return -1;
-	xview_t* view = (xview_t*)malloc(sizeof(xview_t));
-	if(view == NULL)
-		return -1;
-	memset(view, 0, sizeof(xview_t));
-
-	memcpy(&view->xinfo, &xinfo, sizeof(xinfo_t));
-	view->dirty = 1;
-	view->fd = fd;
-	view->from_pid = from_pid;
-	push_view(x, view);
 	return 0;
 }
 
@@ -407,6 +416,14 @@ static int x_get_event(int fd, int from_pid, x_t* x, proto_t* out) {
 
 	proto_add(out, &e->event, sizeof(xevent_t));
 	free(e);
+	return 0;
+}
+
+static int x_get_info(int fd, int from_pid, x_t* x, proto_t* out) {
+	xview_t* view = x_get_view(x, fd, from_pid);
+	if(view == NULL)
+		return -1;
+	proto_add(out, &view->xinfo, sizeof(xinfo_t));
 	return 0;
 }
 
@@ -461,11 +478,14 @@ static int xserver_cntl(int fd, int from_pid, fsinfo_t* info, int cmd, proto_t* 
 	(void)info;
 	x_t* x = (x_t*)p;
 
-	if(cmd == X_CNTL_NEW) {
-		return x_new_view(fd, from_pid, in, x);
+	if(cmd == X_CNTL_UPDATE) {
+		return x_update(fd, from_pid, x);
+	}	
+	else if(cmd == X_CNTL_UPDATE_INFO) {
+		return x_update_info(fd, from_pid, in, x);
 	}
-	else if(cmd == X_CNTL_UPDATE) {
-		return x_update(fd, from_pid, in, x);
+	else if(cmd == X_CNTL_GET_INFO) {
+		return x_get_info(fd, from_pid, x, out);
 	}
 	else if(cmd == X_CNTL_GET_EVT) {
 		return x_get_event(fd, from_pid, x, out);
@@ -480,6 +500,23 @@ static int xserver_cntl(int fd, int from_pid, fsinfo_t* info, int cmd, proto_t* 
 		return x_is_top(fd, from_pid, x, out);
 	}
 
+	return 0;
+}
+
+static int xserver_open(int fd, int from_pid, fsinfo_t* info, int oflag, void* p) {
+	(void)oflag;
+	(void)info;
+	x_t* x = (x_t*)p;
+	if(fd < 0)
+		return -1;
+
+	xview_t* view = (xview_t*)malloc(sizeof(xview_t));
+	if(view == NULL)
+		return -1;
+	memset(view, 0, sizeof(xview_t));
+	view->fd = fd;
+	view->from_pid = from_pid;
+	push_view(x, view);
 	return 0;
 }
 
@@ -664,10 +701,15 @@ static int mouse_handle(x_t* x, int8_t state, int32_t rx, int32_t ry) {
 	else if(state == 1) {
 		e->event.state = XEVT_MOUSE_UP;
 		if(x->current.view == view) {
+			int mrx = x->cursor.cpos.x - x->current.old_pos.x;
+			int mry = x->cursor.cpos.y - x->current.old_pos.y;
 			e->event.type = XEVT_WIN;
 			e->event.value.window.event = XEVT_WIN_MOVE;
-			e->event.value.window.v0 = x->cursor.cpos.x - x->current.old_pos.x;
-			e->event.value.window.v1 = x->cursor.cpos.y - x->current.old_pos.y;
+			e->event.value.window.v0 = mrx;
+			e->event.value.window.v1 = mry;
+			view->xinfo.r.x += mrx;
+			view->xinfo.r.y += mry;
+			x->dirty = 1;
 		}
 		x->current.view = NULL;
 	}
@@ -682,6 +724,9 @@ static int mouse_handle(x_t* x, int8_t state, int32_t rx, int32_t ry) {
 			e->event.value.window.v1 = mry;
 			x->current.old_pos.x = x->cursor.cpos.x;
 			x->current.old_pos.y = x->cursor.cpos.y;
+			view->xinfo.r.x += mrx;
+			view->xinfo.r.y += mry;
+			x->dirty = 1;
 		}
 	}
 	x_push_event(view, e);
@@ -737,7 +782,8 @@ int main(int argc, char** argv) {
 	strcpy(dev.name, "xserver");
 	dev.mount = xserver_mount;
 	dev.cntl = xserver_cntl;
-	dev.close= xserver_close;
+	dev.close = xserver_close;
+	dev.open = xserver_open;
 	dev.loop_step= xserver_loop_step;
 	dev.umount = xserver_umount;
 

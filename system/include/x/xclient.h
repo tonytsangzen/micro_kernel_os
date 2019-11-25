@@ -7,9 +7,7 @@
 
 typedef struct st_x {
 	int fd;
-	xinfo_t xinfo;
 	xinfo_t xinfo_prev; //for backup the state before fullscreen/min/max.
-	graph_t* g;
 	int closed;
 
 	void* data;
@@ -23,8 +21,11 @@ typedef struct st_x {
 } x_t;
 
 x_t*     x_open(int x, int y, int w, int h, const char* title, int style);
-graph_t* x_graph(x_t* x);
+graph_t* x_get_graph(x_t* x);
+void     x_release_graph(x_t* x, graph_t* g);
 int      x_update(x_t* x);
+int      x_update_info(x_t* x, xinfo_t* xinfo);
+int      x_get_info(x_t* x, xinfo_t* xinfo);
 void     x_close(x_t* x);
 int      x_get_event(x_t* x, xevent_t* ev);
 int      x_screen_info(xscreen_t* scr);

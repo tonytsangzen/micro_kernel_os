@@ -25,12 +25,13 @@ int main(int argc, char* argv[]) {
 		graph_free(img);
 		return -1;
 	}
-	graph_t* g = x_graph(x);
-	
+	graph_t* g = x_get_graph(x);
 	clear(g, 0xff888888);
+
 	blt_alpha(img, 0, 0, img->w, img->h,
 			g, 0, 0, img->w, img->h, 0xff);
 	draw_text(g, 30, g->h-20, "press anykey to quit......", font_by_name("8x16"), 0xffffffff);
+	x_release_graph(x, g);
 	x_update(x);
 
 	xevent_t xev;

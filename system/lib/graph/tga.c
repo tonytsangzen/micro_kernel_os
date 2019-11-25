@@ -61,7 +61,6 @@ static unsigned char* tga_image_next_pixel(unsigned char* p, uint8_t bpp, color_
 
 static graph_t* tga_image_read_rgb(unsigned char* p, tga_header_t *header) {
 	int i, j;
-	int data_size = (header->width*4) * header->height;
 	graph_t* g = graph_new(NULL, header->width, header->height);
 	unsigned char* data = (unsigned char*)g->buffer;
 	for(j = header->width-1; j >=0; j--) {

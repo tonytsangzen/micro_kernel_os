@@ -1,5 +1,6 @@
 #include "marray.h"
 #include <stdlib.h>
+#include <string.h>
 
 /** array functions.-----------------------------*/
 

@@ -8,10 +8,9 @@ int main(int argc, char* argv[]) {
 	(void)argc;
 	(void)argv;
 
-	int sz;
-	void* data = vfs_readfile("/data/laptop.png", &sz);
-	if(data == NULL)
-		return -1;
-	free(data);
+	while(1) {
+		usleep(100000);
+		printf("tic.\n");
+	}
 	return 0;
 }
