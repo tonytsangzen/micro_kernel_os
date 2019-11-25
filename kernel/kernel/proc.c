@@ -375,6 +375,19 @@ int32_t proc_load_elf(proc_t *proc, const char *image, uint32_t size) {
 	return 0;
 }
 
+void proc_sleep(context_t* ctx, uint32_t count) {
+	if(_current_proc == NULL)
+		return;
+
+	uint32_t cpsr = __int_off();
+
+	_current_proc->sleep_counter = count;
+	_current_proc->state = SLEEPING;
+	proc_unready(ctx, _current_proc);
+
+	__int_on(cpsr);
+}
+
 void proc_sleep_on(context_t* ctx, uint32_t event) {
 	if(_current_proc == NULL)
 		return;
@@ -596,3 +609,15 @@ procinfo_t* get_procs(int32_t *num) {
 	return procs;
 }
 
+void renew_sleep_counter(void) {
+	int i;
+	for(i=0; i<PROC_MAX; i++) {
+		proc_t* proc = &_proc_table[i];
+		if(proc->state == SLEEPING && proc->sleep_counter > 0) {
+			proc->sleep_counter--;
+			if(proc->sleep_counter == 0) {
+				proc_ready(proc);
+			}
+		}
+	}
+}

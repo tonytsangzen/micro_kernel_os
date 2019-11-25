@@ -49,6 +49,7 @@ typedef struct st_proc {
 	uint32_t start_sec;
 
 	uint32_t sleep_event;
+	uint32_t sleep_counter;
 	int32_t wait_pid;
 
 	proc_space_t* space;
@@ -89,6 +90,9 @@ extern proc_t* proc_get(int32_t pid);
 extern proc_t* kfork(void);
 
 extern procinfo_t* get_procs(int32_t* num);
+
+extern void    renew_sleep_counter(void);
+extern void    proc_sleep(context_t* ctx, uint32_t count);
 
 extern const char* proc_get_env(const char* name);
 extern const char* proc_get_env_name(int32_t index);

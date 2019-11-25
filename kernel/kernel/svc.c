@@ -63,6 +63,10 @@ static void sys_sleep_on(context_t* ctx, uint32_t event) {
 	proc_sleep_on(ctx, event);
 }
 
+static void sys_sleep(context_t* ctx, uint32_t count) {
+	proc_sleep(ctx, count);
+}
+
 static void sys_wakeup(uint32_t event) {
 	proc_wakeup(event);
 }
@@ -469,6 +473,9 @@ void svc_handler(int32_t code, int32_t arg0, int32_t arg1, int32_t arg2, context
 		return;
 	case SYS_SLEEP_ON:
 		sys_sleep_on(ctx, (uint32_t)arg0);
+		return;
+	case SYS_SLEEP:
+		sys_sleep(ctx, (uint32_t)arg0);
 		return;
 	case SYS_WAKEUP:
 		sys_wakeup((uint32_t)arg0);

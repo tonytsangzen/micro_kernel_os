@@ -46,6 +46,7 @@ void irq_handler(context_t* ctx) {
 			_timer_count = 0;
 		}
 		_timer_count++;
+		renew_sleep_counter();
 
 		schedule(ctx);
 		return;
