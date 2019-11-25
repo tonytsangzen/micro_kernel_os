@@ -701,6 +701,7 @@ static int mouse_handle(x_t* x, int8_t state, int32_t rx, int32_t ry) {
 	else if(state == 1) {
 		e->event.state = XEVT_MOUSE_UP;
 		if(x->current.view == view) {
+			/*
 			int mrx = x->cursor.cpos.x - x->current.old_pos.x;
 			int mry = x->cursor.cpos.y - x->current.old_pos.y;
 			e->event.type = XEVT_WIN;
@@ -709,6 +710,7 @@ static int mouse_handle(x_t* x, int8_t state, int32_t rx, int32_t ry) {
 			e->event.value.window.v1 = mry;
 			view->xinfo.r.x += mrx;
 			view->xinfo.r.y += mry;
+			*/
 			x->dirty = 1;
 		}
 		x->current.view = NULL;
@@ -718,10 +720,12 @@ static int mouse_handle(x_t* x, int8_t state, int32_t rx, int32_t ry) {
 		int mrx = x->cursor.cpos.x - x->current.old_pos.x;
 		int mry = x->cursor.cpos.y - x->current.old_pos.y;
 		if(abs32(mrx) > 16 || abs32(mry) > 16) {
+			/*
 			e->event.type = XEVT_WIN;
 			e->event.value.window.event = XEVT_WIN_MOVE;
 			e->event.value.window.v0 = mrx;
 			e->event.value.window.v1 = mry;
+			*/
 			x->current.old_pos.x = x->cursor.cpos.x;
 			x->current.old_pos.y = x->cursor.cpos.y;
 			view->xinfo.r.x += mrx;
@@ -729,7 +733,9 @@ static int mouse_handle(x_t* x, int8_t state, int32_t rx, int32_t ry) {
 			x->dirty = 1;
 		}
 	}
-	x_push_event(view, e);
+	else {
+		x_push_event(view, e);
+	}
 	return -1;
 }
 
