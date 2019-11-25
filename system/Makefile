@@ -16,11 +16,10 @@ CFLAGS = -Wstrict-prototypes \
          -fno-builtin-sprintf \
 				 -Wno-overlength-strings \
          -fno-builtin-exit -fno-builtin-stdio \
-				 -D STBI_NO_STDIO \
 				 -std=c99 
 
-#CFLAGS +=  -g
-CFLAGS +=  -O2
+CFLAGS +=  -g
+#CFLAGS +=  -O2
 
 LDFLAGS = -lc
 

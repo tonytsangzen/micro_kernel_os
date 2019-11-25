@@ -119,7 +119,8 @@ static graph_t* tga_image_read_rle(unsigned char* p, tga_header_t *header) {
 
 graph_t* tga_image_new(const char* filename) {
 	int sz;
-	unsigned char* p = (unsigned char*)vfs_readfile(filename, &sz);
+	unsigned char* data = (unsigned char*)vfs_readfile(filename, &sz);
+	unsigned char* p = data;
 	if(p != NULL ) {
 		tga_header_t header;
 		memcpy(&header, p, 3);
@@ -133,7 +134,7 @@ graph_t* tga_image_new(const char* filename) {
 			this = tga_image_read_rle(p, &header);
 		}
 		
-		free(p);
+		free(data);
 		return this;
 	}
 	return NULL;
