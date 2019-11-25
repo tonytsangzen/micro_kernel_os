@@ -20,7 +20,7 @@ typedef struct COLOUR {
 
 
 static void tga_image_decode16(const short c, color_t* cl) {
-	//TODO: Implement this
+	//TODO: Implement g
 	(void)c;
 	(void)cl;
 }
@@ -60,26 +60,28 @@ static unsigned char* tga_image_next_pixel(unsigned char* p, uint8_t bpp, color_
 }
 
 static graph_t* tga_image_read_rgb(unsigned char* p, tga_header_t *header) {
-	int i;
+	int i, j;
 	int data_size = (header->width*4) * header->height;
-	graph_t* this = graph_new(NULL, header->width, header->height);
-	unsigned char* data = (unsigned char*)this->buffer;
-	for(i = 0; i < data_size;i+=4) {
-		color_t colour;
-		p = tga_image_next_pixel(p, header->bpp, &colour);
-		
-		data[i] = colour.r;
-		data[i+1] = colour.g;
-		data[i+2] = colour.b;
-		data[i+3] = colour.a;
+	graph_t* g = graph_new(NULL, header->width, header->height);
+	unsigned char* data = (unsigned char*)g->buffer;
+	for(j = header->width-1; j >=0; j--) {
+		for(i = 0; i < header->width*4; i+=4) {
+			color_t colour;
+			p = tga_image_next_pixel(p, header->bpp, &colour);
+
+			data[j*header->width*4 + i] = colour.r;
+			data[j*header->width*4 + i + 1] = colour.g;
+			data[j*header->width*4 + i + 2] = colour.b;
+			data[j*header->width*4 + i + 3] = colour.a;
+		}
 	}
-	return this;
+	return g;
 }
 
 static graph_t* tga_image_read_rle(unsigned char* p, tga_header_t *header) {
 	int data_size = (header->width*4) * header->height;
-	graph_t* this = graph_new(NULL, header->width, header->height);
-	unsigned char* data = (unsigned char*)this->buffer;
+	graph_t* g = graph_new(NULL, header->width, header->height);
+	unsigned char* data = (unsigned char*)g->buffer;
 	
 	int i = 0;
 	while( i < data_size ) {
@@ -114,7 +116,7 @@ static graph_t* tga_image_read_rle(unsigned char* p, tga_header_t *header) {
 			i += raw_count*4;
 		}
 	}
-	return this;
+	return g;
 }
 
 graph_t* tga_image_new(const char* filename) {
@@ -127,15 +129,15 @@ graph_t* tga_image_new(const char* filename) {
 		memcpy(&(header.width), p+12, 10);
 		p = p + (18+header.id_size);
 		
-		graph_t* this = NULL;
+		graph_t* g = NULL;
 		if( header.image_type == UNMAPPED_RGB ) {
-			this = tga_image_read_rgb(p, &header);
+			g = tga_image_read_rgb(p, &header);
 		} else if( header.image_type == RLE_RGB ) {
-			this = tga_image_read_rle(p, &header);
+			g = tga_image_read_rle(p, &header);
 		}
 		
 		free(data);
-		return this;
+		return g;
 	}
 	return NULL;
 }

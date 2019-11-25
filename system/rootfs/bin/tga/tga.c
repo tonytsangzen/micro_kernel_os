@@ -27,7 +27,7 @@ int main(int argc, char* argv[]) {
 	}
 	graph_t* g = x_graph(x);
 	
-	clear(g, 0x0);
+	clear(g, 0xff888888);
 	blt_alpha(img, 0, 0, img->w, img->h,
 			g, 0, 0, img->w, img->h, 0xff);
 	draw_text(g, 30, g->h-20, "press anykey to quit......", font_by_name("8x16"), 0xffffffff);
