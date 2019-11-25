@@ -6,6 +6,16 @@
 #include <vprintf.h>
 #include <x/xclient.h>
 
+void on_focus(x_t* x, void* p) {
+	(void)x;
+	*(int*)p = 1;
+}
+
+void on_unfocus(x_t* x, void* p) {
+	(void)x;
+	*(int*)p = 0;
+}
+
 int main(int argc, char* argv[]) {
 	(void)argc;
 	(void)argv;
@@ -13,6 +23,10 @@ int main(int argc, char* argv[]) {
 	xscreen_t scr;
 	x_screen_info(&scr);
 	x_t* x = x_open(100, 100, 600, 200, "gtest", X_STYLE_NORMAL);
+	int top = 0;
+	x->data = &top;
+	x->on_focus = on_focus;
+	x->on_unfocus = on_unfocus;
 
 	font_t* font = font_by_name("16x32");
 
@@ -25,8 +39,7 @@ int main(int argc, char* argv[]) {
 			if(xev.type == XEVT_KEYB)
 				break;
 		}
-		int res = x_is_top(x);
-		if(res == 0) {
+		if(top == 1) {
 			snprintf(str, 31, "paint = %d", i++);
 			graph_t* g = x_graph(x);
 			clear(g, argb_int(0xff0000ff));
