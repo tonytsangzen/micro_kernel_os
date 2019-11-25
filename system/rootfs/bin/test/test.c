@@ -7,6 +7,7 @@
 #include <dev/fbinfo.h>
 #include <sys/wait.h>
 #include <graph/graph.h>
+#include <stb_image.h>
 
 int main(int argc, char* argv[]) {
 	(void)argc;

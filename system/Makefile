@@ -16,6 +16,7 @@ CFLAGS = -Wstrict-prototypes \
          -fno-builtin-sprintf \
 				 -Wno-overlength-strings \
          -fno-builtin-exit -fno-builtin-stdio \
+				 -D STBI_NO_STDIO \
 				 -std=c99 
 
 #CFLAGS +=  -g
