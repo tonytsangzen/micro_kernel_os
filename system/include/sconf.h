@@ -1,13 +1,13 @@
 #ifndef SIMPLE_CONFIG_H
 #define SIMPLE_CONFIG_H
 
-#include <tstr.h>
+#include <mstr.h>
 
 #define S_CONF_ITEM_MAX 32
 
 typedef struct {
-	tstr_t* name;
-	tstr_t* value;
+	str_t* name;
+	str_t* value;
 } sconf_item_t;
 
 typedef struct {

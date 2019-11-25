@@ -4,29 +4,29 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <tstr.h>
+#include <mstr.h>
 
 int vfs_new_node(fsinfo_t* info) {
 	return syscall1(SYS_VFS_NEW_NODE, (int32_t)info);
 }
 
 const char* vfs_fullname(const char* fname) {
-	tstr_t* fullname = tstr_new("");
+	str_t* fullname = str_new("");
 	if(fname[0] == '/') {
-		tstr_cpy(fullname, fname);
+		str_cpy(fullname, fname);
 	}
 	else {
 		char pwd[FS_FULL_NAME_MAX];
 		getcwd(pwd, FS_FULL_NAME_MAX-1);
-		tstr_cpy(fullname, pwd);
+		str_cpy(fullname, pwd);
 		if(pwd[1] != 0)
-			tstr_addc(fullname, '/');
-		tstr_add(fullname, fname);
+			str_add(fullname, '/');
+		str_append(fullname, fname);
 	}
 
 	static char ret[FS_FULL_NAME_MAX];
-	strncpy(ret, CS(fullname), FS_FULL_NAME_MAX-1);
-	tstr_free(fullname);
+	strncpy(ret, fullname->cstr, FS_FULL_NAME_MAX-1);
+	str_free(fullname);
 	return ret;
 }
 

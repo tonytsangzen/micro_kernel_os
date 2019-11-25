@@ -7,7 +7,7 @@
 #include <vfs.h>
 #include <ipc.h>
 #include <string.h>
-#include <tstr.h>
+#include <mstr.h>
 #include <ramfs.h>
 #include <errno.h>
 
@@ -165,17 +165,17 @@ void exec_initfs(const char* fname) {
 }
 
 int exec(const char* cmd_line) {
-	tstr_t* cmd = tstr_new("");
+	str_t* cmd = str_new("");
 	const char *p = cmd_line;
 	while(*p != 0 && *p != ' ') {
-		tstr_addc(cmd, *p);
+		str_add(cmd, *p);
 		p++;
 	}
-	tstr_addc(cmd, 0);
+	str_add(cmd, 0);
 	int sz;
-	void* buf = vfs_readfile(CS(cmd), &sz);
+	void* buf = vfs_readfile(cmd->cstr, &sz);
 	if(buf == NULL) {
-		tstr_free(cmd);
+		str_free(cmd);
 		return -1;
 	}
 	syscall3(SYS_EXEC_ELF, (int32_t)cmd_line, (int32_t)buf, sz);

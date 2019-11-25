@@ -18,8 +18,8 @@ CFLAGS = -Wstrict-prototypes \
          -fno-builtin-exit -fno-builtin-stdio \
 				 -std=c99 
 
-CFLAGS +=  -g
-#CFLAGS +=  -O2
+#CFLAGS +=  -g
+CFLAGS +=  -O2
 
 LDFLAGS = -lc
 
@@ -44,7 +44,6 @@ GRAPH_OBJS =	$(LIB_DIR)/graph/graph.o \
 LIB_OBJS = $(LIB_DIR)/syscall.o \
 	$(LIB_DIR)/cmain.o \
 	$(LIB_DIR)/trunk.o \
-	$(LIB_DIR)/tstr.o \
 	$(LIB_DIR)/vfs.o \
 	$(LIB_DIR)/sconf.o \
 	$(LIB_DIR)/ramfs.o \
@@ -59,6 +58,8 @@ LIB_OBJS = $(LIB_DIR)/syscall.o \
 	$(LIB_DIR)/basic_math.o \
 	$(LIB_DIR)/console.o \
 	$(LIB_DIR)/shm.o \
+	$(LIB_DIR)/mstr.o \
+	$(LIB_DIR)/marray.o \
 	$(LIB_DIR)/sys/wait.o \
 	$(LIB_DIR)/x/xclient.o \
 	$(GRAPH_OBJS)

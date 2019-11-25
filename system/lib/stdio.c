@@ -2,43 +2,43 @@
 #include <vprintf.h>
 #include <unistd.h>
 #include <string.h>
-#include <tstr.h>
+#include <mstr.h>
 #include <syscall.h>
 #include <dev/device.h>
 
 static void outc(char c, void* p) {
-	tstr_t* buf = (tstr_t*)p;
-	tstr_addc(buf, c);
+	str_t* buf = (str_t*)p;
+	str_add(buf, c);
 }
 
 void dprintf(int fd, const char *format, ...) {
 	va_list ap;
 	va_start(ap, format);
-	tstr_t* buf = tstr_new("");
+	str_t* buf = str_new("");
 	v_printf(outc, buf, format, ap);
 	va_end(ap);
-	write(fd, buf->items, buf->size);
-	tstr_free(buf);
+	write(fd, buf->cstr, buf->len);
+	str_free(buf);
 }
 
 void printf(const char *format, ...) {
 	va_list ap;
-	tstr_t* buf = tstr_new("");
+	str_t* buf = str_new("");
 	va_start(ap, format);
 	v_printf(outc, buf, format, ap);
 	va_end(ap);
-	write(1, buf->items, buf->size);
-	tstr_free(buf);
+	write(1, buf->cstr, buf->len);
+	str_free(buf);
 }
 
 void uprintf(const char *format, ...) {
 	va_list ap;
-	tstr_t* buf = tstr_new("");
+	str_t* buf = str_new("");
 	va_start(ap, format);
 	v_printf(outc, buf, format, ap);
 	va_end(ap);
-	syscall3(SYS_DEV_WRITE, DEV_UART0, (int32_t)buf->items, (int32_t)buf->size);
-	tstr_free(buf);
+	syscall3(SYS_DEV_WRITE, DEV_UART0, (int32_t)buf->cstr, (int32_t)buf->len);
+	str_free(buf);
 }
 
 int getch(void) {

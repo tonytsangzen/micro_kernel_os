@@ -63,11 +63,12 @@ static inline void pixel_argb(graph_t* graph, int32_t x, int32_t y,
 	uint8_t og = (oc >> 8)  & 0xff;
 	uint8_t or = oc & 0xff;
 
+	oa = oa + (255 - oa) * a / 255;
 	or = r*a/255 + or*(255-a)/255;
 	og = g*a/255 + og*(255-a)/255;
 	ob = b*a/255 + ob*(255-a)/255;
 
-	graph->buffer[y * graph->w + x] = argb(oa>a?oa:a, or, og, ob);
+	graph->buffer[y * graph->w + x] = argb(oa, or, og, ob);
 }
 
 static inline void pixel_argb_safe(graph_t* graph, int32_t x, int32_t y,
@@ -94,6 +95,21 @@ void clear(graph_t* g, uint32_t color) {
 	char* p = (char*)g->buffer;
 	for(i=1; i<g->h; ++i) {
 		memcpy(p+(i*sz), p, sz);
+	}
+}
+
+void reverse(graph_t* g) {
+	if(g == NULL)
+		return;
+	uint32_t i = 0;
+	while(i < g->w*g->h) {
+		uint32_t oc = g->buffer[i];
+		uint8_t oa = (oc >> 24) & 0xff;
+		uint8_t ob = 0xff - ((oc >> 16) & 0xff);
+		uint8_t og = 0xff - ((oc >> 8)  & 0xff);
+		uint8_t or = 0xff - (oc & 0xff);
+		g->buffer[i] = argb(oa, or, og, ob);
+		i++;
 	}
 }
 

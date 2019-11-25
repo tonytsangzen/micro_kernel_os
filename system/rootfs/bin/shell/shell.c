@@ -4,7 +4,7 @@
 #include <stdio.h>
 #include <vfs.h>
 #include <vprintf.h>
-#include <tstr.h>
+#include <mstr.h>
 #include <fcntl.h>
 #include <syscall.h>
 #include <dev/device.h>
@@ -13,37 +13,37 @@
 #define KEY_BACKSPACE 127
 #define KEY_LEFT 0x8
 
-static int32_t gets(tstr_t* buf) {
-	tstr_empty(buf);	
+static int32_t gets(str_t* buf) {
+	str_reset(buf);	
 	while(1) {
 		int c = getch();
 		if(c == 0)
 			return -1;
 
 		if (c == KEY_BACKSPACE) {
-			if (buf->size > 0) {
+			if (buf->len > 0) {
 				//delete last char
 				putch(KEY_LEFT); 
 				putch(' ');
 				putch(KEY_LEFT); 
-				buf->size--;
+				buf->len--;
 			}
 		}
 		else if (c == 8) {
-			if (buf->size > 0) {
+			if (buf->len > 0) {
 				//delete last char
 				putch(c); 
-				buf->size--;
+				buf->len--;
 			}
 		}
 		else {
 			putch(c);
 			if(c == '\r' || c == '\n')
 				break;
-			tstr_addc(buf, c);
+			str_add(buf, c);
 		}
 	}
-	tstr_addc(buf, 0);
+	str_add(buf, 0);
 	return 0;
 }
 
@@ -309,7 +309,7 @@ int main(int argc, char* argv[]) {
 	(void)argc;
 	(void)argv;
 	_terminated = 0;
-	tstr_t* cmdstr = tstr_new("");
+	str_t* cmdstr = str_new("");
 
 	while(_terminated == 0) {
 		char cwd[FS_FULL_NAME_MAX+1];
@@ -317,7 +317,7 @@ int main(int argc, char* argv[]) {
 		if(gets(cmdstr) != 0)
 			break;
 
-		char* cmd = (char*)CS(cmdstr);
+		char* cmd = cmdstr->cstr;
 		if(cmd[0] == 0)
 			continue;
 		if(handle(cmd) == 0)
@@ -333,7 +333,7 @@ int main(int argc, char* argv[]) {
 		int child_pid = fork();
 		if (child_pid == 0) {
 			int res = run_cmd(cmd);
-			tstr_free(cmdstr);	
+			str_free(cmdstr);	
 			return res;
 		}
 		else if(fg != 0) {
@@ -341,6 +341,6 @@ int main(int argc, char* argv[]) {
 		}
 	}
 
-	tstr_free(cmdstr);	
+	str_free(cmdstr);	
 	return 0;
 }

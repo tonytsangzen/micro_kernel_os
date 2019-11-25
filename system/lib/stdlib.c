@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <syscall.h>
+#include <string.h>
 
 void *malloc(size_t size) {
 	return (void*)syscall1(SYS_MALLOC, (int32_t)size);
@@ -7,6 +8,13 @@ void *malloc(size_t size) {
 
 void free(void* ptr) {
 	syscall1(SYS_FREE, (int32_t)ptr);
+}
+
+void* realloc_raw(void* s, uint32_t old_size, uint32_t new_size) {
+	void* p = malloc(new_size);
+	memcpy(p, s, old_size);
+	free(s);
+	return p;
 }
 
 void exit(int status) {

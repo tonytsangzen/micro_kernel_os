@@ -56,6 +56,10 @@ static void console_focus(x_t* x, void* p) {
 	console->fg_color = _conf.fg_color;
 	console->bg_color = _conf.bg_color;
 	console_refresh(console);
+	if(((console->bg_color >> 24) & 0xff) != 0xff)
+		x->xinfo.style |= X_STYLE_ALPHA;
+	else
+		x->xinfo.style = X_STYLE_NORMAL;
 	x_update(x);
 }
 
@@ -65,6 +69,10 @@ static void console_unfocus(x_t* x, void* p) {
 	console->fg_color = _conf.unfocus_fg_color;
 	console->bg_color = _conf.unfocus_bg_color;
 	console_refresh(console);
+	if(((console->bg_color >> 24) & 0xff) != 0xff)
+		x->xinfo.style |= X_STYLE_ALPHA;
+	else
+		x->xinfo.style = X_STYLE_NORMAL;
 	x_update(x);
 }
 

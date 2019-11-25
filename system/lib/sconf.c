@@ -5,6 +5,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <string.h>
+#include <mstr.h>
 
 static inline int is_space(char c) {
 	if(c == ' ' || c == '\t' || c == '\r' || c == '\n')
@@ -12,14 +13,14 @@ static inline int is_space(char c) {
 	return 0;
 }
 
-static inline void trim_right(tstr_t* st) {
-	char* s = (char*)st->items;
+static inline void trim_right(str_t* st) {
+	char* s = (char*)st->cstr;
 	if(s == NULL)
 		return;
 
-	while(st->size > 0) {
-		if(is_space(s[st->size-1]))
-			st->size--;
+	while(st->len > 0) {
+		if(is_space(s[st->len-1]))
+			st->len--;
 		else
 			break;
 	}
@@ -38,8 +39,8 @@ sconf_t* sconf_parse(const char* str) {
 	int32_t it = 0;	/*item index*/
 	uint8_t stat = 0; /*0 for name; 1 for value; 2 for comment*/
 	sconf_item_t* item = &conf->items[0];
-	item->name = tstr_new("");
-	item->value = tstr_new("");
+	item->name = str_new("");
+	item->value = str_new("");
 	while(it < S_CONF_ITEM_MAX) {
 		char c = *str;
 		str++;
@@ -53,11 +54,11 @@ sconf_t* sconf_parse(const char* str) {
 		else if(c == '#') { //comment
 			if(stat == 1) {
 				trim_right(item->value);
-				tstr_addc(item->value, 0);
+				str_add(item->value, 0);
 				it++;
 				item = &conf->items[it];
-				item->name = tstr_new("");
-				item->value = tstr_new("");
+				item->name = str_new("");
+				item->value = str_new("");
 			}
 			stat = 2;
 			continue;
@@ -65,7 +66,7 @@ sconf_t* sconf_parse(const char* str) {
 		else if(stat == 0) {/*read name*/
 			if(c == '=') {
 				trim_right(item->name);
-				tstr_addc(item->name, 0);
+				str_add(item->name, 0);
 				i = 0;
 				stat = 1;
 				continue;
@@ -73,22 +74,22 @@ sconf_t* sconf_parse(const char* str) {
 			else if(is_space(c)) {
 				continue;
 			}
-			tstr_addc(item->name, c);
+			str_add(item->name, c);
 			i++;
 		}	
 		else if(stat == 1) { /*read value*/
 			if(c == '\n') {
 				trim_right(item->value);
-				tstr_addc(item->value, 0);
+				str_add(item->value, 0);
 				i = 0;
 				stat = 0;
 				it++;
 				item = &conf->items[it];
-				item->name = tstr_new("");
-				item->value = tstr_new("");
+				item->name = str_new("");
+				item->value = str_new("");
 				continue;
 			}
-			tstr_addc(item->value, c);
+			str_add(item->value, c);
 			i++;
 		}
 		else { //comment
@@ -109,8 +110,8 @@ void sconf_free(sconf_t* conf) {
 		sconf_item_t* item = &conf->items[i++];
 		if(item->name == NULL)
 			break;
-		tstr_free(item->name);
-		tstr_free(item->value);
+		str_free(item->name);
+		str_free(item->value);
 	}
 	free(conf);
 }
@@ -128,9 +129,9 @@ const char* sconf_get(sconf_t *conf, const char*name) {
 	int32_t i = 0;
 	while(i < S_CONF_ITEM_MAX) {
 		sconf_item_t* item = &conf->items[i++];
-		const char* n = CS(item->name);
+		const char* n = item->name->cstr;
 		if(strcmp(n, name) == 0)
-			return CS(item->value);
+			return item->value->cstr;
 	}
 	return "";
 }
