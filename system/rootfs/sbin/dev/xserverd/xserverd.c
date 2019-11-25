@@ -161,14 +161,26 @@ static int draw_view(x_t* xp, xview_t* view) {
 	if(gbuf != NULL) {
 		graph_t* g = graph_new(gbuf, view->xinfo.r.w, view->xinfo.r.h);
 		if(xp->current.view != view) { //drag and moving
-			blt(g, 0, 0, 
-					view->xinfo.r.w,
-					view->xinfo.r.h,
-					xp->g,
-					view->xinfo.r.x,
-					view->xinfo.r.y,
-					view->xinfo.r.w,
-					view->xinfo.r.h);
+			if((view->xinfo.style & X_STYLE_ALPHA) != 0) {
+				blt_alpha(g, 0, 0, 
+						view->xinfo.r.w,
+						view->xinfo.r.h,
+						xp->g,
+						view->xinfo.r.x,
+						view->xinfo.r.y,
+						view->xinfo.r.w,
+						view->xinfo.r.h, 0xff);
+			}
+			else {
+				blt(g, 0, 0, 
+						view->xinfo.r.w,
+						view->xinfo.r.h,
+						xp->g,
+						view->xinfo.r.x,
+						view->xinfo.r.y,
+						view->xinfo.r.w,
+						view->xinfo.r.h);
+			}
 		}
 		else {
 			draw_mask(xp->g, 
@@ -354,7 +366,8 @@ static int x_update(int fd, int from_pid, proto_t* in, x_t* x) {
 			view->xinfo.r.x != xinfo.r.x ||
 			view->xinfo.r.y != xinfo.r.y ||
 			view->xinfo.r.w != xinfo.r.w ||
-			view->xinfo.r.h != xinfo.r.h) {
+			view->xinfo.r.h != xinfo.r.h ||
+			(view->xinfo.style & X_STYLE_ALPHA) != 0) {
 		x->dirty = 1;
 	}
 	

@@ -7,6 +7,7 @@
 #include <vprintf.h>
 #include <x/xclient.h>
 #include <sconf.h>
+#include <graph/tga.h>
 
 #define ITEM_MAX 16
 
@@ -38,21 +39,29 @@ static int32_t read_config(const char* fname, items_t* items) {
 	return 0;
 }
 
-static void draw(graph_t *g, items_t* items) {
+static void draw_icon(graph_t* g, items_t* items, int i) {
+	graph_t* img = tga_image_new("/data/laptop.tga");
+	int dx = (items->icon_size - img->w)/2;
+	int dy = (items->icon_size - img->h)/2;
+
+	blt_alpha(img, 0, 0, img->w, img->h,
+			g, dx, dy+i*items->icon_size, img->w, img->h, 0xff);
+	graph_free(img);
+}
+
+static void draw(x_t* x, graph_t *g, items_t* items) {
 	//font_t* font = get_font_by_name("8x16");
-	clear(g, argb_int(0xff222222));
+	clear(g, argb_int(0x22ffffff));
 	int i;
 	for(i=0; i<items->num; i++) {
 		box(g, 0, i*items->icon_size,
 			items->icon_size,
 			items->icon_size,
 			0xffaaaaaa);
-		box(g, 4, i*items->icon_size+4,
-			items->icon_size-8,
-			items->icon_size-8,
-			0xffaaaaaa);
+		draw_icon(g, items, i);
 		//draw_text(g, 0, i*items->icon_size + 4, items->items[i], font, 0xff888888);
 	}
+	x_update(x);
 }
 
 int main(int argc, char* argv[]) {
@@ -69,10 +78,10 @@ int main(int argc, char* argv[]) {
 			scr.size.h-items.icon_size*items.num,
 			items.icon_size, 
 			items.icon_size * items.num,
-			"launcher", X_STYLE_NO_FRAME);
+			"launcher", X_STYLE_NO_FRAME | X_STYLE_ALPHA);
 
 	graph_t* g = x_graph(x);
-	draw(g, &items);
+	draw(x, g, &items);
 
 	xevent_t xev;
 	while(1) {
