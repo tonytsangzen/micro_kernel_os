@@ -25,7 +25,7 @@ CFLAGS = \
 	-g \
 	-mcpu=$(CPU)
 	
-#CFLAGS += -D CONFIG_KEYMAP2
+CFLAGS += -D CONFIG_KEYMAP2
 
 ASFLAGS = -g -I. -Iinclude -mcpu=$(CPU)
 
@@ -50,6 +50,7 @@ LIB_OBJS = \
 	${LIB_DIR}/buffer.o \
 	${LIB_DIR}/vprintf.o \
 	${LIB_DIR}/trunk.o \
+	${LIB_DIR}/proto.o \
 	${LIB_DIR}/tstr.o \
 	${LIB_DIR}/ramfs.o \
 	${LIB_DIR}/charbuf.o \

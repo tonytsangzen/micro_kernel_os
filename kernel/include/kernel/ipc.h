@@ -20,7 +20,7 @@ typedef struct st_proc_msg {
 } proc_msg_t;
 
 
-extern int32_t proc_send_msg(int32_t to_pid, rawdata_t* data, int32_t id);
+extern proc_msg_t* proc_send_msg(int32_t to_pid, rawdata_t* data, int32_t id);
 extern int32_t proc_get_msg(int32_t *pid, rawdata_t* data, int32_t id);
 
 #endif

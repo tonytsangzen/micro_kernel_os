@@ -15,6 +15,19 @@ enum {
 	FS_TYPE_DEV
 };
 
+enum {
+	FS_CMD_NONE = 0,
+	FS_CMD_OPEN,
+	FS_CMD_CLOSE,
+	FS_CMD_CLOSED,
+	FS_CMD_READ,
+	FS_CMD_WRITE,
+	FS_CMD_SEEK,
+	FS_CMD_DMA,
+	FS_CMD_CNTL,
+	FS_CMD_FLUSH
+};
+
 typedef struct {
 	uint32_t access;
 	char dev_name[FS_NODE_NAME_MAX];

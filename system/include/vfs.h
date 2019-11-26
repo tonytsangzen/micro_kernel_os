@@ -3,18 +3,6 @@
 
 #include <fsinfo.h>
 
-enum {
-	FS_CMD_NONE = 0,
-	FS_CMD_OPEN,
-	FS_CMD_CLOSE,
-	FS_CMD_READ,
-	FS_CMD_WRITE,
-	FS_CMD_SEEK,
-	FS_CMD_DMA,
-	FS_CMD_CNTL,
-	FS_CMD_FLUSH
-};
-
 const char* vfs_fullname(const char* fname);
 
 int vfs_new_node(fsinfo_t* info);

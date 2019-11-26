@@ -4,6 +4,8 @@
 #include <kernel/proc.h>
 #include <kstring.h>
 #include <buffer.h>
+#include <proto.h>
+#include <kernel/ipc.h>
 
 static vfs_node_t* _vfs_root = NULL;
 static mount_t _vfs_mounts[FS_MOUNT_MAX];
@@ -24,16 +26,21 @@ void vfs_init(void) {
 	strcpy(_vfs_root->fsinfo.name, "/");
 }
 
+static inline int32_t get_mount_pid(vfs_node_t* node) {
+	mount_t mount;	
+	int32_t res = vfs_get_mount(node, &mount);
+	if(res == 0)
+		return mount.pid;
+	return -1;
+}
+
 static inline int32_t check_mount(vfs_node_t* node) {
 	if(_current_proc->owner <= 0)
 		return 0;
 
-	mount_t mount;	
-	int32_t res = vfs_get_mount(node, &mount);
-	if(res == 0) {
-		if(mount.pid != _current_proc->pid) //current proc not the mounting one.
-			return -1;
-	}
+	int32_t mnt_pid = get_mount_pid(node);
+	if(mnt_pid != _current_proc->pid) //current proc not the mounting one.
+		return -1;
 	return 0;
 }
 
@@ -330,12 +337,33 @@ void vfs_close(proc_t* proc, int32_t fd) {
 	if(file->wr != 0 && node->refs_w > 0)
 		node->refs_w--;
 
+	memset(file, 0, sizeof(kfile_t));
+
 	if(node->fsinfo.type == FS_TYPE_PIPE && node->refs <= 0) {
 		buffer_t* buffer = (buffer_t*)node->fsinfo.data;
 		kfree(buffer);
 		kfree(node);
+		return;
 	}
-	memset(file, 0, sizeof(kfile_t));
+
+	proto_t in;
+	proto_init(&in, NULL, 0);
+	proto_add_int(&in, FS_CMD_CLOSED);
+	proto_add_int(&in, fd);
+	proto_add_int(&in, proc->pid);
+	proto_add(&in, &node->fsinfo, sizeof(fsinfo_t));
+
+	rawdata_t data;
+	data.data = in.data;
+	data.size = in.size;
+
+	int32_t to_pid = get_mount_pid(node);
+	if(to_pid >= 0) {
+		proc_msg_t* msg = proc_send_msg(to_pid, &data, -1);
+		if(msg != NULL)
+			msg->from_pid = proc->pid;
+	}
+	proto_clear(&in);
 }
 
 int32_t vfs_dup(int32_t from) {

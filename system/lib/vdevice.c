@@ -32,10 +32,20 @@ static void do_close(vdevice_t* dev, int from_pid, proto_t *in, void* p) {
 	(void)from_pid;
 	fsinfo_t info;
 	int fd = proto_read_int(in);
-	memcpy(&info, proto_read(in, NULL), sizeof(fsinfo_t));
+	proto_read_to(in, &info, sizeof(fsinfo_t));
 
 	if(dev != NULL && dev->close != NULL) {
 		dev->close(fd, from_pid, &info, p);
+	}
+}
+
+static void do_closed(vdevice_t* dev, int from_pid, proto_t *in, void* p) {
+	(void)from_pid;
+	fsinfo_t info;
+	int fd = proto_read_int(in);
+	proto_read_to(in, &info, sizeof(fsinfo_t));
+	if(dev != NULL && dev->closed != NULL) {
+		dev->closed(fd, from_pid, &info, p);
 	}
 }
 
@@ -43,7 +53,7 @@ static void do_read(vdevice_t* dev, int from_pid, proto_t *in, void* p) {
 	int size, offset;
 	fsinfo_t info;
 	int fd = proto_read_int(in);
-	memcpy(&info, proto_read(in, NULL), sizeof(fsinfo_t));
+	proto_read_to(in, &info, sizeof(fsinfo_t));
 	size = proto_read_int(in);
 	offset = proto_read_int(in);
 
@@ -163,6 +173,9 @@ static void handle(vdevice_t* dev, int from_pid, proto_t *in, void* p) {
 		return;
 	case FS_CMD_CLOSE:
 		do_close(dev, from_pid, in, p);
+		return;
+	case FS_CMD_CLOSED:
+		do_closed(dev, from_pid, in, p);
 		return;
 	case FS_CMD_READ:
 		do_read(dev, from_pid, in, p);

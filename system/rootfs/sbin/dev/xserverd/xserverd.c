@@ -520,7 +520,7 @@ static int xserver_open(int fd, int from_pid, fsinfo_t* info, int oflag, void* p
 	return 0;
 }
 
-static int xserver_close(int fd, int from_pid, fsinfo_t* info, void* p) {
+static int xserver_closed(int fd, int from_pid, fsinfo_t* info, void* p) {
 	(void)info;
 	x_t* x = (x_t*)p;
 	
@@ -788,7 +788,8 @@ int main(int argc, char** argv) {
 	strcpy(dev.name, "xserver");
 	dev.mount = xserver_mount;
 	dev.cntl = xserver_cntl;
-	dev.close = xserver_close;
+	//dev.close = xserver_close;
+	dev.closed = xserver_closed;
 	dev.open = xserver_open;
 	dev.loop_step= xserver_loop_step;
 	dev.umount = xserver_umount;
