@@ -48,7 +48,7 @@ int main(int argc, char* argv[]) {
 			x_release_graph(x, g);
 			x_update(x);
 		}
-		usleep(0);
+		usleep(10000);
 	}
 
 	x_close(x);
