@@ -142,7 +142,7 @@ static void draw_mask(graph_t* g, int x, int y, int w, int h) {
 		h = g->h - y - 1;
 
 	int i, j;
-	int step = 6;
+	int step = 4;
 	for(j=0; j<h; j+=step) {
 		for(i=0; i<w; i+=step) {
 			pixel(g, i+x, j+y, 0xff000000);
@@ -156,28 +156,29 @@ static int draw_view(x_t* xp, xview_t* view) {
 		return 0;
 
 	if(view->g != NULL) {
-		if((view->xinfo.style & X_STYLE_ALPHA) != 0) {
-			blt_alpha(view->g, 0, 0, 
-					view->xinfo.r.w,
-					view->xinfo.r.h,
-					xp->g,
-					view->xinfo.r.x,
-					view->xinfo.r.y,
-					view->xinfo.r.w,
-					view->xinfo.r.h, 0xff);
-			xp->dirty = 1;
+		if(xp->current.view != view) { //drag and moving
+			if((view->xinfo.style & X_STYLE_ALPHA) != 0) {
+				blt_alpha(view->g, 0, 0, 
+						view->xinfo.r.w,
+						view->xinfo.r.h,
+						xp->g,
+						view->xinfo.r.x,
+						view->xinfo.r.y,
+						view->xinfo.r.w,
+						view->xinfo.r.h, 0xff);
+			}
+			else {
+				blt(view->g, 0, 0, 
+						view->xinfo.r.w,
+						view->xinfo.r.h,
+						xp->g,
+						view->xinfo.r.x,
+						view->xinfo.r.y,
+						view->xinfo.r.w,
+						view->xinfo.r.h);
+			}
 		}
 		else {
-			blt(view->g, 0, 0, 
-					view->xinfo.r.w,
-					view->xinfo.r.h,
-					xp->g,
-					view->xinfo.r.x,
-					view->xinfo.r.y,
-					view->xinfo.r.w,
-					view->xinfo.r.h);
-		}
-		if(xp->current.view == view) { //drag and moving
 			draw_mask(xp->g, 
 					view->xinfo.r.x,
 					view->xinfo.r.y,
@@ -685,6 +686,7 @@ static int mouse_handle(x_t* x, int8_t state, int32_t rx, int32_t ry) {
 				x->current.view = view;
 				x->current.old_pos.x = x->cursor.cpos.x;
 				x->current.old_pos.y = x->cursor.cpos.y;
+				x->dirty = 1;
 			}
 			e->event.state = XEVT_MOUSE_DOWN;
 		}
