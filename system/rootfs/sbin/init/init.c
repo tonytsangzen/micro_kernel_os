@@ -128,9 +128,11 @@ static void run(init_console_t* console, const char* cmd) {
 	}
 }
 
-static void welcome(init_console_t* console) {
+static void console_welcome(init_console_t* console) {
 	const char* s = ""
-			"---Ewok micro-kernel OS---\n\n"
+			"+-----Ewok micro-kernel OS-----------------------+\n"
+			"| https://github.com/MisaZhu/micro_kernel_os.git |\n"
+			"+------------------------------------------------+\n"
 			"initrd mounted.\n"
 			"/dev/fb0 mounted (sbin/dev/fbd).\n";
 	console_out(console, s);
@@ -142,13 +144,16 @@ int main(int argc, char** argv) {
 
 	setenv("OS", "mkos");
 	setenv("PATH", "/sbin:/bin");
+	uprintf("-----init process start-------------\n");
 
 	run_init_dev("sbin/dev/initrd", "/dev", 0);
 	run_init_dev("/sbin/dev/fbd", "/dev/fb0", 1);
 
 	init_console_t console;
 	init_console(&console);
-	welcome(&console);
+	uprintf("init console ready.\n");
+
+	console_welcome(&console);
 
 	run_dev(&console, "/sbin/dev/ttyd", "/dev/tty0");
 	run_dev(&console, "/sbin/dev/nulld", "/dev/null");
