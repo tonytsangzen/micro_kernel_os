@@ -12,6 +12,7 @@
 #include <kernel/irq.h>
 #include <dev/timer.h>
 #include <ramfs.h>
+#include <kprintf.h>
 #include <vfs.h>
 
 page_dir_entry_t* _kernel_vm = NULL;
@@ -101,25 +102,39 @@ static void fs_init(void) {
 void _kernel_entry_c(context_t* ctx) {
 	(void)ctx;
 	hw_info_init();
-
 	init_kernel_vm();  
+	uart_out("\n------Ewok micro-kernel-------\n"
+		"kernel mmu inited.\n");
+
 	km_init();
+	printf("kernel malloc inited.\n");
+
 	load_initrd();
+	printf("initrd image loaded.\n");
+
 	init_allocable_mem(); /*init the rest allocable memory VM*/
+	printf("whole allocable memory ready.\n");
 
 	shm_init();
+	printf("share memory ready.\n");
 
 	irq_init();
+	printf("irq inited.\n");
 
 	dev_init();
+	printf("devices inited.\n");
 
 	fs_init();
+	printf("vfs inited.\n");
 
 	procs_init();
+	printf("processes inited.\n");
 
 	load_init();
+	printf("load first process(/sbin/init).\n");
 
 	timer_set_interval(0, 0x40); //0.001 sec sequence
+	printf("start timer.\n");
 
 	while(1) {
 		__asm__("MOV r0, #0; MCR p15,0,R0,c7,c0,4"); // CPU enter WFI state
