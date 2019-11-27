@@ -130,8 +130,9 @@ static void run(init_console_t* console, const char* cmd) {
 
 static void welcome(init_console_t* console) {
 	const char* s = ""
-			"---Ewok micro-kernel OS---\n"
-			"\n";
+			"---Ewok micro-kernel OS---\n\n"
+			"initrd mounted.\n"
+			"/dev/fb0 mounted (sbin/dev/fbd).\n";
 	console_out(console, s);
 }
 
