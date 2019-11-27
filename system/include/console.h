@@ -26,5 +26,6 @@ void console_close(console_t* console);
 void console_refresh(console_t* console);
 int32_t console_reset(console_t* console);
 void console_put_char(console_t* console, char c);
+void console_put_string(console_t* console, const char* s);
 
 #endif

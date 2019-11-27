@@ -164,3 +164,9 @@ void console_put_char(console_t* console, char c) {
 	}
 }
 
+void console_put_string(console_t* console, const char* s) {
+	while(*s != 0) {
+		console_put_char(console, *s);
+		s++;
+	}
+}

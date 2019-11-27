@@ -554,6 +554,7 @@ static int x_init(x_t* x) {
 		close(x->keyb_fd);
 		close(x->mouse_fd);
 		close(x->fb_fd);
+		return -1;
 	}
 
 	void* gbuf = shm_map(id);
@@ -561,6 +562,7 @@ static int x_init(x_t* x) {
 		close(x->keyb_fd);
 		close(x->mouse_fd);
 		close(x->fb_fd);
+		return -1;
 	}
 
 	fbinfo_t info;
