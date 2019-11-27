@@ -133,7 +133,7 @@ static void console_welcome(init_console_t* console) {
 			"+-----Ewok micro-kernel OS-----------------------+\n"
 			"| https://github.com/MisaZhu/micro_kernel_os.git |\n"
 			"+------------------------------------------------+\n"
-			"initrd mounted.\n"
+			"/ mounted (sbin/dev/initrd).\n"
 			"/dev/fb0 mounted (sbin/dev/fbd).\n";
 	console_out(console, s);
 }
