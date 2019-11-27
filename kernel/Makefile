@@ -26,7 +26,6 @@ CFLAGS = \
 	
 #CFLAGS += -g
 CFLAGS += -O2
-#CFLAGS += -D CONFIG_KEYMAP2
 
 ASFLAGS = -g -I. -Iinclude -mcpu=$(CPU)
 
