@@ -42,6 +42,7 @@ void dev_init(void) {
 	dev->type = DEV_TYPE_CHAR;
 	dev->inputch = keyb_inputch;
 	dev->read = char_dev_read;
+	dev->op = keyb_dev_op;
 
 	dev = &_devs[DEV_MOUSE];
 	memset(dev, 0, sizeof(dev_t));

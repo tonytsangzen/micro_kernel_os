@@ -15,9 +15,8 @@ int32_t keyb_init() {
 	return 1;
 }
 
+static int32_t _keyb_map = 0;
 
-#ifndef CONFIG_KEYMAP2
-           
 //0    1    2    3    4    5    6    7     8    9    A    B    C    D    E    F
 const char _ltab[] = {
   0,   0,   0,   0,   0,   0,   0,   0,    0,   0,   0,   0,   0, '\t',  '`',   0,
@@ -41,7 +40,7 @@ const char _utab[] = {
 
 static uint8_t _held[128] = {0};
 
-int32_t keyb_inputch(dev_t* dev, int32_t loop) {
+static int32_t keyb_inputch_map0(dev_t* dev, int32_t loop) {
 	uint8_t scode;
 	char c = 0;
 	scode = get8(KEYBOARD_BASE + KDATA);
@@ -84,7 +83,9 @@ int32_t keyb_inputch(dev_t* dev, int32_t loop) {
 	return 0;
 }
 
-#else 
+/*
+keyboard map2
+*/
 
 /* Scan codes to ASCII for unshifted keys; unused keys are left out */
 static char unsh[] = {
@@ -103,7 +104,7 @@ static char sh[] = {
 };
 
 // kbd_handler1() for scan code set 1
-int32_t keyb_inputch(dev_t* dev, int32_t loop) {
+static int32_t keyb_inputch_map1(dev_t* dev, int32_t loop) {
 	uint8_t scode, c;
 	static uint32_t t2 = 0;
 	scode = get8(KEYBOARD_BASE + KDATA);
@@ -128,4 +129,19 @@ int32_t keyb_inputch(dev_t* dev, int32_t loop) {
 	return 0;
 }
 
-#endif
+int32_t keyb_inputch(dev_t* dev, int32_t loop) {
+	if(_keyb_map == 0)
+		return keyb_inputch_map0(dev, loop);
+	else if(_keyb_map == 1)
+		return keyb_inputch_map1(dev, loop);
+	return -1;
+}
+
+int32_t keyb_dev_op(dev_t* dev, int32_t opcode, int32_t arg) {
+	(void)dev;
+
+	if(opcode == DEV_OP_SET) {
+		_keyb_map = arg;
+	}
+	return 0;
+}

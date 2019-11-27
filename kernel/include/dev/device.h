@@ -19,6 +19,7 @@ enum {
 
 enum {
 	DEV_OP_INFO = 0,
+	DEV_OP_SET,
 	DEV_OP_ON,
 	DEV_OP_OFF
 };
