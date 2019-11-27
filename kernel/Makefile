@@ -22,9 +22,10 @@ CFLAGS = \
 	-fno-builtin-printf -fno-builtin-strcpy -Wno-overlength-strings \
 	-fno-builtin-exit -fno-builtin-stdio \
 	-std=c99 \
-	-g \
 	-mcpu=$(CPU)
 	
+CFLAGS += -g
+#CFLAGS += -O2
 #CFLAGS += -D CONFIG_KEYMAP2
 
 ASFLAGS = -g -I. -Iinclude -mcpu=$(CPU)

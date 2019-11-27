@@ -25,6 +25,7 @@ enum {
 	FS_CMD_SEEK,
 	FS_CMD_DMA,
 	FS_CMD_CNTL,
+	FS_CMD_DUP,
 	FS_CMD_FLUSH
 };
 
