@@ -12,16 +12,16 @@ CFLAGS = -Wstrict-prototypes \
 				 -marm \
 				 -pedantic -Wall -Wextra -msoft-float -fPIC -mapcs-frame \
          -fno-builtin-printf \
+         -fno-builtin-memset \
          -fno-builtin-snprintf \
          -fno-builtin-sprintf \
 				 -Wno-overlength-strings \
          -fno-builtin-exit -fno-builtin-stdio \
 				 -std=c99 
-
 #CFLAGS +=  -g
 CFLAGS +=  -O2
 
-LDFLAGS = -lc
+LDFLAGS = -lc -lnosys
 
 LIB_DIR = lib
 GRAPH_OBJS =	$(LIB_DIR)/graph/graph.o \
