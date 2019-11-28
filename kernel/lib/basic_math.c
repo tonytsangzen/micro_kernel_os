@@ -65,8 +65,6 @@ inline uint32_t div_u32(uint32_t v, uint32_t by) {
 		return v >> 29;
 	case 1<<30:
 		return v >> 30;
-	case 1<<31:
-		return v >> 31;
 	}
 
 	uint32_t ret = 0;
