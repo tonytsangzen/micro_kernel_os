@@ -144,7 +144,7 @@ int main(int argc, char** argv) {
 
 	setenv("OS", "mkos");
 	setenv("PATH", "/sbin:/bin");
-	uprintf("-----init process start-------------\n");
+	uprintf("\n[init process started]\n");
 
 	run_init_dev("sbin/dev/initrd", "/dev", 0);
 	run_init_dev("/sbin/dev/fbd", "/dev/fb0", 1);
