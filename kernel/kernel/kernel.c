@@ -89,7 +89,7 @@ static void load_init(void) {
 	const char* elf = ramfs_read(&_initfs, prog, &sz);
 	if(elf != NULL) {
 		proc_t *proc = proc_create();
-		tstr_cpy(proc->cmd, prog);
+		str_cpy(proc->cmd, prog);
 		proc_load_elf(proc, elf, sz);
 	}
 	free_initrd();

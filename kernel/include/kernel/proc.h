@@ -6,7 +6,7 @@
 #include <mm/mmu.h>
 #include <mm/trunkmalloc.h>
 #include <kernel/kfile.h>
-#include <tstr.h>
+#include <mstr.h>
 #include <procinfo.h>
 
 enum {
@@ -25,8 +25,8 @@ enum {
 #define SHM_MAX 128
 
 typedef struct {
-	tstr_t* name;
-	tstr_t* value;
+	str_t* name;
+	str_t* value;
 } proc_env_t;
 
 typedef struct {
@@ -58,8 +58,8 @@ typedef struct st_proc {
 	proc_msg_t* msg_queue_head;
 	proc_msg_t* msg_queue_tail;
 
-	tstr_t* cmd;
-	tstr_t* cwd;
+	str_t* cmd;
+	str_t* cwd;
 
 	context_t ctx;
 

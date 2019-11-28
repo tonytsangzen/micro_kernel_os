@@ -7,6 +7,7 @@
 
 void* kmalloc(uint32_t size);
 void kfree(void* p);
+void* krealloc_raw(void* s, uint32_t old_size, uint32_t new_size);
 void km_init(void);
 
 #endif

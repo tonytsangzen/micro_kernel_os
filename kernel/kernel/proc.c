@@ -165,9 +165,9 @@ static void proc_free_space(proc_t *proc) {
 	for(i=0; i<ENV_MAX; i++) {
 		proc_env_t* env = &proc->space->envs[i];
 		if(env->name) 
-			tstr_free(env->name);
+			str_free(env->name);
 		if(env->value) 
-			tstr_free(env->value);
+			str_free(env->value);
 	}
 
 	/*close files*/
@@ -263,8 +263,8 @@ void proc_exit(context_t* ctx, proc_t *proc, int32_t res) {
 
 	proc_terminate(ctx, proc);
 	proc->state = UNUSED;
-	tstr_free(proc->cmd);
-	tstr_free(proc->cwd);
+	str_free(proc->cmd);
+	str_free(proc->cwd);
 	proc_free_space(proc);
 	memset(proc, 0, sizeof(proc_t));
 	__int_on(cpsr);
@@ -311,8 +311,8 @@ proc_t *proc_create(void) {
 			V2P(proc->user_stack[i]),
 			AP_RW_RW);
 	}
-	proc->cmd = tstr_new("");
-	proc->cwd = tstr_new("/");
+	proc->cmd = str_new("");
+	proc->cwd = str_new("/");
 	proc->ctx.sp = user_stack_base + STACK_PAGES*PAGE_SIZE;
 	proc->ctx.cpsr = 0x50;
 	return proc;
@@ -465,8 +465,8 @@ int32_t proc_set_env(const char* name, const char* value) {
 				strcmp(CS(_current_proc->space->envs[i].name), name) == 0) {
 			env = &_current_proc->space->envs[i];
 			if(env->name == NULL) {
-				env->name = tstr_new("");
-				tstr_cpy(env->name, name);
+				env->name = str_new("");
+				str_cpy(env->name, name);
 			}
 			break;
 		}
@@ -474,8 +474,8 @@ int32_t proc_set_env(const char* name, const char* value) {
 	if(env == NULL)
 		return -1;
 	if(env->value == NULL)
-		env->value = tstr_new("");
-	tstr_cpy(env->value, value);
+		env->value = str_new("");
+	str_cpy(env->value, value);
 	return 0;
 }
 
@@ -486,11 +486,11 @@ static inline void proc_clone_envs(proc_t* child, proc_t* parent) {
 			break;
 		proc_env_t* env = &child->space->envs[i];
 		if(env->name == NULL)
-			env->name = tstr_new("");
+			env->name = str_new("");
 		if(env->value == NULL)
-			env->value = tstr_new("");
-		tstr_cpy(env->name, CS(parent->space->envs[i].name));
-		tstr_cpy(env->value, CS(parent->space->envs[i].value));
+			env->value = str_new("");
+		str_cpy(env->name, CS(parent->space->envs[i].name));
+		str_cpy(env->value, CS(parent->space->envs[i].value));
 	}
 }
 
@@ -541,8 +541,8 @@ static int32_t proc_clone(proc_t* child, proc_t* parent) {
 	proc_clone_files(child, parent);
 	proc_clone_envs(child, parent);
 
-	tstr_cpy(child->cmd, CS(parent->cmd));
-	tstr_cpy(child->cwd, CS(parent->cwd));
+	str_cpy(child->cmd, CS(parent->cmd));
+	str_cpy(child->cwd, CS(parent->cwd));
 	return 0;
 }
 

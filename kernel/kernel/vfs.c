@@ -141,23 +141,23 @@ int32_t vfs_get_mount(vfs_node_t* node, mount_t* mount) {
 }
 
 static const char* fullname(vfs_node_t* node) {
-	tstr_t* s1 = tstr_new("");
+	str_t* s1 = str_new("");
 	while(node != NULL) {
-		tstr_t* s2 = tstr_new("");
-		tstr_cpy(s2, node->fsinfo.name);
+		str_t* s2 = str_new("");
+		str_cpy(s2, node->fsinfo.name);
 		if(strlen(CS(s1)) != 0) {
 			if(node->fsinfo.name[0] != '/')
-				tstr_addc(s2, '/');
-			tstr_add(s2, CS(s1));
+				str_addc(s2, '/');
+			str_add(s2, CS(s1));
 		}
-		tstr_cpy(s1, CS(s2));
-		tstr_free(s2);
+		str_cpy(s1, CS(s2));
+		str_free(s2);
 		node = node->father;
 	}
 
 	static char ret[FS_FULL_NAME_MAX];
 	strncpy(ret, CS(s1), FS_FULL_NAME_MAX-1);
-	tstr_free(s1);
+	str_free(s1);
 	return ret;
 }
 

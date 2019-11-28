@@ -49,9 +49,8 @@ LIB_OBJS = \
 	${LIB_DIR}/kstring.o \
 	${LIB_DIR}/buffer.o \
 	${LIB_DIR}/vprintf.o \
-	${LIB_DIR}/trunk.o \
 	${LIB_DIR}/proto.o \
-	${LIB_DIR}/tstr.o \
+	${LIB_DIR}/mstr.o \
 	${LIB_DIR}/ramfs.o \
 	${LIB_DIR}/charbuf.o \
 	${LIB_DIR}/basic_math.o \

@@ -274,7 +274,7 @@ static int32_t sys_load_elf(context_t* ctx, const char* cmd, void* elf, uint32_t
 	if(elf == NULL)
 		return -1;
 	
-	tstr_cpy(_current_proc->cmd, cmd);
+	str_cpy(_current_proc->cmd, cmd);
 	if(proc_load_elf(_current_proc, elf, elf_size) != 0)
 		return -1;
 
@@ -295,7 +295,7 @@ static void sys_get_msg(context_t* ctx, int32_t *pid, rawdata_t* data, int32_t i
 }
 
 static int32_t sys_proc_set_cwd(const char* cwd) {
-	tstr_cpy(_current_proc->cwd, cwd);
+	str_cpy(_current_proc->cwd, cwd);
 	return 0;
 }
 
