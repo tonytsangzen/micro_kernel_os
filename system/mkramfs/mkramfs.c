@@ -4,7 +4,7 @@
 #include <string.h>
 #include <stdlib.h>
 
-#define FULL_MAX 256
+#define FULL_MAX 512
 
 void dump(FILE* out, const char*dname, const char* fname) {
 	char full[FULL_MAX];
