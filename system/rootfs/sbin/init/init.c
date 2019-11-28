@@ -89,7 +89,7 @@ static void check_keyb_table(void) {
 			syscall3(SYS_DEV_OP, DEV_KEYB, DEV_OP_SET, 0);
 			break;
 		}
-		else {
+		else if(v == 48) {
 			syscall3(SYS_DEV_OP, DEV_KEYB, DEV_OP_SET, 1);
 			break;
 		}
