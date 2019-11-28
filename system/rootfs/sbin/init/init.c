@@ -74,6 +74,11 @@ static void close_console(init_console_t* console) {
 }
 
 static void console_out(init_console_t* console, const char* s) {
+	if(console->fb_fd < 0) {
+		uprintf("%s", s);
+		return;
+	}
+
 	console_put_string(&console->console, s);
 	flush(console->fb_fd);
 }
@@ -144,15 +149,14 @@ int main(int argc, char** argv) {
 
 	setenv("OS", "mkos");
 	setenv("PATH", "/sbin:/bin");
-	uprintf("\n[init process started]\n");
+	init_console_t console;
+	console.fb_fd = -1;
+	console_out(&console, "\n[init process started]\n");
 
 	run_init_dev("sbin/dev/initrd", "/dev", 0);
 	run_init_dev("/sbin/dev/fbd", "/dev/fb0", 1);
 
-	init_console_t console;
 	init_console(&console);
-	uprintf("init console ready.\n");
-
 	console_welcome(&console);
 
 	run_dev(&console, "/sbin/dev/ttyd", "/dev/tty0");
