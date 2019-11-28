@@ -30,7 +30,7 @@
 	
 .make and run
 	
-	"cd rootfs; make":
+	"cd system; make":
 	  build EwokOS root filesystem.
 	"cd kernel; make":
 	  build EwokOS kernel image.
