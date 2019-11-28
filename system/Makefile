@@ -59,6 +59,7 @@ LIB_OBJS = $(LIB_DIR)/syscall.o \
 	$(LIB_DIR)/console.o \
 	$(LIB_DIR)/shm.o \
 	$(LIB_DIR)/mstr.o \
+	$(LIB_DIR)/mstrx.o \
 	$(LIB_DIR)/marray.o \
 	$(LIB_DIR)/sys/wait.o \
 	$(LIB_DIR)/x/xclient.o \

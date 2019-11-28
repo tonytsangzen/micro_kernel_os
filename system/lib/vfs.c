@@ -20,8 +20,8 @@ const char* vfs_fullname(const char* fname) {
 		getcwd(pwd, FS_FULL_NAME_MAX-1);
 		str_cpy(fullname, pwd);
 		if(pwd[1] != 0)
-			str_add(fullname, '/');
-		str_append(fullname, fname);
+			str_addc(fullname, '/');
+		str_add(fullname, fname);
 	}
 
 	static char ret[FS_FULL_NAME_MAX];

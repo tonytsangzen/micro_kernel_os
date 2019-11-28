@@ -54,7 +54,7 @@ sconf_t* sconf_parse(const char* str) {
 		else if(c == '#') { //comment
 			if(stat == 1) {
 				trim_right(item->value);
-				str_add(item->value, 0);
+				str_addc(item->value, 0);
 				it++;
 				item = &conf->items[it];
 				item->name = str_new("");
@@ -66,7 +66,7 @@ sconf_t* sconf_parse(const char* str) {
 		else if(stat == 0) {/*read name*/
 			if(c == '=') {
 				trim_right(item->name);
-				str_add(item->name, 0);
+				str_addc(item->name, 0);
 				i = 0;
 				stat = 1;
 				continue;
@@ -74,13 +74,13 @@ sconf_t* sconf_parse(const char* str) {
 			else if(is_space(c)) {
 				continue;
 			}
-			str_add(item->name, c);
+			str_addc(item->name, c);
 			i++;
 		}	
 		else if(stat == 1) { /*read value*/
 			if(c == '\n') {
 				trim_right(item->value);
-				str_add(item->value, 0);
+				str_addc(item->value, 0);
 				i = 0;
 				stat = 0;
 				it++;
@@ -89,7 +89,7 @@ sconf_t* sconf_parse(const char* str) {
 				item->value = str_new("");
 				continue;
 			}
-			str_add(item->value, c);
+			str_addc(item->value, c);
 			i++;
 		}
 		else { //comment

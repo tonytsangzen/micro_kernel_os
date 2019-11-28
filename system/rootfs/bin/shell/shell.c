@@ -40,10 +40,10 @@ static int32_t gets(str_t* buf) {
 			putch(c);
 			if(c == '\r' || c == '\n')
 				break;
-			str_add(buf, c);
+			str_addc(buf, c);
 		}
 	}
-	str_add(buf, 0);
+	str_addc(buf, 0);
 	return 0;
 }
 
@@ -125,6 +125,7 @@ static void export_set(const char* arg) {
 	if(v == NULL)
 		return;
 	strncpy(name, arg, v-arg);
+	name[v-arg] = 0;
 
 	syscall2(SYS_PROC_SET_ENV, (int32_t)name, (int32_t)(v+1));
 }

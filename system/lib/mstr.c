@@ -64,7 +64,7 @@ str_t* str_new_by_size(uint32_t sz) {
 	return ret;
 }
 
-char* str_append(str_t* str, const char* src) {
+char* str_add(str_t* str, const char* src) {
 	if(src == NULL || src[0] == 0) {
 		return str->cstr;
 	}
@@ -83,7 +83,7 @@ char* str_append(str_t* str, const char* src) {
 	return str->cstr;
 }
 
-char* str_add(str_t* str, char c) {
+char* str_addc(str_t* str, char c) {
 	uint32_t new_size = str->len + 1;
 	if(str->max <= new_size) {
 		new_size = str->len + STR_BUF; /*STR BUF for buffer*/
@@ -97,12 +97,12 @@ char* str_add(str_t* str, char c) {
 	return str->cstr;
 }
 
-char* str_add_int(str_t* str, int i, int base) {
-	return str_append(str, str_from_int(i, base));
+char* str_addc_int(str_t* str, int i, int base) {
+	return str_add(str, str_from_int(i, base));
 }
 
-/*char* str_add_float(str_t* str, float f) {
-	return str_append(str, str_from_float(f));
+/*char* str_addc_float(str_t* str, float f) {
+	return str_add(str, str_from_float(f));
 }
 */
 
@@ -168,29 +168,6 @@ int str_to_int(const char* str) {
 }
 */
 
-void str_split(const char* str, char c, m_array_t* array) {
-	int i = 0;
-	char offc = str[i];
-	while(1) {
-		if(offc == c || offc == 0) {
-			char* p = (char*)malloc(i+1);
-			memcpy(p, str, i+1);
-			p[i] = 0;
-			array_add(array, p);
-			if(offc == 0)
-				break;
-
-			str = str +  i + 1;
-			i = 0;
-			offc = str[i]; 
-		}
-		else {
-			i++;
-			offc = str[i]; 
-		}
-	}
-}
-
 int str_to(const char* str, char c, str_t* res, uint8_t skipspace) {
 	int i = 0;
 	if(res != NULL)
@@ -211,7 +188,7 @@ int str_to(const char* str, char c, str_t* res, uint8_t skipspace) {
 		if(offc == c) 
 			break;
 		else if(res != NULL)
-			str_add(res, offc);
+			str_addc(res, offc);
 		i++;
 	}
 

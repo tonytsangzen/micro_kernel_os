@@ -8,7 +8,7 @@
 
 static void outc(char c, void* p) {
 	str_t* buf = (str_t*)p;
-	str_add(buf, c);
+	str_addc(buf, c);
 }
 
 void dprintf(int fd, const char *format, ...) {

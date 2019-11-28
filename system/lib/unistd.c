@@ -175,10 +175,10 @@ int exec(const char* cmd_line) {
 	str_t* cmd = str_new("");
 	const char *p = cmd_line;
 	while(*p != 0 && *p != ' ') {
-		str_add(cmd, *p);
+		str_addc(cmd, *p);
 		p++;
 	}
-	str_add(cmd, 0);
+	str_addc(cmd, 0);
 	int sz;
 	void* buf = vfs_readfile(cmd->cstr, &sz);
 	if(buf == NULL) {
