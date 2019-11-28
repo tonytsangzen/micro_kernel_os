@@ -103,8 +103,9 @@ void _kernel_entry_c(context_t* ctx) {
 	(void)ctx;
 	hw_info_init();
 	init_kernel_vm();  
-	uart_out("\n------Ewok micro-kernel-------\n"
-		"kernel mmu inited.\n");
+	printf("\n"
+			"------Ewok micro-kernel-------\n"
+			"kernel mmu inited.\n");
 
 	km_init();
 	printf("kernel malloc inited.\n");
