@@ -85,7 +85,6 @@ static void check_keyb_table(void) {
 		if(rd != 1)
 			continue;
 
-		uprintf("%d\n", v);
 		if(v == 13) {	
 			syscall3(SYS_DEV_OP, DEV_KEYB, DEV_OP_SET, 0);
 			break;
