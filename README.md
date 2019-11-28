@@ -50,16 +50,16 @@
 
 .Source code read-guide
 
-	kernel/asm/boot.S
-	kernel/src/mm/kalloc.c
-	kernel/src/mm/mmu.c
-	kernel/src/mm/trunkmalloc.c
-	kernel/src/mm/kmalloc.c
-	kernel/src/proc.c 
-	kernel/src/sheduler.c
-	kernel/src/syscalls.c
-	kernel/src/mm/shm.c
-	kernel/src/ipc.c
+	kernel/arch/arm/common/boot.S
+	kernel/kernel/mm/kalloc.c
+	kernel/kernel/mm/mmu.c
+	kernel/kernel/mm/trunkmalloc.c
+	kernel/kernel/mm/kmalloc.c
+	kernel/kernel/proc.c 
+	kernel/kernel/sheduler.c
+	kernel/kernel/syscalls.c
+	kernel/kernel/mm/shm.c
+	kernel/kernel/ipc.c
 
 	rootfs/lib/src/stdlib.c
 	rootfs/lib/src/unistd.c
