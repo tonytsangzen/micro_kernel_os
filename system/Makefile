@@ -54,7 +54,7 @@ LIB_OBJS = $(LIB_DIR)/syscall.o \
 	$(LIB_DIR)/vdevice.o \
 	$(LIB_DIR)/fcntl.o \
 	$(LIB_DIR)/proto.o \
-	$(LIB_DIR)/sdc.o \
+	$(LIB_DIR)/sd.o \
 	$(LIB_DIR)/stdio.o \
 	$(LIB_DIR)/basic_math.o \
 	$(LIB_DIR)/console.o \
@@ -75,7 +75,7 @@ all: mkdirs $(LIB_OBJS) apps
 	cp -r ${ROOT_DIR}/etc ${TARGET_DIR}/$(ROOT_DIR)
 	cp -r ${ROOT_DIR}/data ${TARGET_DIR}/$(ROOT_DIR)
 	mkramfs/mkramfs ${TARGET_DIR}/$(ROOT_DIR).img ${TARGET_DIR}/$(ROOT_DIR)
-	dd if=/dev/zero of=${TARGET_DIR}/sdc.img bs=1024 count=8192
+	dd if=/dev/zero of=${TARGET_DIR}/sd.img bs=1024 count=8192
 
 include mkramfs/build.mk
 include $(ROOT_DIR)/sbin/init/build.mk
@@ -119,7 +119,7 @@ KERNEL=../kernel/build/mkos.bin
 include ${ARCH_DIR}/${ARCH}/config.mk
 
 run: 
-	qemu-system-arm $(QEMU_FLAGS) -kernel ${KERNEL} -initrd ${TARGET_DIR}/$(ROOT_DIR).img -sd ${TARGET_DIR}/sdc.img
+	qemu-system-arm $(QEMU_FLAGS) -kernel ${KERNEL} -initrd ${TARGET_DIR}/$(ROOT_DIR).img -sd ${TARGET_DIR}/sd.img
 
 clean:
 	rm -f $(CLEAN)
