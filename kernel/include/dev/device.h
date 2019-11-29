@@ -2,7 +2,7 @@
 #define KDEVICE_TYPE_H
 
 #define DEV_SLEEP -2
-#define SDC_BLOCK_SIZE 1024
+#define SD_BLOCK_SIZE 1024
 
 enum {
 	DEV_TYPE_CHAR = 0,
@@ -15,7 +15,7 @@ enum {
 	DEV_KEYB,
 	DEV_MOUSE,
 	DEV_FRAMEBUFFER,
-	DEV_SDC,
+	DEV_SD,
 	DEV_NUM
 };
 

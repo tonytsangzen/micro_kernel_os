@@ -2,7 +2,7 @@
 #include <dev/timer.h>
 #include <dev/uart.h>
 #include <dev/kdevice.h>
-#include <dev/sdc.h>
+#include <dev/sd.h>
 #include <dev/mouse.h>
 #include <kernel/irq.h>
 #include <kernel/system.h>
@@ -32,9 +32,9 @@ static void keyb_handler(void) {
 	proc_wakeup((uint32_t)dev);
 }
 
-static void sdc_handler(void) {
-	dev_t* dev = get_dev(DEV_SDC);
-	sdc_dev_handle(dev);
+static void sd_handler(void) {
+	dev_t* dev = get_dev(DEV_SD);
+	sd_dev_handle(dev);
 }
 
 uint32_t _kernel_tic = 0;
@@ -71,7 +71,7 @@ void irq_handler(context_t* ctx) {
 	}	
 	
 	if((irqs & IRQ_SDC) != 0) {
-		sdc_handler();
+		sd_handler();
 	}
 }
 

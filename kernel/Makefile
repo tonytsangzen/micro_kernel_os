@@ -52,7 +52,7 @@ ARCH_OBJS = \
 	${ARCH_DIR}/${ARCH}/mouse.o \
 	${ARCH_DIR}/${ARCH}/gic.o \
 	${ARCH_DIR}/${ARCH}/framebuffer.o \
-	${ARCH_DIR}/${ARCH}/sdc.o \
+	${ARCH_DIR}/${ARCH}/sd.o \
 	${ARCH_DIR}/${ARCH}/timer.o 
 
 LIB_DIR = lib
@@ -63,6 +63,7 @@ LIB_OBJS = \
 	${LIB_DIR}/proto.o \
 	${LIB_DIR}/mstr.o \
 	${LIB_DIR}/ramfs.o \
+	${LIB_DIR}/sdread.o \
 	${LIB_DIR}/charbuf.o \
 	${LIB_DIR}/basic_math.o \
 	${LIB_DIR}/kprintf.o
@@ -96,7 +97,7 @@ $(OS).bin: $(OBJS) mkos.lds.S
 	$(OBJDUMP) -D ${BUILD_DIR}/$(OS).elf > ${BUILD_DIR}/$(OS).asm
 
 INITFS = ${SYS_DIR}/build/rootfs.img
-SDC = ${SYS_DIR}/build/sdc.img
+SDC = ${SYS_DIR}/build/sd.img
 
 run: ${INITFS}
 	qemu-system-arm $(QEMU_FLAGS) -kernel ${BUILD_DIR}/$(OS).bin -initrd ${INITFS} -sd ${SDC}

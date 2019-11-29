@@ -5,6 +5,7 @@
 #include <dev/kdevice.h>
 #include <dev/device.h>
 #include <kernel/proc.h>
+#include <dev/sd.h>
 
 #define CONFIG_ARM_PL180_MMCI_CLOCK_FREQ 6250000
 #define MMC_RSP_PRESENT (1 << 0)
@@ -77,63 +78,63 @@
 #define FIFO_COUNT    0x48
 #define FIFO          0x80
 
-#define SDC_RCA  0x45670000 // QEMU's hard-coded RCA
-#define SDC_BASE (MMIO_BASE + 0x5000) // PL180 SDC_BASE address
+#define SD_RCA  0x45670000 // QEMU's hard-coded RCA
+#define SD_BASE (MMIO_BASE + 0x5000) // PL180 SD_BASE address
 
 // shared variables between SDC driver and interrupt handler
 typedef struct {
 	char *rxbuf_index;
-	char rxbuf[SDC_BLOCK_SIZE];
-	char txbuf[SDC_BLOCK_SIZE];
+	char rxbuf[SD_BLOCK_SIZE];
+	char txbuf[SD_BLOCK_SIZE];
 	const char *txbuf_index;
 	uint32_t rxcount, txcount, rxdone, txdone;
-} sdc_t;
+} sd_t;
 
-static sdc_t _sdc;
+static sd_t _sdc;
 
 static inline void do_command(int32_t cmd, int32_t arg, int32_t resp) {
-	put32(SDC_BASE + ARGUMENT, arg);
-	put32(SDC_BASE + COMMAND, 0x400 | (resp<<6) | cmd);
+	put32(SD_BASE + ARGUMENT, arg);
+	put32(SD_BASE + COMMAND, 0x400 | (resp<<6) | cmd);
 }
 
-void sdc_init(dev_t* dev) {
-	sdc_t* sdc = &_sdc;
-	memset(sdc, 0, sizeof(sdc_t));
+void sd_init(dev_t* dev) {
+	sd_t* sdc = &_sdc;
+	memset(sdc, 0, sizeof(sd_t));
 	sdc->rxdone = 1;
 	sdc->txdone = 1;
 	dev->io.block.data = (void*)sdc;
 
-	put32(SDC_BASE + POWER, 0xBF); // power on
-	put32(SDC_BASE + CLOCK, 0xC6); // default CLK
+	put32(SD_BASE + POWER, 0xBF); // power on
+	put32(SD_BASE + CLOCK, 0xC6); // default CLK
 
 	// send init command sequence
 	do_command(0, 0, MMC_RSP_NONE);// idle state
 	do_command(55, 0, MMC_RSP_R1);  // ready state  
 	do_command(41, 1, MMC_RSP_R3);  // argument must not be zero
 	do_command(2, 0, MMC_RSP_R2);  // ask card CID
-	do_command(3, SDC_RCA, MMC_RSP_R1);  // assign RCA
-	do_command(7, SDC_RCA, MMC_RSP_R1);  // transfer state: must use RCA
+	do_command(3, SD_RCA, MMC_RSP_R1);  // assign RCA
+	do_command(7, SD_RCA, MMC_RSP_R1);  // transfer state: must use RCA
 	do_command(16, 512, MMC_RSP_R1);  // set data block length
 
 	// set interrupt MASK0 registers bits = RxFULL(17)|TxEmpty(18)
-	put32(SDC_BASE + MASK0, (1<<17)|(1<<18));
+	put32(SD_BASE + MASK0, (1<<17)|(1<<18));
 }
 
-static int32_t sdc_read_block(dev_t* dev, int32_t block) {
+static int32_t sd_read_block(dev_t* dev, int32_t block) {
 	uint32_t cmd, arg;
-	sdc_t* sdc = (sdc_t*)dev->io.block.data;
+	sd_t* sdc = (sd_t*)dev->io.block.data;
 	if(sdc->rxdone == 0) {
 		return -1;
 	}
 
 	//printf("getblock %d ", block);
 	sdc->rxbuf_index = sdc->rxbuf; 
-	sdc->rxcount = SDC_BLOCK_SIZE;
+	sdc->rxcount = SD_BLOCK_SIZE;
 	sdc->rxdone = 0;
 
-	put32(SDC_BASE + DATATIMER, 0xFFFF0000);
+	put32(SD_BASE + DATATIMER, 0xFFFF0000);
 	// write data_len to datalength reg
-	put32(SDC_BASE + DATALENGTH, SDC_BLOCK_SIZE);
+	put32(SD_BASE + DATALENGTH, SD_BLOCK_SIZE);
 
 	cmd = 18; // CMD17 = READ single sector; 18=read block
 	arg = ((block*2)*512); // absolute byte offset in disk
@@ -141,58 +142,58 @@ static int32_t sdc_read_block(dev_t* dev, int32_t block) {
 
 	//printf("dataControl=%x\n", 0x93);
 	// 0x93=|9|0011|=|9|DMA=0,0=BLOCK,1=Host<-Card,1=Enable
-	put32(SDC_BASE + DATACTRL, 0x93);
+	put32(SD_BASE + DATACTRL, 0x93);
 	//printf("getblock return\n");
 	return 0;
 }
 
-static inline int32_t sdc_read_done(dev_t* dev, void* buf) {
-	sdc_t* sdc = (sdc_t*)dev->io.block.data;
+static inline int32_t sd_read_done(dev_t* dev, void* buf) {
+	sd_t* sdc = (sd_t*)dev->io.block.data;
 	if(sdc->rxdone == 0) {
 		return -1;
 	}
-	memcpy(buf, (void*)sdc->rxbuf, SDC_BLOCK_SIZE);
+	memcpy(buf, (void*)sdc->rxbuf, SD_BLOCK_SIZE);
 	return 0;
 }
 
-static int32_t sdc_write_block(dev_t* dev, int32_t block, const void* buf) {
-	sdc_t* sdc = (sdc_t*)dev->io.block.data;
+static int32_t sd_write_block(dev_t* dev, int32_t block, const void* buf) {
+	sd_t* sdc = (sd_t*)dev->io.block.data;
 	uint32_t cmd, arg;
 	if(sdc->txdone == 0) {
 		return -1;
 	}
-	memcpy(sdc->txbuf, buf, SDC_BLOCK_SIZE);
-	sdc->txbuf_index = sdc->txbuf; sdc->txcount = SDC_BLOCK_SIZE;
+	memcpy(sdc->txbuf, buf, SD_BLOCK_SIZE);
+	sdc->txbuf_index = sdc->txbuf; sdc->txcount = SD_BLOCK_SIZE;
 	sdc->txdone = 0;
 
-	put32(SDC_BASE + DATATIMER, 0xFFFF0000);
-	put32(SDC_BASE + DATALENGTH, SDC_BLOCK_SIZE);
+	put32(SD_BASE + DATATIMER, 0xFFFF0000);
+	put32(SD_BASE + DATALENGTH, SD_BLOCK_SIZE);
 
 	cmd = 25;                  // CMD24 = Write single sector; 25=write block
 	arg = (uint32_t)((block*2)*512);  // absolute byte offset in diks
 	do_command(cmd, arg, MMC_RSP_R1);
 
 	// write 0x91=|9|0001|=|9|DMA=0,BLOCK=0,0=Host->Card, Enable
-	put32(SDC_BASE + DATACTRL, 0x91); // Host->card
+	put32(SD_BASE + DATACTRL, 0x91); // Host->card
 	return 0;
 }
 
-static inline int32_t sdc_write_done(dev_t* dev) {
-	sdc_t* sdc = (sdc_t*)dev->io.block.data;
+static inline int32_t sd_write_done(dev_t* dev) {
+	sd_t* sdc = (sd_t*)dev->io.block.data;
 	if(sdc->txdone == 0) {
 		return -1;
 	}
 	return 0;
 }
 
-void sdc_dev_handle(dev_t* dev) {
-	sdc_t* sdc = (sdc_t*)dev->io.block.data;
+void sd_dev_handle(dev_t* dev) {
+	sd_t* sdc = (sd_t*)dev->io.block.data;
 	int32_t status, status_err;
 	int32_t i; 
 	uint32_t *up;
 
 	// read status register to find out TXempty or RxAvail
-	status = get32(SDC_BASE + STATUS);
+	status = get32(SD_BASE + STATUS);
 
 	if (status & (1<<17)){ // RxFull: read 16 uint32_t at a time;
 		//printf("SDC RX interrupt: ");
@@ -201,11 +202,11 @@ void sdc_dev_handle(dev_t* dev) {
 		if (!status_err && sdc->rxcount) {
 			//printf("R%d ", sdc->rxcount);
 			for (i = 0; i < 16; i++)
-				*(up + i) = get32(SDC_BASE + FIFO);
+				*(up + i) = get32(SD_BASE + FIFO);
 			up += 16;
 			sdc->rxcount -= 64;
 			sdc->rxbuf_index += 64;
-			status = get32(SDC_BASE + STATUS); // read status to clear Rx interrupt
+			status = get32(SD_BASE + STATUS); // read status to clear Rx interrupt
 		}
 		if (sdc->rxcount == 0){
 			do_command(12, 0, MMC_RSP_R1); // stop transmission
@@ -222,11 +223,11 @@ void sdc_dev_handle(dev_t* dev) {
 		if (!status_err && sdc->txcount) {
 			// printf("W%d ", sdc->txcount);
 			for (i = 0; i < 16; i++)
-				put32(SDC_BASE + FIFO, *(up + i));
+				put32(SD_BASE + FIFO, *(up + i));
 			up += 16;
 			sdc->txcount -= 64;
 			sdc->txbuf_index += 64;            // advance sdc->txbuf_index for next write  
-			status = get32(SDC_BASE + STATUS); // read status to clear Tx interrupt
+			status = get32(SD_BASE + STATUS); // read status to clear Tx interrupt
 		}
 		if (sdc->txcount == 0){
 			do_command(12, 0, MMC_RSP_R1); // stop transmission
@@ -235,22 +236,22 @@ void sdc_dev_handle(dev_t* dev) {
 		}
 	}
 	//printf("write to clear register\n");
-	put32(SDC_BASE + STATUS_CLEAR, 0xFFFFFFFF);
+	put32(SD_BASE + STATUS_CLEAR, 0xFFFFFFFF);
 	// printf("SDC interrupt handler done\n");
 }
 
-int32_t sdc_dev_read(dev_t* dev, int32_t block) {
-	return sdc_read_block(dev, block);
+int32_t sd_dev_read(dev_t* dev, int32_t block) {
+	return sd_read_block(dev, block);
 }
 
-int32_t sdc_dev_read_done(dev_t* dev, void* buf) {
-	return sdc_read_done(dev, buf);
+int32_t sd_dev_read_done(dev_t* dev, void* buf) {
+	return sd_read_done(dev, buf);
 }
 
-int32_t sdc_dev_write(dev_t* dev, int32_t block, void* buf) {
-	return sdc_write_block(dev, block, buf);
+int32_t sd_dev_write(dev_t* dev, int32_t block, const void* buf) {
+	return sd_write_block(dev, block, buf);
 }
 
-int32_t sdc_dev_write_done(dev_t* dev) {
-	return sdc_write_done(dev);
+int32_t sd_dev_write_done(dev_t* dev) {
+	return sd_write_done(dev);
 }

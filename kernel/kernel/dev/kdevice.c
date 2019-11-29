@@ -4,7 +4,7 @@
 #include <dev/mouse.h>
 #include <dev/keyb.h>
 #include <dev/framebuffer.h>
-#include <dev/sdc.h>
+#include <dev/sd.h>
 #include <kstring.h>
 
 static dev_t _devs[DEV_NUM];
@@ -56,14 +56,14 @@ void dev_init(void) {
 	dev->io.ch.write = fb_dev_write;
 	dev->op = fb_dev_op;
 
-	dev = &_devs[DEV_SDC];
+	dev = &_devs[DEV_SD];
 	memset(dev, 0, sizeof(dev_t));
-	sdc_init(dev);
+	sd_init(dev);
 	dev->type = DEV_TYPE_BLOCK;
-	dev->io.block.read = sdc_dev_read;
-	dev->io.block.read_done = sdc_dev_read_done;
-	dev->io.block.write = sdc_dev_write;
-	dev->io.block.write_done = sdc_dev_write_done;
+	dev->io.block.read = sd_dev_read;
+	dev->io.block.read_done = sd_dev_read_done;
+	dev->io.block.write = sd_dev_write;
+	dev->io.block.write_done = sd_dev_write_done;
 }
 
 dev_t* get_dev(uint32_t type) {
