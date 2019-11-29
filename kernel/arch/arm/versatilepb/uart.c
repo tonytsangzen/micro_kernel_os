@@ -34,7 +34,7 @@ int32_t uart_inputch(dev_t* dev, int32_t loop) {
 		return -1;
 
 	char c = get32(UART0 + UART_DATA);
-	charbuf_push(&dev->buffer, c, loop);
+	charbuf_push(&dev->io.ch.buffer, c, loop);
 	return 0;
 }
 

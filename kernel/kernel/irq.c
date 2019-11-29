@@ -2,6 +2,7 @@
 #include <dev/timer.h>
 #include <dev/uart.h>
 #include <dev/kdevice.h>
+#include <dev/sdc.h>
 #include <dev/mouse.h>
 #include <kernel/irq.h>
 #include <kernel/system.h>
@@ -14,10 +15,10 @@ static void uart_handler(void) {
 	int32_t rd = 0;
 	dev_t* dev = get_dev(DEV_UART0);
 	while(1) {
-		if(dev->inputch == NULL || dev_ready(dev) != 0)
+		if(dev->io.ch.inputch == NULL || dev_ready(dev) != 0)
 			break;
 		rd++;
-		dev->inputch(dev, 1);
+		dev->io.ch.inputch(dev, 1);
 	}
 	if(rd > 0)
 		proc_wakeup((uint32_t)dev);
@@ -26,9 +27,14 @@ static void uart_handler(void) {
 static void keyb_handler(void) {
 	dev_t* dev = get_dev(DEV_KEYB);
 
-	if(dev->inputch != NULL)
-		dev->inputch(dev, 1);
+	if(dev->io.ch.inputch != NULL)
+		dev->io.ch.inputch(dev, 1);
 	proc_wakeup((uint32_t)dev);
+}
+
+static void sdc_handler(void) {
+	dev_t* dev = get_dev(DEV_SDC);
+	sdc_dev_handle(dev);
 }
 
 uint32_t _kernel_tic = 0;
@@ -62,6 +68,10 @@ void irq_handler(context_t* ctx) {
 
 	if((irqs & IRQ_MOUSE) != 0) {
 		mouse_handler();
+	}	
+	
+	if((irqs & IRQ_SDC) != 0) {
+		sdc_handler();
 	}
 }
 
@@ -80,7 +90,7 @@ void data_abort_handler(context_t* ctx) {
 }
 
 void irq_init(void) {
-	gic_set_irqs( IRQ_UART0 | IRQ_TIMER0 | IRQ_KEY | IRQ_MOUSE);
+	gic_set_irqs( IRQ_UART0 | IRQ_TIMER0 | IRQ_KEY | IRQ_MOUSE | IRQ_SDC);
 	__irq_enable();
 }
 

@@ -10,6 +10,7 @@
 #include <kernel/hw_info.h>
 #include <kernel/proc.h>
 #include <kernel/irq.h>
+#include <kernel/schedule.h>
 #include <dev/timer.h>
 #include <ramfs.h>
 #include <kprintf.h>
@@ -119,9 +120,6 @@ void _kernel_entry_c(context_t* ctx) {
 	shm_init();
 	printf("share memory ready.\n");
 
-	irq_init();
-	printf("irq inited.\n");
-
 	dev_init();
 	printf("devices inited.\n");
 
@@ -133,6 +131,9 @@ void _kernel_entry_c(context_t* ctx) {
 
 	load_init();
 	printf("load first process(/sbin/init).\n");
+
+	irq_init();
+	printf("irq inited.\n");
 
 	timer_set_interval(0, 0x40); //0.001 sec sequence
 	printf("start timer.\n");

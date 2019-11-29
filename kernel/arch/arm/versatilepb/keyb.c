@@ -79,7 +79,7 @@ static int32_t keyb_inputch_map0(dev_t* dev, int32_t loop) {
 	if(c == 0)
 		return 0;
 
-	charbuf_push(&dev->buffer, c, loop);
+	charbuf_push(&dev->io.ch.buffer, c, loop);
 	return 0;
 }
 
@@ -125,7 +125,7 @@ static int32_t keyb_inputch_map1(dev_t* dev, int32_t loop) {
 	if(c == 0)
 		return 0;
 
-	charbuf_push(&dev->buffer, c, loop);
+	charbuf_push(&dev->io.ch.buffer, c, loop);
 	return 0;
 }
 

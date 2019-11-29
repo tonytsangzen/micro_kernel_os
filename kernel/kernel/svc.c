@@ -22,11 +22,56 @@ static void sys_exit(context_t* ctx, int32_t res) {
 	proc_exit(ctx, _current_proc, res);
 }
 
-static int32_t sys_dev_write(uint32_t type, void* data, uint32_t sz) {
+static int32_t sys_dev_block_read(uint32_t type, int32_t bid) {
 	dev_t* dev = get_dev(type);
-	if(dev == NULL)
+	if(dev == NULL) {
 		return -1;
-	return dev_write(dev, data, sz);
+	}
+	return dev_block_read(dev, bid);
+}
+
+static int32_t sys_dev_block_write(uint32_t type, int32_t bid, const char* buf) {
+	dev_t* dev = get_dev(type);
+	if(dev == NULL) {
+		return -1;
+	}
+	return dev_block_write(dev, bid, buf);
+}
+
+static void sys_dev_block_read_done(context_t* ctx, uint32_t type, void* buf) {
+	dev_t* dev = get_dev(type);
+	if(dev == NULL) {
+		ctx->gpr[0] = -1;
+		return;
+	}		
+
+	int res = dev_block_read_done(dev, buf);
+	if(res == 0) {
+		ctx->gpr[0] = res;
+		return;
+	}
+
+	proc_t* proc = _current_proc;
+	proc_sleep_on(ctx, (uint32_t)&proc->pid);
+	proc->ctx.gpr[0] = -1;
+}
+
+static void sys_dev_block_write_done(context_t* ctx, uint32_t type) {
+	dev_t* dev = get_dev(type);
+	if(dev == NULL) {
+		ctx->gpr[0] = -1;
+		return;
+	}		
+
+	int res = dev_block_write_done(dev);
+	if(res == 0) {
+		ctx->gpr[0] = res;
+		return;
+	}
+
+	proc_t* proc = _current_proc;
+	proc_sleep_on(ctx, (uint32_t)&proc->pid);
+	proc->ctx.gpr[0] = -1;
 }
 
 static int32_t sys_dev_op(uint32_t type, int32_t opcode, int32_t arg) {
@@ -36,14 +81,14 @@ static int32_t sys_dev_op(uint32_t type, int32_t opcode, int32_t arg) {
 	return dev_op(dev, opcode, arg);
 }
 
-static void sys_dev_read(context_t* ctx, uint32_t type, void* data, uint32_t sz) {
+static void sys_dev_ch_read(context_t* ctx, uint32_t type, void* data, uint32_t sz) {
 	dev_t* dev = get_dev(type);
 	if(dev == NULL) {
 		ctx->gpr[0] = -1;
 		return;
 	}
 
-	int32_t rd = dev_read(dev, data, sz);
+	int32_t rd = dev_ch_read(dev, data, sz);
 	ctx->gpr[0] = rd;
 
 	if(rd != DEV_SLEEP) //not sleep for
@@ -51,6 +96,13 @@ static void sys_dev_read(context_t* ctx, uint32_t type, void* data, uint32_t sz)
 	proc_t* proc = _current_proc;
 	proc_sleep_on(ctx, (uint32_t)dev);
 	proc->ctx.gpr[0] = 0;
+}
+
+static int32_t sys_dev_ch_write(uint32_t type, void* data, uint32_t sz) {
+	dev_t* dev = get_dev(type);
+	if(dev == NULL)
+		return -1;
+	return dev_ch_write(dev, data, sz);
 }
 
 static int32_t sys_getpid(void) {
@@ -451,11 +503,23 @@ void svc_handler(int32_t code, int32_t arg0, int32_t arg1, int32_t arg2, context
 	__irq_disable();
 
 	switch(code) {
-	case SYS_DEV_READ:
-		sys_dev_read(ctx, arg0, (void*)arg1, arg2);		
+	case SYS_DEV_CHAR_READ:
+		sys_dev_ch_read(ctx, arg0, (void*)arg1, arg2);		
 		return;
-	case SYS_DEV_WRITE:
-		ctx->gpr[0] = sys_dev_write(arg0, (void*)arg1, arg2);		
+	case SYS_DEV_CHAR_WRITE:
+		ctx->gpr[0] = sys_dev_ch_write(arg0, (void*)arg1, arg2);		
+		return;
+	case SYS_DEV_BLOCK_READ:
+		ctx->gpr[0] = sys_dev_block_read(arg0, arg1);
+		return;
+	case SYS_DEV_BLOCK_WRITE:
+		ctx->gpr[0] = sys_dev_block_write(arg0, arg1, (void*)arg2);		
+		return;
+	case SYS_DEV_BLOCK_READ_DONE:
+		sys_dev_block_read_done(ctx, arg0, (void*)arg1);
+		return;
+	case SYS_DEV_BLOCK_WRITE_DONE:
+		sys_dev_block_write_done(ctx, arg0);
 		return;
 	case SYS_DEV_OP:
 		ctx->gpr[0] = sys_dev_op(arg0, arg1, arg2);

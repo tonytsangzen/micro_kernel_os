@@ -19,15 +19,25 @@ CFLAGS = \
 	-marm $(QEMU_CFLAGS) \
 	-Wstrict-prototypes \
 	-pedantic -Wall -Wextra -msoft-float -fPIC -mapcs-frame \
-	-fno-builtin-printf -fno-builtin-strcpy -Wno-overlength-strings \
-	-fno-builtin-exit -fno-builtin-stdio \
+	-fno-builtin-printf \
+	-fno-builtin-strcpy \
+	-Wno-overlength-strings \
+	-fno-builtin-exit \
+	-fno-builtin-stdio \
+	-fno-builtin-memset \
+	-fno-builtin-memcpy \
+	-fno-builtin-strchr \
+	-fno-builtin-strcmp \
+	-fno-builtin-strlen \
+	-fno-builtin-strncpy \
+	-fno-builtin-strncmp \
 	-std=c99 \
 	-mcpu=$(CPU)
 	
 #CFLAGS += -g
 CFLAGS += -O2
 
-ASFLAGS = -g -I. -Iinclude -mcpu=$(CPU)
+ASFLAGS = -O2 -I. -Iinclude -mcpu=$(CPU)
 
 all: $(OS).bin 
 
@@ -42,6 +52,7 @@ ARCH_OBJS = \
 	${ARCH_DIR}/${ARCH}/mouse.o \
 	${ARCH_DIR}/${ARCH}/gic.o \
 	${ARCH_DIR}/${ARCH}/framebuffer.o \
+	${ARCH_DIR}/${ARCH}/sdc.o \
 	${ARCH_DIR}/${ARCH}/timer.o 
 
 LIB_DIR = lib
@@ -85,25 +96,21 @@ $(OS).bin: $(OBJS) mkos.lds.S
 	$(OBJDUMP) -D ${BUILD_DIR}/$(OS).elf > ${BUILD_DIR}/$(OS).asm
 
 INITFS = ${SYS_DIR}/build/rootfs.img
+SDC = ${SYS_DIR}/build/sdc.img
 
 run: ${INITFS}
-	qemu-system-arm $(QEMU_FLAGS) -kernel ${BUILD_DIR}/$(OS).bin -initrd ${INITFS}
-
-runnog: ${INITFS}
-	qemu-system-arm $(QEMU_FLAGS) -kernel ${BUILD_DIR}/$(OS).bin -initrd ${INITFS} -nographic
+	qemu-system-arm $(QEMU_FLAGS) -kernel ${BUILD_DIR}/$(OS).bin -initrd ${INITFS} -sd ${SDC}
 
 debug: ${INITFS}
 	qemu-system-arm $(QEMU_FLAGS) -gdb tcp::26000 -S -kernel ${BUILD_DIR}/$(OS).bin -initrd  ${INITFS}
-
-debugnog: ${INITFS}
-	qemu-system-arm $(QEMU_FLAGS) -gdb tcp::26000 -S -kernel ${BUILD_DIR}/$(OS).bin -initrd  ${INITFS} -nographic
 
 debugasm: ${INITFS}
 	qemu-system-arm $(QEMU_FLAGS) -d in_asm -gdb tcp::26000 -S -kernel ${BUILD_DIR}/$(OS).bin -initrd ${INITFS}
 
 gdb: 
 	echo "target remote :26000" > /tmp/gdbinit
-	arm-none-eabi-gdb ${BUILD_DIR}/$(OS).elf -x /tmp/gdbinit
+	#arm-none-eabi-gdb ${BUILD_DIR}/$(OS).elf -x /tmp/gdbinit
+	gdb-multiarch ${BUILD_DIR}/$(OS).elf -x /tmp/gdbinit
 
 clean:
 	rm -f $(OBJS)

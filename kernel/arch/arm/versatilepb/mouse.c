@@ -140,10 +140,10 @@ void mouse_handler(void) {
 			
 			btndown = (btndown << 1 | btnup);
 
-			charbuf_push(&dev->buffer, (char)btndown, 1);
-			charbuf_push(&dev->buffer, (char)rx, 1);
-			charbuf_push(&dev->buffer, (char)ry, 1);
-			charbuf_push(&dev->buffer, (char)rz, 1);
+			charbuf_push(&dev->io.ch.buffer, (char)btndown, 1);
+			charbuf_push(&dev->io.ch.buffer, (char)rx, 1);
+			charbuf_push(&dev->io.ch.buffer, (char)ry, 1);
+			charbuf_push(&dev->io.ch.buffer, (char)rz, 1);
 		}
 		status = get8(MOUSE_BASE + MOUSE_IIR);
 	}
