@@ -30,7 +30,7 @@ static int keyb_read(int fd, int from_pid, fsinfo_t* info, void* buf, int size, 
 	(void)from_pid;
 	(void)offset;
 	(void)p;
-	int res = syscall3(SYS_DEV_READ, (int32_t)info->data, (int32_t)buf, size);
+	int res = syscall3(SYS_DEV_CHAR_READ, (int32_t)info->data, (int32_t)buf, size);
 	if(res == 0) 
 		return ERR_RETRY;
 	return res;

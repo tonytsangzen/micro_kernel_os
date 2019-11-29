@@ -32,7 +32,7 @@ static int tty_read(int fd, int from_pid, fsinfo_t* info, void* buf, int size, i
 	(void)p;
 	int res = -1;
 	while(1) {
-		res = syscall3(SYS_DEV_READ, (int32_t)info->data, (int32_t)buf, size);
+		res = syscall3(SYS_DEV_CHAR_READ, (int32_t)info->data, (int32_t)buf, size);
 		if(res != 0)
 			break;
 		sleep(0);
@@ -45,7 +45,7 @@ static int tty_write(int fd, int from_pid, fsinfo_t* info, const void* buf, int 
 	(void)from_pid;
 	(void)offset;
 	(void)p;
-	int res = syscall3(SYS_DEV_WRITE, (int32_t)info->data, (int32_t)buf, size);
+	int res = syscall3(SYS_DEV_CHAR_WRITE, (int32_t)info->data, (int32_t)buf, size);
 	return res;
 }
 

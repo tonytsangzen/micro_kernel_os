@@ -30,7 +30,7 @@ static int mouse_read(int fd, int from_pid, fsinfo_t* info, void* buf, int size,
 	(void)from_pid;
 	(void)offset;
 	(void)p;
-	return syscall3(SYS_DEV_READ, (int32_t)info->data, (int32_t)buf, size);
+	return syscall3(SYS_DEV_CHAR_READ, (int32_t)info->data, (int32_t)buf, size);
 }
 
 static int mouse_umount(fsinfo_t* info, void* p) {

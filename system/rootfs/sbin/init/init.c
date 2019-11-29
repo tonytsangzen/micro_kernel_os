@@ -86,7 +86,7 @@ static void console_out(init_console_t* console, const char* s) {
 static void check_keyb_table(void) {
 	while(1) {
 		uint8_t v;
-		int rd = syscall3(SYS_DEV_READ, (int32_t)DEV_KEYB, (int32_t)&v, 1);
+		int rd = syscall3(SYS_DEV_CHAR_READ, (int32_t)DEV_KEYB, (int32_t)&v, 1);
 		if(rd != 1)
 			continue;
 
