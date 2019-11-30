@@ -37,7 +37,7 @@ CFLAGS = \
 #CFLAGS += -g
 CFLAGS += -O2
 
-ASFLAGS = -O2 -I. -Iinclude -mcpu=$(CPU)
+ASFLAGS = -g -I. -Iinclude -mcpu=$(CPU)
 
 all: $(OS).bin 
 
@@ -110,8 +110,8 @@ debugasm: ${INITFS}
 
 gdb: 
 	echo "target remote :26000" > /tmp/gdbinit
-	#arm-none-eabi-gdb ${BUILD_DIR}/$(OS).elf -x /tmp/gdbinit
-	gdb-multiarch ${BUILD_DIR}/$(OS).elf -x /tmp/gdbinit
+	arm-none-eabi-gdb ${BUILD_DIR}/$(OS).elf -x /tmp/gdbinit
+	#gdb-multiarch ${BUILD_DIR}/$(OS).elf -x /tmp/gdbinit
 
 clean:
 	rm -f $(OBJS)
