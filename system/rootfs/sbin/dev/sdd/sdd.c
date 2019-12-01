@@ -78,7 +78,6 @@ static int32_t add_nodes(ext2_t* ext2, INODE *ip, fsinfo_t* dinfo) {
 	return 0;
 }
 
-
 static int mount(fsinfo_t* mnt_point, mount_info_t* mnt_info, ext2_t* ext2) {
 	fsinfo_t info;
 	memset(&info, 0, sizeof(fsinfo_t));
@@ -102,7 +101,6 @@ static int sdext2_mount(fsinfo_t* info, mount_info_t* mnt_info, void* p) {
 	mount(info, mnt_info, (ext2_t*)p);
 	return 0;
 }
-
 
 static int sdext2_read(int fd, int from_pid, fsinfo_t* info, void* buf, int size, int offset, void* p) {
 	(void)fd;
