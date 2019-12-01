@@ -7,6 +7,25 @@
 #include <ext2fs.h>
 #include <dev/device.h>
 
+static void out(void* data, int32_t size) {
+	char* buf = (char*)data;
+	int32_t wr = 0;
+	while(1) {
+		if(size <= 0)
+			break;
+
+		int sz = write(1, buf, size);
+		if(sz <= 0 && errno != EAGAIN)
+			break;
+
+		if(sz > 0) {
+			size -= sz;
+			wr += sz;
+			buf += sz;
+		}
+	}
+}
+
 int main(int argc, char* argv[]) {
 	if(argc < 2) {
 		printf("Usage: test <ext2 fname>\n");
@@ -19,7 +38,7 @@ int main(int argc, char* argv[]) {
 	int32_t sz;
 	void* data = ext2_readfile(&ext2, argv[1], &sz);
 	if(data != NULL) {
-		write(1, data, sz);
+		out(data, sz);
 		free(data);
 	}
 

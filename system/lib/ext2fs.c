@@ -143,7 +143,7 @@ static int32_t ext2_bdealloc(ext2_t* ext2, int32_t block) {
 
 static uint32_t ext2_ialloc(ext2_t* ext2) {
 	char buf[BLOCK_SIZE];
-	int32_t index;
+	int32_t index = 0;
 	uint32_t i;
 	for (i=0; i < ext2->super.s_inodes_count; i++){
 		if(mod_u32(i, ext2->super.s_inodes_per_group) == 0) {
@@ -165,7 +165,7 @@ static uint32_t ext2_ialloc(ext2_t* ext2) {
 
 static int32_t ext2_balloc(ext2_t* ext2) {
  	char buf[BLOCK_SIZE];
-	int32_t index;
+	int32_t index = 0;
 	uint32_t i;
 
 	ext2->read_block(ext2->gds[0].bg_block_bitmap, buf);

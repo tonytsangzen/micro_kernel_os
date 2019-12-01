@@ -5,6 +5,25 @@
 #include <string.h>
 #include <fcntl.h>
 
+void out(void* data, int32_t size) {
+	char* buf = (char*)data;
+	int32_t wr = 0;
+	while(1) {
+		if(size <= 0)
+			break;
+
+		int sz = write(1, buf, size);
+		if(sz <= 0 && errno != EAGAIN)
+			break;
+
+		if(sz > 0) {
+			size -= sz;
+			wr += sz;
+			buf += sz;
+		}
+	}
+}
+
 int main(int argc, char** argv) {
 	if(argc != 2) {
 		printf("  Usage: cat <file>\n");
@@ -24,7 +43,7 @@ int main(int argc, char** argv) {
 			break;
 
 		if(sz > 0)
-			write(1, buf, sz);
+			out(buf, sz);
 		sleep(0);
 	}
 
