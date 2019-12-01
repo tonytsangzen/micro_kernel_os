@@ -15,9 +15,13 @@
 #include <ramfs.h>
 #include <kprintf.h>
 #include <vfs.h>
+#include <ext2read.h>
 
 page_dir_entry_t* _kernel_vm = NULL;
+
+#ifdef _INITRD
 static uint32_t _initrd_size = 8*MB;
+#endif
 
 static void set_kernel_init_vm(page_dir_entry_t* vm) {
 	memset(vm, 0, PAGE_DIR_SIZE);
@@ -33,8 +37,11 @@ static void set_kernel_init_vm(page_dir_entry_t* vm) {
 	map_pages(vm, KMALLOC_BASE, V2P(KMALLOC_BASE), V2P(ALLOCATABLE_MEMORY_START), AP_RW_D);
 	//map MMIO to high(virtual) mem.
 	map_pages(vm, MMIO_BASE, _hw_info.phy_mmio_base, _hw_info.phy_mmio_base + _hw_info.mmio_size, AP_RW_D);
+
+#ifdef _INITRD
 	//map initrd as read only for all proc
 	map_pages(vm, (uint32_t)_initrd, V2P(_initrd), V2P(_initrd)+_initrd_size, AP_RW_R); 
+#endif
 
   uint32_t fb_base = (uint32_t)V2P(_framebuffer_base); //framebuffer addr
   uint32_t fb_end = (uint32_t)V2P(_framebuffer_end); //framebuffer addr
@@ -71,30 +78,43 @@ static void init_allocable_mem(void) {
 	kalloc_init(ALLOCATABLE_MEMORY_START, P2V(_hw_info.phy_mem_size));
 }
 
-static ramfs_t _initfs;
+#ifdef _INITRD
 static void load_initrd(void) {
 	uint32_t initrd = 0x08000000;
 	map_pages(_kernel_vm, initrd, initrd, initrd+_initrd_size, AP_RW_D);
 	memcpy(_initrd, (char*)initrd, _initrd_size);
 	unmap_pages(_kernel_vm, initrd, _initrd_size/PAGE_SIZE);
-	ramfs_open(_initrd, &_initfs);
-}
-
-static void free_initrd(void) {
-	ramfs_close(&_initfs);
 }
 
 static void load_init(void) {
-	const char* prog = "sbin/init";
+	const char* prog = "/sbin/init";
 	int32_t sz;
-	const char* elf = ramfs_read(&_initfs, prog, &sz);
+	ramfs_t initfs;
+
+	ramfs_open(_initrd, &initfs);
+	const char* elf = ramfs_read(&initfs, prog, &sz);
 	if(elf != NULL) {
 		proc_t *proc = proc_create();
 		str_cpy(proc->cmd, prog);
 		proc_load_elf(proc, elf, sz);
 	}
-	free_initrd();
+	ramfs_close(&initfs);
 }
+
+#else 
+static void load_init(void) {
+	const char* prog = "/sbin/init";
+	int32_t sz;
+
+	char* elf = sd_read_ext2(prog, &sz);
+	if(elf != NULL) {
+		proc_t *proc = proc_create();
+		str_cpy(proc->cmd, prog);
+		proc_load_elf(proc, elf, sz);
+	}
+	kfree(elf);
+}
+#endif
 
 static void fs_init(void) {
 	vfs_init();
@@ -111,8 +131,10 @@ void _kernel_entry_c(context_t* ctx) {
 	km_init();
 	printf("kernel malloc inited.\n");
 
+#ifdef _INITRD
 	load_initrd();
 	printf("initrd image loaded.\n");
+#endif
 
 	init_allocable_mem(); /*init the rest allocable memory VM*/
 	printf("whole allocable memory ready.\n");

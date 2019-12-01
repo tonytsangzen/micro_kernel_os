@@ -33,9 +33,15 @@ CFLAGS = \
 	-fno-builtin-strncmp \
 	-std=c99 \
 	-mcpu=$(CPU)
-	
-#CFLAGS += -g
-CFLAGS += -O2
+
+#if boot with loading initrd
+CFLAGS += -D_INITRD
+LDS = mkos.lds.initrd.S
+#else do loading ext2 format sdcard.
+#LDS = mkos.lds.sd.S
+
+CFLAGS += -g
+#CFLAGS += -O2
 
 ASFLAGS = -g -I. -Iinclude -mcpu=$(CPU)
 
@@ -63,9 +69,9 @@ LIB_OBJS = \
 	${LIB_DIR}/proto.o \
 	${LIB_DIR}/mstr.o \
 	${LIB_DIR}/ramfs.o \
-	${LIB_DIR}/sdread.o \
 	${LIB_DIR}/charbuf.o \
 	${LIB_DIR}/basic_math.o \
+	${LIB_DIR}/ext2read.o \
 	${LIB_DIR}/kprintf.o
 
 KERNEL_DIR = kernel
@@ -90,28 +96,28 @@ OBJS = ${ARCH_OBJS} \
 BUILD_DIR = build
 SYS_DIR = ../system
 
-$(OS).bin: $(OBJS) mkos.lds.S
+$(OS).bin: $(OBJS) ${LDS}
 	mkdir -p ${BUILD_DIR}
-	$(LD) -L ${ARCH_DIR}/${ARCH} -T mkos.lds.S $(OBJS) -o ${BUILD_DIR}/$(OS).elf
+	$(LD) -L ${ARCH_DIR}/${ARCH} -T ${LDS} $(OBJS) -o ${BUILD_DIR}/$(OS).elf
 	$(OBJCOPY) -O binary ${BUILD_DIR}/$(OS).elf ${BUILD_DIR}/$(OS).bin
 	$(OBJDUMP) -D ${BUILD_DIR}/$(OS).elf > ${BUILD_DIR}/$(OS).asm
 
 INITFS = ${SYS_DIR}/build/rootfs.img
-SDC = ${SYS_DIR}/build/sd.img
+SDEXT2 = ${SYS_DIR}/build/sd.ext2
 
 run: ${INITFS}
-	qemu-system-arm $(QEMU_FLAGS) -kernel ${BUILD_DIR}/$(OS).bin -initrd ${INITFS} -sd ${SDC}
+	qemu-system-arm $(QEMU_FLAGS) -kernel ${BUILD_DIR}/$(OS).bin -initrd ${INITFS} -sd ${SDEXT2}
 
 debug: ${INITFS}
-	qemu-system-arm $(QEMU_FLAGS) -gdb tcp::26000 -S -kernel ${BUILD_DIR}/$(OS).bin -initrd  ${INITFS}
+	qemu-system-arm $(QEMU_FLAGS) -gdb tcp::26000 -S -kernel ${BUILD_DIR}/$(OS).bin -initrd  ${INITFS} -sd ${SDEXT2}
 
 debugasm: ${INITFS}
 	qemu-system-arm $(QEMU_FLAGS) -d in_asm -gdb tcp::26000 -S -kernel ${BUILD_DIR}/$(OS).bin -initrd ${INITFS}
 
 gdb: 
 	echo "target remote :26000" > /tmp/gdbinit
-	arm-none-eabi-gdb ${BUILD_DIR}/$(OS).elf -x /tmp/gdbinit
-	#gdb-multiarch ${BUILD_DIR}/$(OS).elf -x /tmp/gdbinit #for ubuntu 18.04 without arm-none-eabi-gdb
+	#arm-none-eabi-gdb ${BUILD_DIR}/$(OS).elf -x /tmp/gdbinit
+	gdb-multiarch ${BUILD_DIR}/$(OS).elf -x /tmp/gdbinit #for ubuntu 18.04 without arm-none-eabi-gdb
 
 clean:
 	rm -f $(OBJS)

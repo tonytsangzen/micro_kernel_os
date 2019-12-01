@@ -494,6 +494,14 @@ static int32_t sys_send_msg(int32_t topid, rawdata_t* data, int32_t id) {
 	return msg->id;	
 }
 
+static int32_t sys_initrd(void) {
+#ifdef _INITRD
+	return (int32_t)_initrd;
+#else
+	return 0;
+#endif
+}
+
 void svc_handler(int32_t code, int32_t arg0, int32_t arg1, int32_t arg2, context_t* ctx, int32_t processor_mode) {
 	(void)arg1;
 	(void)arg2;
@@ -525,7 +533,7 @@ void svc_handler(int32_t code, int32_t arg0, int32_t arg1, int32_t arg2, context
 		ctx->gpr[0] = sys_dev_op(arg0, arg1, arg2);
 		return;
 	case SYS_INITRD:
-		ctx->gpr[0] = (int32_t)_initrd;
+		ctx->gpr[0] = sys_initrd();
 		return;
 	case SYS_FRAMEBUFFER:
 		ctx->gpr[0] = (int32_t)sys_framebuffer();

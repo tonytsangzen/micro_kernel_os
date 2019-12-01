@@ -5,7 +5,10 @@
   
 extern char _kernel_start[];
 extern char _kernel_end[];
+
+#ifdef _INITRD
 extern char _initrd[];
+#endif
 
 extern page_dir_entry_t* _kernel_vm;
 extern void set_kernel_vm(page_dir_entry_t* vm);

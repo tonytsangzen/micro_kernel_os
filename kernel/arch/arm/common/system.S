@@ -72,7 +72,7 @@ __irq_enable:
 __irq_disable:
 	mrs r0, cpsr
 	orr r0, r0, #0x80
-	msr cpsr, r0
+	msr cpsr_c, r0
 	mov pc, lr
 
 .global __int_off // SR = int_off()
