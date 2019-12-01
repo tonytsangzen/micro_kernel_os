@@ -85,6 +85,7 @@ include $(ROOT_DIR)/sbin/dev/keybd/build.mk
 include $(ROOT_DIR)/sbin/dev/moused/build.mk
 include $(ROOT_DIR)/sbin/dev/nulld/build.mk
 include $(ROOT_DIR)/sbin/dev/xserverd/build.mk
+include $(ROOT_DIR)/sbin/dev/sdd/build.mk
 include $(ROOT_DIR)/sbin/x/xwm/build.mk
 
 include $(ROOT_DIR)/bin/shell/build.mk

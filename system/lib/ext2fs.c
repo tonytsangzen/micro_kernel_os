@@ -605,6 +605,13 @@ int32_t ext2_ino_by_fname(ext2_t* ext2, const char* filename) {
 	return ino;
 }
 
+int32_t ext2_node_by_fname(ext2_t* ext2, const char* filename, INODE* inode) {
+	int32_t ino = ext2_ino_by_fname(ext2, filename);
+	if(ino <= 0)
+		return -1;
+	return ext2_node_by_ino(ext2, ino, inode);
+}
+
 int32_t ext2_unlink(ext2_t* ext2, const char* fname) {
 	char buf[BLOCK_SIZE];
 	str_t* dir = str_new("");

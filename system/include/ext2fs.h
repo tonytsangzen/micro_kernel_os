@@ -17,6 +17,8 @@ int32_t ext2_write(ext2_t* ext2, INODE* node, char *data, int32_t nbytes, int32_
 
 int32_t ext2_ino_by_fname(ext2_t* ext2, const char* fname);
 
+int32_t ext2_node_by_fname(ext2_t* ext2, const char* fname, INODE* node);
+
 int32_t ext2_node_by_ino(ext2_t* ext2, int32_t ino, INODE* node);
 
 void    put_node(ext2_t* ext2, int32_t ino, INODE *node);

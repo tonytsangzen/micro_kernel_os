@@ -154,8 +154,9 @@ int main(int argc, char** argv) {
 	console_out(&console, "\n[init process started]\n");
 
 	run_init_dev("/sbin/dev/initrd", "/dev", 0);
-	run_init_dev("/sbin/dev/fbd", "/dev/fb0", 1);
+	run_dev(&console, "/sbin/dev/sdd", "/mnt/sd0");
 
+	run_dev(&console, "/sbin/dev/fbd", "/dev/fb0");
 	init_console(&console);
 	console_welcome(&console);
 
