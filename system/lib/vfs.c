@@ -126,6 +126,25 @@ void* vfs_readfile(const char* fname, int* rsz) {
 	return buf;
 }
 
+int vfs_parse_name(const char* fname, str_t* dir, str_t* name) {
+	str_t* fullstr = str_new(vfs_fullname(fname));
+	char* full = (char*)CS(fullstr);
+	int i = strlen(full);
+	while(i >= 0) {
+		if(full[i] == '/') {
+			full[i] = 0;
+			break;
+		}
+		--i;	
+	}
+	str_cpy(dir, full);
+	str_cpy(name, full+i+1);
+	if(CS(dir)[0] == 0)
+		str_cpy(dir, "/");
+	str_free(fullstr);
+	return 0;
+}
+
 /*
 int vfs_seek(int fd, int offset, int whence) {
 	return syscall3(SYS_VFS_PROC_SEEK, (int32_t)fd,(int32_t)offset, (int32_t)whence);

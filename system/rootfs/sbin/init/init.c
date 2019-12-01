@@ -153,7 +153,7 @@ int main(int argc, char** argv) {
 	console.fb_fd = -1;
 	console_out(&console, "\n[init process started]\n");
 
-	run_init_dev("sbin/dev/initrd", "/dev", 0);
+	run_init_dev("/sbin/dev/initrd", "/dev", 0);
 	run_init_dev("/sbin/dev/fbd", "/dev/fb0", 1);
 
 	init_console(&console);

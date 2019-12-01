@@ -2,7 +2,7 @@
 #include <dev/device.h>
 #include <syscall.h>
 
-int sd_read(int block, void* buf) {
+int32_t sd_read(int32_t block, void* buf) {
 	if(syscall2(SYS_DEV_BLOCK_READ, DEV_SD, block) != 0)
 		return -1;
 
@@ -13,7 +13,7 @@ int sd_read(int block, void* buf) {
 	return 0;
 }
 
-int sd_write(int block, const void* buf) {
+int32_t sd_write(int32_t block, const void* buf) {
 	if(syscall3(SYS_DEV_BLOCK_WRITE, DEV_SD, block, (int32_t)buf) != 0)
 		return -1;
 

@@ -14,9 +14,10 @@ void dump(FILE* out, const char*dname, const char* fname) {
 		return;
 	
 	//write name info
-	int32_t nameLen = strlen(fname);
+	int32_t nameLen = strlen(fname)+1;
 	fwrite(&nameLen, 1, 4, out);
-	fwrite(fname, 1, nameLen, out);
+	fwrite("/", 1, 1, out);
+	fwrite(fname, 1, nameLen-1, out);
 
 	//write content info
 	fseek(f, 0, SEEK_END); // seek to end of file

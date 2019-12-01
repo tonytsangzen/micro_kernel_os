@@ -4,18 +4,25 @@
 #include <stdlib.h>
 #include <vfs.h>
 #include <sd.h>
+#include <ext2fs.h>
 #include <dev/device.h>
 
 int main(int argc, char* argv[]) {
-	(void)argc;
-	(void)argv;
+	if(argc < 2) {
+		printf("Usage: test <ext2 fname>\n");
+		return -1;
+	}
 
-	char buf0[SD_BLOCK_SIZE];
-	char buf1[SD_BLOCK_SIZE];
-	memset(buf0, 'x', SD_BLOCK_SIZE);
-	sd_write(0, buf0);
-	sd_read(0, buf1);
+	ext2_t ext2;
+	ext2_init(&ext2, sd_read, sd_write);
 
-	uprintf("%s", buf1);
+	int32_t sz;
+	void* data = ext2_readfile(&ext2, argv[1], &sz);
+	if(data != NULL) {
+		write(1, data, sz);
+		free(data);
+	}
+
+	ext2_quit(&ext2);
 	return 0;
 }

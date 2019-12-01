@@ -29,4 +29,6 @@ int str_to_int(const char* str);
 //float str_to_float(const char* str);
 int str_to(const char* str, char c, str_t* res, uint8_t skipspace);
 
+#define CS(s) ((s)->cstr)
+
 #endif

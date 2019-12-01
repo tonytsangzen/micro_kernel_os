@@ -42,6 +42,8 @@ static void add_node(fsinfo_t* node_to, ram_file_t* rf) {
 	fsinfo_t cnode;
 	memcpy(&pnode, node_to, sizeof(fsinfo_t));
 
+	if(name[0] == '/')
+		name++;
 	for(int32_t i=0; i<FS_FULL_NAME_MAX; i++) {
 		n[i] = name[i];
 		if(n[i] == 0) {

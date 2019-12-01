@@ -2,6 +2,7 @@
 #define VFS_H
 
 #include <fsinfo.h>
+#include <mstr.h>
 
 const char* vfs_fullname(const char* fname);
 
@@ -21,5 +22,6 @@ void vfs_mount_wait(const char* fname, int pid);
 int vfs_umount(fsinfo_t* info);
 
 void* vfs_readfile(const char* fname, int* sz);
+int vfs_parse_name(const char* fname, str_t* dir, str_t* name);
 
 #endif

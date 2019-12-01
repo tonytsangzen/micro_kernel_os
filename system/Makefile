@@ -18,8 +18,8 @@ CFLAGS = -Wstrict-prototypes \
 				 -Wno-overlength-strings \
          -fno-builtin-exit -fno-builtin-stdio \
 				 -std=c99 
-#CFLAGS +=  -g
-CFLAGS +=  -O2
+CFLAGS +=  -g
+#CFLAGS +=  -O2
 
 LDFLAGS = -lc -lnosys
 
@@ -36,7 +36,7 @@ GRAPH_OBJS =	$(LIB_DIR)/graph/graph.o \
 	$(LIB_DIR)/graph/font8x10.o \
 	$(LIB_DIR)/graph/font8x16.o \
 	$(LIB_DIR)/graph/font9x16.o \
-	$(LIB_DIR)/graph/font12x16.o \
+  $(LIB_DIR)/graph/font12x16.o \
 	$(LIB_DIR)/graph/font10x20.o \
 	$(LIB_DIR)/graph/font12x24.o \
 	$(LIB_DIR)/graph/font16x32.o
@@ -45,6 +45,7 @@ LIB_OBJS = $(LIB_DIR)/syscall.o \
 	$(LIB_DIR)/cmain.o \
 	$(LIB_DIR)/trunk.o \
 	$(LIB_DIR)/vfs.o \
+	$(LIB_DIR)/ext2fs.o \
 	$(LIB_DIR)/sconf.o \
 	$(LIB_DIR)/ramfs.o \
 	$(LIB_DIR)/vprintf.o \
@@ -71,11 +72,9 @@ CLEAN = $(LIB_OBJS)
 TARGET_DIR = build
 ROOT_DIR = rootfs
 
-all: mkdirs $(LIB_OBJS) apps 
-	cp -r ${ROOT_DIR}/etc ${TARGET_DIR}/$(ROOT_DIR)
-	cp -r ${ROOT_DIR}/data ${TARGET_DIR}/$(ROOT_DIR)
+all: mkdirs $(LIB_OBJS) apps sd
+	@echo "all done.\n"
 	mkramfs/mkramfs ${TARGET_DIR}/$(ROOT_DIR).img ${TARGET_DIR}/$(ROOT_DIR)
-	dd if=/dev/zero of=${TARGET_DIR}/sd.img bs=1024 count=8192
 
 include mkramfs/build.mk
 include $(ROOT_DIR)/sbin/init/build.mk
@@ -106,10 +105,23 @@ include $(ROOT_DIR)/bin/xconsole/build.mk
 include $(ROOT_DIR)/bin/launcher/build.mk
 
 mkdirs:
-	mkdir -p ${TARGET_DIR}/$(ROOT_DIR)/sbin/dev
-	mkdir -p ${TARGET_DIR}/$(ROOT_DIR)/sbin/x
-	mkdir -p ${TARGET_DIR}/$(ROOT_DIR)/bin
-	mkdir -p ${TARGET_DIR}/asm
+	@mkdir -p ${TARGET_DIR}/$(ROOT_DIR)/sbin/dev
+	@mkdir -p ${TARGET_DIR}/$(ROOT_DIR)/sbin/x
+	@mkdir -p ${TARGET_DIR}/$(ROOT_DIR)/bin
+	@mkdir -p ${TARGET_DIR}/asm
+	@cp -r ${ROOT_DIR}/etc ${TARGET_DIR}/$(ROOT_DIR)
+	@cp -r ${ROOT_DIR}/data ${TARGET_DIR}/$(ROOT_DIR)
+
+sd:
+	@echo "\n====building ext2 format sdcard image===="
+	dd if=/dev/zero of=${TARGET_DIR}/sd.ext2 bs=1024 count=16384
+	mkfs.ext2 ${TARGET_DIR}/sd.ext2
+	mkdir -p tmp
+	sudo mount ${TARGET_DIR}/sd.ext2 ./tmp
+	sudo cp -ar build/rootfs/* ./tmp/
+	sudo umount ./tmp
+	rm -r tmp
+	@echo "==== ext2 format sdcard image created  ====\n"
 
 apps: ${PROGS}
 
@@ -119,7 +131,7 @@ KERNEL=../kernel/build/mkos.bin
 include ${ARCH_DIR}/${ARCH}/config.mk
 
 run: 
-	qemu-system-arm $(QEMU_FLAGS) -kernel ${KERNEL} -initrd ${TARGET_DIR}/$(ROOT_DIR).img -sd ${TARGET_DIR}/sd.img
+	qemu-system-arm $(QEMU_FLAGS) -kernel ${KERNEL} -initrd ${TARGET_DIR}/$(ROOT_DIR).img -sd ${TARGET_DIR}/sd.ext2
 
 clean:
 	rm -f $(CLEAN)

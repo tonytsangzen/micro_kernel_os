@@ -1,7 +1,9 @@
 #ifndef SD_H
 #define SD_H
 
-int sd_read(int block, void* buf); 
-int sd_write(int block, const void* buf); 
+#include <stdint.h>
+
+int32_t sd_read(int32_t block, void* buf); 
+int32_t sd_write(int32_t block, const void* buf); 
 
 #endif
