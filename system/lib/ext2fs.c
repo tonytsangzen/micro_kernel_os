@@ -7,7 +7,7 @@
 #define SHORT_NAME_MAX 64
 
 /*test bit is on or off*/
-static int32_t tst_bit(char *buf, int32_t bit) {
+static inline int32_t tst_bit(char *buf, int32_t bit) {
 	int32_t i, j;
 	i = bit / 8;
 	j = bit % 8;
@@ -17,7 +17,7 @@ static int32_t tst_bit(char *buf, int32_t bit) {
 }
 
 /*set bit off*/
-static int32_t clr_bit(char *buf, int32_t bit) {
+static inline int32_t clr_bit(char *buf, int32_t bit) {
 	int32_t i, j;
 	i = bit / 8;
 	j = bit % 8;
@@ -26,7 +26,7 @@ static int32_t clr_bit(char *buf, int32_t bit) {
 }
 
 /*set bit on*/
-static int32_t set_bit(char *buf, int32_t bit) {
+static inline int32_t set_bit(char *buf, int32_t bit) {
 	int32_t i, j;
 	i = bit / 8;
 	j = bit % 8;
