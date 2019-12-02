@@ -147,6 +147,7 @@ int main(int argc, char** argv) {
 	fsinfo_t root_info;
 	vfs_get("/", &root_info);
 
+/*
 	fsinfo_t mnt_dir;
 	memset(&mnt_dir, 0, sizeof(fsinfo_t));
 	strcpy(mnt_dir.name, "mnt");
@@ -160,13 +161,13 @@ int main(int argc, char** argv) {
 	mnt_point.type = FS_TYPE_DIR;
 	vfs_new_node(&mnt_point);
 	vfs_add(&mnt_dir, &mnt_point);
-
+*/
 	mount_info_t mnt_info;
 	strcpy(mnt_info.dev_name, dev.name);
 	mnt_info.dev_index = 0;
 	mnt_info.access = 0;
 
-	device_run(&dev, &mnt_point, &mnt_info, &ext2, 1);
+	device_run(&dev, &root_info, &mnt_info, &ext2, 1);
 	ext2_quit(&ext2);
 	return 0;
 }

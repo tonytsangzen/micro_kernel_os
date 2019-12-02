@@ -72,9 +72,7 @@ enum {
 	SYS_PROC_SHM_REF,
 
 	SYS_GET_SYSINFO,
-	SYS_GET_PROCS,
-
-	SYS_INITRD
+	SYS_GET_PROCS
 };
 
 #endif

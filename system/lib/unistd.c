@@ -162,13 +162,8 @@ int write(int fd, const void* buf, uint32_t size) {
 	return -1;
 }
 
-void exec_initfs(const char* fname) {
-	ramfs_t ramfs;
-	const char* initrd = (const char*)syscall0(SYS_INITRD);
-	ramfs_open(initrd, &ramfs);
-	int sz;
-	const char* elf = ramfs_read(&ramfs, fname, &sz);
-	syscall3(SYS_EXEC_ELF, (int32_t)fname, (int32_t)elf, sz);
+void exec_elf(const char* cmd_line, const char* elf, int32_t size) {
+	syscall3(SYS_EXEC_ELF, (int32_t)cmd_line, (int32_t)elf, size);
 }
 
 int exec(const char* cmd_line) {
@@ -185,7 +180,7 @@ int exec(const char* cmd_line) {
 		str_free(cmd);
 		return -1;
 	}
-	syscall3(SYS_EXEC_ELF, (int32_t)cmd_line, (int32_t)buf, sz);
+	exec_elf(cmd_line, buf, sz);
 	free(buf);
 	return 0;
 }

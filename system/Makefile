@@ -74,11 +74,8 @@ ROOT_DIR = rootfs
 
 all: mkdirs $(LIB_OBJS) apps sd
 	@echo "all done.\n"
-	mkramfs/mkramfs ${TARGET_DIR}/$(ROOT_DIR).img ${TARGET_DIR}/$(ROOT_DIR)
 
-include mkramfs/build.mk
 include $(ROOT_DIR)/sbin/init/build.mk
-include $(ROOT_DIR)/sbin/dev/initrd/build.mk
 include $(ROOT_DIR)/sbin/dev/ttyd/build.mk
 include $(ROOT_DIR)/sbin/dev/fbd/build.mk
 include $(ROOT_DIR)/sbin/dev/keybd/build.mk
@@ -109,6 +106,7 @@ mkdirs:
 	@mkdir -p ${TARGET_DIR}/$(ROOT_DIR)/sbin/dev
 	@mkdir -p ${TARGET_DIR}/$(ROOT_DIR)/sbin/x
 	@mkdir -p ${TARGET_DIR}/$(ROOT_DIR)/bin
+	@mkdir -p ${TARGET_DIR}/$(ROOT_DIR)/dev
 	@mkdir -p ${TARGET_DIR}/asm
 	@cp -r ${ROOT_DIR}/etc ${TARGET_DIR}/$(ROOT_DIR)
 	@cp -r ${ROOT_DIR}/data ${TARGET_DIR}/$(ROOT_DIR)
@@ -132,7 +130,7 @@ KERNEL=../kernel/build/mkos.bin
 include ${ARCH_DIR}/${ARCH}/config.mk
 
 run: 
-	qemu-system-arm $(QEMU_FLAGS) -kernel ${KERNEL} -initrd ${TARGET_DIR}/$(ROOT_DIR).img -sd ${TARGET_DIR}/sd.ext2
+	qemu-system-arm $(QEMU_FLAGS) -kernel ${KERNEL} -sd ${TARGET_DIR}/sd.ext2
 
 clean:
 	rm -f $(CLEAN)

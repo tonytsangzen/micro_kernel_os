@@ -34,11 +34,7 @@ CFLAGS = \
 	-std=c99 \
 	-mcpu=$(CPU)
 
-#if boot with loading initrd
-CFLAGS += -D_INITRD
-LDS = mkos.lds.initrd.S
-#else do loading ext2 format sdcard.
-#LDS = mkos.lds.sd.S
+LDS = mkos.lds.sd.S
 
 #CFLAGS += -g
 CFLAGS += -O2
@@ -68,7 +64,6 @@ LIB_OBJS = \
 	${LIB_DIR}/vprintf.o \
 	${LIB_DIR}/proto.o \
 	${LIB_DIR}/mstr.o \
-	${LIB_DIR}/ramfs.o \
 	${LIB_DIR}/charbuf.o \
 	${LIB_DIR}/basic_math.o \
 	${LIB_DIR}/ext2read.o \
@@ -102,17 +97,16 @@ $(OS).bin: $(OBJS) ${LDS}
 	$(OBJCOPY) -O binary ${BUILD_DIR}/$(OS).elf ${BUILD_DIR}/$(OS).bin
 	$(OBJDUMP) -D ${BUILD_DIR}/$(OS).elf > ${BUILD_DIR}/$(OS).asm
 
-INITFS = ${SYS_DIR}/build/rootfs.img
 SDEXT2 = ${SYS_DIR}/build/sd.ext2
 
-run: ${INITFS}
-	qemu-system-arm $(QEMU_FLAGS) -kernel ${BUILD_DIR}/$(OS).bin -initrd ${INITFS} -sd ${SDEXT2}
+run: 
+	qemu-system-arm $(QEMU_FLAGS) -kernel ${BUILD_DIR}/$(OS).bin -sd ${SDEXT2}
 
-debug: ${INITFS}
-	qemu-system-arm $(QEMU_FLAGS) -gdb tcp::26000 -S -kernel ${BUILD_DIR}/$(OS).bin -initrd  ${INITFS} -sd ${SDEXT2}
+debug:
+	qemu-system-arm $(QEMU_FLAGS) -gdb tcp::26000 -S -kernel ${BUILD_DIR}/$(OS).bin -sd ${SDEXT2}
 
-debugasm: ${INITFS}
-	qemu-system-arm $(QEMU_FLAGS) -d in_asm -gdb tcp::26000 -S -kernel ${BUILD_DIR}/$(OS).bin -initrd ${INITFS}
+debugasm:
+	qemu-system-arm $(QEMU_FLAGS) -d in_asm -gdb tcp::26000 -S -kernel ${BUILD_DIR}/$(OS).bin
 
 gdb: 
 	echo "target remote :26000" > /tmp/gdbinit

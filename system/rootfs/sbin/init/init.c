@@ -11,6 +11,8 @@
 #include <graph/graph.h>
 #include <console.h>
 #include <vfs.h>
+#include <ext2fs.h>
+#include <sd.h>
 
 static void init_stdio(void) {
 	int fd = open("/dev/tty0", 0);
@@ -101,13 +103,22 @@ static void check_keyb_table(void) {
 	}
 }
 
-static void run_init_dev(const char* cmd, const char* dev, uint8_t fs_ready) {
+static void run_init_dev(const char* cmd, const char* dev) {
 	int pid = fork();
 	if(pid == 0) {
-		if(fs_ready != 0)
-			exec(cmd);
-		else
-			exec_initfs(cmd);
+		ext2_t ext2;
+		ext2_init(&ext2, sd_read, sd_write);
+		str_t* fname = str_new("");
+		str_to(cmd, ' ', fname, 1);
+		int32_t sz;
+		void* data = ext2_readfile(&ext2, fname->cstr, &sz);
+		str_free(fname);
+		ext2_quit(&ext2);
+
+		if(data == NULL)
+			exit(-1);
+		exec_elf(cmd, data, sz);
+		free(data);
 	}
 	vfs_mount_wait(dev, pid);
 	uprintf("%s mounted (%s).\n", dev, cmd);
@@ -153,8 +164,7 @@ int main(int argc, char** argv) {
 	console.fb_fd = -1;
 	console_out(&console, "\n[init process started]\n");
 
-	run_init_dev("/sbin/dev/initrd", "/dev", 0);
-	run_dev(&console, "/sbin/dev/sdd", "/mnt/sd0");
+	run_init_dev("/sbin/dev/sdd", "/dev");
 
 	run_dev(&console, "/sbin/dev/fbd", "/dev/fb0");
 	init_console(&console);
