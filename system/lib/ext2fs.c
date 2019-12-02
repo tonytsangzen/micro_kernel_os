@@ -6,6 +6,7 @@
 
 #define SHORT_NAME_MAX 64
 
+/*test bit is on or off*/
 static int32_t tst_bit(char *buf, int32_t bit) {
 	int32_t i, j;
 	i = bit / 8;
@@ -15,6 +16,7 @@ static int32_t tst_bit(char *buf, int32_t bit) {
 	return 0;
 }
 
+/*set bit off*/
 static int32_t clr_bit(char *buf, int32_t bit) {
 	int32_t i, j;
 	i = bit / 8;
@@ -23,7 +25,7 @@ static int32_t clr_bit(char *buf, int32_t bit) {
 	return 0;
 }
 
-
+/*set bit on*/
 static int32_t set_bit(char *buf, int32_t bit) {
 	int32_t i, j;
 	i = bit / 8;
@@ -32,22 +34,27 @@ static int32_t set_bit(char *buf, int32_t bit) {
 	return 0;
 }
 
+/*get group descriptor index by inode*/
 static inline int32_t get_gd_index_by_ino(ext2_t* ext2, int32_t ino) {
 	return div_u32(ino, ext2->super.s_inodes_per_group);
 }
 
+/*get group descriptor index by block*/
 static inline int32_t get_gd_index_by_block(ext2_t* ext2, int32_t block) {
 	return div_u32(block, ext2->super.s_blocks_per_group);
 }
 
+/*get inode index in group*/
 static inline int32_t get_ino_in_group(ext2_t* ext2, int32_t ino, int32_t index) {
 	return ino - (index * ext2->super.s_inodes_per_group);
 }
 
+/*get block index in group*/
 static inline int32_t get_block_in_group(ext2_t* ext2, int32_t block, int32_t index) {
 	return block - (index * ext2->super.s_blocks_per_group);
 }
 
+/*get group descriptor by index*/
 static int32_t get_gd(ext2_t* ext2, int32_t index, GD* gd) {
 	char buf[BLOCK_SIZE];
 	if(ext2->read_block(index*ext2->super.s_blocks_per_group+2, buf) != 0)
@@ -56,15 +63,19 @@ static int32_t get_gd(ext2_t* ext2, int32_t index, GD* gd) {
 	return 0;
 }
 
+/*write back group descriptor by index*/
 static int32_t set_gd(ext2_t* ext2, int32_t index) {
 	char buf[BLOCK_SIZE];
 	memcpy(buf, &ext2->gds[index], sizeof(GD));
 	return ext2->write_block(index*ext2->super.s_blocks_per_group+2, buf);
 }
 
+/*write back super block*/
 static int32_t set_super(ext2_t* ext2) {
 	char buf[BLOCK_SIZE];
 	memcpy(buf, &ext2->super, sizeof(SUPER));
+	if(ext2->group_num > 1) //write backup super block
+		ext2->write_block(8193, buf);
 	return ext2->write_block(1, buf);
 }
 
@@ -682,9 +693,11 @@ int32_t ext2_init(ext2_t* ext2, read_block_func_t read_block, write_block_func_t
 	ext2->read_block = read_block;
 	ext2->write_block = write_block;
 
+	//read super block
 	ext2->read_block(1, buf);
 	memcpy(&ext2->super, buf, sizeof(SUPER));
 
+	//read all group descriptors
 	ext2->group_num = get_gd_num(ext2);
 	ext2->gds = (GD*)malloc(sizeof(GD) * ext2->group_num);
 
