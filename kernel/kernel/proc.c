@@ -315,6 +315,7 @@ proc_t *proc_create(void) {
 	proc->cwd = str_new("/");
 	proc->ctx.sp = user_stack_base + STACK_PAGES*PAGE_SIZE;
 	proc->ctx.cpsr = 0x50;
+	proc->start_sec = _kernel_tic;
 	return proc;
 }
 

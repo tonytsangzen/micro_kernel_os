@@ -52,7 +52,7 @@ static void sys_dev_block_read_done(context_t* ctx, uint32_t type, void* buf) {
 	}
 
 	proc_t* proc = _current_proc;
-	proc_sleep_on(ctx, (uint32_t)&proc->pid);
+	proc_sleep_on(ctx, (uint32_t)dev);
 	proc->ctx.gpr[0] = -1;
 }
 
@@ -70,7 +70,7 @@ static void sys_dev_block_write_done(context_t* ctx, uint32_t type) {
 	}
 
 	proc_t* proc = _current_proc;
-	proc_sleep_on(ctx, (uint32_t)&proc->pid);
+	proc_sleep_on(ctx, (uint32_t)dev);
 	proc->ctx.gpr[0] = -1;
 }
 
