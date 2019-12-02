@@ -69,18 +69,14 @@ static int32_t set_super(ext2_t* ext2) {
 	return 0;
 }
 
-/*static void inc_free_blocks(ext2_t* ext2) {
-	char buf[BLOCK_SIZE];
-	// inc free block count in SUPER and GD
-	ext2->read_block(1, buf);
-	SUPER* sp = (SUPER *)buf;
-	sp->s_free_blocks_count++;
-	ext2->write_block(1, buf);
+/*
+static void inc_free_blocks(ext2_t* ext2, int32_t block) {
+	ext2->super.s_free_blocks_count++;
+	set_super(ext2);
 
-	ext2->read_block(2, buf);
-	GD* gp = (GD *)buf;
-	gp->bg_free_blocks_count++;
-	ext2->write_block(2, buf);
+	int32_t index = get_gd_index_by_block(ext2, block);
+	ext2->gds[index].bg_free_blocks_count++;
+	set_gd(ext2, index);
 }
 */
 
