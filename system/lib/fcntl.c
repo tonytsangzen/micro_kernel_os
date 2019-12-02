@@ -5,68 +5,13 @@
 #include <stddef.h>
 #include <string.h>
 
-static int create(const char* fname, fsinfo_t* ret, int type) {
-	str_t *dir = str_new("");
-	str_t *name = str_new("");
-	vfs_parse_name(fname, dir, name);
-
-	fsinfo_t info_to;
-	if(vfs_get(CS(dir), &info_to) != 0) {
-		str_free(dir);
-		str_free(name);
-		return -1;
-	}
-	
-	mount_t mount;
-	if(vfs_get_mount(&info_to, &mount) != 0) {
-		str_free(dir);
-		str_free(name);
-		return -1;
-	}
-
-	memset(ret, 0, sizeof(fsinfo_t));
-	strcpy(ret->name, CS(name));
-	ret->type = type;
-	str_free(name);
-	str_free(dir);
-
-	vfs_new_node(ret);
-	if(vfs_add(&info_to, ret) != 0) {
-		vfs_del(ret);
-		return -1;
-	}
-	
-	proto_t in, out;
-	proto_init(&in, NULL, 0);
-	proto_init(&out, NULL, 0);
-
-	proto_add_int(&in, FS_CMD_CREATE);
-	proto_add(&in, &info_to, sizeof(fsinfo_t));
-	proto_add(&in, ret, sizeof(fsinfo_t));
-
-	int res = -1;
-	if(ipc_call(mount.pid, &in, &out) != 0) {
-		vfs_del(ret);
-	}
-	else {
-		res = proto_read_int(&out);
-		if(res == 0) {
-			proto_read_to(&out, ret, sizeof(fsinfo_t));
-			res = vfs_set(ret);
-		}
-	}
-	proto_clear(&in);
-	proto_clear(&out);
-	return res;
-}
-
 int open(const char* fname, int oflag) {
 	int res = -1;
 	fsinfo_t info;
 
 	if(vfs_get(fname, &info) != 0) {
 		if((oflag & O_CREAT) != 0)
-			if(create(fname, &info, FS_TYPE_FILE) != 0)
+			if(vfs_create(fname, &info, FS_TYPE_FILE) != 0)
 				return -1;
 	}
 	

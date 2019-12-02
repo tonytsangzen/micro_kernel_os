@@ -112,6 +112,8 @@ int write_nblock(int fd, const void* buf, uint32_t size) {
 	
 	if(info.type == FS_TYPE_PIPE) 
 		return write_pipe(&info, buf, size);
+	if(info.type == FS_TYPE_DIR) 
+		return -1;
 
 	mount_t mount;
 	if(vfs_get_mount(&info, &mount) != 0)

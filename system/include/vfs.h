@@ -21,6 +21,7 @@ int vfs_mount(fsinfo_t* mount_to, fsinfo_t* info, mount_info_t* mnt_info);
 void vfs_mount_wait(const char* fname, int pid);
 int vfs_umount(fsinfo_t* info);
 
+int vfs_create(const char* fname, fsinfo_t* ret, int type);
 void* vfs_readfile(const char* fname, int* sz);
 int vfs_parse_name(const char* fname, str_t* dir, str_t* name);
 

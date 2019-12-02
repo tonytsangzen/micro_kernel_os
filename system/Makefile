@@ -100,6 +100,7 @@ include $(ROOT_DIR)/bin/tga/build.mk
 include $(ROOT_DIR)/bin/gtest/build.mk
 include $(ROOT_DIR)/bin/grep/build.mk
 include $(ROOT_DIR)/bin/kill/build.mk
+include $(ROOT_DIR)/bin/mkdir/build.mk
 include $(ROOT_DIR)/bin/xconsole/build.mk
 include $(ROOT_DIR)/bin/launcher/build.mk
 
