@@ -55,7 +55,7 @@ static int create(const char* fname, fsinfo_t* ret, int type) {
 	proto_clear(&in);
 	proto_clear(&out);
 
-	return ret;
+	return res;
 }
 
 int open(const char* fname, int oflag) {
@@ -64,7 +64,7 @@ int open(const char* fname, int oflag) {
 
 	if(vfs_get(fname, &info) != 0) {
 		if((oflag & O_CREAT) != 0)
-			if(create(fname, oflag, FS_TYPE_FILE) != 0)
+			if(create(fname, &info, FS_TYPE_FILE) != 0)
 				return -1;
 	}
 	

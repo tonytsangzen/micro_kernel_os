@@ -18,6 +18,7 @@ enum {
 enum {
 	FS_CMD_NONE = 0,
 	FS_CMD_OPEN,
+	FS_CMD_CREATE,
 	FS_CMD_CLOSE,
 	FS_CMD_CLOSED,
 	FS_CMD_READ,
