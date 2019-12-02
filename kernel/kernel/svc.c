@@ -499,7 +499,6 @@ void svc_handler(int32_t code, int32_t arg0, int32_t arg1, int32_t arg2, context
 	(void)arg2;
 	(void)ctx;
 	(void)processor_mode;
-	
 	__irq_disable();
 
 	switch(code) {

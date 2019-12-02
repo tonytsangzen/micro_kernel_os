@@ -385,14 +385,18 @@ int32_t ext2_read(ext2_t* ext2, INODE* node, char *buf, int32_t nbytes, int32_t 
 static INODE* get_node_by_ino(ext2_t* ext2, int32_t ino, char* buf) {
 	int32_t bgid = get_gd_index_by_ino(ext2, ino);
 	ino = get_ino_in_group(ext2, ino, bgid);
+	int32_t offset = (ino-1)%8;
 
 	ext2->read_block(bgid*ext2->super.s_blocks_per_group + ext2->gds[bgid].bg_inode_table + 	((ino-1)/8), buf);
-	return ((INODE *)buf) + ((ino-1) % 8);
+	return ((INODE *)buf) + offset;
 }
 
 void put_node(ext2_t* ext2, int32_t ino, INODE *node) {
-	int32_t blk = (ino-1)/8 + ext2->gds[0].bg_inode_table;
+	int32_t bgid = get_gd_index_by_ino(ext2, ino);
+	ino = get_ino_in_group(ext2, ino, bgid);
 	int32_t offset = (ino-1)%8;
+
+	int32_t blk = bgid*ext2->super.s_blocks_per_group + ext2->gds[bgid].bg_inode_table + 	((ino-1)/8);
 	char buf[BLOCK_SIZE];
 	ext2->read_block(blk, buf);
 	INODE *ip = ((INODE *)buf) + offset;

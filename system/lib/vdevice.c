@@ -161,6 +161,24 @@ static void do_flush(vdevice_t* dev, int from_pid, proto_t *in, void* p) {
 	proto_clear(&out);
 }
 
+static void do_create(vdevice_t* dev, int from_pid, proto_t *in, void* p) {
+	fsinfo_t info_to, info;
+	proto_read_to(in, &info_to, sizeof(fsinfo_t));
+	proto_read_to(in, &info, sizeof(fsinfo_t));
+
+	int res = 0;
+	if(dev != NULL && dev->create != NULL) {
+		res = dev->create(&info_to, &info, p);
+	}
+
+	proto_t out;
+	proto_init(&out, NULL, 0);
+	proto_add_int(&out, res);
+	proto_add(&out, &info, sizeof(fsinfo_t));
+	ipc_send(from_pid, &out, in->id);
+	proto_clear(&out);
+}
+
 static void handle(vdevice_t* dev, int from_pid, proto_t *in, void* p) {
 	if(dev == NULL)
 		return;
@@ -191,6 +209,9 @@ static void handle(vdevice_t* dev, int from_pid, proto_t *in, void* p) {
 		return;
 	case FS_CMD_CNTL:
 		do_cntl(dev, from_pid, in, p);
+		return;
+	case FS_CMD_CREATE:
+		do_create(dev, from_pid, in, p);
 		return;
 	}
 }

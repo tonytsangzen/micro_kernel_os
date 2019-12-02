@@ -74,6 +74,5 @@ int ipc_server(ipc_handle_t handle, void* p) {
 			handle(pid, &pkg, p);
 			proto_clear(&pkg);
 		}
-		sleep(0);
 	}
 }

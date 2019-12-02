@@ -24,10 +24,11 @@ static void add_file(fsinfo_t* node_to, const char* name, INODE* inode, int32_t 
 	vfs_add(node_to, &f);
 }
 
-static int add_dir(fsinfo_t* node_to, fsinfo_t* ret, const char* dn) {
+static int add_dir(fsinfo_t* node_to, fsinfo_t* ret, const char* dn, int ino) {
 	memset(ret, 0, sizeof(fsinfo_t));
 	strcpy(ret->name, dn);
 	ret->type = FS_TYPE_DIR;
+	ret->data = (uint32_t)ino;
 	vfs_new_node(ret);
 	if(vfs_add(node_to, ret) != 0) {
 		vfs_del(ret);
@@ -60,7 +61,7 @@ static int32_t add_nodes(ext2_t* ext2, INODE *ip, fsinfo_t* dinfo) {
 					if(ext2_node_by_ino(ext2, ino, &ip_node) == 0) {
 						if(dp->file_type == 2) {//director
 							fsinfo_t ret;
-							add_dir(dinfo, &ret, dp->name);
+							add_dir(dinfo, &ret, dp->name, ino);
 							add_nodes(ext2, &ip_node, &ret);
 						}
 						else if(dp->file_type == 1) {//file
@@ -102,6 +103,25 @@ static int sdext2_mount(fsinfo_t* info, mount_info_t* mnt_info, void* p) {
 	return 0;
 }
 
+static int sdext2_create(fsinfo_t* info_to, fsinfo_t* info, void* p) {
+	ext2_t* ext2 = (ext2_t*)p;
+	int32_t ino_to = (int32_t)info_to->data;
+	INODE inode_to;
+	if(ext2_node_by_ino(ext2, ino_to, &inode_to) != 0) {
+		return -1;
+	}
+
+	int ino = -1;
+	if(info->type == FS_TYPE_DIR) 
+		ino = ext2_create_dir(ext2, &inode_to, info->name, info->owner);
+	else
+		ino = ext2_create_file(ext2, &inode_to, info->name, info->owner);
+	if(ino == -1)
+		return -1;
+	info->data = ino;
+	return 0;
+}
+
 static int sdext2_read(int fd, int from_pid, fsinfo_t* info, void* buf, int size, int offset, void* p) {
 	(void)fd;
 	(void)from_pid;
@@ -134,15 +154,13 @@ static int sdext2_write(int fd, int from_pid, fsinfo_t* info, const void* buf, i
 	if(ext2_node_by_ino(ext2, ino, &inode) != 0) {
 		return -1;
 	}
-
-	int rsize = info->size - offset;
-	if(rsize < size)
-		size = rsize;
-	if(size < 0)
-		size = -1;
-
-	if(size > 0) 
-		size = ext2_write(ext2, &inode, buf, size, offset);
+	size = ext2_write(ext2, &inode, buf, size, offset);
+	if(size >= 0) {
+		inode.i_size += size;
+		info->size += size;
+		put_node(ext2, ino, &inode);
+		vfs_set(info);
+	}
 	return size;	
 }
 
@@ -162,6 +180,7 @@ int main(int argc, char** argv) {
 	dev.mount = sdext2_mount;
 	dev.read = sdext2_read;
 	dev.write = sdext2_write;
+	dev.create = sdext2_create;
 	dev.umount = sdext2_umount;
 
 	ext2_t ext2;

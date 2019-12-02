@@ -18,6 +18,7 @@ CFLAGS = -Wstrict-prototypes \
 				 -Wno-overlength-strings \
          -fno-builtin-exit -fno-builtin-stdio \
 				 -std=c99 
+
 #CFLAGS +=  -g
 CFLAGS +=  -O2
 

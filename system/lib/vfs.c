@@ -112,7 +112,6 @@ void* vfs_readfile(const char* fname, int* rsz) {
 			fsize -= sz;
 			p += sz;
 		}
-		sleep(0);
 	}
 	close(fd);
 

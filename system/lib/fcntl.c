@@ -44,17 +44,19 @@ static int create(const char* fname, fsinfo_t* ret, int type) {
 	proto_add(&in, &info_to, sizeof(fsinfo_t));
 	proto_add(&in, ret, sizeof(fsinfo_t));
 
-	int res = 1;
+	int res = -1;
 	if(ipc_call(mount.pid, &in, &out) != 0) {
 		vfs_del(ret);
 	}
 	else {
-		proto_read_to(&out, ret, sizeof(fsinfo_t));
-		res = 0;
+		res = proto_read_int(&out);
+		if(res == 0) {
+			proto_read_to(&out, ret, sizeof(fsinfo_t));
+			res = vfs_set(ret);
+		}
 	}
 	proto_clear(&in);
 	proto_clear(&out);
-
 	return res;
 }
 

@@ -5,7 +5,6 @@
 int32_t sd_read(int32_t block, void* buf) {
 	if(syscall2(SYS_DEV_BLOCK_READ, DEV_SD, block) != 0)
 		return -1;
-
 	while(1) {
 		if(syscall2(SYS_DEV_BLOCK_READ_DONE, DEV_SD, (int32_t)buf)  == 0)
 			break;

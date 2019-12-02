@@ -238,7 +238,7 @@ int32_t vfs_del(vfs_node_t* node) {
 }
 
 int32_t vfs_set(vfs_node_t* node, fsinfo_t* info) {
-	if(node == NULL || node->refs > 0 ||
+	if(node == NULL ||
 			info == NULL || check_mount(node) != 0)
 		return -1;
 	memcpy(&node->fsinfo, info, sizeof(fsinfo_t));
