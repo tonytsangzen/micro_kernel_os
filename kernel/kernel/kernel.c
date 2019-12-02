@@ -91,31 +91,31 @@ void _kernel_entry_c(context_t* ctx) {
 	init_kernel_vm();  
 	printf("\n"
 			"------Ewok micro-kernel-------\n"
-			"kernel: kernel mmu inited.\n");
+			"kernel: %39s [ok]\n", "kernel mmu initing");
 
 	km_init();
-	printf("kernel: kernel malloc inited.\n");
+	printf("kernel: %39s [ok]\n", "kmalloc initing");
 
 	init_allocable_mem(); /*init the rest allocable memory VM*/
-	printf("kernel: whole allocable memory ready.\n");
+	printf("kernel: %39s [ok]\n", "whole allocable memory initing");
 
 	shm_init();
-	printf("kernel: share memory ready.\n");
+	printf("kernel: %39s [ok]\n", "share memory initing");
 
 	dev_init();
-	printf("kernel: devices inited.\n");
+	printf("kernel: %39s [ok]\n", "devices initing");
 
 	fs_init();
-	printf("kernel: vfs inited.\n");
+	printf("kernel: %39s [ok]\n", "vfs initing");
 
 	procs_init();
-	printf("kernel: processes inited.\n");
+	printf("kernel: %39s [ok]\n", "processes initing");
 
 	irq_init();
-	printf("kernel: irq inited.\n");
+	printf("kernel: %39s [ok]\n", "irq initing");
 
 	load_init();
-	printf("kernel: load first process(/sbin/init).\n");
+	printf("kernel: %39s [ok]\n", "loading first process(init)");
 
 	timer_set_interval(0, 0x40); //0.001 sec sequence
 	printf("kernel: start timer.\n");

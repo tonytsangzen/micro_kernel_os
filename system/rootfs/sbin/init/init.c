@@ -129,7 +129,7 @@ static void run_init_root(init_console_t* console, const char* cmd) {
 		free(data);
 	}
 	vfs_mount_wait("/dev", pid);
-	console_out(console, "[ok].\n");
+	console_out(console, "[ok]\n");
 }
 
 static void run_dev(init_console_t* console, const char* cmd, const char* mnt) {
@@ -141,7 +141,7 @@ static void run_dev(init_console_t* console, const char* cmd, const char* mnt) {
 		exec(fcmd);
 	}
 	vfs_mount_wait(mnt, pid);
-	console_out(console, "[ok].\n");
+	console_out(console, "[ok]\n");
 }
 
 static void run(const char* cmd) {
