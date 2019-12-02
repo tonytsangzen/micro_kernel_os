@@ -124,6 +124,28 @@ static int sdext2_read(int fd, int from_pid, fsinfo_t* info, void* buf, int size
 	return size;	
 }
 
+static int sdext2_write(int fd, int from_pid, fsinfo_t* info, const void* buf, int size, int offset, void* p) {
+	(void)fd;
+	(void)from_pid;
+
+	ext2_t* ext2 = (ext2_t*)p;
+	int32_t ino = (int32_t)info->data;
+	INODE inode;
+	if(ext2_node_by_ino(ext2, ino, &inode) != 0) {
+		return -1;
+	}
+
+	int rsize = info->size - offset;
+	if(rsize < size)
+		size = rsize;
+	if(size < 0)
+		size = -1;
+
+	if(size > 0) 
+		size = ext2_write(ext2, &inode, buf, size, offset);
+	return size;	
+}
+
 static int sdext2_umount(fsinfo_t* info, void* p) {
 	(void)p;
 	vfs_umount(info);
@@ -139,6 +161,7 @@ int main(int argc, char** argv) {
 	strcpy(dev.name, "sd(ext2)");
 	dev.mount = sdext2_mount;
 	dev.read = sdext2_read;
+	dev.write = sdext2_write;
 	dev.umount = sdext2_umount;
 
 	ext2_t ext2;

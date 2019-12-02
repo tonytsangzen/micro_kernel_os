@@ -455,9 +455,9 @@ int32_t ext2_create_file(ext2_t* ext2, INODE* father_inp, const char *base, int3
 	return ino;
 }
 
-int32_t ext2_write(ext2_t* ext2, INODE* node, char *data, int32_t nbytes, int32_t offset) {
+int32_t ext2_write(ext2_t* ext2, INODE* node, const char *data, int32_t nbytes, int32_t offset) {
 	static char buf[BLOCK_SIZE];
-	char *cq = data;
+	const char *cq = data;
 	char *cp;
 	//(2)
 	int32_t blk =0, lbk = 0, start_byte = 0, remain = 0;
