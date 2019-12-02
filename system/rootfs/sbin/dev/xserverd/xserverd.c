@@ -755,8 +755,9 @@ static void x_close(x_t* x) {
 }
 
 int main(int argc, char** argv) {
-	(void)argc;
-	(void)argv;
+	fsinfo_t mnt_point;
+	const char* mnt_name = argc > 1 ? argv[1]: "/dev/x";
+	vfs_create(mnt_name, &mnt_point, FS_TYPE_DEV);
 
 	int pid = fork();
 	if(pid == 0) {
@@ -773,17 +774,6 @@ int main(int argc, char** argv) {
 	dev.open = xserver_open;
 	dev.loop_step= xserver_loop_step;
 	dev.umount = xserver_umount;
-
-	fsinfo_t dev_info;
-	vfs_get("/dev", &dev_info);
-
-	fsinfo_t mnt_point;
-	memset(&mnt_point, 0, sizeof(fsinfo_t));
-	strcpy(mnt_point.name, "x");
-	mnt_point.type = FS_TYPE_DEV;
-
-	vfs_new_node(&mnt_point);
-	vfs_add(&dev_info, &mnt_point);
 
 	mount_info_t mnt_info;
 	strcpy(mnt_info.dev_name, dev.name);

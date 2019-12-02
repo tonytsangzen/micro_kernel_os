@@ -77,8 +77,9 @@ static int fb_cntl(int fd, int from_pid, fsinfo_t* info, int cmd, proto_t* in, p
 }
 
 int main(int argc, char** argv) {
-	(void)argc;
-	(void)argv;
+	fsinfo_t mnt_point;
+	const char* mnt_name = argc > 1 ? argv[1]: "/dev/fb0";
+	vfs_create(mnt_name, &mnt_point, FS_TYPE_DEV);
 
 	fbinfo_t fbinfo;
 	syscall3(SYS_DEV_OP, DEV_FRAMEBUFFER, DEV_OP_INFO, (int32_t)&fbinfo);
@@ -101,17 +102,6 @@ int main(int argc, char** argv) {
 	dev.flush = fb_flush;
 	dev.cntl = fb_cntl;
 	dev.umount = fb_umount;
-
-	fsinfo_t dev_info;
-	vfs_get("/dev", &dev_info);
-
-	fsinfo_t mnt_point;
-	memset(&mnt_point, 0, sizeof(fsinfo_t));
-	strcpy(mnt_point.name, "fb0");
-	mnt_point.type = FS_TYPE_DEV;
-
-	vfs_new_node(&mnt_point);
-	vfs_add(&dev_info, &mnt_point);
 
 	mount_info_t mnt_info;
 	strcpy(mnt_info.dev_name, dev.name);

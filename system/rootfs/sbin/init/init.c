@@ -13,6 +13,7 @@
 #include <vfs.h>
 #include <ext2fs.h>
 #include <sd.h>
+#include <vprintf.h>
 
 typedef struct {
 	graph_t* g;
@@ -69,17 +70,29 @@ static void close_console(init_console_t* console) {
 	close(console->fb_fd);
 }
 
-static void console_out(init_console_t* console, const char* s) {
+static void outc(char c, void* p) {
+	char s[2];
+	s[0] = c;
+	s[1] = 0;
+
+	init_console_t* console = (init_console_t*)p;
 	if(console->fb_fd < 0) {
 		uprintf("%s", s);
 		return;
 	}
-
 	console_put_string(&console->console, s);
+}
+ 
+static void console_out(init_console_t* console, const char* format, ...) {
+	va_list ap;
+  va_start(ap, format);
+  v_printf(outc, console, format, ap);
+  va_end(ap);
 	flush(console->fb_fd);
 }
 
-static void check_keyb_table(void) {
+static void check_keyb_table(init_console_t* console) {
+	console_out(console, "  ENTER to continue......\n");
 	while(1) {
 		uint8_t v;
 		int rd = syscall3(SYS_DEV_CHAR_READ, (int32_t)DEV_KEYB, (int32_t)&v, 1);
@@ -97,7 +110,8 @@ static void check_keyb_table(void) {
 	}
 }
 
-static void run_init_dev(const char* cmd, const char* dev) {
+static void run_init_root(init_console_t* console, const char* cmd) {
+	console_out(console, "init: mounting %32s ", "/");
 	int pid = fork();
 	if(pid == 0) {
 		ext2_t ext2;
@@ -114,21 +128,20 @@ static void run_init_dev(const char* cmd, const char* dev) {
 		exec_elf(cmd, data, sz);
 		free(data);
 	}
-	vfs_mount_wait(dev, pid);
-	uprintf("init: %s mounted (%s).\n", dev, cmd);
+	vfs_mount_wait("/dev", pid);
+	console_out(console, "[ok].\n");
 }
 
-static void run_dev(init_console_t* console, const char* cmd, const char* dev) {
+static void run_dev(init_console_t* console, const char* cmd, const char* mnt) {
+	console_out(console, "init: mounting %32s ", mnt);
 	int pid = fork();
 	if(pid == 0) {
-		exec(cmd);
+		char fcmd[FS_FULL_NAME_MAX];
+		snprintf(fcmd, FS_FULL_NAME_MAX-1, "%s %s", cmd, mnt);
+		exec(fcmd);
 	}
-	vfs_mount_wait(dev, pid);
-	console_out(console, "init: ");
-	console_out(console, dev);
-	console_out(console, " mounted (");
-	console_out(console, cmd);
-	console_out(console, ").\n");
+	vfs_mount_wait(mnt, pid);
+	console_out(console, "[ok].\n");
 }
 
 static void run(const char* cmd) {
@@ -138,13 +151,11 @@ static void run(const char* cmd) {
 	}
 }
 
-static void console_welcome(init_console_t* console) {
+static void welcome(init_console_t* console) {
 	const char* s = ""
 			"+-----Ewok micro-kernel OS-----------------------+\n"
 			"| https://github.com/MisaZhu/micro_kernel_os.git |\n"
-			"+------------------------------------------------+\n"
-			"init: / mounted (/sbin/dev/sdd).\n"
-			"init: /dev/fb0 mounted (sbin/dev/fbd).\n";
+			"+------------------------------------------------+\n";
 	console_out(console, s);
 }
 
@@ -162,27 +173,27 @@ int main(int argc, char** argv) {
 
 	setenv("OS", "mkos");
 	setenv("PATH", "/sbin:/bin");
-	uprintf("\n[init process started]\n");
 
-	run_init_dev("/sbin/dev/sdd", "/dev");
+	console_out(&console, "\n[init process started]\n");
+	run_init_root(&console, "/sbin/dev/sdd");
+
+	run_dev(&console, "/sbin/dev/nulld", "/dev/null");
 	run_dev(&console, "/sbin/dev/ttyd", "/dev/tty0");
+	run_dev(&console, "/sbin/dev/fbd", "/dev/fb0");
+	init_console(&console);
+	welcome(&console);
+	
 	init_stdio();
 	run("/bin/shell");
 
-	run_dev(&console, "/sbin/dev/fbd", "/dev/fb0");
-	init_console(&console);
-	console_welcome(&console);
-
-	run_dev(&console, "/sbin/dev/nulld", "/dev/null");
 	run_dev(&console, "/sbin/dev/moused", "/dev/mouse0");
 	run_dev(&console, "/sbin/dev/keybd", "/dev/keyb0");
-	console_out(&console, "  ENTER to continue......\n\n");
-	check_keyb_table();
+	check_keyb_table(&console);
 
 	run_dev(&console, "/sbin/dev/xserverd", "/dev/x");
 	run("/bin/launcher");
+	close_console(&console);
 
 	while(1) sleep(1);
-	close_console(&console);
 	return 0;
 }

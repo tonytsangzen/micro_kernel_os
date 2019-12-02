@@ -189,21 +189,6 @@ int main(int argc, char** argv) {
 	fsinfo_t root_info;
 	vfs_get("/", &root_info);
 
-/*
-	fsinfo_t mnt_dir;
-	memset(&mnt_dir, 0, sizeof(fsinfo_t));
-	strcpy(mnt_dir.name, "mnt");
-	mnt_dir.type = FS_TYPE_DIR;
-	vfs_new_node(&mnt_dir);
-	vfs_add(&root_info, &mnt_dir);
-
-	fsinfo_t mnt_point;
-	memset(&mnt_point, 0, sizeof(fsinfo_t));
-	strcpy(mnt_point.name, "sd0");
-	mnt_point.type = FS_TYPE_DIR;
-	vfs_new_node(&mnt_point);
-	vfs_add(&mnt_dir, &mnt_point);
-*/
 	mount_info_t mnt_info;
 	strcpy(mnt_info.dev_name, dev.name);
 	mnt_info.dev_index = 0;
