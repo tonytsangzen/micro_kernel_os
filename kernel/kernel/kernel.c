@@ -91,34 +91,34 @@ void _kernel_entry_c(context_t* ctx) {
 	init_kernel_vm();  
 	printf("\n"
 			"------Ewok micro-kernel-------\n"
-			"kernel mmu inited.\n");
+			"kernel: kernel mmu inited.\n");
 
 	km_init();
-	printf("kernel malloc inited.\n");
+	printf("kernel: kernel malloc inited.\n");
 
 	init_allocable_mem(); /*init the rest allocable memory VM*/
-	printf("whole allocable memory ready.\n");
+	printf("kernel: whole allocable memory ready.\n");
 
 	shm_init();
-	printf("share memory ready.\n");
+	printf("kernel: share memory ready.\n");
 
 	dev_init();
-	printf("devices inited.\n");
+	printf("kernel: devices inited.\n");
 
 	fs_init();
-	printf("vfs inited.\n");
+	printf("kernel: vfs inited.\n");
 
 	procs_init();
-	printf("processes inited.\n");
+	printf("kernel: processes inited.\n");
 
 	irq_init();
-	printf("irq inited.\n");
+	printf("kernel: irq inited.\n");
 
 	load_init();
-	printf("load first process(/sbin/init).\n");
+	printf("kernel: load first process(/sbin/init).\n");
 
 	timer_set_interval(0, 0x40); //0.001 sec sequence
-	printf("start timer.\n");
+	printf("kernel: start timer.\n");
 
 	while(1) __asm__("MOV r0, #0; MCR p15,0,R0,c7,c0,4"); // CPU enter WFI state
 }

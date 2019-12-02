@@ -290,7 +290,7 @@ vfs_node_t* vfs_root(void) {
 
 static int32_t get_free_fd(proc_t* proc) {
 	int32_t i;
-	for(i=0; i<PROC_FILE_MAX; i++) {
+	for(i=3; i<PROC_FILE_MAX; i++) { //0, 1, 2 reserved for stdio in/out/err
 		if(proc->space->files[i].node == 0)
 			return i;
 	}

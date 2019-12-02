@@ -14,12 +14,6 @@
 #include <ext2fs.h>
 #include <sd.h>
 
-static void init_stdio(void) {
-	int fd = open("/dev/tty0", 0);
-	dup2(fd, 0);
-	dup2(fd, 1);
-}
-
 typedef struct {
 	graph_t* g;
 	int fb_fd;
@@ -121,7 +115,7 @@ static void run_init_dev(const char* cmd, const char* dev) {
 		free(data);
 	}
 	vfs_mount_wait(dev, pid);
-	uprintf("%s mounted (%s).\n", dev, cmd);
+	uprintf("init: %s mounted (%s).\n", dev, cmd);
 }
 
 static void run_dev(init_console_t* console, const char* cmd, const char* dev) {
@@ -130,14 +124,14 @@ static void run_dev(init_console_t* console, const char* cmd, const char* dev) {
 		exec(cmd);
 	}
 	vfs_mount_wait(dev, pid);
+	console_out(console, "init: ");
 	console_out(console, dev);
 	console_out(console, " mounted (");
 	console_out(console, cmd);
 	console_out(console, ").\n");
 }
 
-static void run(init_console_t* console, const char* cmd) {
-	(void)console;
+static void run(const char* cmd) {
 	int pid = fork();
 	if(pid == 0) {
 		exec(cmd);
@@ -149,40 +143,44 @@ static void console_welcome(init_console_t* console) {
 			"+-----Ewok micro-kernel OS-----------------------+\n"
 			"| https://github.com/MisaZhu/micro_kernel_os.git |\n"
 			"+------------------------------------------------+\n"
-			"/ mounted (sbin/dev/initrd).\n"
-			"/dev/fb0 mounted (sbin/dev/fbd).\n";
+			"init: / mounted (/sbin/dev/sdd).\n"
+			"init: /dev/fb0 mounted (sbin/dev/fbd).\n";
 	console_out(console, s);
+}
+
+static void init_stdio(void) {
+	int fd = open("/dev/tty0", 0);
+	dup2(fd, 0);
+	dup2(fd, 1);
 }
 
 int main(int argc, char** argv) {
 	(void)argc;
 	(void)argv;
+	init_console_t console;
+	console.fb_fd = -1;
 
 	setenv("OS", "mkos");
 	setenv("PATH", "/sbin:/bin");
-	init_console_t console;
-	console.fb_fd = -1;
-	console_out(&console, "\n[init process started]\n");
+	uprintf("\n[init process started]\n");
 
 	run_init_dev("/sbin/dev/sdd", "/dev");
+	run_dev(&console, "/sbin/dev/ttyd", "/dev/tty0");
+	init_stdio();
+	run("/bin/shell");
 
 	run_dev(&console, "/sbin/dev/fbd", "/dev/fb0");
 	init_console(&console);
 	console_welcome(&console);
 
-	run_dev(&console, "/sbin/dev/ttyd", "/dev/tty0");
 	run_dev(&console, "/sbin/dev/nulld", "/dev/null");
-	run_dev(&console, "/sbin/dev/keybd", "/dev/keyb0");
 	run_dev(&console, "/sbin/dev/moused", "/dev/mouse0");
-
-	console_out(&console, "\nEnter to continue......\n");
+	run_dev(&console, "/sbin/dev/keybd", "/dev/keyb0");
+	console_out(&console, "  ENTER to continue......\n\n");
 	check_keyb_table();
 
 	run_dev(&console, "/sbin/dev/xserverd", "/dev/x");
-	run(&console, "/bin/launcher");
-
-	init_stdio();
-	run(&console, "/bin/shell");
+	run("/bin/launcher");
 
 	while(1) sleep(1);
 	close_console(&console);
