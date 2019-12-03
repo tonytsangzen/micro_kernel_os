@@ -78,7 +78,7 @@ int read(int fd, void* buf, uint32_t size) {
 		int rd = proto_read_int(&out);
 		res = rd;
 		if(rd > 0) {
-			memcpy(buf, proto_read(&out, NULL), rd);
+			proto_read_to(&out, buf, rd);
 			offset += rd;
 			syscall2(SYS_VFS_PROC_SEEK, fd, offset);
 		}

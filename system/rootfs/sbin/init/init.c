@@ -96,17 +96,17 @@ static void check_keyb_table(init_console_t* console) {
 	while(1) {
 		uint8_t v;
 		int rd = syscall3(SYS_DEV_CHAR_READ, (int32_t)DEV_KEYB, (int32_t)&v, 1);
-		if(rd != 1)
-			continue;
-
-		if(v == 13) {	
-			syscall3(SYS_DEV_OP, DEV_KEYB, DEV_OP_SET, 0);
-			break;
+		if(rd == 1) {
+			if(v == 13) {	
+				syscall3(SYS_DEV_OP, DEV_KEYB, DEV_OP_SET, 0);
+				break;
+			}
+			else if(v == 48 || v == 97) {
+				syscall3(SYS_DEV_OP, DEV_KEYB, DEV_OP_SET, 1);
+				break;
+			}
 		}
-		else if(v == 48 || v == 97) {
-			syscall3(SYS_DEV_OP, DEV_KEYB, DEV_OP_SET, 1);
-			break;
-		}
+		sleep(0);
 	}
 }
 
