@@ -27,6 +27,7 @@ enum {
 	FS_CMD_DMA,
 	FS_CMD_CNTL,
 	FS_CMD_DUP,
+	FS_CMD_UNLINK,
 	FS_CMD_FLUSH
 };
 
