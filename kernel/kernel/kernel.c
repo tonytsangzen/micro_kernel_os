@@ -117,7 +117,7 @@ void _kernel_entry_c(context_t* ctx) {
 	load_init();
 	printf("kernel: %39s [ok]\n", "loading first process(init)");
 
-	timer_set_interval(0, 0x40); //0.001 sec sequence
+	timer_set_interval(0, 0x8); //0.0002 sec sequence
 	printf("kernel: start timer.\n");
 
 	while(1) __asm__("MOV r0, #0; MCR p15,0,R0,c7,c0,4"); // CPU enter WFI state

@@ -47,7 +47,7 @@ void irq_handler(context_t* ctx) {
 	if((irqs & IRQ_TIMER0) != 0) {
 		timer_clear_interrupt(0);
 
-		if(_timer_count == 1000) {
+		if(_timer_count == 4000) {
 			_kernel_tic++;
 			_timer_count = 0;
 		}
