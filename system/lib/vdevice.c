@@ -179,6 +179,23 @@ static void do_create(vdevice_t* dev, int from_pid, proto_t *in, void* p) {
 	proto_clear(&out);
 }
 
+static void do_unlink(vdevice_t* dev, int from_pid, proto_t *in, void* p) {
+	fsinfo_t info_to, info;
+	proto_read_to(in, &info_to, sizeof(fsinfo_t));
+	const char* fname = proto_read_str(in);
+
+	int res = 0;
+	if(dev != NULL && dev->unlink != NULL) {
+		res = dev->unlink(&info, fname, p);
+	}
+
+	proto_t out;
+	proto_init(&out, NULL, 0);
+	proto_add_int(&out, res);
+	ipc_send(from_pid, &out, in->id);
+	proto_clear(&out);
+}
+
 static void handle(vdevice_t* dev, int from_pid, proto_t *in, void* p) {
 	if(dev == NULL)
 		return;
@@ -212,6 +229,9 @@ static void handle(vdevice_t* dev, int from_pid, proto_t *in, void* p) {
 		return;
 	case FS_CMD_CREATE:
 		do_create(dev, from_pid, in, p);
+		return;
+	case FS_CMD_UNLINK:
+		do_unlink(dev, from_pid, in, p);
 		return;
 	}
 }

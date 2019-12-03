@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <mstr.h>
+#include <ipc.h>
 
 int vfs_new_node(fsinfo_t* info) {
 	return syscall1(SYS_VFS_NEW_NODE, (int32_t)info);

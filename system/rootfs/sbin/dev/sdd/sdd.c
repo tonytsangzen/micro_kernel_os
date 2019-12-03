@@ -164,6 +164,12 @@ static int sdext2_write(int fd, int from_pid, fsinfo_t* info, const void* buf, i
 	return size;	
 }
 
+static int sdext2_unlink(fsinfo_t* info, const char* fname, void* p) {
+	(void)info;
+	ext2_t* ext2 = (ext2_t*)p;
+	return ext2_unlink(ext2, fname);
+}
+
 static int sdext2_umount(fsinfo_t* info, void* p) {
 	(void)p;
 	vfs_umount(info);
@@ -181,6 +187,7 @@ int main(int argc, char** argv) {
 	dev.read = sdext2_read;
 	dev.write = sdext2_write;
 	dev.create = sdext2_create;
+	dev.unlink = sdext2_unlink;
 	dev.umount = sdext2_umount;
 
 	ext2_t ext2;

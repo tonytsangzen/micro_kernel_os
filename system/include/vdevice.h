@@ -17,6 +17,7 @@ typedef struct {
 	int (*cntl)(int fd, int from_pid, fsinfo_t* info, int cmd, proto_t* in, proto_t* out, void* p);
 	int (*mount)(fsinfo_t* mnt_point, mount_info_t* mnt_info, void* p);
 	int (*umount)(fsinfo_t* mnt_point, void* p);
+	int (*unlink)(fsinfo_t* info, const char *fname, void* p);
 	int (*loop_step)(void* p);
 } vdevice_t;
 

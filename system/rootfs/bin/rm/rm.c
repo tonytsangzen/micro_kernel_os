@@ -1,16 +1,13 @@
 #include <unistd.h>
-#include <vfs.h>
 #include <stdio.h>
-#include <vprintf.h>
 #include <cmain.h>
+#include <vfs.h>
 
 int main(int argc, char* argv[]) {
 	if(argc < 2) {
-		printf("Usage: mkdir <dir>");
+		printf("Usage: rm <fname>");
 		return -1;
 	}
-
 	const char* fname = vfs_fullname(argv[1]);
-	fsinfo_t info;
-	return vfs_create(fname, &info, FS_TYPE_DIR);
+	return unlink(fname);
 }

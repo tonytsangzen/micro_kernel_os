@@ -101,6 +101,7 @@ include $(ROOT_DIR)/bin/gtest/build.mk
 include $(ROOT_DIR)/bin/grep/build.mk
 include $(ROOT_DIR)/bin/kill/build.mk
 include $(ROOT_DIR)/bin/mkdir/build.mk
+include $(ROOT_DIR)/bin/rm/build.mk
 include $(ROOT_DIR)/bin/xconsole/build.mk
 include $(ROOT_DIR)/bin/launcher/build.mk
 
@@ -129,10 +130,19 @@ apps: ${PROGS}
 ARCH_DIR=../kernel/arch
 ARCH=arm/versatilepb
 KERNEL=../kernel/build/mkos.bin
+KERNEL_ELF=../kernel/build/mkos.elf
 include ${ARCH_DIR}/${ARCH}/config.mk
 
 run: 
 	qemu-system-arm $(QEMU_FLAGS) -kernel ${KERNEL} -sd ${TARGET_DIR}/sd.ext2
+
+debug:
+	qemu-system-arm $(QEMU_FLAGS) -gdb tcp::26000 -S -kernel ${KERNEL} -sd ${TARGET_DIR}/sd.ext2
+
+gdb: 
+	echo "target remote :26000" > /tmp/gdbinit
+	#arm-none-eabi-gdb ${KERNEL_ELF} -x /tmp/gdbinit
+	gdb-multiarch ${KERNEL_ELF} -x /tmp/gdbinit #for ubuntu 18.04 without arm-none-eabi-gdb
 
 clean:
 	rm -f $(CLEAN)

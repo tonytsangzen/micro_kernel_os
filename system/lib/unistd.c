@@ -206,3 +206,31 @@ int dup(int from) {
 int pipe(int fds[2]) {
 	return syscall2(SYS_PIPE_OPEN, (int32_t)&fds[0], (int32_t)&fds[1]);
 }
+
+int unlink(const char* fname) {
+	fsinfo_t info;
+	if(vfs_get(fname, &info) != 0)
+		return -1;
+	if(info.type != FS_TYPE_FILE) 
+		return -1;
+	
+	mount_t mount;
+	if(vfs_get_mount(&info, &mount) != 0)
+		return -1;
+	
+	proto_t in, out;
+	proto_init(&in, NULL, 0);
+	proto_init(&out, NULL, 0);
+
+	proto_add_int(&in, FS_CMD_UNLINK);
+	proto_add(&in, &info, sizeof(fsinfo_t));
+	proto_add_str(&in, fname);
+
+	ipc_call(mount.pid, &in, &out);
+	proto_clear(&in);
+	int res = proto_read_int(&out);
+	proto_clear(&out);
+	if(res == 0)
+		return vfs_del(&info);
+	return -1;
+}
