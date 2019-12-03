@@ -50,7 +50,7 @@ int getch(void) {
 		}
 		if(i <= 0 && errno != EAGAIN)
 			break;
-		sleep(0);
+		usleep(10000);
 	}
 	return 0;
 }

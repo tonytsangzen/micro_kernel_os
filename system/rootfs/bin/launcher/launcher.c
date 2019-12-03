@@ -115,7 +115,7 @@ int main(int argc, char* argv[]) {
 				}
 			}
 		}
-		sleep(0);
+		usleep(10000);
 	}
 
 	int i;
