@@ -415,7 +415,7 @@ int32_t ext2_create_dir(ext2_t* ext2, INODE* father_inp, const char *base, int32
 	inp->i_mode = 0;//TODO EXT2_DIR_MODE;
 	inp->i_uid  = owner & 0xffff;
 	inp->i_gid  = (owner >> 16) & 0xffff;
-	inp->i_size = 0;	        // Size in bytes 
+	inp->i_size = BLOCK_SIZE;	        // Size in bytes (one block for dir)
 	inp->i_links_count = 0;	  //
 	inp->i_atime = 0;         // TODO Set last access to current time
 	inp->i_ctime = 0;         // TODO  Set creation to current time

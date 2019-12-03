@@ -32,9 +32,9 @@ int main(int argc, char* argv[]) {
 		if(info.type == FS_TYPE_FILE)
 			printf("  %24s  f    %4d   %dK\n", info.name, info.owner, sz);
 		else if(info.type == FS_TYPE_DIR)
-			printf("  %24s  r    %4d   %dK\n", info.name, info.owner, sz);
+			printf("  %24s  r    %4d   %d\n", info.name, info.owner, info.size);
 		else //if(info.type == FS_TYPE_DEV)
-			printf("  %24s  d    %4d   %dK\n", info.name, info.owner, sz);
+			printf("  %24s  d    %4d   %d\n", info.name, info.owner, info.size);
 
 		if(vfs_next(&info, &info) != 0)
 			break;

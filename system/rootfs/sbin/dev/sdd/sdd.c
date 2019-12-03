@@ -24,11 +24,12 @@ static void add_file(fsinfo_t* node_to, const char* name, INODE* inode, int32_t 
 	vfs_add(node_to, &f);
 }
 
-static int add_dir(fsinfo_t* node_to, fsinfo_t* ret, const char* dn, int ino) {
+static int add_dir(fsinfo_t* node_to, fsinfo_t* ret, const char* dn, INODE* inode, int ino) {
 	memset(ret, 0, sizeof(fsinfo_t));
 	strcpy(ret->name, dn);
 	ret->type = FS_TYPE_DIR;
 	ret->data = (uint32_t)ino;
+	ret->size = inode->i_size;
 	vfs_new_node(ret);
 	if(vfs_add(node_to, ret) != 0) {
 		vfs_del(ret);
@@ -61,7 +62,7 @@ static int32_t add_nodes(ext2_t* ext2, INODE *ip, fsinfo_t* dinfo) {
 					if(ext2_node_by_ino(ext2, ino, &ip_node) == 0) {
 						if(dp->file_type == 2) {//director
 							fsinfo_t ret;
-							add_dir(dinfo, &ret, dp->name, ino);
+							add_dir(dinfo, &ret, dp->name, &ip_node, ino);
 							add_nodes(ext2, &ip_node, &ret);
 						}
 						else if(dp->file_type == 1) {//file
@@ -84,6 +85,7 @@ static int mount(fsinfo_t* mnt_point, mount_info_t* mnt_info, ext2_t* ext2) {
 	memset(&info, 0, sizeof(fsinfo_t));
 	strcpy(info.name, mnt_point->name);
 	info.type = FS_TYPE_DIR;
+	info.data = 2; //ext2 root block at 2
 	vfs_new_node(&info);
 
 	INODE root_node;
@@ -112,8 +114,10 @@ static int sdext2_create(fsinfo_t* info_to, fsinfo_t* info, void* p) {
 	}
 
 	int ino = -1;
-	if(info->type == FS_TYPE_DIR) 
+	if(info->type == FS_TYPE_DIR)  {
+		info->size = BLOCK_SIZE;
 		ino = ext2_create_dir(ext2, &inode_to, info->name, info->owner);
+	}
 	else
 		ino = ext2_create_file(ext2, &inode_to, info->name, info->owner);
 	if(ino == -1)
