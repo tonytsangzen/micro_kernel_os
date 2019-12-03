@@ -50,6 +50,7 @@ typedef struct {
 } x_current_t;
 
 typedef struct {
+	int actived;
 	int fb_fd;
 	int keyb_fd;
 	int mouse_fd;
@@ -307,7 +308,8 @@ static inline void draw_cursor(x_t* x) {
 }
 
 static void x_repaint(x_t* x) {
-	if(x->need_repaint == 0 && x->dirty == 0)
+	if(x->actived == 0 ||
+			(x->need_repaint == 0 && x->dirty == 0))
 		return;
 	x->need_repaint = 0;
 
@@ -589,6 +591,7 @@ static int x_init(x_t* x) {
 	x->cursor.offset.y = 8;
 	x->cursor.cpos.x = info.width/2;
 	x->cursor.cpos.y = info.height/2; 
+	x->actived = 1;
 	return 0;
 }	
 
@@ -721,6 +724,9 @@ static int mouse_handle(x_t* x, int8_t state, int32_t rx, int32_t ry) {
 
 static int xserver_loop_step(void* p) {
 	x_t* x = (x_t*)p;
+	if(x->actived == 0)
+		return 0;
+
 	int8_t v;
 	//read keyb
 	int rd = read(x->keyb_fd, &v, 1);
