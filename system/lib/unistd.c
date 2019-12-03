@@ -159,6 +159,7 @@ int write(int fd, const void* buf, uint32_t size) {
 
 		if(errno != EAGAIN)
 			break;
+		sleep(0);
 	}
 	return -1;
 }

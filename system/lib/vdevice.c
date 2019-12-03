@@ -253,6 +253,8 @@ int device_run(vdevice_t* dev, fsinfo_t* mount_point, mount_info_t* mnt_info, vo
 		}
 		if(dev->loop_step != NULL)
 			dev->loop_step(p);
+		if(block == 0)
+			sleep(0);
 	}
 
 	return dev->umount(mount_point, p);
