@@ -14,6 +14,7 @@
 #include <ext2fs.h>
 #include <sd.h>
 #include <vprintf.h>
+#include <sconf.h>
 
 typedef struct {
 	graph_t* g;
@@ -91,23 +92,50 @@ static void console_out(init_console_t* console, const char* format, ...) {
 	flush(console->fb_fd);
 }
 
+static void set_keyb_table(int type) {
+	syscall3(SYS_DEV_OP, DEV_KEYB, DEV_OP_SET, type);
+}
+
 static void check_keyb_table(init_console_t* console) {
+	const char* fname = "/etc/keyb.conf";
+	const char* key = "keyb_table";
+	sconf_t* conf = sconf_load(fname);
+	if(conf != NULL) {
+		const char* kmap = sconf_get(conf, key);
+		if(kmap[0] != 0) {
+			set_keyb_table(kmap[0] - '0');
+			sconf_free(conf);
+			return;
+		}
+	}
+	sconf_free(conf);
+
+	int type = 0;
 	console_out(console, "  ENTER to continue......\n");
 	while(1) {
 		uint8_t v;
 		int rd = syscall3(SYS_DEV_CHAR_READ, (int32_t)DEV_KEYB, (int32_t)&v, 1);
 		if(rd == 1) {
 			if(v == 13) {	
-				syscall3(SYS_DEV_OP, DEV_KEYB, DEV_OP_SET, 0);
+				type = 0;
 				break;
 			}
 			else if(v == 48 || v == 97) {
-				syscall3(SYS_DEV_OP, DEV_KEYB, DEV_OP_SET, 1);
+				type = 1;
 				break;
 			}
 		}
 		sleep(0);
 	}
+	set_keyb_table(type);
+
+	char s[32];
+	snprintf(s, 31, "%s=%d\n", key, type);
+	int fd = open(fname, O_RDWR | O_CREAT);
+	if(fd < 0)
+		return;
+	write(fd, s, strlen(s));
+	close(fd);
 }
 
 static void run_init_root(init_console_t* console, const char* cmd) {
