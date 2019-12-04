@@ -4,6 +4,7 @@
 #include <kernel/system.h>
 #include <kernel/proc.h>
 #include <kernel/hw_info.h>
+#include <kernel/kevent.h>
 #include <mm/kalloc.h>
 #include <mm/shm.h>
 #include <mm/kmalloc.h>
@@ -346,6 +347,18 @@ static void sys_get_msg(context_t* ctx, int32_t *pid, rawdata_t* data, int32_t i
 	proc->ctx.gpr[0] = -1;
 }
 
+static void sys_get_kevent(context_t* ctx, int32_t *pid, rawdata_t* data) {
+	int32_t res = kevent_pop(pid, data);
+	if(res == 0) {
+		ctx->gpr[0] = res;
+		return;
+	}
+
+	proc_t* proc = _current_proc;
+	proc_sleep_on(ctx, (uint32_t)kevent_pop);
+	proc->ctx.gpr[0] = -1;
+}
+
 static int32_t sys_proc_set_cwd(const char* cwd) {
 	str_cpy(_current_proc->cwd, cwd);
 	return 0;
@@ -568,6 +581,9 @@ void svc_handler(int32_t code, int32_t arg0, int32_t arg1, int32_t arg2, context
 	case SYS_GET_MSG:
 		sys_get_msg(ctx, (int32_t*)arg0, (rawdata_t*)arg1, arg2);
 		return;
+	case SYS_GET_KEVENT:
+		sys_get_kevent(ctx, (int32_t*)arg0, (rawdata_t*)arg1);
+		return;
 	case SYS_VFS_GET:
 		ctx->gpr[0] = sys_vfs_get_info((const char*)arg0, (fsinfo_t*)arg1);
 		return;
@@ -675,6 +691,12 @@ void svc_handler(int32_t code, int32_t arg0, int32_t arg1, int32_t arg2, context
 		return;
 	case SYS_PROC_SHM_REF:
 		ctx->gpr[0] = sys_shm_ref(arg0);
+		return;
+	case SYS_SET_GLOBAL:
+		ctx->gpr[0] = set_global((const char*)arg0, (const char*)arg1);
+		return;
+	case SYS_GET_GLOBAL:
+		ctx->gpr[0] = get_global((const char*)arg0, (char*)arg1, arg2);
 		return;
 	}
 	printf("pid:%d, code(%d) error!\n", _current_proc->pid, code);

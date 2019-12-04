@@ -2,7 +2,7 @@
 #define KERNEL_H
 
 #include <mm/mmu.h>
-  
+
 extern char _kernel_start[];
 extern char _kernel_end[];
 

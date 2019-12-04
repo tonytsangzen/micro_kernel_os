@@ -108,6 +108,9 @@ void _kernel_entry_c(context_t* ctx) {
 	fs_init();
 	printf("kernel: %39s [ok]\n", "vfs initing");
 
+	init_global();
+	printf("kernel: %39s [ok]\n", "global env initing");
+
 	procs_init();
 	printf("kernel: %39s [ok]\n", "processes initing");
 

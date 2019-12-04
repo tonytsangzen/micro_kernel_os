@@ -65,7 +65,7 @@ static void proc_init_space(proc_t* proc) {
 	proc->space->malloc_man.expand = proc_expand;
 	//proc->space->malloc_man.shrink = proc_shrink; //TODO
 	proc->space->malloc_man.get_mem_tail = proc_get_mem_tail;
-	memset(&proc->space->envs, 0, sizeof(proc_env_t)*ENV_MAX);
+	memset(&proc->space->envs, 0, sizeof(env_t)*ENV_MAX);
 }
 
 void proc_switch(context_t* ctx, proc_t* to){
@@ -163,7 +163,7 @@ static void proc_clone_files(proc_t *proc_to, proc_t* from) {
 static void proc_free_space(proc_t *proc) {
 	int32_t i;
 	for(i=0; i<ENV_MAX; i++) {
-		proc_env_t* env = &proc->space->envs[i];
+		env_t* env = &proc->space->envs[i];
 		if(env->name) 
 			str_free(env->name);
 		if(env->value) 
@@ -430,7 +430,7 @@ void proc_wakeup(uint32_t event) {
 	__int_on(cpsr);
 }
 
-static inline proc_env_t* find_env(proc_t* proc, const char* name) {
+static inline env_t* find_env(proc_t* proc, const char* name) {
 	int32_t i=0;
 	for(i=0; i<ENV_MAX; i++) {
 		if(proc->space->envs[i].name == NULL)
@@ -442,24 +442,28 @@ static inline proc_env_t* find_env(proc_t* proc, const char* name) {
 }
 	
 const char* proc_get_env(const char* name) {
-	proc_env_t* env = find_env(_current_proc, name);
+	env_t* env = find_env(_current_proc, name);
 	return env == NULL ? "":CS(env->value);
 }
 	
 const char* proc_get_env_name(int32_t index) {
 	if(index < 0 || index >= ENV_MAX)
 		return "";
-	return CS(_current_proc->space->envs[index].name);
+	if(_current_proc->space->envs[index].name != NULL)
+		return CS(_current_proc->space->envs[index].name);
+	return "";
 }
 	
 const char* proc_get_env_value(int32_t index) {
 	if(index < 0 || index >= ENV_MAX)
 		return "";
-	return CS(_current_proc->space->envs[index].value);
+	if(_current_proc->space->envs[index].value != NULL)
+		return CS(_current_proc->space->envs[index].value);
+	return "";
 }
 
 int32_t proc_set_env(const char* name, const char* value) {
-	proc_env_t* env = NULL;	
+	env_t* env = NULL;	
 	int32_t i=0;
 	for(i=0; i<ENV_MAX; i++) {
 		if(_current_proc->space->envs[i].name == NULL ||
@@ -485,7 +489,7 @@ static inline void proc_clone_envs(proc_t* child, proc_t* parent) {
 	for(i=0; i<ENV_MAX; i++) {
 		if(parent->space->envs[i].name == NULL)
 			break;
-		proc_env_t* env = &child->space->envs[i];
+		env_t* env = &child->space->envs[i];
 		if(env->name == NULL)
 			env->name = str_new("");
 		if(env->value == NULL)

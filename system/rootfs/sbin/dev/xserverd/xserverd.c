@@ -14,6 +14,7 @@
 #include <x/xcntl.h>
 #include <x/xevent.h>
 #include <x/xwm.h>
+#include <global.h>
 
 #define X_EVENT_MAX 16
 
@@ -591,7 +592,7 @@ static int x_init(x_t* x) {
 	x->cursor.offset.y = 8;
 	x->cursor.cpos.x = info.width/2;
 	x->cursor.cpos.y = info.height/2; 
-	x->actived = 1;
+	//x->actived = 1;
 	return 0;
 }	
 
@@ -724,6 +725,15 @@ static int mouse_handle(x_t* x, int8_t state, int32_t rx, int32_t ry) {
 
 static int xserver_loop_step(void* p) {
 	x_t* x = (x_t*)p;
+	const char* cc = get_global("current_console");
+	if(cc[0] == 'x') {
+		if(x->actived == 0)
+			x->dirty = 1;
+		x->actived = 1;
+	}
+	else
+		x->actived = 0;
+
 	if(x->actived == 0)
 		return 0;
 

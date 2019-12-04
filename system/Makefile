@@ -61,6 +61,7 @@ LIB_OBJS = $(LIB_DIR)/syscall.o \
 	$(LIB_DIR)/basic_math.o \
 	$(LIB_DIR)/console.o \
 	$(LIB_DIR)/shm.o \
+	$(LIB_DIR)/global.o \
 	$(LIB_DIR)/mstr.o \
 	$(LIB_DIR)/mstrx.o \
 	$(LIB_DIR)/marray.o \
@@ -102,8 +103,10 @@ include $(ROOT_DIR)/bin/grep/build.mk
 include $(ROOT_DIR)/bin/kill/build.mk
 include $(ROOT_DIR)/bin/mkdir/build.mk
 include $(ROOT_DIR)/bin/rm/build.mk
+include $(ROOT_DIR)/bin/console/build.mk
 include $(ROOT_DIR)/bin/xconsole/build.mk
 include $(ROOT_DIR)/bin/launcher/build.mk
+include $(ROOT_DIR)/bin/session/build.mk
 
 mkdirs:
 	@mkdir -p ${TARGET_DIR}/$(ROOT_DIR)/sbin/dev

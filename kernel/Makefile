@@ -80,6 +80,8 @@ OBJS = ${ARCH_OBJS} \
 	${KERNEL_DIR}/mm/shm.o \
 	${KERNEL_DIR}/init.o \
 	${KERNEL_DIR}/irq.o \
+	${KERNEL_DIR}/kevent.o \
+	${KERNEL_DIR}/env.o \
 	${KERNEL_DIR}/svc.o \
 	${KERNEL_DIR}/proc.o \
 	${KERNEL_DIR}/ipc.o \

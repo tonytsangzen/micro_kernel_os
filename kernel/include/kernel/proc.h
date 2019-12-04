@@ -2,6 +2,7 @@
 #define PROC_H
 
 #include <kernel/context.h>
+#include <kernel/env.h>
 #include <kernel/ipc.h>
 #include <mm/mmu.h>
 #include <mm/trunkmalloc.h>
@@ -25,18 +26,13 @@ enum {
 #define SHM_MAX 128
 
 typedef struct {
-	str_t* name;
-	str_t* value;
-} proc_env_t;
-
-typedef struct {
 	page_dir_entry_t *vm;
 	malloc_t malloc_man;
 	uint32_t heap_size;
 	
 	int32_t shms[SHM_MAX];
 	kfile_t files[PROC_FILE_MAX];
-	proc_env_t envs[ENV_MAX];
+	env_t envs[ENV_MAX];
 } proc_space_t;
 
 

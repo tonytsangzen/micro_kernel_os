@@ -1,4 +1,5 @@
 #include <dev/keyb.h>
+#include <kernel/kevent.h>
 #include <mm/mmu.h>
 
 #define KCNTL 0x00
@@ -59,11 +60,11 @@ static int32_t keyb_inputch_map0(dev_t* dev, int32_t loop) {
 		return 0;
 
 	if(_held[0x14] == 1 && _ltab[scode] == 'c') { // if control held and 'c' pressed
-		//dev_kevent_push(KEV_TERMINATE);
+		kevent_push(KEV_TERMINATE, NULL);
 		return 0;
 	}
 	else if(_held[0x14] == 1 && _ltab[scode] == '\t') {// if control held and table pressed
-		//dev_kevent_push(KEV_CONSOLE_SWITCH);
+		kevent_push(KEV_CONSOLE_SWITCH, NULL);
 		return 0;
 	}
 	else if(_held[0x14] == 1 && _ltab[scode] == 'd') {// if control held and 'd' pressed

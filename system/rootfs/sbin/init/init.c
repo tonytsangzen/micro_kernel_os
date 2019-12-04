@@ -15,9 +15,11 @@
 #include <sd.h>
 #include <vprintf.h>
 #include <sconf.h>
+#include <rawdata.h>
+#include <global.h>
+#include <kernel/kevent_type.h>
 
 typedef struct {
-	graph_t* g;
 	int fb_fd;
 	int shm_id;
 	console_t console;
@@ -66,7 +68,7 @@ static void init_console(init_console_t* console) {
 }
 
 static void close_console(init_console_t* console) {
-	graph_free(console->g);
+	graph_free(console->console.g);
 	shm_unmap(console->shm_id);
 	close(console->fb_fd);
 }
@@ -111,7 +113,7 @@ static void check_keyb_table(init_console_t* console) {
 	sconf_free(conf);
 
 	int type = 0;
-	console_out(console, "  ENTER to continue......\n");
+	console_out(console, "\n  ENTER to continue......\n");
 	while(1) {
 		uint8_t v;
 		int rd = syscall3(SYS_DEV_CHAR_READ, (int32_t)DEV_KEYB, (int32_t)&v, 1);
@@ -179,49 +181,65 @@ static void run(const char* cmd) {
 	}
 }
 
-static void welcome(init_console_t* console) {
-	const char* s = ""
-			"+-----Ewok micro-kernel OS-----------------------+\n"
-			"| https://github.com/MisaZhu/micro_kernel_os.git |\n"
-			"+------------------------------------------------+\n";
-	console_out(console, s);
-}
-
 static void init_stdio(void) {
 	int fd = open("/dev/tty0", 0);
 	dup2(fd, 0);
 	dup2(fd, 1);
 }
 
+static int _current_console = 0;
+static void kevent_handle(int32_t type, rawdata_t* data) {
+	(void)data;
+	if(type == KEV_CONSOLE_SWITCH) {
+		if(_current_console == 1) {
+			_current_console = 0;
+			set_global("current_console", "c");
+		}
+		else {
+			_current_console = 1;
+			set_global("current_console", "x");
+		}
+	}
+}
+
 int main(int argc, char** argv) {
 	(void)argc;
 	(void)argv;
+	_current_console = 0;
 	init_console_t console;
 	console.fb_fd = -1;
 
 	setenv("OS", "mkos");
 	setenv("PATH", "/sbin:/bin");
+	set_global("current_console", "c");
 
 	console_out(&console, "\n[init process started]\n");
 	run_init_root(&console, "/sbin/dev/sdd");
-
-	run_dev(&console, "/sbin/dev/nulld", "/dev/null");
 	run_dev(&console, "/sbin/dev/ttyd", "/dev/tty0");
 	run_dev(&console, "/sbin/dev/fbd", "/dev/fb0");
-	init_console(&console);
-	welcome(&console);
-	
-	init_stdio();
-	run("/bin/shell");
 
+	init_stdio();
+	setenv("CONSOLE", "tty0");
+	run("/bin/session");
+
+	init_console(&console);
+	run_dev(&console, "/sbin/dev/nulld", "/dev/null");
 	run_dev(&console, "/sbin/dev/moused", "/dev/mouse0");
 	run_dev(&console, "/sbin/dev/keybd", "/dev/keyb0");
-	check_keyb_table(&console);
-
 	run_dev(&console, "/sbin/dev/xserverd", "/dev/x");
-	run("/bin/launcher");
+
+	check_keyb_table(&console);
 	close_console(&console);
 
-	while(1) sleep(1);
+	run("/bin/launcher");
+	run("/bin/console");
+
+	while(1) {
+		int32_t type;
+		rawdata_t data;
+		if(syscall2(SYS_GET_KEVENT, (int32_t)&type, (int32_t)&data) != 0)
+			continue;
+		kevent_handle(type, &data);
+	}
 	return 0;
 }

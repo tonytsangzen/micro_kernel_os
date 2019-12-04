@@ -309,9 +309,9 @@ static int run_cmd(char* cmd) {
 int main(int argc, char* argv[]) {
 	(void)argc;
 	(void)argv;
-	_terminated = 0;
-	str_t* cmdstr = str_new("");
 
+	str_t* cmdstr = str_new("");
+	_terminated = 0;
 	while(_terminated == 0) {
 		char cwd[FS_FULL_NAME_MAX+1];
 		printf("ewok:%s# ", getcwd(cwd, FS_FULL_NAME_MAX));
