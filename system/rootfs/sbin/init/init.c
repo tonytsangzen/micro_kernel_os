@@ -219,7 +219,7 @@ int main(int argc, char** argv) {
 	run_dev(&console, "/sbin/dev/fbd", "/dev/fb0");
 
 	init_stdio();
-	setenv("CONSOLE", "tty0");
+	setenv("CONSOLE", "tty");
 	run("/bin/session");
 
 	init_console(&console);
