@@ -73,7 +73,7 @@ CLEAN = $(LIB_OBJS)
 
 TARGET_DIR = build
 ROOT_DIR = rootfs
-SD_RUN = sd_run.ext2
+SD_RUN = ../kernel/build/sd.ext2
 SD = sd.ext2
 
 all: mkdirs $(LIB_OBJS) apps

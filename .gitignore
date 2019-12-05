@@ -1,4 +1,3 @@
 *.o
 *.swp
 build
-system/sd_run.ext2
