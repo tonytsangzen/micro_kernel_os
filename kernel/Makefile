@@ -99,7 +99,7 @@ $(OS).bin: $(OBJS) ${LDS}
 	$(OBJCOPY) -O binary ${BUILD_DIR}/$(OS).elf ${BUILD_DIR}/$(OS).bin
 	$(OBJDUMP) -D ${BUILD_DIR}/$(OS).elf > ${BUILD_DIR}/$(OS).asm
 
-SDEXT2 = ${SYS_DIR}/sd_run.ext2
+SDEXT2 = sd_run.ext2
 
 run: 
 	qemu-system-arm $(QEMU_FLAGS) -kernel ${BUILD_DIR}/$(OS).bin -sd ${SDEXT2}
