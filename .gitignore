@@ -1,4 +1,4 @@
 *.o
 *.swp
 build
-system/mkramfs/mkramfs
+system/sd_run.ext2
