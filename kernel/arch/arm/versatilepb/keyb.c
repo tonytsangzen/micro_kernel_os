@@ -107,19 +107,39 @@ static char sh[] = {
 // kbd_handler1() for scan code set 1
 static int32_t keyb_inputch_map1(dev_t* dev, int32_t loop) {
 	uint8_t scode, c;
+	static uint32_t t1 = 0;
 	static uint32_t t2 = 0;
 	scode = get8(KEYBOARD_BASE + KDATA);
 
-	if(scode == 182 || scode == 170) { 
+	if(scode == 182 || scode == 170) { //shift up
 		t2 = 0;
 		return 0;
 	}
-	else if(scode == 54 || scode == 42) { 
+	else if(scode == 157) { //ctrl up
+		t1 = 0;
+		return 0;
+	}
+	else if(scode == 54 || scode == 42) {  //shift down
 		t2 = 1;
+		return 0;
+	}	
+	else if(scode == 29) { //ctrl down
+		t1 = 1;
 		return 0;
 	}	
 	else if(scode & 0x80) {
 		return 0;
+	}
+
+	if(t1 == 1) {
+		if(scode == 'c') { // if control held and 'c' pressed
+			kevent_push(KEV_TERMINATE, NULL);
+			return 0;
+		}
+		else if(scode == 15) {// if control held and table pressed
+			kevent_push(KEV_CONSOLE_SWITCH, NULL);
+			return 0;
+		}
 	}
 
 	c = t2==0 ? unsh[scode] : sh[scode];
