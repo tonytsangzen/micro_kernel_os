@@ -73,6 +73,7 @@ CLEAN = $(LIB_OBJS)
 
 TARGET_DIR = build
 ROOT_DIR = rootfs
+SD=sd.ext2
 
 all: mkdirs $(LIB_OBJS) apps sd
 	@echo "all done.\n"
@@ -119,10 +120,10 @@ mkdirs:
 
 sd:
 	@echo "\n====building ext2 format sdcard image===="
-	dd if=/dev/zero of=${TARGET_DIR}/sd.ext2 bs=1024 count=16384
-	mkfs.ext2 ${TARGET_DIR}/sd.ext2
+	dd if=/dev/zero of=${SD} bs=1024 count=16384
+	mkfs.ext2 ${SD}
 	mkdir -p tmp
-	sudo mount ${TARGET_DIR}/sd.ext2 ./tmp
+	sudo mount ${SD} ./tmp
 	sudo cp -ar build/rootfs/* ./tmp/
 	sudo umount ./tmp
 	rm -r tmp
