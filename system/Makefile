@@ -75,7 +75,7 @@ TARGET_DIR = build
 ROOT_DIR = rootfs
 SD=sd.ext2
 
-all: mkdirs $(LIB_OBJS) apps sd
+all: mkdirs $(LIB_OBJS) apps
 	@echo "all done.\n"
 
 include $(ROOT_DIR)/sbin/init/build.mk
