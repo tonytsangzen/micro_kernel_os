@@ -138,10 +138,10 @@ KERNEL_ELF=../kernel/build/mkos.elf
 include ${ARCH_DIR}/${ARCH}/config.mk
 
 run: 
-	qemu-system-arm $(QEMU_FLAGS) -kernel ${KERNEL} -sd ${TARGET_DIR}/sd.ext2
+	qemu-system-arm $(QEMU_FLAGS) -kernel ${KERNEL} -sd ${SD}
 
 debug:
-	qemu-system-arm $(QEMU_FLAGS) -gdb tcp::26000 -S -kernel ${KERNEL} -sd ${TARGET_DIR}/sd.ext2
+	qemu-system-arm $(QEMU_FLAGS) -gdb tcp::26000 -S -kernel ${KERNEL} -sd ${SD}
 
 gdb: 
 	echo "target remote :26000" > /tmp/gdbinit
