@@ -27,6 +27,18 @@
 		brew install gcc-arm-none-eabi-49
 		brew install qemu
 		(set the right PATH environment after installed)
+
+		brew install e2fsprogs
+		brew cask install osxfuse
+		brew install autoconf
+		brew install automake
+
+		(download https://github.com/alperakcan/fuse-ext2)
+		./autogen.sh
+		CFLAGS="-idirafter/opt/gnu/include -idirafter/usr/local/include/osxfuse/ -idirafter/$(brew --prefix e2fsprogs)/include" LDFLAGS="-L/usr/local/opt/glib -L/usr/local/lib -L$(brew --prefix e2fsprogs)/lib" ./configure
+		sudo xcode-select -s /Applications/Xcode.app/Contents/Developer
+		make
+		sudo make install
 	
 .make and run
 	
