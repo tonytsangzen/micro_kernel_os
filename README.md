@@ -44,12 +44,12 @@
 		sudo make install
 		=================example==============
 		dd if=/dev/zero of=img bs=1024 count=16384
-  		mke2fs img
+ 		mke2fs img
  		mkdir -p tmp
-  		fuse-ext2 -o force,rw+ img tmp
-  		(copy files)
-  		umount ./tmp
-  		rm -r tmp
+		fuse-ext2 -o force,rw+ img tmp
+ 		(copy files)
+ 		umount ./tmp
+ 		rm -r tmp
 	
 .make and run
 	
