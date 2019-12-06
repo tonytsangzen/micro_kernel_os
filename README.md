@@ -44,7 +44,7 @@
 	
 	"cd system; make":
 	  build EwokOS rootfs apps.
-	"cd system; make sd":
+	"cd system; make sd": ('make sdmac' for macos)
 	  build EwokOS root sd filesystem.
 	"cd kernel; make":
 	  build EwokOS kernel image.
