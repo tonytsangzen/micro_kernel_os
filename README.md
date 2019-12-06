@@ -27,7 +27,8 @@
 		brew install gcc-arm-none-eabi-49
 		brew install qemu
 		(set the right PATH environment after installed)
-
+		
+	How to create/mount ext2 image in macosx
 		brew install e2fsprogs
 		brew cask install osxfuse
 		brew install libtool 
