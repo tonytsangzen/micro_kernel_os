@@ -30,6 +30,7 @@
 
 		brew install e2fsprogs
 		brew cask install osxfuse
+		brew install libtool 
 		brew install autoconf
 		brew install automake
 
