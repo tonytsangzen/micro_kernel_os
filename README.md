@@ -29,6 +29,7 @@
 		(set the right PATH environment after installed)
 		
 	How to create/mount ext2 image in macosx
+		===============prepair================
 		brew install e2fsprogs
 		brew cask install osxfuse
 		brew install libtool 
@@ -41,6 +42,14 @@
 		sudo xcode-select -s /Applications/Xcode.app/Contents/Developer
 		make
 		sudo make install
+		=================example==============
+		dd if=/dev/zero of=img bs=1024 count=16384
+  		mke2fs img
+ 		mkdir -p tmp
+  		fuse-ext2 -o force,rw+ img tmp
+  		(copy files)
+  		umount ./tmp
+  		rm -r tmp
 	
 .make and run
 	
