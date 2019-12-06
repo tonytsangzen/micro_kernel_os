@@ -73,11 +73,10 @@ CLEAN = $(LIB_OBJS)
 
 TARGET_DIR = build
 ROOT_DIR = rootfs
-SD_RUN = ../kernel/build/sd.ext2
-SD = sd.ext2
+SD = build/sd.ext2
 
 all: mkdirs $(LIB_OBJS) apps
-	@echo "all done.\n"
+	@echo "all done."
 
 include $(ROOT_DIR)/sbin/init/build.mk
 include $(ROOT_DIR)/sbin/dev/ttyd/build.mk
@@ -128,7 +127,6 @@ sd:
 	sudo cp -ar build/rootfs/* ./tmp/
 	sudo umount ./tmp
 	rm -r tmp
-	cp $(SD) ${SD_RUN}
 	@echo "==== ext2 format sdcard image created  ====\n"
 
 apps: ${PROGS}
@@ -140,10 +138,10 @@ KERNEL_ELF=../kernel/build/mkos.elf
 include ${ARCH_DIR}/${ARCH}/config.mk
 
 run: 
-	qemu-system-arm $(QEMU_FLAGS) -kernel ${KERNEL} -sd ${SD_RUN}
+	qemu-system-arm $(QEMU_FLAGS) -kernel ${KERNEL} -sd ${SD}
 
 debug:
-	qemu-system-arm $(QEMU_FLAGS) -gdb tcp::26000 -S -kernel ${KERNEL} -sd ${SD_RUN}
+	qemu-system-arm $(QEMU_FLAGS) -gdb tcp::26000 -S -kernel ${KERNEL} -sd ${SD}
 
 gdb: 
 	echo "target remote :26000" > /tmp/gdbinit

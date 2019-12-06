@@ -31,7 +31,9 @@
 .make and run
 	
 	"cd system; make":
-	  build EwokOS root filesystem.
+	  build EwokOS rootfs apps.
+	"cd system; make sd":
+	  build EwokOS root sd filesystem.
 	"cd kernel; make":
 	  build EwokOS kernel image.
 	"cd kernel; make run":
