@@ -62,17 +62,14 @@ static void remove_msg(proc_t* proc, proc_msg_t* msg) {
 }
 
 proc_msg_t* proc_send_msg(int32_t to_pid, rawdata_t* data, int32_t id) {
-	uint32_t cpsr = __int_off();
 
 	proc_t* proc_to = proc_get(to_pid);
 	if(proc_to == NULL || proc_to->state == UNUSED) {
-		__int_on(cpsr);
 		return NULL;
 	}
 
 	proc_msg_t* msg = new_msg(proc_to);
 	if(msg == NULL) {
-		__int_on(cpsr);
 		return NULL;
 	}
 	if(id < 0) {
@@ -90,19 +87,15 @@ proc_msg_t* proc_send_msg(int32_t to_pid, rawdata_t* data, int32_t id) {
 	msg->data.data = kmalloc(data->size);
 	if(msg->data.data == NULL) {
 		kfree(msg);
-		__int_on(cpsr);
 		return NULL;
 	}
 	memcpy(msg->data.data, data->data, data->size);
-
-	__int_on(cpsr);
 	proc_wakeup((uint32_t)&proc_to->pid);
 	return msg;
 }
 
 int32_t proc_get_msg(int32_t *pid, rawdata_t* data, int32_t id) {
 	int32_t res = -1;
-	uint32_t cpsr = __int_off();
 
 	proc_msg_t* msg;
 	msg = get_msg(_current_proc, id);
@@ -117,8 +110,6 @@ int32_t proc_get_msg(int32_t *pid, rawdata_t* data, int32_t id) {
 		res = msg->id;
 		remove_msg(_current_proc, msg);
 	}
-
-	__int_on(cpsr);
 	return res;
 }
 

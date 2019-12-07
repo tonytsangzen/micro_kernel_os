@@ -32,28 +32,22 @@ void kalloc_init(uint32_t start, uint32_t end) {
 
 /* kalloc allocates and returns a single available page. and removed from free list*/
 void *kalloc4k() {
-	uint32_t cpsr = __int_off();
 	void *result = 0;
 	if (_free_list4k != 0) {
 		result = _free_list4k;
 		_free_list4k = _free_list4k->next;
 	}
-	__int_on(cpsr);
 	return result;
 }
 
 /* kfree adds the given page to the 4k free list. */
 void kfree4k(void *page) {
-	uint32_t cpsr = __int_off();
 	_free_list4k = page_list_prepend(_free_list4k, page);
-	__int_on(cpsr);
 }
 
 /* kalloc1k allocates 1k sized and aligned chuncks of memory. */
 void *kalloc1k() {
 	void *result = 0;
-
-	uint32_t cpsr = __int_off();
 	/*
 	 * if we don't have any free 1k chunks, convert a 4k page into four
 	 * 1k chunks.
@@ -72,16 +66,12 @@ void *kalloc1k() {
 		result = _free_list1k;
 		_free_list1k = _free_list1k->next;
 	}
-
-	__int_on(cpsr);
 	return result;
 }
 
 /* kfree1k adds the given chunk to the 1k free list. */
 void kfree1k(void *mem) {
-	uint32_t cpsr = __int_off();
 	_free_list1k = page_list_prepend(_free_list1k, mem);
-	__int_on(cpsr);
 }
 
 /*

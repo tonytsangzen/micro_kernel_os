@@ -87,13 +87,11 @@ void proc_switch(context_t* ctx, proc_t* to){
 
 /* proc_exapnad_memory expands the heap size of the given process. */
 int32_t proc_expand_mem(proc_t *proc, int32_t page_num) {
-	uint32_t cpsr = __int_off();
 	int32_t i;
 	for (i = 0; i < page_num; i++) {
 		char *page = kalloc4k();
 		if(page == NULL) {
 			printf("proc expand failed!! free mem size: (%x), pid:%d, pages ask:%d\n", get_free_mem_size(), proc->pid, page_num);
-			__int_on(cpsr);
 			//proc_shrink_mem(proc, i);
 			return -1;
 		}
@@ -104,7 +102,6 @@ int32_t proc_expand_mem(proc_t *proc, int32_t page_num) {
 				AP_RW_RW);
 		proc->space->heap_size += PAGE_SIZE;
 	}
-	__int_on(cpsr);
 	return 0;
 }
 
@@ -113,7 +110,6 @@ void proc_shrink_mem(proc_t* proc, int32_t page_num) {
 	if(page_num <= 0)
 		return;
 
-	uint32_t cpsr = __int_off();
 	int32_t i;
 	for (i = 0; i < page_num; i++) {
 		uint32_t virtual_addr = proc->space->heap_size - PAGE_SIZE;
@@ -126,7 +122,6 @@ void proc_shrink_mem(proc_t* proc, int32_t page_num) {
 		if (proc->space->heap_size == 0)
 			break;
 	}
-	__int_on(cpsr);
 }
 
 static void proc_close_files(proc_t *proc) {
@@ -259,15 +254,12 @@ static void proc_terminate(context_t* ctx, proc_t* proc) {
 /* proc_free frees all resources allocated by proc. */
 void proc_exit(context_t* ctx, proc_t *proc, int32_t res) {
 	(void)res;
-	uint32_t cpsr = __int_off();
-
 	proc_terminate(ctx, proc);
 	proc->state = UNUSED;
 	str_free(proc->cmd);
 	str_free(proc->cwd);
 	proc_free_space(proc);
 	memset(proc, 0, sizeof(proc_t));
-	__int_on(cpsr);
 }
 
 void* proc_malloc(uint32_t size) {
@@ -380,44 +372,30 @@ void proc_sleep(context_t* ctx, uint32_t count) {
 	if(_current_proc == NULL)
 		return;
 
-	uint32_t cpsr = __int_off();
-
 	_current_proc->sleep_counter = count;
 	_current_proc->state = SLEEPING;
 	proc_unready(ctx, _current_proc);
-
-	__int_on(cpsr);
 }
 
 void proc_sleep_on(context_t* ctx, uint32_t event) {
 	if(_current_proc == NULL)
 		return;
 
-	uint32_t cpsr = __int_off();
-
 	_current_proc->sleep_event = event;
 	_current_proc->state = SLEEPING;
 	proc_unready(ctx, _current_proc);
-
-	__int_on(cpsr);
 }
 
 void proc_waitpid(context_t* ctx, int32_t pid) {
 	if(_current_proc == NULL || _proc_table[pid].state == UNUSED)
 		return;
 
-	uint32_t cpsr = __int_off();
-
 	_current_proc->wait_pid = pid;
 	_current_proc->state = WAIT;
 	proc_unready(ctx, _current_proc);
-
-	__int_on(cpsr);
 }
 
 void proc_wakeup(uint32_t event) {
-	uint32_t cpsr = __int_off();
-
 	int32_t i = 0;	
 	while(1) {
 		if(i >= PROC_MAX)
@@ -427,7 +405,6 @@ void proc_wakeup(uint32_t event) {
 			proc_ready(proc);
 		i++;
 	}
-	__int_on(cpsr);
 }
 
 static inline env_t* find_env(proc_t* proc, const char* name) {

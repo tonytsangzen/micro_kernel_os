@@ -3,8 +3,6 @@
 #include <kprintf.h>
 
 void schedule(context_t* ctx) {
-	uint32_t cpsr = __int_off();
-
 	proc_t* next = NULL;
 	if(_current_proc != NULL)
 		next = _current_proc->next;
@@ -18,5 +16,4 @@ void schedule(context_t* ctx) {
 		printf("dead schedule!\n");
 		while(1);
 	}
-	__int_on(cpsr);
 }
