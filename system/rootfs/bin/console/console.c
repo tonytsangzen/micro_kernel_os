@@ -16,6 +16,36 @@ typedef struct {
 	console_t console;
 } fb_console_t;
 
+typedef struct {
+	font_t* font;
+	uint32_t fg_color;
+	uint32_t bg_color;
+} conf_t;
+
+static conf_t _conf;
+
+static int32_t read_config(conf_t* conf, const char* fname) {
+	conf->font = font_by_name("8x16");
+	conf->bg_color = 0xffffffff;
+	conf->fg_color = 0xff000000;
+
+	sconf_t *sconf = sconf_load(fname);	
+	if(sconf == NULL)
+		return -1;
+
+	const char* v = sconf_get(sconf, "bg_color");
+	if(v[0] != 0) 
+		conf->bg_color = argb_int(atoi_base(v, 16));
+	v = sconf_get(sconf, "fg_color");
+	if(v[0] != 0) 
+		conf->fg_color = argb_int(atoi_base(v, 16));
+	v = sconf_get(sconf, "font");
+	if(v[0] != 0) 
+		conf->font = font_by_name(v);
+	sconf_free(sconf);
+	return 0;
+}
+
 static void init_console(fb_console_t* console) {
 	int fb_fd = open("/dev/fb0", O_RDONLY);
 	if(fb_fd < 0) {
@@ -52,9 +82,9 @@ static void init_console(fb_console_t* console) {
 	console->shm_id = id;
 	console_init(&console->console);
 	console->console.g = g;
-	console->console.font = font_by_name("8x16");
-	console->console.fg_color = 0xffffffff;
-	console->console.bg_color = 0xff000000;
+	console->console.font = _conf.font;
+	console->console.fg_color = _conf.fg_color;
+	console->console.bg_color = _conf.bg_color;
 	console_reset(&console->console);
 }
 
@@ -68,6 +98,7 @@ static int run(int argc, char* argv[]) {
 	(void)argc;
 	(void)argv;
 
+	read_config(&_conf, "/etc/console.conf");
 	int fd = open("/dev/keyb0", O_RDONLY);
 	if(fd < 0)
 		return -1;

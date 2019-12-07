@@ -72,7 +72,7 @@ static int run(int argc, char* argv[]) {
 	(void)argc;
 	(void)argv;
 	memset(&_conf, 0, sizeof(conf_t));
-	read_config(&_conf, "/etc/x/console.conf");
+	read_config(&_conf, "/etc/x/xconsole.conf");
 
 	int fd = open("/dev/keyb0", O_RDONLY);
 	if(fd < 0)

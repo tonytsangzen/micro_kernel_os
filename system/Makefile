@@ -124,7 +124,9 @@ sd:
 	mke2fs ${SD}
 	mkdir -p tmp
 	sudo mount ${SD} ./tmp
-	sudo cp -ar build/rootfs/* ./tmp/
+	sudo cp -r ${ROOT_DIR}/etc ${TARGET_DIR}/$(ROOT_DIR)
+	sudo cp -r ${ROOT_DIR}/data ${TARGET_DIR}/$(ROOT_DIR)
+	sudo cp -avr build/rootfs/* ./tmp/
 	sudo umount ./tmp
 	rm -r tmp
 	@echo "==== ext2 format sdcard image created  ====\n"
@@ -135,6 +137,8 @@ sdmac:
 	mke2fs ${SD}
 	mkdir -p tmp
 	fuse-ext2 -o force,rw+ $(SD) tmp
+	sudo cp -r ${ROOT_DIR}/etc ${TARGET_DIR}/$(ROOT_DIR)
+	sudo cp -r ${ROOT_DIR}/data ${TARGET_DIR}/$(ROOT_DIR)
 	sudo cp -r build/rootfs/* ./tmp/
 	umount ./tmp
 	rm -r tmp
