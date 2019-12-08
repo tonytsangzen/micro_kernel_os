@@ -38,6 +38,7 @@ static int read_pipe(fsinfo_t* info, void* buf, uint32_t size) {
 	int res = syscall3(SYS_PIPE_READ, (int32_t)info, (int32_t)buf, (int32_t)size);
 	if(res == 0) { // pipe empty, do retry
 		errno = EAGAIN;
+		sleep(0);
 		return -1;
 	}
 	if(res > 0) {
@@ -84,6 +85,7 @@ int read(int fd, void* buf, uint32_t size) {
 		}
 		if(res == ERR_RETRY) {
 			errno = EAGAIN;
+			sleep(0);
 			res = -1;
 		}
 	}
@@ -98,6 +100,7 @@ static int write_pipe(fsinfo_t* info, const void* buf, uint32_t size) {
 	int res = syscall3(SYS_PIPE_WRITE, (int32_t)info, (int32_t)buf, (int32_t)size);
 	if(res == 0) { // pipe not empty, do retry
 		errno = EAGAIN;
+		sleep(0);
 		return -1;
 	}
 	if(res > 0)
@@ -143,6 +146,7 @@ int write_nblock(int fd, const void* buf, uint32_t size) {
 		}
 		if(res == -2) {
 			errno = EAGAIN;
+			sleep(0);
 			res = -1;
 		}
 	}

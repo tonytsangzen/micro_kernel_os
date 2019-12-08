@@ -734,8 +734,10 @@ static int xserver_loop_step(void* p) {
 	else
 		x->actived = 0;
 
-	if(x->actived == 0)
+	if(x->actived == 0) {
+		usleep(100000);
 		return 0;
+	}
 
 	int8_t v;
 	//read keyb
