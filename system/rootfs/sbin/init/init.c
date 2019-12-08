@@ -214,24 +214,29 @@ int main(int argc, char** argv) {
 	set_global("current_console", "c");
 
 	console_out(&console, "\n[init process started]\n");
+	/*mount root fs*/
 	run_init_root(&console, "/sbin/dev/sdd");
-	run_dev(&console, "/sbin/dev/ttyd", "/dev/tty0");
+	/*mount framebuffer device*/
 	run_dev(&console, "/sbin/dev/fbd", "/dev/fb0");
-
-	init_stdio();
-	setenv("CONSOLE", "tty");
-	run("/bin/session");
-
+	/*init framebuffer console*/
 	init_console(&console);
+	check_keyb_table(&console);
+
+	/*load reset devices*/
+	run_dev(&console, "/sbin/dev/ttyd", "/dev/tty0");
 	run_dev(&console, "/sbin/dev/nulld", "/dev/null");
 	run_dev(&console, "/sbin/dev/moused", "/dev/mouse0");
 	run_dev(&console, "/sbin/dev/keybd", "/dev/keyb0");
 	run_dev(&console, "/sbin/dev/xserverd", "/dev/x");
 
-	check_keyb_table(&console);
 	close_console(&console);
 
-	run("/bin/launcher");
+	/*run tty shell*/
+	init_stdio();
+	setenv("CONSOLE", "tty");
+	run("/bin/session");
+
+	/*run screen console shell*/
 	run("/bin/console");
 
 	while(1) {
