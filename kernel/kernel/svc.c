@@ -89,14 +89,16 @@ static void sys_dev_ch_read(context_t* ctx, uint32_t type, void* data, uint32_t 
 		return;
 	}
 
-	int32_t rd = dev_ch_read(dev, data, sz);
-	ctx->gpr[0] = rd;
+	if(dev->ready != NULL) {
+		if(dev->ready(dev) != 0) {
+			proc_t* proc = _current_proc;
+			proc_sleep_on(ctx, (uint32_t)dev);
+			proc->ctx.gpr[0] = 0;
+			return;
+		}
+	}
 
-	if(rd != DEV_SLEEP) //not sleep for
-		return;
-	proc_t* proc = _current_proc;
-	proc_sleep_on(ctx, (uint32_t)dev);
-	proc->ctx.gpr[0] = 0;
+	ctx->gpr[0] = dev_ch_read(dev, data, sz);
 }
 
 static int32_t sys_dev_ch_write(uint32_t type, void* data, uint32_t sz) {

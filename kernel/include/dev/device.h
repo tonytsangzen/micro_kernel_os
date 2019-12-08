@@ -1,7 +1,6 @@
 #ifndef KDEVICE_TYPE_H
 #define KDEVICE_TYPE_H
 
-#define DEV_SLEEP -2
 #define SD_BLOCK_SIZE 1024
 
 enum {
