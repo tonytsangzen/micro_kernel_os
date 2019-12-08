@@ -74,7 +74,7 @@ static void load_init(void) {
 
 	char* elf = sd_read_ext2(prog, &sz);
 	if(elf != NULL) {
-		proc_t *proc = proc_create();
+		proc_t *proc = proc_create(PROC_TYPE_PROC);
 		str_cpy(proc->cmd, prog);
 		proc_load_elf(proc, elf, sz);
 	}

@@ -77,7 +77,9 @@ enum {
 	SYS_GET_PROCS,
 
 	SYS_SET_GLOBAL,
-	SYS_GET_GLOBAL
+	SYS_GET_GLOBAL,
+
+	SYS_THREAD
 };
 
 #endif

@@ -1,5 +1,6 @@
 #include <dev/uart.h>
 #include <mm/mmu.h>
+#include <buffer.h>
 
 /* memory mapping for the serial port */
 #define UART0 ((volatile uint32_t*)(MMIO_BASE+0x001f1000))
@@ -30,7 +31,7 @@ static inline void uart_basic_trans(char c) {
 }
 
 int32_t uart_inputch(dev_t* dev, int32_t loop) {
-	if(dev == NULL)
+	if(dev == NULL || (get8(UART0+UART_INT_TARGET) &  UART_RECEIVE) == 0)
 		return -1;
 
 	char c = get32(UART0 + UART_DATA);
@@ -49,8 +50,9 @@ int32_t uart_write(dev_t* dev, const void* data, uint32_t size) {
 }
 
 int32_t uart_ready(dev_t* dev) {
-	(void)dev;
-	if((get8(UART0+UART_INT_TARGET) &  UART_RECEIVE) != 0)
+	//(void)dev;
+	//if((get8(UART0+UART_INT_TARGET) &  UART_RECEIVE) != 0)
+	if(dev->io.ch.buffer.size > 0)
 		return 0;
 	return -1;
 }

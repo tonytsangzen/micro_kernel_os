@@ -31,9 +31,16 @@ proc_t* proc_get(int32_t pid) {
 	return &_proc_table[pid];
 }
 
+static inline uint32_t proc_get_user_stack_pages(proc_t* proc) {
+	return proc->type == PROC_TYPE_THREAD ? THREAD_STACK_PAGES: STACK_PAGES;
+}
+
 static inline  uint32_t proc_get_user_stack_base(proc_t* proc) {
 	(void)proc;
-  return USER_STACK_TOP - STACK_PAGES*PAGE_SIZE;
+  uint32_t proc_stack_base = USER_STACK_TOP - STACK_PAGES*PAGE_SIZE;
+	if(proc->type != PROC_TYPE_THREAD)
+		return proc_stack_base;
+  return proc_stack_base - proc->pid*THREAD_STACK_PAGES*PAGE_SIZE;
 }
 
 static void* proc_get_mem_tail(void* p) {
@@ -156,6 +163,9 @@ static void proc_clone_files(proc_t *proc_to, proc_t* from) {
 }
 
 static void proc_free_space(proc_t *proc) {
+	if(proc->type == PROC_TYPE_THREAD)
+		return;
+
 	int32_t i;
 	for(i=0; i<ENV_MAX; i++) {
 		env_t* env = &proc->space->envs[i];
@@ -173,13 +183,6 @@ static void proc_free_space(proc_t *proc) {
 
 	/*free file info*/
 	proc_shrink_mem(proc, proc->space->heap_size / PAGE_SIZE);
-
-	/*free user_stack*/
-	uint32_t user_stack_base = proc_get_user_stack_base(proc);
-	for(int i=0; i<STACK_PAGES; i++) {
-		unmap_page(proc->space->vm, user_stack_base + PAGE_SIZE*i);
-		kfree4k(proc->user_stack[i]);
-	}
 
 	free_page_tables(proc->space->vm);
 	kfree(proc->space);
@@ -258,6 +261,15 @@ void proc_exit(context_t* ctx, proc_t *proc, int32_t res) {
 	proc->state = UNUSED;
 	str_free(proc->cmd);
 	str_free(proc->cwd);
+
+	/*free user_stack*/
+	uint32_t user_stack_base = proc_get_user_stack_base(proc);
+	uint32_t pages = proc_get_user_stack_pages(proc);
+	for(uint32_t i=0; i<pages; i++) {
+		unmap_page(proc->space->vm, user_stack_base + PAGE_SIZE*i);
+		kfree4k(proc->user_stack[i]);
+	}
+
 	proc_free_space(proc);
 	memset(proc, 0, sizeof(proc_t));
 }
@@ -275,9 +287,9 @@ void proc_free(void* p) {
 }
 
 /* proc_creates allocates a new process and returns it. */
-proc_t *proc_create(void) {
+proc_t *proc_create(int32_t type) {
 	int32_t index = -1;
-	int32_t i;
+	uint32_t i;
 	for (i = 0; i < PROC_MAX; i++) {
 		if (_proc_table[i].state == UNUSED) {
 			index = i;
@@ -290,13 +302,17 @@ proc_t *proc_create(void) {
 	proc_t *proc = &_proc_table[index];
 	memset(proc, 0, sizeof(proc_t));
 	proc->pid = index;
-
+	proc->type = type;
 	proc->father_pid = -1;
 	proc->state = CREATED;
-	proc_init_space(proc);
+	if(type == PROC_TYPE_PROC)
+		proc_init_space(proc);
+	else
+		proc->space = _current_proc->space;
 
 	uint32_t user_stack_base =  proc_get_user_stack_base(proc);
-	for(i=0; i<STACK_PAGES; i++) {
+	uint32_t pages = proc_get_user_stack_pages(proc);
+	for(i=0; i<pages; i++) {
 		proc->user_stack[i] = kalloc4k();
 		map_page(proc->space->vm,
 			user_stack_base + PAGE_SIZE*i,
@@ -305,7 +321,7 @@ proc_t *proc_create(void) {
 	}
 	proc->cmd = str_new("");
 	proc->cwd = str_new("/");
-	proc->ctx.sp = user_stack_base + STACK_PAGES*PAGE_SIZE;
+	proc->ctx.sp = user_stack_base + pages*PAGE_SIZE;
 	proc->ctx.cpsr = 0x50;
 	proc->start_sec = _kernel_tic;
 	return proc;
@@ -360,7 +376,7 @@ int32_t proc_load_elf(proc_t *proc, const char *image, uint32_t size) {
 	}
 
 	uint32_t user_stack_base =  proc_get_user_stack_base(proc);
-	proc->ctx.sp = user_stack_base + STACK_PAGES*PAGE_SIZE;
+	proc->ctx.sp = user_stack_base + proc_get_user_stack_pages(proc)*PAGE_SIZE;
 	proc->ctx.pc = header->entry;
 	proc->ctx.lr = header->entry;
 	proc_ready(proc);
@@ -528,19 +544,22 @@ static int32_t proc_clone(proc_t* child, proc_t* parent) {
 	return 0;
 }
 
-proc_t* kfork() {
+proc_t* kfork(int32_t type) {
 	proc_t *child = NULL;
 	proc_t *parent = _current_proc;
 
-	child = proc_create();
+	child = proc_create(type);
 	if(child == NULL) {
 		printf("panic: kfork create proc failed!!(%d)\n", parent->pid);
 		return NULL;
 	}
+	child->father_pid = _current_proc->pid;
 
-	if(proc_clone(child, parent) != 0) {
-		printf("panic: kfork clone failed!!(%d)\n", parent->pid);
-		return NULL;
+	if(type == PROC_TYPE_PROC) {
+		if(proc_clone(child, parent) != 0) {
+			printf("panic: kfork clone failed!!(%d)\n", parent->pid);
+			return NULL;
+		}
 	}
 
 	proc_ready(child);

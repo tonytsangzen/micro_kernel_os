@@ -88,16 +88,13 @@ static void sys_dev_ch_read(context_t* ctx, uint32_t type, void* data, uint32_t 
 		ctx->gpr[0] = -1;
 		return;
 	}
-
-	if(dev->ready != NULL) {
-		if(dev->ready(dev) != 0) {
-			proc_t* proc = _current_proc;
-			proc_sleep_on(ctx, (uint32_t)dev);
-			proc->ctx.gpr[0] = 0;
-			return;
-		}
+	
+	if(dev->ready != NULL && dev_ready(dev) != 0) {
+		proc_t* proc = _current_proc;
+		proc_sleep_on(ctx, (uint32_t)dev);
+		proc->ctx.gpr[0] = 0;
+		return;
 	}
-
 	ctx->gpr[0] = dev_ch_read(dev, data, sz);
 }
 
@@ -147,12 +144,26 @@ static void sys_free(int32_t p) {
 }
 
 static int32_t sys_fork(context_t* ctx) {
-	proc_t *proc = kfork();
+	proc_t *proc = kfork(PROC_TYPE_PROC);
 	if(proc == NULL)
 		return -1;
 
 	memcpy(&proc->ctx, ctx, sizeof(context_t));
 	proc->ctx.gpr[0] = 0;
+	return proc->pid;
+}
+
+static int32_t sys_thread(context_t* ctx, uint32_t entry, int32_t arg) {
+	proc_t *proc = kfork(PROC_TYPE_THREAD);
+	if(proc == NULL)
+		return -1;
+	uint32_t sp = proc->ctx.sp;
+	memcpy(&proc->ctx, ctx, sizeof(context_t));
+	proc->ctx.sp = sp;
+	proc->ctx.pc = entry;
+	proc->ctx.lr = entry;
+	proc->ctx.gpr[0] = arg;
+	proc->ctx.gpr[0] = arg;
 	return proc->pid;
 }
 
@@ -716,6 +727,9 @@ void svc_handler(int32_t code, int32_t arg0, int32_t arg1, int32_t arg2, context
 		return;
 	case SYS_GET_GLOBAL:
 		ctx->gpr[0] = get_global((const char*)arg0, (char*)arg1, arg2);
+		return;
+	case SYS_THREAD:
+		ctx->gpr[0] = sys_thread(ctx, (uint32_t)arg0, arg1);
 		return;
 	}
 	printf("pid:%d, code(%d) error!\n", _current_proc->pid, code);

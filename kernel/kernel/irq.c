@@ -15,10 +15,9 @@ static void uart_handler(void) {
 	int32_t rd = 0;
 	dev_t* dev = get_dev(DEV_UART0);
 	while(1) {
-		if(dev->io.ch.inputch == NULL || dev_ready(dev) != 0)
+		if(dev->io.ch.inputch == NULL || dev->io.ch.inputch(dev, 1) != 0)
 			break;
 		rd++;
-		dev->io.ch.inputch(dev, 1);
 	}
 	if(rd > 0)
 		proc_wakeup((uint32_t)dev);
