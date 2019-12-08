@@ -39,11 +39,6 @@ typedef struct {
 #define STACK_PAGES 32
 #define THREAD_STACK_PAGES 4
 
-enum {
-	PROC_TYPE_PROC = 0,
-	PROC_TYPE_THREAD
-};
-
 typedef struct st_proc {
 	int32_t type;
 	int32_t pid;

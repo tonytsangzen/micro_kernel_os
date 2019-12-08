@@ -305,10 +305,16 @@ proc_t *proc_create(int32_t type) {
 	proc->type = type;
 	proc->father_pid = -1;
 	proc->state = CREATED;
-	if(type == PROC_TYPE_PROC)
+	if(type == PROC_TYPE_PROC) {
 		proc_init_space(proc);
-	else
+		proc->cmd = str_new("");
+		proc->cwd = str_new("/");
+	}
+	else {
 		proc->space = _current_proc->space;
+		proc->cmd = str_new(_current_proc->cmd->cstr);
+		proc->cwd = str_new(_current_proc->cwd->cstr);
+	}
 
 	uint32_t user_stack_base =  proc_get_user_stack_base(proc);
 	uint32_t pages = proc_get_user_stack_pages(proc);
@@ -319,8 +325,6 @@ proc_t *proc_create(int32_t type) {
 			V2P(proc->user_stack[i]),
 			AP_RW_RW);
 	}
-	proc->cmd = str_new("");
-	proc->cwd = str_new("/");
 	proc->ctx.sp = user_stack_base + pages*PAGE_SIZE;
 	proc->ctx.cpsr = 0x50;
 	proc->start_sec = _kernel_tic;
@@ -595,6 +599,7 @@ procinfo_t* get_procs(int32_t *num) {
 		if(_proc_table[i].state != UNUSED && 
 				(_current_proc->owner == 0 ||
 				 _proc_table[i].owner == _current_proc->owner)) {
+			procs[j].type = _proc_table[i].type;	
 			procs[j].pid = _proc_table[i].pid;	
 			procs[j].father_pid = _proc_table[i].father_pid;	
 			procs[j].owner = _proc_table[i].owner;	

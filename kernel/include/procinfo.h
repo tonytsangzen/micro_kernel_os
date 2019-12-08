@@ -5,7 +5,13 @@
 
 #define PROC_INFO_CMD_MAX 256
 
+enum {
+	PROC_TYPE_PROC = 0,
+	PROC_TYPE_THREAD
+};
+
 typedef struct {
+	int32_t type; 
 	int32_t pid; 
 	int32_t father_pid;
 	int32_t owner; 
