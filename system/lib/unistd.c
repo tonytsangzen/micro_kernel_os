@@ -38,7 +38,6 @@ static int read_pipe(fsinfo_t* info, void* buf, uint32_t size) {
 	int res = syscall3(SYS_PIPE_READ, (int32_t)info, (int32_t)buf, (int32_t)size);
 	if(res == 0) { // pipe empty, do retry
 		errno = EAGAIN;
-		sleep(0);
 		return -1;
 	}
 	if(res > 0) {
@@ -99,7 +98,6 @@ static int write_pipe(fsinfo_t* info, const void* buf, uint32_t size) {
 	int res = syscall3(SYS_PIPE_WRITE, (int32_t)info, (int32_t)buf, (int32_t)size);
 	if(res == 0) { // pipe not empty, do retry
 		errno = EAGAIN;
-		sleep(0);
 		return -1;
 	}
 	if(res > 0)
@@ -164,6 +162,23 @@ int write(int fd, const void* buf, uint32_t size) {
 		sleep(0);
 	}
 	return -1;
+}
+
+int lseek(int fd, uint32_t offset, int whence) {
+	if(whence == SEEK_CUR) {
+		int cur = syscall1(SYS_VFS_PROC_TELL, fd);
+		if(cur < 0)
+			cur = 0;
+		offset += cur;
+	}	
+	else if(whence == SEEK_END) {
+		fsinfo_t info;
+		int cur = 0;
+		if(vfs_get_by_fd(fd, &info) == 0)
+			cur = info.size;
+		offset += cur;
+	}
+	return syscall2(SYS_VFS_PROC_SEEK, fd, offset);
 }
 
 void exec_elf(const char* cmd_line, const char* elf, int32_t size) {
