@@ -85,7 +85,6 @@ int read(int fd, void* buf, uint32_t size) {
 		}
 		if(res == ERR_RETRY) {
 			errno = EAGAIN;
-			sleep(0);
 			res = -1;
 		}
 	}
@@ -146,7 +145,6 @@ int write_nblock(int fd, const void* buf, uint32_t size) {
 		}
 		if(res == -2) {
 			errno = EAGAIN;
-			sleep(0);
 			res = -1;
 		}
 	}
