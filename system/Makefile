@@ -58,6 +58,7 @@ LIB_OBJS = $(LIB_DIR)/syscall.o \
 	$(LIB_DIR)/proto.o \
 	$(LIB_DIR)/sd.o \
 	$(LIB_DIR)/stdio.o \
+	$(LIB_DIR)/thread.o \
 	$(LIB_DIR)/basic_math.o \
 	$(LIB_DIR)/console.o \
 	$(LIB_DIR)/shm.o \
