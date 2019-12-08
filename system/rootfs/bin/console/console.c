@@ -107,6 +107,7 @@ static int run(int argc, char* argv[]) {
 	init_console(&console);
 
 	int actived = 0;
+	int rd = 0;
 	while(1) {
 		const char* cc = get_global("current_console");
 		if(cc[0] == 'c') {
@@ -124,9 +125,12 @@ static int run(int argc, char* argv[]) {
 
 		int8_t c;
 		//read keyb
-		int rd = read(fd, &c, 1);
-		if(rd == 1) {
-			write(1, &c, 1);
+		if(rd != 1) {
+			rd = read(fd, &c, 1);
+		}
+		else {
+			if(write_nblock(1, &c, 1) == 1)
+				rd = 0;
 		}
 
 		char buf[256];
