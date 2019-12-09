@@ -187,16 +187,14 @@ static void init_stdio(void) {
 	dup2(fd, 1);
 }
 
-static int _current_console = 0;
 static void kevent_handle(int32_t type, rawdata_t* data) {
 	(void)data;
 	if(type == KEV_CONSOLE_SWITCH) {
-		if(_current_console == 1) {
-			_current_console = 0;
+		const char* s = get_global("current_console");
+		if(s[0] == 'x') {
 			set_global("current_console", "c");
 		}
 		else {
-			_current_console = 1;
 			set_global("current_console", "x");
 		}
 	}
@@ -205,7 +203,6 @@ static void kevent_handle(int32_t type, rawdata_t* data) {
 int main(int argc, char** argv) {
 	(void)argc;
 	(void)argv;
-	_current_console = 0;
 	init_console_t console;
 	console.fb_fd = -1;
 

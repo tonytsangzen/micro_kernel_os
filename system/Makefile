@@ -109,6 +109,7 @@ include $(ROOT_DIR)/bin/console/build.mk
 include $(ROOT_DIR)/bin/xconsole/build.mk
 include $(ROOT_DIR)/bin/launcher/build.mk
 include $(ROOT_DIR)/bin/session/build.mk
+include $(ROOT_DIR)/bin/x/build.mk
 
 mkdirs:
 	@mkdir -p ${TARGET_DIR}/$(ROOT_DIR)/sbin/dev
@@ -161,8 +162,8 @@ debug:
 
 gdb: 
 	echo "target remote :26000" > /tmp/gdbinit
-	#arm-none-eabi-gdb ${KERNEL_ELF} -x /tmp/gdbinit
-	gdb-multiarch ${KERNEL_ELF} -x /tmp/gdbinit #for ubuntu 18.04 without arm-none-eabi-gdb
+	arm-none-eabi-gdb ${KERNEL_ELF} -x /tmp/gdbinit
+	#gdb-multiarch ${KERNEL_ELF} -x /tmp/gdbinit #for ubuntu 18.04 without arm-none-eabi-gdb
 
 clean:
 	rm -f $(CLEAN)

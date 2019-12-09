@@ -21,6 +21,10 @@ int fork(void) {
 	return syscall0(SYS_FORK);
 }
 
+void detach(void) {
+	return syscall0(SYS_DETACH);
+}
+
 int usleep(unsigned int usecs) {
 	if(usecs == 0)
 		syscall0(SYS_YIELD);

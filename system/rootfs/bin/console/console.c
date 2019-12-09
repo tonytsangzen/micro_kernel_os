@@ -119,18 +119,18 @@ static int run(int argc, char* argv[]) {
 		}
 		else {
 			actived = 0;
-			sleep(0);
-			continue;
 		}
 
 		int8_t c;
 		//read keyb
-		if(rd != 1) {
-			rd = read(fd, &c, 1);
-		}
-		else {
-			if(write_nblock(1, &c, 1) == 1)
-				rd = 0;
+		if(actived == 1) {
+			if(rd != 1) {
+				rd = read(fd, &c, 1);
+			}
+			else {
+				if(write_nblock(1, &c, 1) == 1)
+					rd = 0;
+			}
 		}
 
 		char buf[256];
@@ -153,7 +153,9 @@ static int run(int argc, char* argv[]) {
 			char c = p[i];
 			console_put_char(&console.console, c);
 		}
-		flush(console.fb_fd);
+
+		if(actived == 1)
+			flush(console.fb_fd);
 	}
 
 	close(fd);

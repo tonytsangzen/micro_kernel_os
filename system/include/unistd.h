@@ -8,6 +8,7 @@
 
 int getpid(void);
 int fork(void);
+void detach(void);
 unsigned int sleep(unsigned int seconds);
 int usleep(unsigned int usecs);
 
