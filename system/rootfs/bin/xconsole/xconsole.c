@@ -171,5 +171,6 @@ int main(int argc, char* argv[]) {
 	close(fds2[0]);
 	close(fds2[1]);
 	setenv("CONSOLE", "xconsole");
+	setenv("CONSOLE_ID", "console-x");
 	return exec("/bin/shell");
 }

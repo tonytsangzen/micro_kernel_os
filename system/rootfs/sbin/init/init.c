@@ -187,15 +187,28 @@ static void init_stdio(void) {
 	dup2(fd, 1);
 }
 
+static int _cid;
+static int _cnum;
+
 static void kevent_handle(int32_t type, rawdata_t* data) {
 	(void)data;
 	if(type == KEV_CONSOLE_SWITCH) {
+		char id[2];
 		const char* s = get_global("current_console");
 		if(s[0] == 'x') {
-			set_global("current_console", "c");
+			set_global("current_console", "0");
 		}
 		else {
-			set_global("current_console", "x");
+			_cid++;
+			if(_cid >= _cnum) {
+				set_global("current_console", "x");
+				_cid = 0;
+			}
+			else {
+				id[1] = 0;
+				id[0] = '0' + _cid;
+				set_global("current_console", id);
+			}
 		}
 	}
 }
@@ -208,7 +221,7 @@ int main(int argc, char** argv) {
 
 	setenv("OS", "mkos");
 	setenv("PATH", "/sbin:/bin");
-	set_global("current_console", "c");
+	set_global("current_console", "0");
 
 	console_out(&console, "\n[init process started]\n");
 	/*mount root fs*/
@@ -230,11 +243,22 @@ int main(int argc, char** argv) {
 
 	/*run tty shell*/
 	init_stdio();
-	setenv("CONSOLE", "tty");
+	setenv("CONSOLE_ID", "tty");
 	run("/bin/session");
 
 	/*run screen console shell*/
-	run("/bin/console");
+	_cnum = 4;
+	_cid = 0;
+	int i = 0;
+	while(i < _cnum) {
+		char cmd[64];
+		char cid[16];
+		snprintf(cid, 15, "console-%d/%d", i, _cnum);
+		setenv("CONSOLE_ID", cid);
+		snprintf(cmd, 64, "/bin/console %d", i);
+		run(cmd);
+		i++;
+	}
 
 	while(1) {
 		int32_t type;

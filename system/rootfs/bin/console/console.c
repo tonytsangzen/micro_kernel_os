@@ -11,6 +11,7 @@
 #include <dev/fbinfo.h>
 
 typedef struct {
+	const char* id;
 	int fb_fd;
 	int shm_id;
 	console_t console;
@@ -95,9 +96,6 @@ static void close_console(fb_console_t* console) {
 }
 
 static int run(int argc, char* argv[]) {
-	(void)argc;
-	(void)argv;
-
 	read_config(&_conf, "/etc/console.conf");
 	int fd = open("/dev/keyb0", O_RDONLY);
 	if(fd < 0)
@@ -105,12 +103,16 @@ static int run(int argc, char* argv[]) {
 
 	fb_console_t console;
 	init_console(&console);
+	if(argc <= 1)
+		console.id = "0";
+	else
+		console.id = argv[1];
 
 	int actived = 0;
 	int rd = 0;
 	while(1) {
 		const char* cc = get_global("current_console");
-		if(cc[0] == 'c') {
+		if(cc[0] == console.id[0]) {
 			if(actived == 0) {
 				console_refresh(&console.console);
 				flush(console.fb_fd);
@@ -164,9 +166,6 @@ static int run(int argc, char* argv[]) {
 }
 
 int main(int argc, char* argv[]) {
-	(void)argc;
-	(void)argv;
-
 	int fds1[2];
 	int fds2[2];
 	pipe(fds1);

@@ -310,18 +310,15 @@ int main(int argc, char* argv[]) {
 	(void)argc;
 	(void)argv;
 
-	int tty = 0;
-	if(strcmp(getenv("CONSOLE"), "tty") == 0)
-		tty = 1;
+	const char* cid = getenv("CONSOLE_ID");
+	if(cid[0] == 0)
+		cid = "0";
 
 	str_t* cmdstr = str_new("");
 	_terminated = 0;
 	while(_terminated == 0) {
 		char cwd[FS_FULL_NAME_MAX+1];
-		if(tty == 0)
-			printf("ewok:%s# ", getcwd(cwd, FS_FULL_NAME_MAX));
-		else
-			printf("ewok:(tty)%s# ", getcwd(cwd, FS_FULL_NAME_MAX));
+		printf("ewok(%s):%s# ", cid, getcwd(cwd, FS_FULL_NAME_MAX));
 
 		if(gets(cmdstr) != 0)
 			break;
