@@ -52,6 +52,9 @@ int main(int argc, char* argv[]) {
 	if(procs != NULL) {
 		printf("  PID    FATHER OWNER   STATE TIME       HEAP(k)  PROC\n"); 
 		for(int i=0; i<num; i++) {
+			if(procs[i].type == PROC_TYPE_THREAD && full == 0)
+				continue;
+
 			uint32_t sec = csec - procs[i].start_sec;
 			printf("  %4d   %6d %5d   %5s %02d:%02d:%02d   %8d %s%s\n", 
 				procs[i].pid,

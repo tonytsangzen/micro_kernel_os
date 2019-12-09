@@ -22,7 +22,7 @@ int fork(void) {
 }
 
 void detach(void) {
-	return syscall0(SYS_DETACH);
+	syscall0(SYS_DETACH);
 }
 
 int usleep(unsigned int usecs) {
@@ -38,8 +38,13 @@ unsigned int sleep(unsigned int seconds) {
 	return 0;
 }
 
-static int read_pipe(fsinfo_t* info, void* buf, uint32_t size) {
-	int res = syscall3(SYS_PIPE_READ, (int32_t)info, (int32_t)buf, (int32_t)size);
+static int read_pipe(fsinfo_t* info, void* buf, uint32_t size, int block) {
+	int res = -1;
+	if(block == 0)
+		res = syscall3(SYS_PIPE_READ_NBLOCK, (int32_t)info, (int32_t)buf, (int32_t)size);
+	else
+		res = syscall3(SYS_PIPE_READ, (int32_t)info, (int32_t)buf, (int32_t)size);
+
 	if(res == 0) { // pipe empty, do retry
 		errno = EAGAIN;
 		return -1;
@@ -50,14 +55,14 @@ static int read_pipe(fsinfo_t* info, void* buf, uint32_t size) {
 	return 0; //res < 0 , pipe closed, return 0.
 }
 
-int read(int fd, void* buf, uint32_t size) {
+static int read_raw(int fd, void* buf, uint32_t size, int block) {
 	errno = ENONE;
 	fsinfo_t info;
 	if(vfs_get_by_fd(fd, &info) != 0)
 		return -1;
 
 	if(info.type == FS_TYPE_PIPE)
-		return read_pipe(&info, buf, size);
+		return read_pipe(&info, buf, size, block);
 	
 	mount_t mount;
 	if(vfs_get_mount(&info, &mount) != 0)
@@ -76,6 +81,7 @@ int read(int fd, void* buf, uint32_t size) {
 	proto_add(&in, &info, sizeof(fsinfo_t));
 	proto_add_int(&in, size);
 	proto_add_int(&in, offset);
+	proto_add_int(&in, block);
 
 	int res = -1;
 	if(ipc_call(mount.pid, &in, &out) == 0) {
@@ -97,9 +103,31 @@ int read(int fd, void* buf, uint32_t size) {
 	return res;
 }
 
-static int write_pipe(fsinfo_t* info, const void* buf, uint32_t size) {
+int read_nblock(int fd, void* buf, uint32_t size) {
+	return read_raw(fd, buf, size, 0);
+}
+
+int read(int fd, void* buf, uint32_t size) {
+	while(1) {
+		int res = read_raw(fd, buf, size, 1);
+		if(res >= 0)
+			return res;
+
+		if(errno != EAGAIN)
+			break;
+		sleep(0);
+	}
+	return -1;
+}
+
+static int write_pipe(fsinfo_t* info, const void* buf, uint32_t size, int block) {
 	errno = ENONE;
-	int res = syscall3(SYS_PIPE_WRITE, (int32_t)info, (int32_t)buf, (int32_t)size);
+	int res;
+	if(block == 0)
+		res = syscall3(SYS_PIPE_WRITE_NBLOCK, (int32_t)info, (int32_t)buf, (int32_t)size);
+	else
+		res = syscall3(SYS_PIPE_WRITE, (int32_t)info, (int32_t)buf, (int32_t)size);
+
 	if(res == 0) { // pipe not empty, do retry
 		errno = EAGAIN;
 		return -1;
@@ -109,13 +137,14 @@ static int write_pipe(fsinfo_t* info, const void* buf, uint32_t size) {
 	return 0; //res < 0 , pipe closed, return 0.
 }
 
-int write_nblock(int fd, const void* buf, uint32_t size) {
+int write_raw(int fd, const void* buf, uint32_t size, int block) {
+	errno = ENONE;
 	fsinfo_t info;
 	if(vfs_get_by_fd(fd, &info) != 0)
 		return -1;
 	
 	if(info.type == FS_TYPE_PIPE) 
-		return write_pipe(&info, buf, size);
+		return write_pipe(&info, buf, size, block);
 	if(info.type == FS_TYPE_DIR) 
 		return -1;
 
@@ -136,6 +165,7 @@ int write_nblock(int fd, const void* buf, uint32_t size) {
 	proto_add(&in, &info, sizeof(fsinfo_t));
 	proto_add(&in, buf, size);
 	proto_add_int(&in, offset);
+	proto_add_int(&in, block);
 
 	int res = -1;
 	if(ipc_call(mount.pid, &in, &out) == 0) {
@@ -155,9 +185,13 @@ int write_nblock(int fd, const void* buf, uint32_t size) {
 	return res;
 }
 
+int write_nblock(int fd, const void* buf, uint32_t size) {
+	return write_raw(fd, buf, size, 0);
+}
+
 int write(int fd, const void* buf, uint32_t size) {
 	while(1) {
-		int res = write_nblock(fd, buf, size);
+		int res = write_raw(fd, buf, size, 1);
 		if(res >= 0)
 			return res;
 

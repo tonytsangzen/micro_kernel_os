@@ -25,12 +25,12 @@ static int mount(fsinfo_t* mnt_point, mount_info_t* mnt_info, void* p) {
 	return 0;
 }
 
-static int tty_mount(fsinfo_t* info, mount_info_t* mnt_info, void* p) {
+static int null_mount(fsinfo_t* info, mount_info_t* mnt_info, void* p) {
 	mount(info, mnt_info, p);
 	return 0;
 }
 
-static int tty_read(int fd, int from_pid, fsinfo_t* info, void* buf, int size, int offset, void* p) {
+static int null_read(int fd, int from_pid, fsinfo_t* info, void* buf, int size, int offset, void* p, int block) {
 	(void)fd;
 	(void)from_pid;
 	(void)info;
@@ -38,20 +38,22 @@ static int tty_read(int fd, int from_pid, fsinfo_t* info, void* buf, int size, i
 	(void)size;
 	(void)offset;
 	(void)p;
+	(void)block;
 	return 0;	
 }
 
-static int tty_write(int fd, int from_pid, fsinfo_t* info, const void* buf, int size, int offset, void* p) {
+static int null_write(int fd, int from_pid, fsinfo_t* info, const void* buf, int size, int offset, void* p, int block) {
 	(void)fd;
 	(void)from_pid;
 	(void)info;
 	(void)buf;
 	(void)offset;
 	(void)p;
+	(void)block;
 	return size;
 }
 
-static int tty_umount(fsinfo_t* info, void* p) {
+static int null_umount(fsinfo_t* info, void* p) {
 	(void)p;
 	vfs_umount(info);
 	return 0;
@@ -65,10 +67,10 @@ int main(int argc, char** argv) {
 	vdevice_t dev;
 	memset(&dev, 0, sizeof(vdevice_t));
 	strcpy(dev.name, "null");
-	dev.mount = tty_mount;
-	dev.read = tty_read;
-	dev.write = tty_write;
-	dev.umount = tty_umount;
+	dev.mount = null_mount;
+	dev.read = null_read;
+	dev.write = null_write;
+	dev.umount = null_umount;
 
 	mount_info_t mnt_info;
 	strcpy(mnt_info.dev_name, dev.name);

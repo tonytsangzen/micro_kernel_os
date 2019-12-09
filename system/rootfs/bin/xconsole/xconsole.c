@@ -115,7 +115,7 @@ static int run(int argc, char* argv[]) {
 		}
 
 		char buf[256];
-		int32_t size = read(0, buf, 255);
+		int32_t size = read_nblock(0, buf, 255);
 		if(size == 0) {
 			break;
 		}

@@ -23,6 +23,12 @@ static int32_t char_dev_read(dev_t* dev, void* data, uint32_t size) {
 	return i;
 }
 
+static int32_t char_dev_ready_read(dev_t* dev) {
+	if(dev->io.ch.buffer.size > 0)
+		return 0;
+	return -1;
+}
+
 void dev_init(void) {
 	dev_t* dev;
 
@@ -30,7 +36,7 @@ void dev_init(void) {
 	dev = &_devs[DEV_UART0];
 	memset(dev, 0, sizeof(dev_t));
 	dev->type = DEV_TYPE_CHAR;
-	dev->ready = uart_ready;
+	dev->ready_read = char_dev_ready_read;
 	dev->io.ch.inputch = uart_inputch;
 	dev->io.ch.read = char_dev_read;
 	dev->io.ch.write = uart_write;
@@ -40,12 +46,14 @@ void dev_init(void) {
 	memset(dev, 0, sizeof(dev_t));
 	dev->type = DEV_TYPE_CHAR;
 	dev->io.ch.inputch = keyb_inputch;
+	//dev->ready_read = char_dev_ready_read;
 	dev->io.ch.read = char_dev_read;
 	dev->op = keyb_dev_op;
 
 	mouse_init();
 	dev = &_devs[DEV_MOUSE];
 	memset(dev, 0, sizeof(dev_t));
+	//dev->ready_read = char_dev_ready_read;
 	dev->type = DEV_TYPE_CHAR;
 	dev->io.ch.read = char_dev_read;
 
@@ -78,10 +86,16 @@ int32_t dev_op(dev_t* dev, int32_t opcode, int32_t arg) {
 	return dev->op(dev, opcode, arg);
 }
 
-int32_t dev_ready(dev_t* dev) {
-	if(dev->ready == NULL)
+int32_t dev_ready_read(dev_t* dev) {
+	if(dev->ready_read == NULL)
 		return -1;
-	return dev->ready(dev);
+	return dev->ready_read(dev);
+}
+
+int32_t dev_ready_write(dev_t* dev) {
+	if(dev->ready_write == NULL)
+		return -1;
+	return dev->ready_write(dev);
 }
 
 /*return : -1 for error/closed, 0 for retry*/

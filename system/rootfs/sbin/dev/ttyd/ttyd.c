@@ -25,27 +25,29 @@ static int tty_mount(fsinfo_t* mnt_point, mount_info_t* mnt_info, void* p) {
 	return 0;
 }
 
-static int tty_read(int fd, int from_pid, fsinfo_t* info, void* buf, int size, int offset, void* p) {
+static int tty_read(int fd, int from_pid, fsinfo_t* info, void* buf, int size, int offset, void* p, int block) {
 	(void)fd;
 	(void)from_pid;
 	(void)offset;
 	(void)p;
-	int res = -1;
-	while(1) {
-		res = syscall3(SYS_DEV_CHAR_READ, (int32_t)info->data, (int32_t)buf, size);
-		if(res != 0)
-			break;
-		sleep(0);
-	}
+	int res = block == 0 ? 
+			syscall3(SYS_DEV_CHAR_READ_NBLOCK, (int32_t)info->data, (int32_t)buf, size):
+		 	syscall3(SYS_DEV_CHAR_READ, (int32_t)info->data, (int32_t)buf, size);
+	if(res == 0) 
+		return ERR_RETRY;
 	return res;	
 }
 
-static int tty_write(int fd, int from_pid, fsinfo_t* info, const void* buf, int size, int offset, void* p) {
+static int tty_write(int fd, int from_pid, fsinfo_t* info, const void* buf, int size, int offset, void* p, int block) {
 	(void)fd;
 	(void)from_pid;
 	(void)offset;
 	(void)p;
-	int res = syscall3(SYS_DEV_CHAR_WRITE, (int32_t)info->data, (int32_t)buf, size);
+	int res = block == 0 ?
+			syscall3(SYS_DEV_CHAR_WRITE_NBLOCK, (int32_t)info->data, (int32_t)buf, size):
+			syscall3(SYS_DEV_CHAR_WRITE, (int32_t)info->data, (int32_t)buf, size);
+	if(res == 0) 
+		return ERR_RETRY;
 	return res;
 }
 

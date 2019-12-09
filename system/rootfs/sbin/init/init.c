@@ -91,7 +91,10 @@ static void console_out(init_console_t* console, const char* format, ...) {
   va_start(ap, format);
   v_printf(outc, console, format, ap);
   va_end(ap);
-	flush(console->fb_fd);
+
+	if(console->fb_fd >= 0) {
+		flush(console->fb_fd);
+	}
 }
 
 static void set_keyb_table(int type) {
@@ -116,7 +119,7 @@ static void check_keyb_table(init_console_t* console) {
 	console_out(console, "\n  ENTER to continue......\n");
 	while(1) {
 		uint8_t v;
-		int rd = syscall3(SYS_DEV_CHAR_READ, (int32_t)DEV_KEYB, (int32_t)&v, 1);
+		int rd = syscall3(SYS_DEV_CHAR_READ_NBLOCK, (int32_t)DEV_KEYB, (int32_t)&v, 1);
 		if(rd == 1) {
 			if(v == 13) {	
 				type = 0;
@@ -197,6 +200,7 @@ static void kevent_handle(int32_t type, rawdata_t* data) {
 		const char* s = get_global("current_console");
 		if(s[0] == 'x') {
 			set_global("current_console", "0");
+			_cid = 0;
 		}
 		else {
 			_cid++;
@@ -263,8 +267,9 @@ int main(int argc, char** argv) {
 	while(1) {
 		int32_t type;
 		rawdata_t data;
-		if(syscall2(SYS_GET_KEVENT, (int32_t)&type, (int32_t)&data) != 0)
+		if(syscall3(SYS_GET_KEVENT, (int32_t)&type, (int32_t)&data, 1) != 0) {
 			continue;
+		}
 		kevent_handle(type, &data);
 	}
 	return 0;

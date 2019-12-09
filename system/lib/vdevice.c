@@ -50,19 +50,20 @@ static void do_closed(vdevice_t* dev, int from_pid, proto_t *in, void* p) {
 }
 
 static void do_read(vdevice_t* dev, int from_pid, proto_t *in, void* p) {
-	int size, offset;
+	int size, offset, block;
 	fsinfo_t info;
 	int fd = proto_read_int(in);
 	proto_read_to(in, &info, sizeof(fsinfo_t));
 	size = proto_read_int(in);
 	offset = proto_read_int(in);
+	block = proto_read_int(in);
 
 	proto_t out;
 	proto_init(&out, NULL, 0);
 
 	if(dev != NULL && dev->read != NULL) {
 		void* buf = malloc(size);
-		size = dev->read(fd, from_pid, &info, buf, size, offset, p);
+		size = dev->read(fd, from_pid, &info, buf, size, offset, p, block);
 		proto_add_int(&out, size);
 		if(size > 0)
 			proto_add(&out, buf, size);
@@ -76,18 +77,19 @@ static void do_read(vdevice_t* dev, int from_pid, proto_t *in, void* p) {
 }
 
 static void do_write(vdevice_t* dev, int from_pid, proto_t *in, void* p) {
-	int32_t size, offset;
+	int32_t size, offset, block;
 	fsinfo_t info;
 	int fd = proto_read_int(in);
 	memcpy(&info, proto_read(in, NULL), sizeof(fsinfo_t));
 	void* data = proto_read(in, &size);
 	offset = proto_read_int(in);
+	block = proto_read_int(in);
 
 	proto_t out;
 	proto_init(&out, NULL, 0);
 
 	if(dev != NULL && dev->write != NULL) {
-		size = dev->write(fd, from_pid, &info, data, size, offset, p);
+		size = dev->write(fd, from_pid, &info, data, size, offset, p, block);
 		proto_add_int(&out, size);
 	}
 	else {

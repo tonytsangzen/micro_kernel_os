@@ -202,6 +202,20 @@ static void proc_ready(proc_t* proc) {
 	_ready_proc->prev = proc;
 }
 
+proc_t* proc_get_next_ready(void) {
+	proc_t* next = NULL;
+	if(_current_proc != NULL)
+		next = _current_proc->next;
+	if(next == NULL)
+		next = _ready_proc;
+
+	if(next == NULL) {
+		next = &_proc_table[0];
+		proc_ready(next);
+	}
+	return next;
+}
+
 static void proc_unready(context_t* ctx, proc_t* proc) {
 	if(proc == NULL)
 		return;

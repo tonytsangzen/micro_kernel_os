@@ -7,7 +7,8 @@
 typedef struct st_dev {
 	int32_t type;
 
-	int32_t (*ready)(struct st_dev* p);
+	int32_t (*ready_read)(struct st_dev* p);
+	int32_t (*ready_write)(struct st_dev* p);
 	int32_t (*op)(struct st_dev* dev, int32_t opcode, int32_t arg);
 
 	struct {
@@ -32,7 +33,8 @@ typedef struct st_dev {
 
 extern void    dev_init(void);
 extern dev_t*  get_dev(uint32_t type);
-extern int32_t dev_ready(dev_t* dev);
+extern int32_t dev_ready_read(dev_t* dev);
+extern int32_t dev_ready_write(dev_t* dev);
 extern int32_t dev_op(dev_t* dev, int32_t opcode, int32_t arg);
 
 /*return : -1 for error/closed, 0 for retry*/

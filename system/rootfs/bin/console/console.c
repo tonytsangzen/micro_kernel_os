@@ -9,6 +9,7 @@
 #include <sconf.h>
 #include <global.h>
 #include <dev/fbinfo.h>
+#include <thread.h>
 
 typedef struct {
 	const char* id;
@@ -95,20 +96,36 @@ static void close_console(fb_console_t* console) {
 	close(console->fb_fd);
 }
 
+static int actived = 0;
+
+static int read_input(int fd, int rd) {
+	int8_t c;
+	//read keyb
+	if(actived == 1) {
+		if(rd != 1) {
+			rd = read_nblock(fd, &c, 1);
+		}
+		else {
+			if(write_nblock(1, &c, 1) == 1)
+				rd = 0;
+		}
+	}
+	return rd;
+}
+
 static int run(int argc, char* argv[]) {
-	read_config(&_conf, "/etc/console.conf");
 	int fd = open("/dev/keyb0", O_RDONLY);
 	if(fd < 0)
 		return -1;
 
+	read_config(&_conf, "/etc/console.conf");
 	fb_console_t console;
 	init_console(&console);
 	if(argc <= 1)
 		console.id = "0";
 	else
 		console.id = argv[1];
-
-	int actived = 0;
+	
 	int rd = 0;
 	while(1) {
 		const char* cc = get_global("current_console");
@@ -121,22 +138,14 @@ static int run(int argc, char* argv[]) {
 		}
 		else {
 			actived = 0;
+			usleep(10000);
+			continue;
 		}
 
-		int8_t c;
-		//read keyb
-		if(actived == 1) {
-			if(rd != 1) {
-				rd = read(fd, &c, 1);
-			}
-			else {
-				if(write_nblock(1, &c, 1) == 1)
-					rd = 0;
-			}
-		}
+		rd = read_input(fd, rd);
 
 		char buf[256];
-		int32_t size = read(0, buf, 255);
+		int32_t size = read_nblock(0, buf, 255);
 		if(size == 0) {
 			break;
 		}
@@ -159,7 +168,6 @@ static int run(int argc, char* argv[]) {
 		if(actived == 1)
 			flush(console.fb_fd);
 	}
-
 	close(fd);
 	close_console(&console);
 	return 0;

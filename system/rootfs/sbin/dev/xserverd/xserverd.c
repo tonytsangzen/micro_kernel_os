@@ -15,6 +15,7 @@
 #include <x/xevent.h>
 #include <x/xwm.h>
 #include <global.h>
+#include <thread.h>
 
 #define X_EVENT_MAX 16
 
@@ -194,6 +195,11 @@ static int draw_view(x_t* xp, xview_t* view) {
 	return 0;
 }
 
+static inline void x_dirty(x_t* x) {
+	x->dirty = 1;
+	x->need_repaint = 1;
+}
+
 static void remove_view(x_t* x, xview_t* view) {
 	if(view->prev != NULL)
 		view->prev->next = view->next;
@@ -204,7 +210,7 @@ static void remove_view(x_t* x, xview_t* view) {
 	if(x->view_head == view)
 		x->view_head = view->next;
 	view->next = view->prev = NULL;
-	x->dirty = 1;
+	x_dirty(x);
 }
 
 static void x_push_event(xview_t* view, xview_event_t* e, uint8_t must) {
@@ -241,7 +247,7 @@ static void push_view(x_t* x, xview_t* view) {
 	e->event.value.window.event = XEVT_WIN_FOCUS;
 	x_push_event(view, e, 1);
 
-	x->dirty = 1;
+	x_dirty(x);
 }
 
 static void x_del_view(x_t* x, xview_t* view) {
@@ -349,7 +355,7 @@ static int x_update(int fd, int from_pid, x_t* x) {
 	view->dirty = 1;
 	if(view != x->view_tail ||
 			(view->xinfo.style & X_STYLE_ALPHA) != 0) {
-		x->dirty = 1;
+		x_dirty(x);
 	}
 	x->need_repaint = 1;
 	return 0;
@@ -389,7 +395,7 @@ static int x_update_info(int fd, int from_pid, proto_t* in, x_t* x) {
 			view->xinfo.r.w != xinfo.r.w ||
 			view->xinfo.r.h != xinfo.r.h ||
 			(view->xinfo.style & X_STYLE_ALPHA) != 0) {
-		x->dirty = 1;
+		x_dirty(x);
 	}
 	memcpy(&view->xinfo, &xinfo, sizeof(xinfo_t));
 	view->xinfo.shm_id = shm_id;
@@ -584,7 +590,7 @@ static int x_init(x_t* x) {
 	x->g = graph_new(gbuf, info.width, info.height);
 	proto_clear(&out);
 	x->shm_id = id;
-	x->dirty = 1;
+	x_dirty(x);
 
 	x->cursor.size.w = 15;
 	x->cursor.size.h = 15;
@@ -692,7 +698,7 @@ static int mouse_handle(x_t* x, int8_t state, int32_t rx, int32_t ry) {
 				x->current.view = view;
 				x->current.old_pos.x = x->cursor.cpos.x;
 				x->current.old_pos.y = x->cursor.cpos.y;
-				x->dirty = 1;
+				x_dirty(x);
 			}
 			e->event.state = XEVT_MOUSE_DOWN;
 		}
@@ -700,7 +706,7 @@ static int mouse_handle(x_t* x, int8_t state, int32_t rx, int32_t ry) {
 	else if(state == 1) {
 		e->event.state = XEVT_MOUSE_UP;
 		if(x->current.view == view) {
-			x->dirty = 1;
+			x_dirty(x);
 		}
 		x->current.view = NULL;
 	}
@@ -713,7 +719,7 @@ static int mouse_handle(x_t* x, int8_t state, int32_t rx, int32_t ry) {
 			x->current.old_pos.y = x->cursor.cpos.y;
 			view->xinfo.r.x += mrx;
 			view->xinfo.r.y += mry;
-			x->dirty = 1;
+			x_dirty(x);
 		}
 	}
 	if(e->event.type == XEVT_MOUSE && e->event.state == XEVT_MOUSE_MOVE)
@@ -728,20 +734,20 @@ static int xserver_loop_step(void* p) {
 	const char* cc = get_global("current_console");
 	if(cc[0] == 'x') {
 		if(x->actived == 0)
-			x->dirty = 1;
+			x_dirty(x);
 		x->actived = 1;
 	}
 	else
 		x->actived = 0;
 
-	if(x->actived == 0) {
-		usleep(100000);
-		return 0;
+	if(x->actived == 0)  {
+		usleep(10000);
+		return -1;
 	}
 
 	int8_t v;
 	//read keyb
-	int rd = read(x->keyb_fd, &v, 1);
+	int rd = read_nblock(x->keyb_fd, &v, 1);
 	if(rd == 1) {
 		xview_t* topv = x->view_tail; 
 		if(topv != NULL) {
@@ -752,14 +758,13 @@ static int xserver_loop_step(void* p) {
 			x_push_event(topv, e, 1);
 		}
 	}
-
+	
 	//read mouse
 	int8_t mv[4];
-	if(read(x->mouse_fd, mv, 4) == 4) {
+	if(read_nblock(x->mouse_fd, mv, 4) == 4) {
 		mouse_handle(x, mv[0], mv[1], mv[2]);
 		x->need_repaint = 1;
 	}
-
 	x_repaint(x);	
 	return 0;
 }

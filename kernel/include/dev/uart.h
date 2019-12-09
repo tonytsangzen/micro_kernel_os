@@ -6,6 +6,5 @@
 int32_t uart_init(void);
 int32_t uart_inputch(dev_t* dev, int32_t loop);
 int32_t uart_write(dev_t* dev, const void* data, uint32_t size);
-int32_t uart_ready(dev_t* dev);
 
 #endif

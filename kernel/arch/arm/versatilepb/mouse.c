@@ -144,6 +144,7 @@ void mouse_handler(void) {
 			charbuf_push(&dev->io.ch.buffer, (char)rx, 1);
 			charbuf_push(&dev->io.ch.buffer, (char)ry, 1);
 			charbuf_push(&dev->io.ch.buffer, (char)rz, 1);
+			proc_wakeup((uint32_t)dev);
 		}
 		status = get8(MOUSE_BASE + MOUSE_IIR);
 	}

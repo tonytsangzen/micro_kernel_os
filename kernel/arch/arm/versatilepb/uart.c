@@ -49,11 +49,3 @@ int32_t uart_write(dev_t* dev, const void* data, uint32_t size) {
 	return i;
 }
 
-int32_t uart_ready(dev_t* dev) {
-	//(void)dev;
-	//if((get8(UART0+UART_INT_TARGET) &  UART_RECEIVE) != 0)
-	if(dev->io.ch.buffer.size > 0)
-		return 0;
-	return -1;
-}
-
