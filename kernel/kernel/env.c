@@ -14,9 +14,6 @@ void init_global(void) {
 }
 
 int32_t set_global(const char* name, const char* value) {
-	if(_current_proc->pid != 0)
-		return -1;
-
 	env_t* env = NULL;	
 	int32_t i=0;
 	for(i=0; i<GLOBAL_MAX; i++) {

@@ -153,6 +153,10 @@ static int32_t sys_fork(context_t* ctx) {
 	return proc->pid;
 }
 
+static void sys_detach(void) {
+	_current_proc->father_pid = 0;
+}
+
 static int32_t sys_thread(context_t* ctx, uint32_t entry, int32_t arg) {
 	proc_t *proc = kfork(PROC_TYPE_THREAD);
 	if(proc == NULL)
@@ -598,6 +602,9 @@ void svc_handler(int32_t code, int32_t arg0, int32_t arg1, int32_t arg2, context
 		return;
 	case SYS_FORK:
 		ctx->gpr[0] = sys_fork(ctx);
+		return;
+	case SYS_DETACH:
+		sys_detach();
 		return;
 	case SYS_WAIT_PID:
 		sys_waitpid(ctx, arg0);

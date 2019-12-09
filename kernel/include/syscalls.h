@@ -25,6 +25,7 @@ enum {
 	SYS_WAKEUP,
 	SYS_EXIT,
 	SYS_KILL,
+	SYS_DETACH,
 
 	SYS_EXEC_ELF,
 
