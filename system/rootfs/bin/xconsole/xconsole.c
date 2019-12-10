@@ -78,7 +78,7 @@ static int run(int argc, char* argv[]) {
 	if(fd < 0)
 		return -1;
 
-	x_t* xp = x_open(0, 0, 800, 600, "console", 0);
+	x_t* xp = x_open(100, 100, 800, 600, "xconsole", 0);
 	if(xp == NULL) {
 		close(fd);
 		return -1;

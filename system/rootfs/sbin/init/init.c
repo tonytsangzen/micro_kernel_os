@@ -264,6 +264,8 @@ int main(int argc, char** argv) {
 		i++;
 	}
 
+	run("/bin/x /bin/xconsole");
+
 	while(1) {
 		int32_t type;
 		rawdata_t data;
