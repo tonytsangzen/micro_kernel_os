@@ -765,6 +765,7 @@ static void read_thread(void* p) {
 			x->need_repaint = 1;
 			proc_unlock(x->lock);
 		}
+		sleep(0);
 	}
 }
 
