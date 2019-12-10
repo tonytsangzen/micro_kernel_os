@@ -50,20 +50,19 @@ static void do_closed(vdevice_t* dev, int from_pid, proto_t *in, void* p) {
 }
 
 static void do_read(vdevice_t* dev, int from_pid, proto_t *in, void* p) {
-	int size, offset, block;
+	int size, offset;
 	fsinfo_t info;
 	int fd = proto_read_int(in);
 	proto_read_to(in, &info, sizeof(fsinfo_t));
 	size = proto_read_int(in);
 	offset = proto_read_int(in);
-	block = proto_read_int(in);
 
 	proto_t out;
 	proto_init(&out, NULL, 0);
 
 	if(dev != NULL && dev->read != NULL) {
 		void* buf = malloc(size);
-		size = dev->read(fd, from_pid, &info, buf, size, offset, p, block);
+		size = dev->read(fd, from_pid, &info, buf, size, offset, p);
 		proto_add_int(&out, size);
 		if(size > 0)
 			proto_add(&out, buf, size);
@@ -77,19 +76,18 @@ static void do_read(vdevice_t* dev, int from_pid, proto_t *in, void* p) {
 }
 
 static void do_write(vdevice_t* dev, int from_pid, proto_t *in, void* p) {
-	int32_t size, offset, block;
+	int32_t size, offset;
 	fsinfo_t info;
 	int fd = proto_read_int(in);
 	memcpy(&info, proto_read(in, NULL), sizeof(fsinfo_t));
 	void* data = proto_read(in, &size);
 	offset = proto_read_int(in);
-	block = proto_read_int(in);
 
 	proto_t out;
 	proto_init(&out, NULL, 0);
 
 	if(dev != NULL && dev->write != NULL) {
-		size = dev->write(fd, from_pid, &info, data, size, offset, p, block);
+		size = dev->write(fd, from_pid, &info, data, size, offset, p);
 		proto_add_int(&out, size);
 	}
 	else {
@@ -198,6 +196,22 @@ static void do_unlink(vdevice_t* dev, int from_pid, proto_t *in, void* p) {
 	proto_clear(&out);
 }
 
+static void do_block(vdevice_t* dev, int from_pid, proto_t *in, void* p) {
+	fsinfo_t info_to, info;
+	proto_read_to(in, &info_to, sizeof(fsinfo_t));
+
+	int res = -1;
+	if(dev != NULL && dev->block != NULL) {
+		res = dev->block(&info, p);
+	}
+
+	proto_t out;
+	proto_init(&out, NULL, 0);
+	proto_add_int(&out, res);
+	ipc_send(from_pid, &out, in->id);
+	proto_clear(&out);
+}
+
 static void handle(vdevice_t* dev, int from_pid, proto_t *in, void* p) {
 	if(dev == NULL)
 		return;
@@ -234,6 +248,9 @@ static void handle(vdevice_t* dev, int from_pid, proto_t *in, void* p) {
 		return;
 	case FS_CMD_UNLINK:
 		do_unlink(dev, from_pid, in, p);
+		return;
+	case FS_CMD_BLOCK:
+		do_block(dev, from_pid, in, p);
 		return;
 	}
 }

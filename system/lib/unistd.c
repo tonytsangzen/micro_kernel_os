@@ -38,13 +38,8 @@ unsigned int sleep(unsigned int seconds) {
 	return 0;
 }
 
-static int read_pipe(fsinfo_t* info, void* buf, uint32_t size, int block) {
-	int res = -1;
-	if(block == 0)
-		res = syscall3(SYS_PIPE_READ_NBLOCK, (int32_t)info, (int32_t)buf, (int32_t)size);
-	else
-		res = syscall3(SYS_PIPE_READ, (int32_t)info, (int32_t)buf, (int32_t)size);
-
+static int read_pipe(fsinfo_t* info, void* buf, uint32_t size) {
+	int res = syscall3(SYS_PIPE_READ, (int32_t)info, (int32_t)buf, (int32_t)size);
 	if(res == 0) { // pipe empty, do retry
 		errno = EAGAIN;
 		return -1;
@@ -55,17 +50,13 @@ static int read_pipe(fsinfo_t* info, void* buf, uint32_t size, int block) {
 	return 0; //res < 0 , pipe closed, return 0.
 }
 
-static int read_raw(int fd, void* buf, uint32_t size, int block) {
+static int read_raw(int fd, fsinfo_t *info, void* buf, uint32_t size) {
 	errno = ENONE;
-	fsinfo_t info;
-	if(vfs_get_by_fd(fd, &info) != 0)
-		return -1;
-
-	if(info.type == FS_TYPE_PIPE)
-		return read_pipe(&info, buf, size, block);
+	if(info->type == FS_TYPE_PIPE)
+		return read_pipe(info, buf, size);
 	
 	mount_t mount;
-	if(vfs_get_mount(&info, &mount) != 0)
+	if(vfs_get_mount(info, &mount) != 0)
 		return -1;
 
 	int offset = syscall1(SYS_VFS_PROC_TELL, fd);
@@ -78,10 +69,9 @@ static int read_raw(int fd, void* buf, uint32_t size, int block) {
 
 	proto_add_int(&in, FS_CMD_READ);
 	proto_add_int(&in, fd);
-	proto_add(&in, &info, sizeof(fsinfo_t));
+	proto_add(&in, info, sizeof(fsinfo_t));
 	proto_add_int(&in, size);
 	proto_add_int(&in, offset);
-	proto_add_int(&in, block);
 
 	int res = -1;
 	if(ipc_call(mount.pid, &in, &out) == 0) {
@@ -104,29 +94,40 @@ static int read_raw(int fd, void* buf, uint32_t size, int block) {
 }
 
 int read_nblock(int fd, void* buf, uint32_t size) {
-	return read_raw(fd, buf, size, 0);
+	fsinfo_t info;
+	if(vfs_get_by_fd(fd, &info) != 0)
+		return -1;
+	int res = read_raw(fd, &info, buf, size);
+	return res;
 }
 
 int read(int fd, void* buf, uint32_t size) {
+	fsinfo_t info;
+	if(vfs_get_by_fd(fd, &info) != 0)
+		return -1;
+
+	int res = -1;
 	while(1) {
-		int res = read_raw(fd, buf, size, 1);
+		res = read_raw(fd, &info, buf, size);
 		if(res >= 0)
-			return res;
+			break;
 
 		if(errno != EAGAIN)
 			break;
-		sleep(0);
+
+		if(info.type == FS_TYPE_PIPE) {
+			syscall1(SYS_SLEEP_ON, (uint32_t)info.data);
+		}
+		else if(vfs_block(&info) != 0) {
+			sleep(0);
+		}
 	}
-	return -1;
+	return res;
 }
 
-static int write_pipe(fsinfo_t* info, const void* buf, uint32_t size, int block) {
+static int write_pipe(fsinfo_t* info, const void* buf, uint32_t size) {
 	errno = ENONE;
-	int res;
-	if(block == 0)
-		res = syscall3(SYS_PIPE_WRITE_NBLOCK, (int32_t)info, (int32_t)buf, (int32_t)size);
-	else
-		res = syscall3(SYS_PIPE_WRITE, (int32_t)info, (int32_t)buf, (int32_t)size);
+	int res = syscall3(SYS_PIPE_WRITE, (int32_t)info, (int32_t)buf, (int32_t)size);
 
 	if(res == 0) { // pipe not empty, do retry
 		errno = EAGAIN;
@@ -137,19 +138,15 @@ static int write_pipe(fsinfo_t* info, const void* buf, uint32_t size, int block)
 	return 0; //res < 0 , pipe closed, return 0.
 }
 
-int write_raw(int fd, const void* buf, uint32_t size, int block) {
+int write_raw(int fd, fsinfo_t* info, const void* buf, uint32_t size) {
 	errno = ENONE;
-	fsinfo_t info;
-	if(vfs_get_by_fd(fd, &info) != 0)
-		return -1;
-	
-	if(info.type == FS_TYPE_PIPE) 
-		return write_pipe(&info, buf, size, block);
-	if(info.type == FS_TYPE_DIR) 
+	if(info->type == FS_TYPE_PIPE) 
+		return write_pipe(info, buf, size);
+	if(info->type == FS_TYPE_DIR) 
 		return -1;
 
 	mount_t mount;
-	if(vfs_get_mount(&info, &mount) != 0)
+	if(vfs_get_mount(info, &mount) != 0)
 		return -1;
 
 	int offset = syscall1(SYS_VFS_PROC_TELL, fd);
@@ -162,10 +159,9 @@ int write_raw(int fd, const void* buf, uint32_t size, int block) {
 
 	proto_add_int(&in, FS_CMD_WRITE);
 	proto_add_int(&in, fd);
-	proto_add(&in, &info, sizeof(fsinfo_t));
+	proto_add(&in, info, sizeof(fsinfo_t));
 	proto_add(&in, buf, size);
 	proto_add_int(&in, offset);
-	proto_add_int(&in, block);
 
 	int res = -1;
 	if(ipc_call(mount.pid, &in, &out) == 0) {
@@ -186,20 +182,33 @@ int write_raw(int fd, const void* buf, uint32_t size, int block) {
 }
 
 int write_nblock(int fd, const void* buf, uint32_t size) {
-	return write_raw(fd, buf, size, 0);
+	fsinfo_t info;
+	if(vfs_get_by_fd(fd, &info) != 0)
+		return -1;
+	int res = write_raw(fd, &info, buf, size);
+	return res;
 }
 
 int write(int fd, const void* buf, uint32_t size) {
+	fsinfo_t info;
+	if(vfs_get_by_fd(fd, &info) != 0)
+		return -1;
+	int res = -1;
 	while(1) {
-		int res = write_raw(fd, buf, size, 1);
+		res = write_raw(fd, &info, buf, size);
 		if(res >= 0)
-			return res;
-
+			break;
 		if(errno != EAGAIN)
 			break;
-		sleep(0);
+
+		if(info.type == FS_TYPE_PIPE) {
+			syscall1(SYS_SLEEP_ON, (uint32_t)info.data);
+		}
+		else if(vfs_block(&info) != 0) {
+			sleep(0);
+		}
 	}
-	return -1;
+	return res;
 }
 
 int lseek(int fd, uint32_t offset, int whence) {

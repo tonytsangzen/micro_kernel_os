@@ -30,7 +30,7 @@ static int null_mount(fsinfo_t* info, mount_info_t* mnt_info, void* p) {
 	return 0;
 }
 
-static int null_read(int fd, int from_pid, fsinfo_t* info, void* buf, int size, int offset, void* p, int block) {
+static int null_read(int fd, int from_pid, fsinfo_t* info, void* buf, int size, int offset, void* p) {
 	(void)fd;
 	(void)from_pid;
 	(void)info;
@@ -38,18 +38,16 @@ static int null_read(int fd, int from_pid, fsinfo_t* info, void* buf, int size, 
 	(void)size;
 	(void)offset;
 	(void)p;
-	(void)block;
 	return 0;	
 }
 
-static int null_write(int fd, int from_pid, fsinfo_t* info, const void* buf, int size, int offset, void* p, int block) {
+static int null_write(int fd, int from_pid, fsinfo_t* info, const void* buf, int size, int offset, void* p) {
 	(void)fd;
 	(void)from_pid;
 	(void)info;
 	(void)buf;
 	(void)offset;
 	(void)p;
-	(void)block;
 	return size;
 }
 

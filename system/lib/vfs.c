@@ -126,6 +126,28 @@ void* vfs_readfile(const char* fname, int* rsz) {
 	return buf;
 }
 
+int vfs_block(fsinfo_t* info) {
+	mount_t mount;
+	if(vfs_get_mount(info, &mount) != 0) {
+		return -1;
+	}
+	
+	proto_t in, out;
+	proto_init(&in, NULL, 0);
+	proto_init(&out, NULL, 0);
+
+	proto_add_int(&in, FS_CMD_BLOCK);
+	proto_add(&in, info, sizeof(fsinfo_t));
+
+	int res = -1;
+	if(ipc_call(mount.pid, &in, &out) == 0) {
+		res = proto_read_int(&out);
+	}
+	proto_clear(&in);
+	proto_clear(&out);
+	return res;
+}
+
 int vfs_create(const char* fname, fsinfo_t* ret, int type) {
 	str_t *dir = str_new("");
 	str_t *name = str_new("");

@@ -25,14 +25,18 @@ static int keyb_mount(fsinfo_t* mnt_point, mount_info_t* mnt_info, void* p) {
 	return 0;
 }
 
-static int keyb_read(int fd, int from_pid, fsinfo_t* info, void* buf, int size, int offset, void* p, int block) {
+static int keyb_block(fsinfo_t* info,  void* p) {
+	(void)p;
+	(void)info;
+	return syscall1(SYS_SLEEP_ON, DEV_KEYB);
+}
+
+static int keyb_read(int fd, int from_pid, fsinfo_t* info, void* buf, int size, int offset, void* p) {
 	(void)fd;
 	(void)from_pid;
 	(void)offset;
 	(void)p;
-	int res = block == 0 ? 
-			syscall3(SYS_DEV_CHAR_READ_NBLOCK, (int32_t)info->data, (int32_t)buf, size):
-		 	syscall3(SYS_DEV_CHAR_READ, (int32_t)info->data, (int32_t)buf, size);
+	int res = syscall3(SYS_DEV_CHAR_READ, (int32_t)info->data, (int32_t)buf, size);
 	if(res == 0)  {
 		return ERR_RETRY;
 	}
@@ -54,6 +58,7 @@ int main(int argc, char** argv) {
 	memset(&dev, 0, sizeof(vdevice_t));
 	strcpy(dev.name, "keyb");
 	dev.mount = keyb_mount;
+	dev.block = keyb_block;
 	dev.read = keyb_read;
 	dev.umount = keyb_umount;
 

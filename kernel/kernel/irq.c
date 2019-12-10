@@ -20,7 +20,7 @@ static void uart_handler(void) {
 		rd++;
 	}
 	if(rd > 0)
-		proc_wakeup((uint32_t)dev);
+		proc_wakeup((uint32_t)DEV_UART0);
 }
 
 static void keyb_handler(void) {
@@ -28,7 +28,7 @@ static void keyb_handler(void) {
 
 	if(dev->io.ch.inputch != NULL)
 		dev->io.ch.inputch(dev, 1);
-	proc_wakeup((uint32_t)dev);
+	proc_wakeup((uint32_t)DEV_KEYB);
 }
 
 static void sd_handler(void) {

@@ -49,6 +49,7 @@ static void sys_dev_block_read_done(context_t* ctx, uint32_t type, void* buf) {
 	int res = dev_block_read_done(dev, buf);
 	if(res == 0) {
 		ctx->gpr[0] = res;
+		proc_wakeup(type);
 		return;
 	}
 
@@ -67,6 +68,7 @@ static void sys_dev_block_write_done(context_t* ctx, uint32_t type) {
 	int res = dev_block_write_done(dev);
 	if(res == 0) {
 		ctx->gpr[0] = res;
+		proc_wakeup(type);
 		return;
 	}
 
@@ -82,38 +84,24 @@ static int32_t sys_dev_op(uint32_t type, int32_t opcode, int32_t arg) {
 	return dev_op(dev, opcode, arg);
 }
 
-static void sys_dev_ch_read(context_t* ctx, uint32_t type, void* data, uint32_t sz, int32_t block) {
+static int32_t sys_dev_ch_read(uint32_t type, void* data, uint32_t sz) {
 	dev_t* dev = get_dev(type);
-	if(dev == NULL) {
-		ctx->gpr[0] = -1;
-		return;
-	}
-	
-	if(block != 0 && dev->ready_read != NULL && dev_ready_read(dev) != 0) {
-		proc_t* proc = _current_proc;
-		proc_sleep_on(ctx, (uint32_t)dev);
-		proc->ctx.gpr[0] = 0;
-		return;
-	}
-	ctx->gpr[0] = dev_ch_read(dev, data, sz);
-	proc_wakeup((uint32_t)dev);
+	if(dev == NULL)
+		return -1;
+	int32_t res = dev_ch_read(dev, data, sz);
+	if(res != 0)
+		proc_wakeup(type);
+	return res;
 }
 
-static void sys_dev_ch_write(context_t* ctx, uint32_t type, void* data, uint32_t sz, int32_t block) {
+static int32_t sys_dev_ch_write(uint32_t type, void* data, uint32_t sz) {
 	dev_t* dev = get_dev(type);
-	if(dev == NULL) {
-		ctx->gpr[0] = -1;
-		return;
-	}
-	
-	if(block != 0 && dev->ready_write != NULL && dev_ready_write(dev) != 0) {
-		proc_t* proc = _current_proc;
-		proc_sleep_on(ctx, (uint32_t)dev);
-		proc->ctx.gpr[0] = 0;
-		return;
-	}
-	ctx->gpr[0] = dev_ch_write(dev, data, sz);
-	proc_wakeup((uint32_t)dev);
+	if(dev == NULL) 
+		return -1;
+	int32_t res = dev_ch_write(dev, data, sz);
+	if(res != 0)
+		proc_wakeup(type);
+	return res;
 }
 
 static int32_t sys_getpid(void) {
@@ -122,16 +110,8 @@ static int32_t sys_getpid(void) {
 	return _current_proc->pid;
 }
 
-static void sys_sleep_on(context_t* ctx, uint32_t event) {
-	proc_sleep_on(ctx, event);
-}
-
 static void sys_sleep(context_t* ctx, uint32_t count) {
 	proc_sleep(ctx, count);
-}
-
-static void sys_wakeup(uint32_t event) {
-	proc_wakeup(event);
 }
 
 static void sys_kill(context_t* ctx, int32_t pid) {
@@ -363,6 +343,12 @@ static int32_t sys_load_elf(context_t* ctx, const char* cmd, void* elf, uint32_t
 	return 0;
 }
 
+static void sys_sleep_on(context_t* ctx, int32_t event) {
+	proc_t* proc = _current_proc;
+	proc_sleep_on(ctx, (uint32_t)event);
+	proc->ctx.gpr[0] = 0;
+}
+
 static void sys_get_msg(context_t* ctx, int32_t *pid, rawdata_t* data, int32_t id) {
 	int32_t res = proc_get_msg(pid, data, id);
 	if(res >= 0) {
@@ -375,18 +361,8 @@ static void sys_get_msg(context_t* ctx, int32_t *pid, rawdata_t* data, int32_t i
 	proc->ctx.gpr[0] = -1;
 }
 
-static void sys_get_kevent(context_t* ctx, int32_t *pid, rawdata_t* data, int32_t block) {
-	int32_t res = kevent_pop(pid, data);
-	if(res == 0) {
-		ctx->gpr[0] = res;
-		return;
-	}
-	
-	if(block != 0) {
-		proc_t* proc = _current_proc;
-		proc_sleep_on(ctx, (uint32_t)kevent_pop);
-		proc->ctx.gpr[0] = -1;
-	}
+static int32_t sys_get_kevent(int32_t *pid, rawdata_t* data) {
+	return  kevent_pop(pid, data);
 }
 
 static int32_t sys_proc_set_cwd(const char* cwd) {
@@ -442,7 +418,7 @@ static int32_t sys_pipe_open(int32_t* fd0, int32_t* fd1) {
 	return 0;
 }
 
-static int32_t pipe_write(fsinfo_t* info, const void* data, uint32_t sz) {
+static int32_t sys_pipe_write(fsinfo_t* info, const void* data, uint32_t sz) {
 	if(info == NULL || info->type != FS_TYPE_PIPE)
 		return -1;
 
@@ -461,21 +437,7 @@ static int32_t pipe_write(fsinfo_t* info, const void* data, uint32_t sz) {
 	return -1; //closed
 }
 
-static void sys_pipe_write(context_t* ctx, fsinfo_t* info, const void* data, uint32_t sz, int32_t block) {
-	int32_t res = pipe_write(info, data, sz);
-	ctx->gpr[0] = res;
-	if(res != 0)
-		return;
-
-	if(block != 0) {
-		buffer_t* buffer = (buffer_t*)info->data;
-		proc_t* proc = _current_proc;
-		proc_sleep_on(ctx, (uint32_t)buffer);
-		proc->ctx.gpr[0] = 0;
-	}
-}
-
-static int32_t pipe_read(fsinfo_t* info, void* data, uint32_t sz) {
+static int32_t sys_pipe_read(fsinfo_t* info, void* data, uint32_t sz) {
 	if(info == NULL || info->type != FS_TYPE_PIPE)
 		return -1;
 
@@ -483,6 +445,7 @@ static int32_t pipe_read(fsinfo_t* info, void* data, uint32_t sz) {
 	if(buffer == NULL)
 		return -1;
 
+	proc_wakeup((uint32_t)buffer);
 	int32_t res =  buffer_read(buffer, data, sz);
 	if(res > 0)
 		return res;
@@ -491,22 +454,6 @@ static int32_t pipe_read(fsinfo_t* info, void* data, uint32_t sz) {
 	if(node->refs >= 2)
 		return 0;
 	return -1; //closed.
-}
-
-static void sys_pipe_read(context_t* ctx, fsinfo_t* info, void* data, uint32_t sz, int32_t block) {
-	buffer_t* buffer = (buffer_t*)info->data;
-	int32_t res = pipe_read(info, data, sz);
-	ctx->gpr[0] = res;
-	if(res != 0) {
-		proc_wakeup((uint32_t)buffer);
-		return;
-	}
-
-	if(block != 0) {
-		proc_t* proc = _current_proc;
-		proc_sleep_on(ctx, (uint32_t)buffer);
-		proc->ctx.gpr[0] = 0;
-	}
 }
 
 static int32_t sys_get_env(const char* name, char* value, int32_t size) {
@@ -577,16 +524,10 @@ void svc_handler(int32_t code, int32_t arg0, int32_t arg1, int32_t arg2, context
 
 	switch(code) {
 	case SYS_DEV_CHAR_READ:
-		sys_dev_ch_read(ctx, arg0, (void*)arg1, arg2, 1);
-		return;
-	case SYS_DEV_CHAR_READ_NBLOCK:
-		sys_dev_ch_read(ctx, arg0, (void*)arg1, arg2, 0);
+		ctx->gpr[0] = sys_dev_ch_read(arg0, (void*)arg1, arg2);
 		return;
 	case SYS_DEV_CHAR_WRITE:
-		sys_dev_ch_write(ctx, arg0, (void*)arg1, arg2, 1);
-		return;
-	case SYS_DEV_CHAR_WRITE_NBLOCK:
-		sys_dev_ch_write(ctx, arg0, (void*)arg1, arg2, 0);
+		ctx->gpr[0] = sys_dev_ch_write(arg0, (void*)arg1, arg2);
 		return;
 	case SYS_DEV_BLOCK_READ:
 		ctx->gpr[0] = sys_dev_block_read(arg0, arg1);
@@ -618,14 +559,8 @@ void svc_handler(int32_t code, int32_t arg0, int32_t arg1, int32_t arg2, context
 	case SYS_GET_PID:
 		ctx->gpr[0] = sys_getpid();
 		return;
-	case SYS_SLEEP_ON:
-		sys_sleep_on(ctx, (uint32_t)arg0);
-		return;
 	case SYS_SLEEP:
 		sys_sleep(ctx, (uint32_t)arg0);
-		return;
-	case SYS_WAKEUP:
-		sys_wakeup((uint32_t)arg0);
 		return;
 	case SYS_KILL:
 		sys_kill(ctx, arg0);
@@ -635,6 +570,9 @@ void svc_handler(int32_t code, int32_t arg0, int32_t arg1, int32_t arg2, context
 		return;
 	case SYS_FORK:
 		ctx->gpr[0] = sys_fork(ctx);
+		return;
+	case SYS_SLEEP_ON:
+		sys_sleep_on(ctx, arg0);
 		return;
 	case SYS_DETACH:
 		sys_detach();
@@ -652,7 +590,7 @@ void svc_handler(int32_t code, int32_t arg0, int32_t arg1, int32_t arg2, context
 		sys_get_msg(ctx, (int32_t*)arg0, (rawdata_t*)arg1, arg2);
 		return;
 	case SYS_GET_KEVENT:
-		sys_get_kevent(ctx, (int32_t*)arg0, (rawdata_t*)arg1, arg2);
+		ctx->gpr[0] = sys_get_kevent((int32_t*)arg0, (rawdata_t*)arg1);
 		return;
 	case SYS_VFS_GET:
 		ctx->gpr[0] = sys_vfs_get_info((const char*)arg0, (fsinfo_t*)arg1);
@@ -733,16 +671,10 @@ void svc_handler(int32_t code, int32_t arg0, int32_t arg1, int32_t arg2, context
 		ctx->gpr[0] = sys_pipe_open((int32_t*)arg0, (int32_t*)arg1);
 		return;
 	case SYS_PIPE_READ: 
-		sys_pipe_read(ctx, (fsinfo_t*)arg0, (void*)arg1, (int32_t)arg2, 1);
-		return;
-	case SYS_PIPE_READ_NBLOCK: 
-		sys_pipe_read(ctx, (fsinfo_t*)arg0, (void*)arg1, (int32_t)arg2, 0);
+		ctx->gpr[0] = sys_pipe_read((fsinfo_t*)arg0, (void*)arg1, (int32_t)arg2);
 		return;
 	case SYS_PIPE_WRITE: 
-		sys_pipe_write(ctx, (fsinfo_t*)arg0, (const void*)arg1, (int32_t)arg2, 1);
-		return;
-	case SYS_PIPE_WRITE_NBLOCK: 
-		sys_pipe_write(ctx, (fsinfo_t*)arg0, (const void*)arg1, (int32_t)arg2, 0);
+		ctx->gpr[0] = sys_pipe_write((fsinfo_t*)arg0, (const void*)arg1, (int32_t)arg2);
 		return;
 	case SYS_PROC_SET_ENV: 
 		ctx->gpr[0] = proc_set_env((const char*)arg0, (const char*)arg1);

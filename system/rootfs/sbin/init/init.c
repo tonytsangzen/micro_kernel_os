@@ -119,7 +119,7 @@ static void check_keyb_table(init_console_t* console) {
 	console_out(console, "\n  ENTER to continue......\n");
 	while(1) {
 		uint8_t v;
-		int rd = syscall3(SYS_DEV_CHAR_READ_NBLOCK, (int32_t)DEV_KEYB, (int32_t)&v, 1);
+		int rd = syscall3(SYS_DEV_CHAR_READ, (int32_t)DEV_KEYB, (int32_t)&v, 1);
 		if(rd == 1) {
 			if(v == 13) {	
 				type = 0;
@@ -267,7 +267,8 @@ int main(int argc, char** argv) {
 	while(1) {
 		int32_t type;
 		rawdata_t data;
-		if(syscall3(SYS_GET_KEVENT, (int32_t)&type, (int32_t)&data, 1) != 0) {
+		if(syscall2(SYS_GET_KEVENT, (int32_t)&type, (int32_t)&data) != 0) {
+			sleep(0);
 			continue;
 		}
 		kevent_handle(type, &data);

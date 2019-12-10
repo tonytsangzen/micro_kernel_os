@@ -15,6 +15,7 @@ int vfs_first_kid(fsinfo_t* info, fsinfo_t* ret);
 int vfs_next(fsinfo_t* info, fsinfo_t* ret);
 int vfs_father(fsinfo_t* info, fsinfo_t* ret);
 int vfs_set(fsinfo_t* info);
+int vfs_block(fsinfo_t* info);
 int vfs_get_mount(fsinfo_t* info, mount_t* mount);
 
 int vfs_mount(fsinfo_t* mount_to, fsinfo_t* info, mount_info_t* mnt_info);
