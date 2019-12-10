@@ -361,8 +361,16 @@ static void sys_get_msg(context_t* ctx, int32_t *pid, rawdata_t* data, int32_t i
 	proc->ctx.gpr[0] = -1;
 }
 
-static int32_t sys_get_kevent(int32_t *pid, rawdata_t* data) {
-	return  kevent_pop(pid, data);
+static void sys_get_kevent(context_t* ctx, int32_t *pid, rawdata_t* data) {
+	int32_t res = kevent_pop(pid, data);
+	if(res == 0) {
+		ctx->gpr[0] = res;
+		return;
+	}
+
+	proc_t* proc = _current_proc;
+	proc_sleep_on(ctx, (uint32_t)kevent_pop);
+	proc->ctx.gpr[0] = -1;
 }
 
 static int32_t sys_proc_set_cwd(const char* cwd) {
@@ -590,7 +598,7 @@ void svc_handler(int32_t code, int32_t arg0, int32_t arg1, int32_t arg2, context
 		sys_get_msg(ctx, (int32_t*)arg0, (rawdata_t*)arg1, arg2);
 		return;
 	case SYS_GET_KEVENT:
-		ctx->gpr[0] = sys_get_kevent((int32_t*)arg0, (rawdata_t*)arg1);
+		sys_get_kevent(ctx, (int32_t*)arg0, (rawdata_t*)arg1);
 		return;
 	case SYS_VFS_GET:
 		ctx->gpr[0] = sys_vfs_get_info((const char*)arg0, (fsinfo_t*)arg1);

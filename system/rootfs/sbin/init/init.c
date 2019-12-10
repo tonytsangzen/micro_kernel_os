@@ -268,7 +268,6 @@ int main(int argc, char** argv) {
 		int32_t type;
 		rawdata_t data;
 		if(syscall2(SYS_GET_KEVENT, (int32_t)&type, (int32_t)&data) != 0) {
-			sleep(0);
 			continue;
 		}
 		kevent_handle(type, &data);
