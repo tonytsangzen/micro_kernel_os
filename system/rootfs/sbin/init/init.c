@@ -225,7 +225,7 @@ int main(int argc, char** argv) {
 
 	setenv("OS", "mkos");
 	setenv("PATH", "/sbin:/bin");
-	set_global("current_console", "0");
+	set_global("current_console", "x");
 
 	console_out(&console, "\n[init process started]\n");
 	/*mount root fs*/
@@ -263,6 +263,8 @@ int main(int argc, char** argv) {
 		run(cmd);
 		i++;
 	}
+
+	run("/bin/launcher");
 
 	while(1) {
 		int32_t type;

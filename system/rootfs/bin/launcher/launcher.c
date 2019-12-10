@@ -93,8 +93,8 @@ int main(int argc, char* argv[]) {
 
 	xscreen_t scr;
 	x_screen_info(&scr);
-	x_t* x = x_open(scr.size.w - items.icon_size,
-			0,
+	x_t* x = x_open(scr.size.w - items.icon_size - 24,
+			24,
 			items.icon_size, 
 			items.icon_size * items.num,
 			"launcher", X_STYLE_NO_FRAME | X_STYLE_ALPHA);
@@ -115,7 +115,6 @@ int main(int argc, char* argv[]) {
 				}
 			}
 		}
-		usleep(10000);
 	}
 
 	int i;
