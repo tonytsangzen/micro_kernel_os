@@ -139,6 +139,16 @@ static void proc_close_files(proc_t *proc) {
 	}
 }
 
+static void proc_free_locks(proc_t *proc) {
+	int32_t i;
+	for(i=0; i<LOCK_MAX; i++) {
+		if(proc->space->locks[i] != 0) {
+			kfree((uint32_t*)proc->space->locks[i]);
+			proc->space->locks[i] = 0;
+		}
+	}
+}
+
 static void proc_unmap_shms(proc_t *proc) {
 	int32_t i;
 	for(i=0; i<SHM_MAX; i++) {
@@ -174,6 +184,9 @@ static void proc_free_space(proc_t *proc) {
 		if(env->value) 
 			str_free(env->value);
 	}
+
+	/*free locks*/
+	proc_free_locks(proc);
 
 	/*close files*/
 	proc_close_files(proc);

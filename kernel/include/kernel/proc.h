@@ -24,6 +24,7 @@ enum {
 #define PROC_FILE_MAX 128
 #define ENV_MAX 32
 #define SHM_MAX 128
+#define LOCK_MAX 64
 
 typedef struct {
 	page_dir_entry_t *vm;
@@ -31,6 +32,7 @@ typedef struct {
 	uint32_t heap_size;
 	
 	int32_t shms[SHM_MAX];
+	uint32_t locks[LOCK_MAX];
 	kfile_t files[PROC_FILE_MAX];
 	env_t envs[ENV_MAX];
 } proc_space_t;

@@ -524,20 +524,37 @@ static int32_t sys_send_msg(int32_t topid, rawdata_t* data, int32_t id) {
 }
 
 static int32_t sys_lock_new(void) {
+	int32_t i;
+	for(i=0; i<LOCK_MAX; i++) {
+		if(_current_proc->space->locks[i] == 0)
+			break;
+	}
+	if(i >= LOCK_MAX)
+		return -1;
+
 	uint32_t *lock = (uint32_t*)kmalloc(sizeof(uint32_t));
 	*lock = 0;
-	return (int32_t)lock;
+	_current_proc->space->locks[i] = (uint32_t)lock;
+	return i;
+}
+
+static inline uint32_t* get_lock(int32_t at) {
+	if(at < 0 || at >= LOCK_MAX)
+		return NULL;
+	return (uint32_t*)_current_proc->space->locks[at];
 }
 
 static int32_t sys_lock_free(int32_t arg) {
-	uint32_t *lock = (uint32_t*)arg;
-	if(lock != NULL)
+	uint32_t *lock = get_lock(arg);
+	if(lock != NULL) {
 		kfree(lock);
+		_current_proc->space->locks[arg] = 0;
+	}
 	return 0;
 }
 
 static void sys_lock(context_t* ctx, int32_t arg) {
-	uint32_t *lock = (uint32_t*)arg;
+	uint32_t *lock = get_lock(arg);
 	if(lock == NULL) {
 		ctx->gpr[0] = 0;
 		return;
@@ -554,7 +571,7 @@ static void sys_lock(context_t* ctx, int32_t arg) {
 }
 
 static void sys_unlock(int32_t arg) {
-	uint32_t *lock = (uint32_t*)arg;
+	uint32_t *lock = get_lock(arg);
 	if(lock == NULL) {
 		return;
 	}

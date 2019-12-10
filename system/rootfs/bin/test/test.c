@@ -9,7 +9,7 @@ proc_lock_t _lock;
 
 static void thread(void* data) {
 	int *i = (int*)data;
-	while(1) {
+	while((*i) < 10) {
 		printf("thread: %d\n", *i);
 		usleep(100000);
 
@@ -27,7 +27,7 @@ int main(int argc, char* argv[]) {
 
 	int i = 0;
 	thread_create(thread, &i);
-	while(1) {
+	while(i < 20) {
 		printf("main: %d\n", i);
 		usleep(100000);
 
