@@ -433,8 +433,9 @@ static int32_t sys_pipe_write(fsinfo_t* info, const void* data, uint32_t sz) {
 	buffer_t* buffer = (buffer_t*)info->data;
 	if(buffer == NULL)
 		return -1;
-	proc_wakeup((uint32_t)buffer);
+
 	int32_t res = buffer_write(buffer, data, sz);
+	proc_wakeup((uint32_t)buffer);
 	if(res > 0) {
 		return res;
 	}
@@ -453,8 +454,8 @@ static int32_t sys_pipe_read(fsinfo_t* info, void* data, uint32_t sz) {
 	if(buffer == NULL)
 		return -1;
 
-	proc_wakeup((uint32_t)buffer);
 	int32_t res =  buffer_read(buffer, data, sz);
+	proc_wakeup((uint32_t)buffer);
 	if(res > 0)
 		return res;
 

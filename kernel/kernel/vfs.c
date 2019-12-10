@@ -339,11 +339,14 @@ void vfs_close(proc_t* proc, int32_t fd) {
 
 	memset(file, 0, sizeof(kfile_t));
 
-	if(node->fsinfo.type == FS_TYPE_PIPE && node->refs <= 0) {
+	if(node->fsinfo.type == FS_TYPE_PIPE) {
 		buffer_t* buffer = (buffer_t*)node->fsinfo.data;
-		kfree(buffer);
-		kfree(node);
-		return;
+		proc_wakeup((uint32_t)buffer);
+		if(node->refs <= 0) {
+			kfree(buffer);
+			kfree(node);
+			return;
+		}
 	}
 
 	proto_t in;
