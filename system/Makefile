@@ -66,6 +66,7 @@ LIB_OBJS = $(LIB_DIR)/syscall.o \
 	$(LIB_DIR)/mstr.o \
 	$(LIB_DIR)/mstrx.o \
 	$(LIB_DIR)/marray.o \
+	$(LIB_DIR)/proclock.o \
 	$(LIB_DIR)/sys/wait.o \
 	$(LIB_DIR)/x/xclient.o \
 	$(GRAPH_OBJS)

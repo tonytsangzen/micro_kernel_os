@@ -523,6 +523,45 @@ static int32_t sys_send_msg(int32_t topid, rawdata_t* data, int32_t id) {
 	return msg->id;	
 }
 
+static int32_t sys_lock_new(void) {
+	uint32_t *lock = (uint32_t*)kmalloc(sizeof(uint32_t));
+	*lock = 0;
+	return (int32_t)lock;
+}
+
+static int32_t sys_lock_free(int32_t arg) {
+	uint32_t *lock = (uint32_t*)arg;
+	if(lock != NULL)
+		kfree(lock);
+	return 0;
+}
+
+static void sys_lock(context_t* ctx, int32_t arg) {
+	uint32_t *lock = (uint32_t*)arg;
+	if(lock == NULL) {
+		ctx->gpr[0] = 0;
+		return;
+	}
+	if(*lock == 0) {
+		*lock = 1;
+		ctx->gpr[0] = 0;
+		return;
+	}
+	
+	proc_t* proc = _current_proc;
+	proc_sleep_on(ctx, (uint32_t)lock);
+	proc->ctx.gpr[0] = -1;
+}
+
+static void sys_unlock(int32_t arg) {
+	uint32_t *lock = (uint32_t*)arg;
+	if(lock == NULL) {
+		return;
+	}
+	*lock = 0;
+	proc_wakeup((uint32_t)lock);
+}
+	
 void svc_handler(int32_t code, int32_t arg0, int32_t arg1, int32_t arg2, context_t* ctx, int32_t processor_mode) {
 	(void)arg1;
 	(void)arg2;
@@ -716,6 +755,18 @@ void svc_handler(int32_t code, int32_t arg0, int32_t arg1, int32_t arg2, context
 		return;
 	case SYS_THREAD:
 		ctx->gpr[0] = sys_thread(ctx, (uint32_t)arg0, arg1);
+		return;
+	case SYS_LOCK_NEW:
+		ctx->gpr[0] = sys_lock_new();
+		return;
+	case SYS_LOCK_FREE:
+		ctx->gpr[0] = sys_lock_free(arg0);
+		return;
+	case SYS_LOCK:
+		sys_lock(ctx, arg0);
+		return;
+	case SYS_UNLOCK:
+		sys_unlock(arg0);
 		return;
 	}
 	printf("pid:%d, code(%d) error!\n", _current_proc->pid, code);
