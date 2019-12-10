@@ -251,13 +251,13 @@ int main(int argc, char** argv) {
 	run("/bin/session");
 
 	/*run screen console shell*/
-	_cnum = 4;
+	_cnum = 2;
 	_cid = 0;
 	int i = 0;
 	while(i < _cnum) {
 		char cmd[64];
 		char cid[16];
-		snprintf(cid, 15, "console-%d/%d", i, _cnum);
+		snprintf(cid, 15, "console-%d/%d", i+1, _cnum);
 		setenv("CONSOLE_ID", cid);
 		snprintf(cmd, 64, "/bin/console %d", i);
 		run(cmd);
