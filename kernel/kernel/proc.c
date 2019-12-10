@@ -424,12 +424,12 @@ void proc_sleep(context_t* ctx, uint32_t count) {
 	proc_unready(ctx, _current_proc);
 }
 
-void proc_sleep_on(context_t* ctx, uint32_t event) {
+void proc_block_on(context_t* ctx, uint32_t event) {
 	if(_current_proc == NULL)
 		return;
 
-	_current_proc->sleep_event = event;
-	_current_proc->state = SLEEPING;
+	_current_proc->block_event = event;
+	_current_proc->state = BLOCK;
 	proc_unready(ctx, _current_proc);
 }
 
@@ -448,8 +448,8 @@ void proc_wakeup(uint32_t event) {
 		if(i >= PROC_MAX)
 			break;
 		proc_t* proc = &_proc_table[i];	
-		if(proc->state == SLEEPING && proc->sleep_event == event) {
-			proc->sleep_event = 0;
+		if(proc->state == BLOCK && proc->block_event == event) {
+			proc->block_event = 0;
 			if(proc->sleep_counter == 0)
 				proc_ready(proc);
 		}

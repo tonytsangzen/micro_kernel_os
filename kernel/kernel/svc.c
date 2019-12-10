@@ -54,7 +54,7 @@ static void sys_dev_block_read_done(context_t* ctx, uint32_t type, void* buf) {
 	}
 
 	proc_t* proc = _current_proc;
-	proc_sleep_on(ctx, (uint32_t)dev);
+	proc_block_on(ctx, (uint32_t)dev);
 	proc->ctx.gpr[0] = -1;
 }
 
@@ -73,7 +73,7 @@ static void sys_dev_block_write_done(context_t* ctx, uint32_t type) {
 	}
 
 	proc_t* proc = _current_proc;
-	proc_sleep_on(ctx, (uint32_t)dev);
+	proc_block_on(ctx, (uint32_t)dev);
 	proc->ctx.gpr[0] = -1;
 }
 
@@ -343,9 +343,9 @@ static int32_t sys_load_elf(context_t* ctx, const char* cmd, void* elf, uint32_t
 	return 0;
 }
 
-static void sys_sleep_on(context_t* ctx, int32_t event) {
+static void sys_block_on(context_t* ctx, int32_t event) {
 	proc_t* proc = _current_proc;
-	proc_sleep_on(ctx, (uint32_t)event);
+	proc_block_on(ctx, (uint32_t)event);
 	proc->ctx.gpr[0] = 0;
 }
 
@@ -357,7 +357,7 @@ static void sys_get_msg(context_t* ctx, int32_t *pid, rawdata_t* data, int32_t i
 	}
 
 	proc_t* proc = _current_proc;
-	proc_sleep_on(ctx, (uint32_t)&proc->pid);
+	proc_block_on(ctx, (uint32_t)&proc->pid);
 	proc->ctx.gpr[0] = -1;
 }
 
@@ -369,7 +369,7 @@ static void sys_get_kevent(context_t* ctx, int32_t *pid, rawdata_t* data) {
 	}
 
 	proc_t* proc = _current_proc;
-	proc_sleep_on(ctx, (uint32_t)kevent_pop);
+	proc_block_on(ctx, (uint32_t)kevent_pop);
 	proc->ctx.gpr[0] = -1;
 }
 
@@ -567,7 +567,7 @@ static void sys_lock(context_t* ctx, int32_t arg) {
 	}
 	
 	proc_t* proc = _current_proc;
-	proc_sleep_on(ctx, (uint32_t)lock);
+	proc_block_on(ctx, (uint32_t)lock);
 	proc->ctx.gpr[0] = -1;
 }
 
@@ -636,8 +636,8 @@ void svc_handler(int32_t code, int32_t arg0, int32_t arg1, int32_t arg2, context
 	case SYS_FORK:
 		ctx->gpr[0] = sys_fork(ctx);
 		return;
-	case SYS_SLEEP_ON:
-		sys_sleep_on(ctx, arg0);
+	case SYS_BLOCK_ON:
+		sys_block_on(ctx, arg0);
 		return;
 	case SYS_DETACH:
 		sys_detach();
