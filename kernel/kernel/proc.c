@@ -435,7 +435,7 @@ void proc_wakeup(uint32_t event) {
 		if(i >= PROC_MAX)
 			break;
 		proc_t* proc = &_proc_table[i];	
-		if(proc->state == SLEEPING && proc->sleep_event == event)
+		if(proc->state == SLEEPING && proc->sleep_event == event && proc->sleep_counter == 0)
 			proc_ready(proc);
 		i++;
 	}
