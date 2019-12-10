@@ -16,6 +16,7 @@
 #include <x/xwm.h>
 #include <global.h>
 #include <thread.h>
+#include <proclock.h>
 
 #define X_EVENT_MAX 16
 
@@ -67,6 +68,7 @@ typedef struct {
 	xview_t* view_tail;
 
 	x_current_t current;
+	proc_lock_t lock;
 } x_t;
 
 static int xserver_mount(fsinfo_t* mnt_point, mount_info_t* mnt_info, void* p) {
@@ -598,7 +600,8 @@ static int x_init(x_t* x) {
 	x->cursor.offset.y = 8;
 	x->cursor.cpos.x = info.width/2;
 	x->cursor.cpos.y = info.height/2; 
-	//x->actived = 1;
+
+	x->lock = proc_lock_new();
 	return 0;
 }	
 
@@ -729,6 +732,42 @@ static int mouse_handle(x_t* x, int8_t state, int32_t rx, int32_t ry) {
 	return -1;
 }
 
+static void read_thread(void* p) {
+	x_t* x = (x_t*)p;
+	while(1) {
+		if(x->actived == 0)  {
+			usleep(10000);
+			continue;
+		}
+
+		int8_t v;
+		//read keyb
+		int rd = read_nblock(x->keyb_fd, &v, 1);
+		if(rd == 1) {
+			xview_t* topv = x->view_tail; 
+			if(topv != NULL) {
+				xview_event_t* e = (xview_event_t*)malloc(sizeof(xview_event_t));
+				e->next = NULL;
+				e->event.type = XEVT_KEYB;
+				e->event.value.keyboard.value = v;
+
+				proc_lock(x->lock);
+				x_push_event(topv, e, 1);
+				proc_unlock(x->lock);
+			}
+		}
+
+		//read mouse
+		int8_t mv[4];
+		if(read_nblock(x->mouse_fd, mv, 4) == 4) {
+			proc_lock(x->lock);
+			mouse_handle(x, mv[0], mv[1], mv[2]);
+			x->need_repaint = 1;
+			proc_unlock(x->lock);
+		}
+	}
+}
+
 static int xserver_loop_step(void* p) {
 	x_t* x = (x_t*)p;
 	const char* cc = get_global("current_console");
@@ -739,37 +778,19 @@ static int xserver_loop_step(void* p) {
 	}
 	else
 		x->actived = 0;
-
 	if(x->actived == 0)  {
 		usleep(10000);
 		return -1;
 	}
 
-	int8_t v;
-	//read keyb
-	int rd = read_nblock(x->keyb_fd, &v, 1);
-	if(rd == 1) {
-		xview_t* topv = x->view_tail; 
-		if(topv != NULL) {
-			xview_event_t* e = (xview_event_t*)malloc(sizeof(xview_event_t));
-			e->next = NULL;
-			e->event.type = XEVT_KEYB;
-			e->event.value.keyboard.value = v;
-			x_push_event(topv, e, 1);
-		}
-	}
-	
-	//read mouse
-	int8_t mv[4];
-	if(read_nblock(x->mouse_fd, mv, 4) == 4) {
-		mouse_handle(x, mv[0], mv[1], mv[2]);
-		x->need_repaint = 1;
-	}
+	proc_lock(x->lock);
 	x_repaint(x);	
+	proc_unlock(x->lock);
 	return 0;
 }
 
 static void x_close(x_t* x) {
+	proc_lock_free(x->lock);
 	close(x->keyb_fd);
 	close(x->mouse_fd);
 	graph_free(x->g);
@@ -806,6 +827,7 @@ int main(int argc, char** argv) {
 	x_t x;
 	if(x_init(&x) == 0) {
 		x.xwm_pid = pid;
+		thread_create(read_thread, &x);
 		device_run(&dev, &mnt_point, &mnt_info, &x, 0);
 		x_close(&x);
 	}
