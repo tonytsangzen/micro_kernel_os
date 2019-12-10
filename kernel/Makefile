@@ -36,8 +36,8 @@ CFLAGS = \
 
 LDS = mkos.lds.sd.S
 
-CFLAGS += -g
-#CFLAGS += -O2
+#CFLAGS += -g
+CFLAGS += -O2
 
 ASFLAGS = -g -I. -Iinclude -mcpu=$(CPU)
 

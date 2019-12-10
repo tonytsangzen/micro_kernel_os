@@ -4,8 +4,6 @@
 #include <cmain.h>
 
 int main(int argc, char* argv[]) {
-	printf("switch to X.\n");
-	set_global("current_console", "x");
 	int i;
 	for(i=1; i<argc; i++) {
 		printf("run '%s'.\nn", argv[i]);
@@ -16,5 +14,7 @@ int main(int argc, char* argv[]) {
 		}
 	}
 
+	printf("switch to X.\n");
+	set_global("current_console", "x");
 	return 0;
 }
