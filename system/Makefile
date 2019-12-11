@@ -22,7 +22,7 @@ CFLAGS +=  -O2
 
 LDFLAGS = -lc -lnosys
 
-LIB_INC = -I libs/include \
+LIB_INC = -I libs/sys/include \
 				  -I libs/x/include \
 				  -I libs/ext2/include \
 				  -I libs/graph/include \
@@ -30,7 +30,7 @@ LIB_INC = -I libs/include \
 				  -I libs/console/include \
 					-I ../kernel/include
 				 
-LIB_DIR = libs/lib
+LIB_SYS_DIR = libs/sys/src
 LIB_X_DIR = libs/x/src
 LIB_EXT2_DIR = libs/ext2/src
 LIB_GRAPH_DIR = libs/graph/src
@@ -67,25 +67,25 @@ LIB_M_OBJS = $(LIB_M_DIR)/mstr.o \
 	$(LIB_M_DIR)/marray.o
 
 
-LIB_OBJS = $(LIB_DIR)/syscall.o \
-	$(LIB_DIR)/cmain.o \
-	$(LIB_DIR)/vfs.o \
-	$(LIB_DIR)/sconf.o \
-	$(LIB_DIR)/vprintf.o \
-	$(LIB_DIR)/unistd.o \
-	$(LIB_DIR)/stdlib.o \
-	$(LIB_DIR)/ipc.o \
-	$(LIB_DIR)/vdevice.o \
-	$(LIB_DIR)/fcntl.o \
-	$(LIB_DIR)/proto.o \
-	$(LIB_DIR)/sd.o \
-	$(LIB_DIR)/stdio.o \
-	$(LIB_DIR)/thread.o \
-	$(LIB_DIR)/basic_math.o \
-	$(LIB_DIR)/shm.o \
-	$(LIB_DIR)/global.o \
-	$(LIB_DIR)/proclock.o \
-	$(LIB_DIR)/sys/wait.o \
+LIB_OBJS = $(LIB_SYS_DIR)/syscall.o \
+	$(LIB_SYS_DIR)/cmain.o \
+	$(LIB_SYS_DIR)/vfs.o \
+	$(LIB_SYS_DIR)/sconf.o \
+	$(LIB_SYS_DIR)/vprintf.o \
+	$(LIB_SYS_DIR)/unistd.o \
+	$(LIB_SYS_DIR)/stdlib.o \
+	$(LIB_SYS_DIR)/ipc.o \
+	$(LIB_SYS_DIR)/vdevice.o \
+	$(LIB_SYS_DIR)/fcntl.o \
+	$(LIB_SYS_DIR)/proto.o \
+	$(LIB_SYS_DIR)/sd.o \
+	$(LIB_SYS_DIR)/stdio.o \
+	$(LIB_SYS_DIR)/thread.o \
+	$(LIB_SYS_DIR)/basic_math.o \
+	$(LIB_SYS_DIR)/shm.o \
+	$(LIB_SYS_DIR)/global.o \
+	$(LIB_SYS_DIR)/proclock.o \
+	$(LIB_SYS_DIR)/sys/wait.o \
 	$(GRAPH_OBJS) \
 	$(LIB_EXT2_OBJS) \
 	$(LIB_M_OBJS) \
