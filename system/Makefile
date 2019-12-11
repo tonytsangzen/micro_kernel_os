@@ -94,9 +94,10 @@ LIB_OBJS = $(LIB_DIR)/syscall.o \
 
 CLEAN = $(LIB_OBJS)
 
-TARGET_DIR = build
-ROOT_DIR = rootfs
-SD = build/sd.ext2
+BUILD_DIR = build
+TARGET_DIR = $(BUILD_DIR)/rootfs
+ROOT_DIR = .
+SD = $(BUILD_DIR)/sd.ext2
 
 all: mkdirs $(LIB_OBJS) apps
 	@echo "all done."
@@ -138,7 +139,7 @@ mkdirs:
 	@mkdir -p ${TARGET_DIR}/$(ROOT_DIR)/sbin/x
 	@mkdir -p ${TARGET_DIR}/$(ROOT_DIR)/bin
 	@mkdir -p ${TARGET_DIR}/$(ROOT_DIR)/dev
-	@mkdir -p ${TARGET_DIR}/asm
+	@mkdir -p ${BUILD_DIR}/asm
 	@cp -r ${ROOT_DIR}/etc ${TARGET_DIR}/$(ROOT_DIR)
 	@cp -r ${ROOT_DIR}/data ${TARGET_DIR}/$(ROOT_DIR)
 
