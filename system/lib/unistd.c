@@ -116,7 +116,7 @@ int read(int fd, void* buf, uint32_t size) {
 			break;
 
 		if(info.type == FS_TYPE_PIPE) {
-			syscall1(SYS_SLEEP_ON, (uint32_t)info.data);
+			syscall1(SYS_BLOCK_ON, (uint32_t)info.data);
 		}
 		else if(vfs_block(&info) != 0) {
 			sleep(0);
@@ -202,7 +202,7 @@ int write(int fd, const void* buf, uint32_t size) {
 			break;
 
 		if(info.type == FS_TYPE_PIPE) {
-			syscall1(SYS_SLEEP_ON, (uint32_t)info.data);
+			syscall1(SYS_BLOCK_ON, (uint32_t)info.data);
 		}
 		else if(vfs_block(&info) != 0) {
 			sleep(0);

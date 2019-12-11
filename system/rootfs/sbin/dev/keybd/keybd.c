@@ -28,7 +28,7 @@ static int keyb_mount(fsinfo_t* mnt_point, mount_info_t* mnt_info, void* p) {
 static int keyb_block(fsinfo_t* info,  void* p) {
 	(void)p;
 	(void)info;
-	return syscall1(SYS_SLEEP_ON, DEV_KEYB);
+	return syscall1(SYS_BLOCK_ON, DEV_KEYB);
 }
 
 static int keyb_read(int fd, int from_pid, fsinfo_t* info, void* buf, int size, int offset, void* p) {
