@@ -127,8 +127,6 @@ sd:
 	mke2fs ${SD}
 	mkdir -p tmp
 	sudo fuse-ext2 -o force,rw+ ${SD} ./tmp
-	sudo cp -r ${ROOT_DIR}/etc ${TARGET_DIR}/$(ROOT_DIR)
-	sudo cp -r ${ROOT_DIR}/data ${TARGET_DIR}/$(ROOT_DIR)
 	sudo cp -r build/rootfs/* ./tmp
 	sudo umount ./tmp
 	rm -r tmp
