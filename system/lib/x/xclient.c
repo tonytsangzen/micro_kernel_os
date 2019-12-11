@@ -165,9 +165,6 @@ int x_get_event(x_t* x, xevent_t* ev) {
 			res = 0;
 	}
 	proto_clear(&out);
-
-	if(res != 0)
-		sleep(0);
 	return res;
 }
 
