@@ -53,7 +53,7 @@
 	
 .make and run
 	
-	"cd system; make":
+	"cd system; make; make sd":
 	  build EwokOS rootfs apps and sd file system.
 	"cd kernel; make":
 	  build EwokOS kernel image.
