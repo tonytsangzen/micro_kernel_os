@@ -143,6 +143,7 @@ include $(ROOT_DIR)/bin/xconsole/build.mk
 include $(ROOT_DIR)/bin/launcher/build.mk
 include $(ROOT_DIR)/bin/session/build.mk
 include $(ROOT_DIR)/bin/x/build.mk
+include $(ROOT_DIR)/bin/mario/build.mk
 
 mkdirs:
 	@mkdir -p ${TARGET_DIR}/$(ROOT_DIR)/sbin/dev

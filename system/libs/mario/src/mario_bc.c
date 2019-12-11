@@ -10,6 +10,7 @@ extern "C" {
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <vprintf.h>
 
 /** bytecode.-----------------------------*/
 
@@ -48,7 +49,7 @@ void bc_release(bytecode_t* bc) {
 		free(bc->code_buf);
 }
 
-void bc_add(bytecode_t* bc, PC ins) {
+void bc_addc(bytecode_t* bc, PC ins) {
 	if(bc->cindex >= bc->buf_size) {
 		bc->buf_size = bc->cindex + BC_BUF_SIZE;
 		PC *new_buf = (PC*)malloc(bc->buf_size*sizeof(PC));
@@ -65,7 +66,7 @@ void bc_add(bytecode_t* bc, PC ins) {
 }
 	
 PC bc_reserve(bytecode_t* bc) {
-	bc_add(bc, INS(INSTR_NIL, OFF_MASK));
+	bc_addc(bc, INS(INSTR_NIL, OFF_MASK));
   return bc->cindex-1;
 }
 
@@ -81,15 +82,15 @@ PC bc_bytecode(bytecode_t* bc, opr_code_t instr, const char* str) {
 	
 PC bc_gen_int(bytecode_t* bc, opr_code_t instr, int32_t i) {
 	PC ins = bc_bytecode(bc, instr, "");
-	bc_add(bc, ins);
-	bc_add(bc, i);
+	bc_addc(bc, ins);
+	bc_addc(bc, i);
 	return bc->cindex;
 }
 
 PC bc_gen_short(bytecode_t* bc, opr_code_t instr, int32_t s) {
 	PC ins = bc_bytecode(bc, instr, "");
 	ins = (ins&0xFFF0000) | (s&OFF_MASK);
-	bc_add(bc, ins);
+	bc_addc(bc, ins);
 	return bc->cindex;
 }
 	
@@ -112,17 +113,17 @@ PC bc_gen_str(bytecode_t* bc, opr_code_t instr, const char* str) {
 	}
 	
 	PC ins = bc_bytecode(bc, instr, s);
-	bc_add(bc, ins);
+	bc_addc(bc, ins);
 
 	if(instr == INSTR_INT) {
 		if(i < OFF_MASK) //short int
 			bc->code_buf[bc->cindex-1] = INS(INSTR_INT_S, i);
 		else 	
-			bc_add(bc, i);
+			bc_addc(bc, i);
 	}
 	else if(instr == INSTR_FLOAT) {
 		memcpy(&i, &f, sizeof(PC));
-		bc_add(bc, i);
+		bc_addc(bc, i);
 	}
 	return bc->cindex;
 }
@@ -160,7 +161,7 @@ PC bc_add_instr(bytecode_t* bc, PC anchor, opr_code_t op, PC target) {
 
 	int offset = target > anchor ? (target-anchor) : (anchor-target);
 	PC ins = INS(op, offset);
-	bc_add(bc, ins);
+	bc_addc(bc, ins);
 	return bc->cindex;
 } 
 
@@ -266,7 +267,7 @@ PC bc_get_instr_str(bytecode_t* bc, PC i, str_t* ret) {
 
 	if(offset == OFF_MASK) {
 		snprintf(s, 128, "%08d | 0x%08X ; %s", i, ins, instr_str(instr));	
-		str_append(ret, s);
+		str_add(ret, s);
 	}
 	else {
 		if(instr == INSTR_JMP || 
@@ -275,28 +276,29 @@ PC bc_get_instr_str(bytecode_t* bc, PC i, str_t* ret) {
 				instr == INSTR_JMPB ||
 				instr == INSTR_INT_S) {
 			snprintf(s, 128, "%08d | 0x%08X ; %s\t%d", i, ins, instr_str(instr), offset);	
-			str_append(ret, s);
+			str_add(ret, s);
 		}
 		else {
 			snprintf(s, 128, "%08d | 0x%08X ; %s\t\"", i, ins, instr_str(instr));	
-			str_append(ret, s);
-			str_append(ret, bc_getstr(bc, offset));
-			str_add(ret, '"');
+			str_add(ret, s);
+			str_add(ret, bc_getstr(bc, offset));
+			str_addc(ret, '"');
 		}
 	}
 	
 	if(instr == INSTR_INT) {
 		ins = bc->code_buf[i+1];
 		snprintf(s, 128, "\n%08d | 0x%08X ; (%d)", i+1, ins, ins);	
-		str_append(ret, s);
+		str_add(ret, s);
 		i++;
 	}
 	else if(instr == INSTR_FLOAT) {
 		ins = bc->code_buf[i+1];
 		float f;
 		memcpy(&f, &ins, sizeof(PC));
-		snprintf(s, 128, "\n%08d | 0x%08X ; (%f)", i+1, ins, f);	
-		str_append(ret, s);
+		//snprintf(s, 128, "\n%08d | 0x%08X ; (%f)", i+1, ins, f);// TODO
+		snprintf(s, 128, "\n%08d | 0x%08X ; (0.0)", i+1, ins);
+		str_add(ret, s);
 		i++;
 	}	
 	return i;
@@ -304,31 +306,24 @@ PC bc_get_instr_str(bytecode_t* bc, PC i, str_t* ret) {
 
 void bc_dump(bytecode_t* bc) {
 	PC i;
-	char index[32];
 	PC sz = bc->str_table.size;
 
-	_out_func("str_index| value\n");
-	_out_func("---------------------------------------\n");
+	printf("str_index| value\n");
+	printf("---------------------------------------\n");
 	for(i=0; i<sz; ++i) {
-		sprintf(index, "0x%06X | ", i);
-		_out_func(index);
-		_out_func((const char*)bc->str_table.items[i]);
-		_out_func("\n");
+		printf("0x%06X | %s\n", i, (const char*)bc->str_table.items[i]);
 	}
-	_out_func("\npc_index | opr_code   ; instruction\n");
-	_out_func("---------------------------------------\n");
-
+	printf("\npc_index | opr_code   ; instruction\n"
+				 "---------------------------------------\n");
 	str_t* s = str_new("");
-
 	i = 0;
 	while(i < bc->cindex) {
 		i = bc_get_instr_str(bc, i, s);
-		_out_func(s->cstr);
-		_out_func("\n");
+		printf("%s\n", s->cstr);
 		i++;
 	}
 	str_free(s);
-	_out_func("---------------------------------------\n");
+	printf("---------------------------------------\n");
 }
 
 #endif

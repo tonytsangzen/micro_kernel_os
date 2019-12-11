@@ -19,8 +19,10 @@ static inline void trim_right(str_t* st) {
 		return;
 
 	while(st->len > 0) {
-		if(is_space(s[st->len-1]))
+		if(is_space(s[st->len-1])) {
+			st->cstr[st->len-1] = 0;
 			st->len--;
+		}
 		else
 			break;
 	}
