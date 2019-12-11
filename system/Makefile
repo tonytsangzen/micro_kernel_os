@@ -7,8 +7,6 @@ OBJDUMP = arm-none-eabi-objdump
 
 # flags
 CFLAGS = -Wstrict-prototypes \
-				 -I include \
-				 -I ../kernel/include \
 				 -marm \
 				 -pedantic -Wall -Wextra -msoft-float -fPIC -mapcs-frame \
          -fno-builtin-printf \
@@ -24,31 +22,55 @@ CFLAGS +=  -O2
 
 LDFLAGS = -lc -lnosys
 
-LIB_DIR = lib
-GRAPH_OBJS =	$(LIB_DIR)/graph/graph.o \
-	$(LIB_DIR)/graph/tga.o \
-	$(LIB_DIR)/graph/font.o \
-	$(LIB_DIR)/graph/font4x6.o \
-	$(LIB_DIR)/graph/font5x12.o \
-	$(LIB_DIR)/graph/font6x8.o \
-	$(LIB_DIR)/graph/font7x9.o \
-	$(LIB_DIR)/graph/font8x8.o \
-	$(LIB_DIR)/graph/font9x8.o \
-	$(LIB_DIR)/graph/font8x10.o \
-	$(LIB_DIR)/graph/font8x16.o \
-	$(LIB_DIR)/graph/font9x16.o \
-  $(LIB_DIR)/graph/font12x16.o \
-	$(LIB_DIR)/graph/font10x20.o \
-	$(LIB_DIR)/graph/font12x24.o \
-	$(LIB_DIR)/graph/font16x32.o
+LIB_INC = -I libs/include \
+				  -I libs/x/include \
+				  -I libs/ext2/include \
+				  -I libs/graph/include \
+				  -I libs/libm/include \
+				  -I libs/console/include \
+					-I ../kernel/include
+				 
+LIB_DIR = libs/lib
+LIB_X_DIR = libs/x/src
+LIB_EXT2_DIR = libs/ext2/src
+LIB_GRAPH_DIR = libs/graph/src
+LIB_M_DIR = libs/libm/src
+LIB_CONSOLE_DIR = libs/console/src
+
+CFLAGS += $(LIB_INC)
+
+GRAPH_OBJS =	$(LIB_GRAPH_DIR)/graph.o \
+	$(LIB_GRAPH_DIR)/tga.o \
+	$(LIB_GRAPH_DIR)/font.o \
+	$(LIB_GRAPH_DIR)/font4x6.o \
+	$(LIB_GRAPH_DIR)/font5x12.o \
+	$(LIB_GRAPH_DIR)/font6x8.o \
+	$(LIB_GRAPH_DIR)/font7x9.o \
+	$(LIB_GRAPH_DIR)/font8x8.o \
+	$(LIB_GRAPH_DIR)/font9x8.o \
+	$(LIB_GRAPH_DIR)/font8x10.o \
+	$(LIB_GRAPH_DIR)/font8x16.o \
+	$(LIB_GRAPH_DIR)/font9x16.o \
+  $(LIB_GRAPH_DIR)/font12x16.o \
+	$(LIB_GRAPH_DIR)/font10x20.o \
+	$(LIB_GRAPH_DIR)/font12x24.o \
+	$(LIB_GRAPH_DIR)/font16x32.o
+
+LIB_X_OBJS = $(LIB_X_DIR)/xclient.o
+
+LIB_EXT2_OBJS = $(LIB_EXT2_DIR)/ext2fs.o
+
+LIB_CONSOLE_OBJS = $(LIB_CONSOLE_DIR)/console.o
+
+LIB_M_OBJS = $(LIB_M_DIR)/mstr.o \
+	$(LIB_M_DIR)/mstrx.o \
+	$(LIB_M_DIR)/marray.o
+
 
 LIB_OBJS = $(LIB_DIR)/syscall.o \
 	$(LIB_DIR)/cmain.o \
-	$(LIB_DIR)/trunk.o \
 	$(LIB_DIR)/vfs.o \
-	$(LIB_DIR)/ext2fs.o \
 	$(LIB_DIR)/sconf.o \
-	$(LIB_DIR)/ramfs.o \
 	$(LIB_DIR)/vprintf.o \
 	$(LIB_DIR)/unistd.o \
 	$(LIB_DIR)/stdlib.o \
@@ -60,16 +82,15 @@ LIB_OBJS = $(LIB_DIR)/syscall.o \
 	$(LIB_DIR)/stdio.o \
 	$(LIB_DIR)/thread.o \
 	$(LIB_DIR)/basic_math.o \
-	$(LIB_DIR)/console.o \
 	$(LIB_DIR)/shm.o \
 	$(LIB_DIR)/global.o \
-	$(LIB_DIR)/mstr.o \
-	$(LIB_DIR)/mstrx.o \
-	$(LIB_DIR)/marray.o \
 	$(LIB_DIR)/proclock.o \
 	$(LIB_DIR)/sys/wait.o \
-	$(LIB_DIR)/x/xclient.o \
-	$(GRAPH_OBJS)
+	$(GRAPH_OBJS) \
+	$(LIB_EXT2_OBJS) \
+	$(LIB_M_OBJS) \
+	$(LIB_CONSOLE_OBJS) \
+	$(LIB_X_OBJS)
 
 CLEAN = $(LIB_OBJS)
 
