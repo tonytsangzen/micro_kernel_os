@@ -72,29 +72,6 @@
 	ls, ps, pwd, test ......
 
 .Source code read-guide
-
-	kernel/arch/arm/common/boot.S
-	kernel/kernel/mm/kalloc.c
-	kernel/kernel/mm/mmu.c
-	kernel/kernel/mm/trunkmalloc.c
-	kernel/kernel/mm/kmalloc.c
-	kernel/kernel/proc.c 
-	kernel/kernel/sheduler.c
-	kernel/kernel/syscalls.c
-	kernel/kernel/mm/shm.c
-	kernel/kernel/ipc.c
-
-	rootfs/lib/src/stdlib.c
-	rootfs/lib/src/unistd.c
-	rootfs/lib/src/ipc.c
-	rootfs/lib/src/shm.c
-
-	rootfs/sbin/init/init.c
-	rootfs/dev/initfs/initfs.c
-	rootfs/dev/fbd/fbd.c
-	rootfs/dev/ttyd/ttyd.c
-	rootfs/bin/shell/shell.c
-
 	Tips: Don't fall in love with assembly too much;).
 
 . Kernel init memory map

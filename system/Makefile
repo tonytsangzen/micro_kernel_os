@@ -28,6 +28,7 @@ LIB_INC = -I libs/sys/include \
 				  -I libs/graph/include \
 				  -I libs/libm/include \
 				  -I libs/console/include \
+				  -I libs/mario/include \
 					-I ../kernel/include
 				 
 LIB_SYS_DIR = libs/sys/src
@@ -36,6 +37,7 @@ LIB_EXT2_DIR = libs/ext2/src
 LIB_GRAPH_DIR = libs/graph/src
 LIB_M_DIR = libs/libm/src
 LIB_CONSOLE_DIR = libs/console/src
+LIB_MARIO_DIR = libs/mario/src
 
 CFLAGS += $(LIB_INC)
 
@@ -64,7 +66,14 @@ LIB_CONSOLE_OBJS = $(LIB_CONSOLE_DIR)/console.o
 
 LIB_M_OBJS = $(LIB_M_DIR)/mstr.o \
 	$(LIB_M_DIR)/mstrx.o \
-	$(LIB_M_DIR)/marray.o
+	$(LIB_M_DIR)/marray.o \
+	$(LIB_M_DIR)/mutf8.o
+
+LIB_MARIO_OBJS = $(LIB_MARIO_DIR)/mario_bc.o \
+	$(LIB_MARIO_DIR)/mario_json.o \
+	$(LIB_MARIO_DIR)/mario_lex.o \
+	$(LIB_MARIO_DIR)/mario_vm.o \
+	$(LIB_MARIO_DIR)/compiler.o
 
 
 LIB_OBJS = $(LIB_SYS_DIR)/syscall.o \
@@ -90,6 +99,7 @@ LIB_OBJS = $(LIB_SYS_DIR)/syscall.o \
 	$(LIB_EXT2_OBJS) \
 	$(LIB_M_OBJS) \
 	$(LIB_CONSOLE_OBJS) \
+	$(LIB_MARIO_OBJS) \
 	$(LIB_X_OBJS)
 
 CLEAN = $(LIB_OBJS)
