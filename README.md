@@ -19,7 +19,7 @@
 .Environment & Tools
 
 	Linux:	
-		Ubuntu Linux 16.04 with "qemu-system-arm","gcc-arm-none-eabi","gdb-arm-none-eabi"
+		Ubuntu Linux 16.04 with "qemu-system-arm","gcc-arm-none-eabi","gdb-arm-none-eabi","fuseext2"
 		installed(can install by "apt")
 
 	Mac OSX(with brew installed):	
@@ -54,18 +54,16 @@
 .make and run
 	
 	"cd system; make":
-	  build EwokOS rootfs apps.
-	"cd system; make sd": ('make sdmac' for macos)
-	  build EwokOS root sd filesystem.
+	  build EwokOS rootfs apps and sd file system.
 	"cd kernel; make":
 	  build EwokOS kernel image.
-	"cd kernel; make run":
+	"make run":
 	  run EwokOS;
 	  "qemu-system-arm -kernel build/EwokOS.bin -serial mon:stdio -initrd ../system/build/rootfs.img"
 	  boot kernel file and mount initrd.
-	"cd kernel; make debug":
+	"make debug":
 	  run EwokOS at debug server-mode.
-	"cd kernel; make gdb":
+	"make gdb":
 	  debug EwokOS (debug client-mode).
 
 .commands 
