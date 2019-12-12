@@ -80,7 +80,7 @@ static void draw_desktop(proto_t* in, proto_t* out) {
 		}
 		const char* msg = "(CTRL+TAB to switch to console)";
 		draw_text(g, 12, 12, msg, _xwm.font, 0xff000000);
-		draw_text(g, 10, 10, msg, _xwm.font, 0xff888888);
+		draw_text(g, 11, 11, msg, _xwm.font, 0xffaaaaaa);
 
 		graph_free(g);
 		shm_unmap(shm_id);
