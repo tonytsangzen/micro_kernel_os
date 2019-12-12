@@ -10,6 +10,7 @@
 #include <mstr.h>
 #include <ramfs.h>
 #include <errno.h>
+#include <rawdata.h>
 
 int errno = ENONE;
 
@@ -38,8 +39,11 @@ unsigned int sleep(unsigned int seconds) {
 	return 0;
 }
 
-static int read_pipe(fsinfo_t* info, void* buf, uint32_t size) {
-	int res = syscall3(SYS_PIPE_READ, (int32_t)info, (int32_t)buf, (int32_t)size);
+static int read_pipe(fsinfo_t* info, void* buf, uint32_t size, int block) {
+	rawdata_t data;
+	data.data = buf;
+	data.size = size;
+	int res = syscall3(SYS_PIPE_READ, (int32_t)info, (int32_t)&data, block);
 	if(res == 0) { // pipe empty, do retry
 		errno = EAGAIN;
 		return -1;
@@ -51,10 +55,6 @@ static int read_pipe(fsinfo_t* info, void* buf, uint32_t size) {
 }
 
 static int read_raw(int fd, fsinfo_t *info, void* buf, uint32_t size) {
-	errno = ENONE;
-	if(info->type == FS_TYPE_PIPE)
-		return read_pipe(info, buf, size);
-	
 	mount_t mount;
 	if(vfs_get_mount(info, &mount) != 0)
 		return -1;
@@ -94,40 +94,50 @@ static int read_raw(int fd, fsinfo_t *info, void* buf, uint32_t size) {
 }
 
 int read_nblock(int fd, void* buf, uint32_t size) {
+	errno = ENONE;
 	fsinfo_t info;
 	if(vfs_get_by_fd(fd, &info) != 0)
 		return -1;
-	int res = read_raw(fd, &info, buf, size);
-	return res;
+	if(info.type == FS_TYPE_PIPE)
+		return read_pipe(&info, buf, size, 0);
+	return read_raw(fd, &info, buf, size);
 }
 
 int read(int fd, void* buf, uint32_t size) {
+	errno = ENONE;
 	fsinfo_t info;
 	if(vfs_get_by_fd(fd, &info) != 0)
 		return -1;
 
 	int res = -1;
+	if(info.type == FS_TYPE_PIPE) {
+		while(1) {
+			res = read_pipe(&info, buf, size, 1);
+			if(res >= 0)
+				break;
+			if(errno != EAGAIN)
+				break;
+		}
+		return res;
+	}
+
 	while(1) {
 		res = read_raw(fd, &info, buf, size);
 		if(res >= 0)
 			break;
-
 		if(errno != EAGAIN)
 			break;
-
-		if(info.type == FS_TYPE_PIPE) {
-			syscall1(SYS_BLOCK_ON, (uint32_t)info.data);
-		}
-		else if(vfs_block(&info) != 0) {
+		if(vfs_block(&info) != 0)
 			sleep(0);
-		}
 	}
 	return res;
 }
 
-static int write_pipe(fsinfo_t* info, const void* buf, uint32_t size) {
-	errno = ENONE;
-	int res = syscall3(SYS_PIPE_WRITE, (int32_t)info, (int32_t)buf, (int32_t)size);
+static int write_pipe(fsinfo_t* info, const void* buf, uint32_t size, int block) {
+	rawdata_t data;
+	data.data = (void*)buf;
+	data.size = size;
+	int res = syscall3(SYS_PIPE_WRITE, (int32_t)info, (int32_t)&data, block);
 
 	if(res == 0) { // pipe not empty, do retry
 		errno = EAGAIN;
@@ -139,9 +149,6 @@ static int write_pipe(fsinfo_t* info, const void* buf, uint32_t size) {
 }
 
 int write_raw(int fd, fsinfo_t* info, const void* buf, uint32_t size) {
-	errno = ENONE;
-	if(info->type == FS_TYPE_PIPE) 
-		return write_pipe(info, buf, size);
 	if(info->type == FS_TYPE_DIR) 
 		return -1;
 
@@ -182,33 +189,41 @@ int write_raw(int fd, fsinfo_t* info, const void* buf, uint32_t size) {
 }
 
 int write_nblock(int fd, const void* buf, uint32_t size) {
+	errno = ENONE;
 	fsinfo_t info;
 	if(vfs_get_by_fd(fd, &info) != 0)
 		return -1;
-	int res = write_raw(fd, &info, buf, size);
-	return res;
+	if(info.type == FS_TYPE_PIPE) 
+		return write_pipe(&info, buf, size, 0);
+	return write_raw(fd, &info, buf, size);
 }
 
 int write(int fd, const void* buf, uint32_t size) {
+	errno = ENONE;
 	fsinfo_t info;
 	if(vfs_get_by_fd(fd, &info) != 0)
 		return -1;
+
 	int res = -1;
+	if(info.type == FS_TYPE_PIPE) {
+		while(1) {
+			res = write_pipe(&info, buf, size, 1);
+			if(res >= 0)
+				break;
+			if(errno != EAGAIN)
+				break;
+		}
+		return res;
+	}
+
 	while(1) {
 		res = write_raw(fd, &info, buf, size);
 		if(res >= 0)
 			break;
 		if(errno != EAGAIN)
 			break;
-
-		sleep(0);
-		/*if(info.type == FS_TYPE_PIPE) {
-			syscall1(SYS_BLOCK_ON, (uint32_t)info.data);
-		}
-		else if(vfs_block(&info) != 0) {
+		if(vfs_block(&info) != 0)
 			sleep(0);
-		}
-		*/
 	}
 	return res;
 }

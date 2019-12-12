@@ -98,15 +98,14 @@ static void close_console(fb_console_t* console) {
 
 static int actived = 0;
 
-static int read_input(int fd, int rd) {
-	int8_t c;
+static int read_input(int fd, int8_t* c, int rd) {
 	//read keyb
 	if(actived == 1) {
 		if(rd != 1) {
-			rd = read_nblock(fd, &c, 1);
+			rd = read_nblock(fd, c, 1);
 		}
 		else {
-			if(write_nblock(1, &c, 1) == 1)
+			if(write_nblock(1, c, 1) == 1)
 				rd = 0;
 		}
 	}
@@ -127,6 +126,7 @@ static int run(int argc, char* argv[]) {
 		console.id = argv[1];
 	
 	int rd = 0;
+	int8_t c = 0;
 	while(1) {
 		const char* cc = get_global("current_console");
 		if(cc[0] == console.id[0]) {
@@ -142,7 +142,7 @@ static int run(int argc, char* argv[]) {
 			continue;
 		}
 
-		rd = read_input(fd, rd);
+		rd = read_input(fd, &c, rd);
 
 		char buf[256];
 		int32_t size = read_nblock(0, buf, 255);

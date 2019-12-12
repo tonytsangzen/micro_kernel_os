@@ -16,6 +16,7 @@
 #include <buffer.h>
 #include <dev/kdevice.h>
 #include <dev/framebuffer.h>
+#include <rawdata.h>
 
 static void sys_exit(context_t* ctx, int32_t res) {
 	if(_current_proc == NULL)
@@ -426,45 +427,74 @@ static int32_t sys_pipe_open(int32_t* fd0, int32_t* fd1) {
 	return 0;
 }
 
-static int32_t sys_pipe_write(fsinfo_t* info, const void* data, uint32_t sz) {
-	if(info == NULL || info->type != FS_TYPE_PIPE)
-		return -1;
+static void sys_pipe_write(context_t* ctx, fsinfo_t* info, const rawdata_t* data, int32_t block) {
+	if(info == NULL || info->type != FS_TYPE_PIPE) {
+		ctx->gpr[0] = -1;
+		return;
+	}
 
 	buffer_t* buffer = (buffer_t*)info->data;
-	if(buffer == NULL)
-		return -1;
+	if(buffer == NULL) {
+		ctx->gpr[0] = -1;
+		return;
+	}
 
-	int32_t res = buffer_write(buffer, data, sz);
+	int32_t res =  buffer_write(buffer, data->data, data->size);
+	proc_wakeup((uint32_t)buffer);
 	if(res > 0) {
-		proc_wakeup((uint32_t)buffer);
-		return res;
+		ctx->gpr[0] = res;
+		return;
 	}
 
 	vfs_node_t* node = (vfs_node_t*)info->node;
-	if(node->refs >= 2)
-		return 0;
+	if(node->refs < 2) {
+		ctx->gpr[0] = -1;
+		return; //closed
+	}
 
-	proc_wakeup((uint32_t)buffer);
-	return -1; //closed
+	if(block == 0) {
+		ctx->gpr[0] = 0; //retry;
+		return;
+	}
+
+	proc_t* proc = _current_proc;
+	proc_block_on(ctx, (uint32_t)buffer);
+	proc->ctx.gpr[0] = 0;
 }
 
-static int32_t sys_pipe_read(fsinfo_t* info, void* data, uint32_t sz) {
-	if(info == NULL || info->type != FS_TYPE_PIPE)
-		return -1;
+static void sys_pipe_read(context_t *ctx, fsinfo_t* info, rawdata_t* data, int32_t block) {
+	if(info == NULL || info->type != FS_TYPE_PIPE) {
+		ctx->gpr[0] = -1;
+		return;
+	}
 
 	buffer_t* buffer = (buffer_t*)info->data;
-	if(buffer == NULL)
-		return -1;
+	if(buffer == NULL) {
+		ctx->gpr[0] = -1;
+		return;
+	}
 
-	int32_t res =  buffer_read(buffer, data, sz);
-	//proc_wakeup((uint32_t)buffer);
-	if(res > 0)
-		return res;
+	int32_t res =  buffer_read(buffer, data->data, data->size);
+	proc_wakeup((uint32_t)buffer);
+	if(res > 0) {
+		ctx->gpr[0] = res;
+		return;
+	}
 
 	vfs_node_t* node = (vfs_node_t*)info->node;
-	if(node->refs >= 2)
-		return 0;
-	return -1; //closed.
+	if(node->refs < 2) {
+		ctx->gpr[0] = -1;
+		return; //closed
+	}
+
+	if(block == 0) {
+		ctx->gpr[0] = 0; //retry;
+		return;
+	}
+
+	proc_t* proc = _current_proc;
+	proc_block_on(ctx, (uint32_t)buffer);
+	proc->ctx.gpr[0] = 0;
 }
 
 static int32_t sys_get_env(const char* name, char* value, int32_t size) {
@@ -738,10 +768,10 @@ void svc_handler(int32_t code, int32_t arg0, int32_t arg1, int32_t arg2, context
 		ctx->gpr[0] = sys_pipe_open((int32_t*)arg0, (int32_t*)arg1);
 		return;
 	case SYS_PIPE_READ: 
-		ctx->gpr[0] = sys_pipe_read((fsinfo_t*)arg0, (void*)arg1, (int32_t)arg2);
+		sys_pipe_read(ctx, (fsinfo_t*)arg0, (rawdata_t*)arg1, (int32_t)arg2);
 		return;
 	case SYS_PIPE_WRITE: 
-		ctx->gpr[0] = sys_pipe_write((fsinfo_t*)arg0, (const void*)arg1, (int32_t)arg2);
+		sys_pipe_write(ctx, (fsinfo_t*)arg0, (const rawdata_t*)arg1, (int32_t)arg2);
 		return;
 	case SYS_PROC_SET_ENV: 
 		ctx->gpr[0] = proc_set_env((const char*)arg0, (const char*)arg1);
