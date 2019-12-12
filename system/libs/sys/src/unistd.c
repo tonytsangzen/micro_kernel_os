@@ -201,12 +201,14 @@ int write(int fd, const void* buf, uint32_t size) {
 		if(errno != EAGAIN)
 			break;
 
-		if(info.type == FS_TYPE_PIPE) {
+		sleep(0);
+		/*if(info.type == FS_TYPE_PIPE) {
 			syscall1(SYS_BLOCK_ON, (uint32_t)info.data);
 		}
 		else if(vfs_block(&info) != 0) {
 			sleep(0);
 		}
+		*/
 	}
 	return res;
 }

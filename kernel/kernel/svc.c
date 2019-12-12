@@ -435,14 +435,16 @@ static int32_t sys_pipe_write(fsinfo_t* info, const void* data, uint32_t sz) {
 		return -1;
 
 	int32_t res = buffer_write(buffer, data, sz);
-	proc_wakeup((uint32_t)buffer);
 	if(res > 0) {
+		proc_wakeup((uint32_t)buffer);
 		return res;
 	}
 
 	vfs_node_t* node = (vfs_node_t*)info->node;
 	if(node->refs >= 2)
 		return 0;
+
+	proc_wakeup((uint32_t)buffer);
 	return -1; //closed
 }
 
@@ -455,7 +457,7 @@ static int32_t sys_pipe_read(fsinfo_t* info, void* data, uint32_t sz) {
 		return -1;
 
 	int32_t res =  buffer_read(buffer, data, sz);
-	proc_wakeup((uint32_t)buffer);
+	//proc_wakeup((uint32_t)buffer);
 	if(res > 0)
 		return res;
 

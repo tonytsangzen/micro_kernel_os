@@ -26,7 +26,7 @@ int main(int argc, char* argv[]) {
 		char buf[BUF_SIZE];
 		char str[17];
 		int res;
-		res = read_nblock(0, buf, BUF_SIZE);
+		res = read(0, buf, BUF_SIZE);
 		if(res > 0) {
 			int j;
 			for(j=0; j<res; ++j) {
