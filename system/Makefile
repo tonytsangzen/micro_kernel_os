@@ -98,8 +98,6 @@ LIB_OBJS = $(LIB_SYS_DIR)/syscall.o \
 	$(GRAPH_OBJS) \
 	$(LIB_EXT2_OBJS) \
 	$(LIB_M_OBJS) \
-	$(LIB_CONSOLE_OBJS) \
-	$(LIB_MARIO_OBJS) \
 	$(LIB_X_OBJS)
 
 CLEAN = $(LIB_OBJS)
