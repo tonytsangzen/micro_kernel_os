@@ -9,6 +9,8 @@ LD = arm-none-eabi-ld
 OBJCOPY = arm-none-eabi-objcopy
 OBJDUMP = arm-none-eabi-objdump
 
+export QEMU_AUDIO_DRV=none
+
 ARCH_DIR=arch
 ARCH=arm/versatilepb
 include ${ARCH_DIR}/${ARCH}/config.mk

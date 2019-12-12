@@ -56,6 +56,7 @@ void dev_init(void) {
 	//dev->ready_read = char_dev_ready_read;
 	dev->type = DEV_TYPE_CHAR;
 	dev->io.ch.read = char_dev_read;
+	dev->op = mouse_dev_op;
 
 	fb_dev_init(RES_1024x768);
 	dev = &_devs[DEV_FRAMEBUFFER];

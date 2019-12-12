@@ -149,3 +149,13 @@ void mouse_handler(void) {
 		status = get8(MOUSE_BASE + MOUSE_IIR);
 	}
 }
+
+int32_t mouse_dev_op(dev_t* dev, int32_t opcode, int32_t arg) {
+	(void)dev;
+	(void)arg;
+
+	if(opcode == DEV_OP_CLEAR_BUFFER) {
+		memset(&dev->io.ch.buffer, 0, sizeof(charbuf_t));
+	}
+	return 0;
+}
