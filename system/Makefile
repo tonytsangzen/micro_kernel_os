@@ -149,11 +149,11 @@ mkdirs:
 	@mkdir -p ${TARGET_DIR}/$(ROOT_DIR)/bin
 	@mkdir -p ${TARGET_DIR}/$(ROOT_DIR)/dev
 	@mkdir -p ${BUILD_DIR}/asm
-	@cp -r ${ROOT_DIR}/etc ${TARGET_DIR}/$(ROOT_DIR)
-	@cp -r ${ROOT_DIR}/data ${TARGET_DIR}/$(ROOT_DIR)
 
 sd:
 	@echo "\n====building ext2 format sdcard image===="
+	@cp -r ${ROOT_DIR}/etc ${TARGET_DIR}/$(ROOT_DIR)
+	@cp -r ${ROOT_DIR}/data ${TARGET_DIR}/$(ROOT_DIR)
 	dd if=/dev/zero of=${SD} bs=1024 count=16384
 	mke2fs ${SD}
 	mkdir -p tmp

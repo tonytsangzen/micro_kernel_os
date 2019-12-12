@@ -69,9 +69,11 @@ int main(int argc, char* argv[]) {
 		char buf[128];
 		int sz;
 		while(1) { //non-block
-			sz = read(0, buf, 128);
-			if(sz < 0 && errno == EAGAIN)
+			sz = read_nblock(0, buf, 128);
+			if(sz < 0 && errno == EAGAIN) {
+				sleep(0);
 				continue;
+			}
 			break;
 		}
 		if(sz <= 0)
