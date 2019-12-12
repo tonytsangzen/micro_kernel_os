@@ -5,6 +5,8 @@ CXX = arm-none-eabi-c++
 LD = arm-none-eabi-ld
 OBJDUMP = arm-none-eabi-objdump
 
+export QEMU_AUDIO_DRV=none
+
 # flags
 CFLAGS = -Wstrict-prototypes \
 				 -marm \

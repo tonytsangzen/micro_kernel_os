@@ -16,11 +16,16 @@ typedef struct {
 	uint32_t bg_color;
 	uint32_t unfocus_fg_color;
 	uint32_t unfocus_bg_color;
+	uint32_t w;
+	uint32_t h;
 } conf_t;
 
 static conf_t _conf;
 
 static int32_t read_config(conf_t* conf, const char* fname) {
+	conf->w = 800;
+	conf->h = 600;
+
 	sconf_t *sconf = sconf_load(fname);	
 	if(sconf == NULL)
 		return -1;
@@ -28,18 +33,31 @@ static int32_t read_config(conf_t* conf, const char* fname) {
 	const char* v = sconf_get(sconf, "bg_color");
 	if(v[0] != 0) 
 		conf->bg_color = argb_int(atoi_base(v, 16));
+
 	v = sconf_get(sconf, "fg_color");
 	if(v[0] != 0) 
 		conf->fg_color = argb_int(atoi_base(v, 16));
+
 	v = sconf_get(sconf, "unfocus_fg_color");
 	if(v[0] != 0) 
 		conf->unfocus_fg_color = argb_int(atoi_base(v, 16));
+
 	v = sconf_get(sconf, "unfocus_bg_color");
 	if(v[0] != 0) 
 		conf->unfocus_bg_color = argb_int(atoi_base(v, 16));
+
 	v = sconf_get(sconf, "font");
 	if(v[0] != 0) 
 		conf->font = font_by_name(v);
+
+	v = sconf_get(sconf, "width");
+	if(v[0] != 0) 
+		conf->w = atoi(v);
+
+	v = sconf_get(sconf, "height");
+	if(v[0] != 0) 
+		conf->h = atoi(v);
+
 	sconf_free(sconf);
 	return 0;
 }
@@ -78,7 +96,7 @@ static int run(int argc, char* argv[]) {
 	if(fd < 0)
 		return -1;
 
-	x_t* xp = x_open(100, 100, 800, 600, "xconsole", 0);
+	x_t* xp = x_open(0, 0, _conf.w, _conf.h, "xconsole", 0);
 	if(xp == NULL) {
 		close(fd);
 		return -1;

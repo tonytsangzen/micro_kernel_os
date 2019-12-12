@@ -19,6 +19,7 @@ typedef struct {
 	int (*umount)(fsinfo_t* mnt_point, void* p);
 	int (*unlink)(fsinfo_t* info, const char *fname, void* p);
 	int (*block)(fsinfo_t* info, void* p);
+	int (*clear_buffer)(fsinfo_t* info, void* p);
 	int (*loop_step)(void* p);
 } vdevice_t;
 

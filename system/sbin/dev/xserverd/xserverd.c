@@ -773,8 +773,10 @@ static int xserver_loop_step(void* p) {
 	x_t* x = (x_t*)p;
 	const char* cc = get_global("current_console");
 	if(cc[0] == 'x') {
-		if(x->actived == 0)
+		if(x->actived == 0) {
 			x_dirty(x);
+			syscall3(SYS_DEV_OP, DEV_MOUSE, DEV_OP_CLEAR_BUFFER, 0);
+		}
 		x->actived = 1;
 	}
 	else
