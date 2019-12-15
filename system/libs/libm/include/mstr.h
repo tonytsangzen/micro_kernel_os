@@ -20,13 +20,13 @@ str_t* str_new_by_size(uint32_t sz);
 char* str_add(str_t* str, const char* src);
 char* str_addc(str_t* str, char c);
 char* str_add_int(str_t* str, int i, int base);
-//char* str_add_float(str_t* str, float f);
+char* str_add_float(str_t* str, float f);
 void str_free(str_t* str);
 const char* str_from_int(int i, int base);
-//const char* str_from_float(float f);
+const char* str_from_float(float f);
 const char* str_from_bool(uint8_t b);
 int str_to_int(const char* str);
-//float str_to_float(const char* str);
+float str_to_float(const char* str);
 int str_to(const char* str, char c, str_t* res, uint8_t skipspace);
 
 #define CS(s) ((s)->cstr)

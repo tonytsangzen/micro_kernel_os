@@ -108,7 +108,7 @@ PC bc_gen_str(bytecode_t* bc, opr_code_t instr, const char* str) {
 		s = NULL;
 	}
 	else if(instr == INSTR_FLOAT) {
-		//f = atof(str); //TODO
+		f = atof(str);
 		s = NULL;
 	}
 	
@@ -296,8 +296,11 @@ PC bc_get_instr_str(bytecode_t* bc, PC i, str_t* ret) {
 		ins = bc->code_buf[i+1];
 		float f;
 		memcpy(&f, &ins, sizeof(PC));
-		//snprintf(s, 128, "\n%08d | 0x%08X ; (%f)", i+1, ins, f);// TODO
+#ifdef M_FLOAT
+		snprintf(s, 128, "\n%08d | 0x%08X ; (%f)", i+1, ins, f);
+#else
 		snprintf(s, 128, "\n%08d | 0x%08X ; (0.0)", i+1, ins);
+#endif
 		str_add(ret, s);
 		i++;
 	}	

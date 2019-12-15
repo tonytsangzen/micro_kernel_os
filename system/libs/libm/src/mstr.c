@@ -104,10 +104,9 @@ char* str_addc_int(str_t* str, int i, int base) {
 	return str_add(str, str_from_int(i, base));
 }
 
-/*char* str_addc_float(str_t* str, float f) {
+char* str_addc_float(str_t* str, float f) {
 	return str_add(str, str_from_float(f));
 }
-*/
 
 void str_free(str_t* str) {
 	if(str == NULL)
@@ -150,11 +149,15 @@ const char* str_from_bool(uint8_t b) {
 	return b == 0 ? "false":"true";
 }
 
-/*const char* str_from_float(float i) {
+const char* str_from_float(float i) {
+#ifdef M_FLOAT
 	snprintf(_str_result, STATIC_STR_MAX-1, "%f", i);
+#else
+	(void)i;
+	strcpy(_str_result, "0.0");
+#endif
 	return _str_result;
 }
-*/
 
 int str_to_int(const char* str) {
 	int i = 0;
@@ -166,10 +169,9 @@ int str_to_int(const char* str) {
 	return i;
 }
 
-/*float str_to_float(const char* str) {
+float str_to_float(const char* str) {
 	return atof(str);
 }
-*/
 
 int str_to(const char* str, char c, str_t* res, uint8_t skipspace) {
 	int i = 0;

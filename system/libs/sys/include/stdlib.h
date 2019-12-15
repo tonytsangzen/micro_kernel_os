@@ -14,5 +14,6 @@ int setenv(const char* name, const char* value);
 
 int atoi_base(const char *s, int b);
 int atoi(const char *s);
+float atof(const char *s);
 
 #endif

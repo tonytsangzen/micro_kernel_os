@@ -56,8 +56,7 @@ static var_t* var_clone(var_t* v) {
 		case V_INT:
 			return var_new_int(v->vm, var_get_int(v));
 		case V_FLOAT:
-			//return var_new_float(v->vm, var_get_int(v)); //TODO
-			return var_new_float(v->vm, 0.0);
+			return var_new_float(v->vm, var_get_float(v));
 		case V_STRING:
 			return var_new_str(v->vm, var_get_str(v));
 		/*case V_BOOL:
@@ -650,8 +649,11 @@ inline int var_get_int(var_t* var) {
 	if(var == NULL || var->value == NULL)
 		return 0;
 	if(var->type == V_FLOAT)	
+#ifdef M_FLOAT
+		return (int)(*(float*)var->value);
+#else
 		return 0;
-		//return (int)(*(float*)var->value); //TODO
+#endif
 	return *(int*)var->value;
 }
 
@@ -666,14 +668,15 @@ inline var_t* var_set_int(var_t* var, int v) {
 
 inline float var_get_float(var_t* var) {
 	(void)var;
-	return 0.0; 
-/* TODO
+#ifdef M_FLOAT
 	if(var == NULL || var->value == NULL)
 		return 0.0;
 	if(var->type == V_INT)	
 		return (float)(*(int*)var->value);
 	return *(float*)var->value;
-	*/
+#else
+	return 0.0; 
+#endif
 }
 
 inline var_t* var_set_float(var_t* var, float v) {
@@ -724,8 +727,7 @@ void var_to_str(var_t* var, str_t* ret) {
 		str_cpy(ret, str_from_int(var_get_int(var), 10));
 		break;
 	case V_FLOAT:
-		//str_cpy(ret, str_from_float(var_get_float(var))); //TODO
-		str_cpy(ret, "0.0");
+		str_cpy(ret, str_from_float(var_get_float(var)));
 		break;
 	case V_STRING:
 		str_cpy(ret, var_get_str(var));
@@ -1610,8 +1612,7 @@ static inline void math_op(vm_t* vm, opr_code_t op, var_t* v1, var_t* v2) {
 		return;
 	}
 
-	//do float //TODO
-	/*
+#ifdef M_FLOAT
 	if(v1->type == V_FLOAT || v2->type == V_FLOAT) {
 		float f1, f2, ret = 0.0;
 
@@ -1659,7 +1660,8 @@ static inline void math_op(vm_t* vm, opr_code_t op, var_t* v1, var_t* v2) {
 		vm_push(vm, v);
 		return;
 	}
-	*/
+#endif
+
 	//do string + 
 	if(op == INSTR_PLUS || op == INSTR_PLUSEQ) {
 		str_t* s = str_new((const char*)v1->value);
@@ -1741,7 +1743,7 @@ static inline void compare(vm_t* vm, opr_code_t op, var_t* v1, var_t* v2) {
 		return;
 	}
 
-/*TODO
+#ifdef M_FLOAT
 	register float f1, f2;
 	if(v1->value == NULL)
 		f1 = 0.0;
@@ -1818,7 +1820,7 @@ static inline void compare(vm_t* vm, opr_code_t op, var_t* v1, var_t* v2) {
 		vm_push(vm, vm->var_true);
 	else
 		vm_push(vm, vm->var_false);
-	*/
+#endif
 }
 
 void do_get(vm_t* vm, var_t* v, const char* name) {
