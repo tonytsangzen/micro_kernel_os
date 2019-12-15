@@ -30,11 +30,21 @@ static inline void uart_basic_trans(char c) {
 	put8(UART0+UART_DATA, c);
 }
 
+int32_t uart_ready_to_recv(void) {
+	if((get8(UART0+UART_INT_TARGET) &  UART_RECEIVE) == 0)
+		return -1;
+	return 0;
+}
+
+int32_t uart_recv(void) {
+	return get32(UART0 + UART_DATA);
+}
+
 int32_t uart_inputch(dev_t* dev, int32_t loop) {
-	if(dev == NULL || (get8(UART0+UART_INT_TARGET) &  UART_RECEIVE) == 0)
+	if(dev == NULL || uart_ready_to_recv() != 0)
 		return -1;
 
-	char c = get32(UART0 + UART_DATA);
+	char c = uart_recv();
 	charbuf_push(&dev->io.ch.buffer, c, loop);
 	return 0;
 }
