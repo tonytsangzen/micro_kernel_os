@@ -93,13 +93,13 @@ static void uart_trans(char c) {
 	put32(MMIO_BASE+UART0_DR, c);
 }
 
-static int32_t uart_ready_to_recv(void) {
+int32_t uart_ready_to_recv(void) {
 	if(get32(MMIO_BASE+UART0_FR) & (1 << 4)) 
 		return -1;
 	return 0;
 }
 
-static int uart_recv(void) {
+int32_t uart_recv(void) {
 	return get32(MMIO_BASE+UART0_DR);
 }
 

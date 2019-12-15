@@ -89,6 +89,7 @@ void data_abort_handler(context_t* ctx) {
 }
 
 void irq_init(void) {
+	irq_arch_init();
 	gic_set_irqs( IRQ_UART0 | IRQ_TIMER0 | IRQ_KEY | IRQ_MOUSE | IRQ_SDC);
 	__irq_enable();
 }

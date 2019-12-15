@@ -23,5 +23,6 @@ extern void irq_handler(context_t* ctx);
 extern void prefetch_abort_handler(context_t* ctx);
 extern void data_abort_handler(context_t* ctx);
 extern void irq_init(void);
+extern void irq_arch_init(void);
 
 #endif

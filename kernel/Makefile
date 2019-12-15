@@ -15,6 +15,7 @@ ifneq ($(HOST),)
 ARCH=$(HOST)
 else
 ARCH=arm/versatilepb
+#ARCH=arm/raspi2
 endif
 
 ARCH_DIR=arch
@@ -23,6 +24,7 @@ include ${ARCH_DIR}/${ARCH}/config.mk
 # flags
 CFLAGS = \
 	-I. -I../include -Iinclude \
+	-I${ARCH_DIR}/${ARCH} \
 	-marm $(QEMU_CFLAGS) \
 	-Wstrict-prototypes \
 	-pedantic -Wall -Wextra -msoft-float -fPIC -mapcs-frame \
@@ -43,8 +45,8 @@ CFLAGS = \
 
 LDS = mkos.lds.sd.S
 
-#CFLAGS += -g
-CFLAGS += -O2
+CFLAGS += -g
+#CFLAGS += -O2
 
 ASFLAGS = -g -I. -Iinclude -mcpu=$(CPU)
 
@@ -59,7 +61,7 @@ ARCH_OBJS = \
 	${ARCH_DIR}/${ARCH}/uart.o \
 	${ARCH_DIR}/${ARCH}/keyb.o \
 	${ARCH_DIR}/${ARCH}/mouse.o \
-	${ARCH_DIR}/${ARCH}/gic.o \
+	${ARCH_DIR}/${ARCH}/irq_arch.o \
 	${ARCH_DIR}/${ARCH}/framebuffer.o \
 	${ARCH_DIR}/${ARCH}/sd.o \
 	${ARCH_DIR}/${ARCH}/timer.o 
