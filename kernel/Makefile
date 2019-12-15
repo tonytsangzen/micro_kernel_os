@@ -13,6 +13,7 @@ export QEMU_AUDIO_DRV=none
 
 ARCH_DIR=arch
 ARCH=arm/versatilepb
+#ARCH=arm/raspi2
 include ${ARCH_DIR}/${ARCH}/config.mk
 
 # flags
