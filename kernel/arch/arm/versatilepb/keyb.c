@@ -14,7 +14,7 @@
 int32_t keyb_init() {
   put8(KEYBOARD_BASE + KCNTL, 0x10); // bit4=Enable bit0=INT on
   put8(KEYBOARD_BASE + KCLK, 8);
-	return 1;
+	return 0;
 }
 
 static int32_t _keyb_map = 0;

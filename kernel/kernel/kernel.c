@@ -14,6 +14,7 @@
 #include <dev/timer.h>
 #include <kprintf.h>
 #include <vfs.h>
+#include <dev/uart.h>
 #include <ext2read.h>
 
 page_dir_entry_t* _kernel_vm = NULL;
@@ -89,6 +90,8 @@ void _kernel_entry_c(context_t* ctx) {
 	(void)ctx;
 	hw_info_init();
 	init_kernel_vm();  
+	uart_init();
+
 	printf("\n"
 			"------Ewok micro-kernel-------\n"
 			"kernel: %39s [ok]\n", "kernel mmu initing");

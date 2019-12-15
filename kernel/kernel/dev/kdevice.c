@@ -32,7 +32,7 @@ static int32_t char_dev_ready_read(dev_t* dev) {
 void dev_init(void) {
 	dev_t* dev;
 
-	uart_init();
+	//uart_init(); //did at kerne_entry
 	dev = &_devs[DEV_UART0];
 	memset(dev, 0, sizeof(dev_t));
 	dev->type = DEV_TYPE_CHAR;

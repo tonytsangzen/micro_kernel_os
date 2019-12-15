@@ -57,20 +57,19 @@ static inline int32_t kmi_read(uint8_t * data) {
 }
 
 int32_t mouse_init(void) {
+/*
 	uint8_t data;
-
 	uint32_t divisor = 1000;
 	put8(MOUSE_CLKDIV, divisor);
-
-  put8(MOUSE_BASE+MOUSE_CR, MOUSE_CR_EN);
+	put8(MOUSE_BASE+MOUSE_CR, MOUSE_CR_EN);
 	//reset mouse, and wait ack and pass/fail code
 	if(! kmi_write(0xff) )
-		return 0;
+		return -1;
 	if(! kmi_read(&data))
-		return 0;
+		return -1;
 	if(data != 0xaa)
-		return 0;
-	
+		return -1;
+
 	// enable scroll wheel
 	kmi_write(0xf3);
 	kmi_write(200);
@@ -101,9 +100,10 @@ int32_t mouse_init(void) {
 	kmi_read(&data);
 	kmi_read(&data);
 
-	/* re-enables mouse */
-  put8(MOUSE_BASE+MOUSE_CR, MOUSE_CR_EN|MOUSE_CR_RXINTREN); 
-	return 1;
+	// re-enables mouse
+	put8(MOUSE_BASE+MOUSE_CR, MOUSE_CR_EN|MOUSE_CR_RXINTREN); 
+	*/
+	return 0;
 }
 
 void mouse_handler(void) {
