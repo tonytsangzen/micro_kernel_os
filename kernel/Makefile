@@ -11,9 +11,13 @@ OBJDUMP = arm-none-eabi-objdump
 
 export QEMU_AUDIO_DRV=none
 
-ARCH_DIR=arch
+ifneq ($(HOST),)
+ARCH=$(HOST)
+else
 ARCH=arm/versatilepb
-#ARCH=arm/raspi2
+endif
+
+ARCH_DIR=arch
 include ${ARCH_DIR}/${ARCH}/config.mk
 
 # flags

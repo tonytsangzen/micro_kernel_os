@@ -1,4 +1,5 @@
 //TODO
+#include <kstring.h>
 #include <types.h>
 #include <mm/mmu.h>
 #include <kernel/proc.h>

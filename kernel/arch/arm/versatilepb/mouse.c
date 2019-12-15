@@ -1,4 +1,5 @@
 #include <types.h>
+#include <kstring.h>
 #include <mm/mmu.h>
 #include <kernel/proc.h>
 #include <dev/kdevice.h>

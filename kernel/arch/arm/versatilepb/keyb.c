@@ -1,4 +1,5 @@
 #include <dev/keyb.h>
+#include <kstring.h>
 #include <kernel/kevent.h>
 #include <mm/mmu.h>
 
