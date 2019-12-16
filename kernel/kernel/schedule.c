@@ -7,8 +7,4 @@ void schedule(context_t* ctx) {
 	if(next != NULL) {
 		proc_switch(ctx, next);
 	}
-	else {
-		printf("dead schedule!\n");
-		while(1);
-	}
 }

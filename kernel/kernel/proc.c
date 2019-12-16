@@ -224,6 +224,8 @@ proc_t* proc_get_next_ready(void) {
 
 	if(next == NULL) {
 		next = &_proc_table[0];
+		if(next->state == UNUSED || next->state == ZOMBIE)
+			return NULL;
 		proc_ready(next);
 	}
 	return next;

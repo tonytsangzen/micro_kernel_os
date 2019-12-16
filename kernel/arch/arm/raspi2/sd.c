@@ -98,7 +98,7 @@ static inline void do_command(int32_t cmd, int32_t arg, int32_t resp) {
 	put32(SD_BASE + COMMAND, 0x400 | (resp<<6) | cmd);
 }
 
-void sd_init(dev_t* dev) {
+int32_t sd_init(dev_t* dev) {
 	sd_t* sdc = &_sdc;
 	memset(sdc, 0, sizeof(sd_t));
 	sdc->rxdone = 1;
@@ -119,6 +119,7 @@ void sd_init(dev_t* dev) {
 
 	// set interrupt MASK0 registers bits = RxFULL(17)|TxEmpty(18)
 	put32(SD_BASE + MASK0, (1<<17)|(1<<18));
+	return 0;
 }
 
 static int32_t sd_read_block(dev_t* dev, int32_t block) {

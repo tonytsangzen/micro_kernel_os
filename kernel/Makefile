@@ -14,15 +14,15 @@ export QEMU_AUDIO_DRV=none
 ifneq ($(HOST),)
 ARCH=$(HOST)
 else
+CFLAGS = -DRUN_INIT
 ARCH=arm/versatilepb
-#ARCH=arm/raspi2
 endif
 
 ARCH_DIR=arch
 include ${ARCH_DIR}/${ARCH}/config.mk
 
 # flags
-CFLAGS = \
+CFLAGS += \
 	-I. -I../include -Iinclude \
 	-I${ARCH_DIR}/${ARCH} \
 	-marm $(QEMU_CFLAGS) \

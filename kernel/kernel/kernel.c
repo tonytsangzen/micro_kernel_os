@@ -69,6 +69,7 @@ static void init_allocable_mem(void) {
 	kalloc_init(ALLOCATABLE_MEMORY_START, P2V(_hw_info.phy_mem_size));
 }
 
+#ifdef RUN_INIT
 static void load_init(void) {
 	const char* prog = "/sbin/init";
 	int32_t sz;
@@ -81,6 +82,7 @@ static void load_init(void) {
 	}
 	kfree(elf);
 }
+#endif
 
 static void fs_init(void) {
 	vfs_init();
@@ -120,8 +122,10 @@ void _kernel_entry_c(context_t* ctx) {
 	irq_init();
 	printf("kernel: %39s [ok]\n", "irq initing");
 
+#ifdef RUN_INIT
 	load_init();
 	printf("kernel: %39s [ok]\n", "loading first process(init)");
+#endif
 
 	timer_set_interval(0, 0x40); //0.001 sec sequence
 	printf("kernel: start timer.\n");

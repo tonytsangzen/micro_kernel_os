@@ -43,9 +43,21 @@ void irq_handler(context_t* ctx) {
 	__irq_disable();
 
 	uint32_t irqs = gic_get_irqs();
+
+	if((irqs & IRQ_UART0) != 0) {
+		uart_handler();
+	}
+	if((irqs & IRQ_KEY) != 0) {
+		keyb_handler();
+	}
+	if((irqs & IRQ_MOUSE) != 0) {
+		mouse_handler();
+	}	
+	if((irqs & IRQ_SDC) != 0) {
+		sd_handler();
+	}
 	if((irqs & IRQ_TIMER0) != 0) {
 		timer_clear_interrupt(0);
-
 		if(_timer_count == 1000) {
 			_kernel_tic++;
 			_timer_count = 0;
@@ -55,22 +67,6 @@ void irq_handler(context_t* ctx) {
 
 		schedule(ctx);
 		return;
-	}
-
-	if((irqs & IRQ_UART0) != 0) {
-		uart_handler();
-	}
-
-	if((irqs & IRQ_KEY) != 0) {
-		keyb_handler();
-	}
-
-	if((irqs & IRQ_MOUSE) != 0) {
-		mouse_handler();
-	}	
-	
-	if((irqs & IRQ_SDC) != 0) {
-		sd_handler();
 	}
 }
 

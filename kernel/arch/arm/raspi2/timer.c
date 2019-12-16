@@ -1,68 +1,64 @@
 #include <mm/mmu.h>
 #include <dev/timer.h>
 #include <kernel/irq.h>
-#include <dev/gic.h>
+#include "timer_arch.h"
 
-/*
-The ARM Versatile 926EJS board contains two ARM SB804 dual timer modules [ARM Timers 2004]. Each timer module contains two timers, which are driven by the same clock. The base addresses of the timers are:
-  Timer0: 0x101E2000, Timer1: 0x101E2020
-  Timer2: 0x101E3000, Timer3: 0x101E3020
-*/
-#define TIMER0 ((volatile uint32_t*)(MMIO_BASE+0x001e2000))
-#define TIMER1 ((volatile uint32_t*)(MMIO_BASE+0x001e2020))
-#define TIMER2 ((volatile uint32_t*)(MMIO_BASE+0x001e3000))
-#define TIMER3 ((volatile uint32_t*)(MMIO_BASE+0x001e3020))
+/*#define ARM_TIMER_BASE (MMIO_BASE + 0xB400)
+#define ARM_TIMER_LOAD ARM_TIMER_BASE
+#define ARM_TIMER_CTRL ARM_TIMER_BASE+(4*2)
+#define ARM_TIMER_CTRL_32BIT (1<<1)
+#define ARM_TIMER_CTRL_ENABLE (1<<7)
+#define ARM_TIMER_CTRL_IRQ_ENABLE (1<<5)
+#define ARM_TIMER_CTRL_PRESCALE_256 (2<<2)
 
-#define TIMER_LOAD    0x00
-#define TIMER_VALUE   0x01
-#define TIMER_CTRL 0x02
-#define TIMER_INTCTRL  0x03
-#define TIMER_BGLOAD  0x06
-
-#define TIMER_CTRL_EN	(1 << 7)
-#define TIMER_CTRL_FREERUN	(0 << 6)
-#define TIMER_CTRL_PERIODIC	(1 << 6)
-#define TIMER_CTRL_INTREN	(1 << 5)
-#define TIMER_CTRL_DIV1	(0 << 2)
-#define TIMER_CTRL_DIV16	(1 << 2)
-#define TIMER_CTRL_DIV256	(2 << 2)
-#define TIMER_CTRL_32BIT	(1 << 1)
-#define TIMER_CTRL_ONESHOT	(1 << 0)
-
-#define	DEFAULT_FREQUENCY	1000000
-/* QEMU seems to have problem with full frequency */
-#define	DEFAULT_DIVISOR		16
-#define	DEFAULT_CTRL_DIV	TIMER_CTRL_DIV16
-
-static volatile uint32_t* timer_addr_by_id(uint32_t id) {
-	switch(id) {
-		case 0:
-			return TIMER0;
-		case 1:
-			return TIMER1;
-		case 2:
-			return TIMER2;
-		case 3:
-			return TIMER3;
-	}
-	return TIMER0;
-}
+#define PIC_BASE (MMIO_BASE + 0xB200)
+#define PIC_ENABLE_BASIC_IRQ (PIC_BASE+(4*6))
+#define IRQ_ARM_TIMER_BIT 0
 
 void timer_set_interval(uint32_t id, uint32_t interval_microsecond) {
-	volatile uint32_t* t = timer_addr_by_id(id);
-  /*put8(t + TIMER_CTRL, 0);
-  put8(t + TIMER_BGLOAD, 0);
-  put8(t + TIMER_LOAD, interval_microsecond);
-  put8(t + TIMER_CTRL, 0xe2);
-	*/
-  put32(t + TIMER_LOAD, interval_microsecond);
-	uint8_t reg = TIMER_CTRL_32BIT | TIMER_CTRL_INTREN |
-		TIMER_CTRL_PERIODIC | DEFAULT_CTRL_DIV | TIMER_CTRL_EN;
-  put8(t + TIMER_CTRL, reg);
+	(void)id;
+	put32(PIC_ENABLE_BASIC_IRQ, 1 << IRQ_ARM_TIMER_BIT);
+	put32(ARM_TIMER_LOAD, interval_microsecond);
+	put32(ARM_TIMER_CTRL, ARM_TIMER_CTRL_32BIT |
+			ARM_TIMER_CTRL_ENABLE |
+			ARM_TIMER_CTRL_IRQ_ENABLE | ARM_TIMER_CTRL_PRESCALE_256);
+}
+*/
+
+uint32_t read_cntfrq(void) {
+  uint32_t val;
+  __asm__ volatile ("mrc p15, 0, %0, c14, c0, 0" : "=r"(val) );
+  return val;
+}
+
+uint32_t _timer_frq  = 0;
+void write_cntv_tval(uint32_t val) {
+  __asm__ volatile ("mcr p15, 0, %0, c14, c3, 0" :: "r"(val) );
+}
+
+static void enable_cntv(void) {
+  uint32_t cntv_ctl;
+  cntv_ctl = 1;
+  __asm__ volatile ("mcr p15, 0, %0, c14, c3, 1" :: "r"(cntv_ctl) ); // write CNTV_CTL
+}
+
+/*static void disable_cntv(void) {
+  uint32_t cntv_ctl;
+  cntv_ctl = 0;
+  __asm__ volatile ("mcr p15, 0, %0, c14, c3, 1" :: "r"(cntv_ctl) ); // write CNTV_CTL
+}
+*/
+
+void timer_set_interval(uint32_t id, uint32_t interval_microsecond) {
+	(void)id;
+  if(interval_microsecond == 0)
+    interval_microsecond = 100;
+  _timer_frq = (read_cntfrq() /(interval_microsecond*10));
+  write_cntv_tval(_timer_frq);
+  enable_cntv();
 }
 
 void timer_clear_interrupt(uint32_t id) {
-	volatile uint32_t* t = timer_addr_by_id(id);
-  put32(t + TIMER_INTCTRL, 0xFFFFFFFF);
+	(void)id;
 }
 
