@@ -1,5 +1,4 @@
 #include <kernel/hw_info.h>
-#include <mm/mmu.h>
 #include <kernel/system.h>
 #include "mailbox.h"
 
@@ -286,4 +285,12 @@ uint32_t* mailbox_get_video_info(tags_info_t* info) {
 	/* return pointer to buffer on success */
 	info->info_status = INFO_STATUS_OK;
 	return (uint32_t*)mbbuff;
+}
+
+#define CORE0_ROUTING 0x40000000
+void arch_vm(page_dir_entry_t* vm) {
+	uint32_t offset = CORE0_ROUTING - _hw_info.phy_mmio_base;
+	uint32_t vbase = MMIO_BASE + offset;
+	uint32_t pbase = _hw_info.phy_mmio_base + offset;
+	map_pages(vm, vbase, pbase, pbase+16*KB, AP_RW_D);
 }

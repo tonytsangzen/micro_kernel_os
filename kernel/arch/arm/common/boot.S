@@ -1,5 +1,12 @@
 .global __entry
 __entry:
+#ifdef CPU_NUM
+	mrc p15, #0, r1, c0, c0, #5
+	and r1, r1, #3
+	cmp r1, #0
+	bne halt
+#endif
+
 	msr cpsr, #0xD2             @ enter IRQ mode with IRQ and FIQ interrupts disabled
 	ldr sp, = _irq_stack        @ initialise IRQ mode stack
 
@@ -25,3 +32,6 @@ __entry:
 	ldmia sp, { r0-r12, sp, lr }^ @ load   USR mode registers
 	add   sp, sp, #60             @ update SVC mode SP
 	movs  pc, lr                  @ return from interrupt
+
+halt:
+	b halt

@@ -2,6 +2,7 @@
 #define HW_INFO_H
 
 #include <types.h>
+#include <mm/mmu.h>
 
 typedef struct {
 	uint32_t phy_mem_size;
@@ -12,5 +13,6 @@ typedef struct {
 extern hw_info_t _hw_info;
 
 extern void hw_info_init(void);
+extern void arch_vm(page_dir_entry_t* vm);
 
 #endif

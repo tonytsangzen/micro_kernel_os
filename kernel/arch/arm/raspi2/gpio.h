@@ -1,50 +1,25 @@
-/*----------------------------------------------------------------------------*/
-#ifndef __MY1GPIOH__
-#define __MY1GPIOH__
-/*----------------------------------------------------------------------------*/
+#ifndef GPIO_H
+#define GPIO_H
 
-#include <types.h>
+#include <mm/mmu.h>
 
-#define GPIO_COUNT 54
-/*----------------------------------------------------------------------------*/
-#define GPIO_INPUT  0x00
-#define GPIO_OUTPUT 0x01
-#define GPIO_ALTF5  0x02
-#define GPIO_ALTF4  0x03
-#define GPIO_ALTF0  0x04
-#define GPIO_ALTF1  0x05
-#define GPIO_ALTF2  0x06
-#define GPIO_ALTF3  0x07
-/*----------------------------------------------------------------------------*/
-#define GPIO_PULL_NONE 0x00
-#define GPIO_PULL_DOWN 0x01
-#define GPIO_PULL_UP   0x02
-#define GPIO_PULL_MASK 0x03
-/*----------------------------------------------------------------------------*/
-#define GPIO_EVENT_EDGER 0x01
-#define GPIO_EVENT_EDGEF 0x02
-#define GPIO_EVENT_LVLHI 0x04
-#define GPIO_EVENT_LVLLO 0x08
-#define GPIO_EVENT_AEDGR 0x10
-#define GPIO_EVENT_AEDGF 0x20
-/*----------------------------------------------------------------------------*/
-void gpio_init(void);
-void gpio_config(int32_t gpio_num, int32_t gpio_sel);
-void gpio_set(int32_t gpio_num);
-void gpio_clr(int32_t gpio_num);
-void gpio_write(int32_t gpio_num, int32_t value);
-uint32_t gpio_read(int32_t gpio_num);
-void gpio_toggle(int32_t gpio_num);
-void gpio_pull(int32_t gpio_num, int32_t pull_dir);
-/*----------------------------------------------------------------------------*/
-/** GPIO_DATA => 20-27 : LSB-MSB */
-void gpio_init_data(int32_t gpio_sel); /** select GPIO_INPUT or GPIO_OUTPUT */
-void gpio_put_data(uint32_t data);
-uint32_t gpio_get_data(void);
-/*----------------------------------------------------------------------------*/
-void gpio_setevent(int32_t gpio_num,int32_t events); /** enable gpio events detection */
-void gpio_rstevent(int32_t gpio_num); /** clears event status */
-uint32_t gpio_chkevent(int32_t gpio_num); /** check event status */
-/*----------------------------------------------------------------------------*/
+#define GPFSEL0         ((volatile uint32_t*)(MMIO_BASE+0x00200000))
+#define GPFSEL1         ((volatile uint32_t*)(MMIO_BASE+0x00200004))
+#define GPFSEL2         ((volatile uint32_t*)(MMIO_BASE+0x00200008))
+#define GPFSEL3         ((volatile uint32_t*)(MMIO_BASE+0x0020000C))
+#define GPFSEL4         ((volatile uint32_t*)(MMIO_BASE+0x00200010))
+#define GPFSEL5         ((volatile uint32_t*)(MMIO_BASE+0x00200014))
+#define GPSET0          ((volatile uint32_t*)(MMIO_BASE+0x0020001C))
+#define GPSET1          ((volatile uint32_t*)(MMIO_BASE+0x00200020))
+#define GPCLR0          ((volatile uint32_t*)(MMIO_BASE+0x00200028))
+#define GPLEV0          ((volatile uint32_t*)(MMIO_BASE+0x00200034))
+#define GPLEV1          ((volatile uint32_t*)(MMIO_BASE+0x00200038))
+#define GPEDS0          ((volatile uint32_t*)(MMIO_BASE+0x00200040))
+#define GPEDS1          ((volatile uint32_t*)(MMIO_BASE+0x00200044))
+#define GPHEN0          ((volatile uint32_t*)(MMIO_BASE+0x00200064))
+#define GPHEN1          ((volatile uint32_t*)(MMIO_BASE+0x00200068))
+#define GPPUD           ((volatile uint32_t*)(MMIO_BASE+0x00200094))
+#define GPPUDCLK0       ((volatile uint32_t*)(MMIO_BASE+0x00200098))
+#define GPPUDCLK1       ((volatile uint32_t*)(MMIO_BASE+0x0020009C))
+
 #endif
-/*----------------------------------------------------------------------------*/

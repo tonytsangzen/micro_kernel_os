@@ -33,11 +33,7 @@ static void set_kernel_init_vm(page_dir_entry_t* vm) {
 	map_pages(vm, KMALLOC_BASE, V2P(KMALLOC_BASE), V2P(ALLOCATABLE_MEMORY_START), AP_RW_D);
 	//map MMIO to high(virtual) mem.
 	map_pages(vm, MMIO_BASE, _hw_info.phy_mmio_base, _hw_info.phy_mmio_base + _hw_info.mmio_size, AP_RW_D);
-
-  uint32_t fb_base = (uint32_t)V2P(_framebuffer_base); //framebuffer addr
-  uint32_t fb_end = (uint32_t)V2P(_framebuffer_end); //framebuffer addr
-  //map_pages(vm, fb_base, fb_base, base+fb_dev_get_size(), AP_RW_D);
-  map_pages(vm, fb_base, fb_base, fb_end, AP_RW_D);
+	arch_vm(vm);
 }
 
 void set_kernel_vm(page_dir_entry_t* vm) {

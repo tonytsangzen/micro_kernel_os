@@ -54,13 +54,8 @@ static uint32_t read_core0timer_pending(void) {
   return tmp;
 }
 
-#define CORE0_ROUTING 0x40000000
 void irq_arch_init(void) {
 	_pic = (pic_regs_t*)(PIC);
-	uint32_t offset = CORE0_ROUTING - _hw_info.phy_mmio_base;
-	uint32_t vbase = MMIO_BASE + offset;
-	uint32_t pbase = _hw_info.phy_mmio_base + offset;
-	map_pages(_kernel_vm, vbase, pbase, pbase+16*KB, AP_RW_D);
 }
 
 void gic_set_irqs(uint32_t irqs) {

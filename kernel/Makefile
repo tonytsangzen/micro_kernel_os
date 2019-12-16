@@ -25,7 +25,7 @@ include ${ARCH_DIR}/${ARCH}/config.mk
 CFLAGS += \
 	-I. -I../include -Iinclude \
 	-I${ARCH_DIR}/${ARCH} \
-	-marm $(QEMU_CFLAGS) \
+	-marm $(ARCH_QEMU_CFLAGS) \
 	-Wstrict-prototypes \
 	-pedantic -Wall -Wextra -msoft-float -fPIC -mapcs-frame \
 	-fno-builtin-printf \
@@ -45,8 +45,8 @@ CFLAGS += \
 
 LDS = mkos.lds.sd.S
 
-CFLAGS += -g
-#CFLAGS += -O2
+#CFLAGS += -g
+CFLAGS += -O2
 
 ASFLAGS = -g -I. -Iinclude -mcpu=$(CPU)
 
@@ -64,8 +64,6 @@ ARCH_OBJS = \
 	${ARCH_DIR}/${ARCH}/irq_arch.o \
 	${ARCH_DIR}/${ARCH}/framebuffer.o \
 	${ARCH_DIR}/${ARCH}/sd.o \
-	${ARCH_DIR}/${ARCH}/spi.o \
-	${ARCH_DIR}/${ARCH}/gpio.o \
 	${ARCH_DIR}/${ARCH}/timer.o 
 
 LIB_DIR = lib
