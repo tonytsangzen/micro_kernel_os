@@ -97,6 +97,7 @@ static void console_out(init_console_t* console, const char* format, ...) {
 	}
 }
 
+/*
 static void set_keyb_table(int type) {
 	syscall3(SYS_DEV_OP, DEV_KEYB, DEV_OP_SET, type);
 }
@@ -142,6 +143,7 @@ static void check_keyb_table(init_console_t* console) {
 	write(fd, s, strlen(s));
 	close(fd);
 }
+*/
 
 static void run_init_root(init_console_t* console, const char* cmd) {
 	console_out(console, "init: mounting %32s ", "/");
@@ -234,7 +236,7 @@ int main(int argc, char** argv) {
 	run_dev(&console, "/sbin/dev/fbd", "/dev/fb0");
 	/*init framebuffer console*/
 	init_console(&console);
-	check_keyb_table(&console);
+	//check_keyb_table(&console);
 
 	/*load reset devices*/
 	run_dev(&console, "/sbin/dev/ttyd", "/dev/tty0");
