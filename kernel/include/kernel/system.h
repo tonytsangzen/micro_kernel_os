@@ -9,5 +9,6 @@ extern void __set_translation_table_base(uint32_t);
 
 extern uint32_t __int_off(void);
 extern void __int_on(uint32_t);
+extern void __mem_barrier(void);
 
 #endif

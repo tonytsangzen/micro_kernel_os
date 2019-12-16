@@ -1,88 +1,87 @@
-//TODO
 #include "mm/mmu.h"
-#include "string.h"
+#include "kstring.h"
 #include "dev/fbinfo.h"
 #include "dev/framebuffer.h"
+#include "mailbox.h"
+#include "dev/framebuffer.h"
+#include "kstring.h"
+#include <kernel/system.h>
 
-static int32_t _res = RES_640x480;
+#define VIDEO_FB_CHANNEL MAIL_CH_FBUFF
+#define VIDEO_INIT_RETRIES 3
+#define VIDEO_INITIALIZED 0
+#define VIDEO_ERROR_RETURN 1
+#define VIDEO_ERROR_POINTER 2
 
-static int32_t video_init(fbinfo_t *fbinfo) {
-	if(_res == RES_640x480) {
-		put32((MMIO_BASE | 0x1c), 0x2c77);
-		put32((MMIO_BASE | 0x00120000), 0x3f1f3f9c);
-		put32((MMIO_BASE | 0x00120004), 0x090b61df); 
-		put32((MMIO_BASE | 0x00120008), 0x067f1800); 
+#define VIDEO_FB_CHANNEL MAIL_CH_FBUFF
+#define VIDEO_INIT_RETRIES 3
+#define VIDEO_INITIALIZED 0
+#define VIDEO_ERROR_RETURN 1
+#define VIDEO_ERROR_POINTER 2
+
+#define MAIL_CH_FBUFF 0x00000001
+
+int32_t video_init(fbinfo_t *p_fbinfo) {
+	uint32_t init = VIDEO_INIT_RETRIES;
+	uint32_t test, addr = ((uint32_t)p_fbinfo);
+	while(init>0) {
+		__mem_barrier();
+		mailbox_write(VIDEO_FB_CHANNEL,addr);
+		__mem_barrier();
+		test = mailbox_read(VIDEO_FB_CHANNEL);
+		__mem_barrier();
+		if (test) 
+			test = VIDEO_ERROR_RETURN;
+		else if(p_fbinfo->pointer == 0x0)
+			test = VIDEO_ERROR_POINTER;
+		else { 
+			test = VIDEO_INITIALIZED; break; 
+		}
+		init--;
 	}
-	else if(_res == RES_800x600) {
-		put32((MMIO_BASE | 0x1c), 0x2cac);
-		put32((MMIO_BASE | 0x00120000), 0x1313a4c4);
-		put32((MMIO_BASE | 0x00120004), 0x0505f6f7);
-		put32((MMIO_BASE | 0x00120008), 0x071f1800); 
-	}
-	else {
-		//1024x768
-		put32((MMIO_BASE | 0x00120000), 0x3F << 2);
-		put32((MMIO_BASE | 0x00120004), 767);
-	}	
-	
-	put32((MMIO_BASE | 0x00120010), fbinfo->pointer);
-	put32((MMIO_BASE | 0x00120018), 0x082b);
-	return 0;
-}
-
-static fbinfo_t _fbinfo __attribute__((aligned(16)));
-
-void fb_dev_init(int32_t res) {
-	_res = res;
-
-	if(_res == RES_640x480) {
-		_fbinfo.height = 480;
-		_fbinfo.width = 640;
-		_fbinfo.vheight = 480;
-		_fbinfo.vwidth = 640;
-	}
-	else if(_res == RES_800x600) {
-		_fbinfo.height = 600;
-		_fbinfo.width = 800;
-		_fbinfo.vheight = 600;
-		_fbinfo.vwidth = 800;
-	}
-	else {
-		_fbinfo.height = 768;
-		_fbinfo.width = 1024;
-		_fbinfo.vheight = 768;
-		_fbinfo.vwidth = 1024;
-	}
-
-	_fbinfo.pitch = 0;
-	_fbinfo.depth = 32;
-	_fbinfo.xoffset = 0;
-	_fbinfo.yoffset = 0;
-	_fbinfo.pointer = V2P(_framebuffer_base);
-	_fbinfo.size = 0;
-
-	video_init(&_fbinfo);
+	return test;
 }
 
 uint32_t fb_dev_get_size(void) {
 	return 1*MB;
 }
 
+fbinfo_t _fb_info __attribute__((aligned(16)));
+
+int32_t fb_dev_init(int32_t res) {
+	(void)res;
+	tags_info_t info;
+	mailbox_get_video_info(&info);
+	/** initialize fbinfo */
+	_fb_info.height = info.fb_height;
+	_fb_info.width = info.fb_width;
+	_fb_info.vheight = info.fb_height;
+	_fb_info.vwidth = info.fb_width;
+	_fb_info.pitch = 0;
+	_fb_info.depth = 32;
+	_fb_info.xoffset = 0;
+	_fb_info.yoffset = 0;
+	_fb_info.pointer = 0;
+	_fb_info.size = 0;
+
+	return video_init(&_fb_info);
+}
+
 int32_t fb_dev_op(dev_t* dev, int32_t opcode, int32_t arg) {
 	(void)dev;
-
 	if(opcode == DEV_OP_INFO) {
 		fbinfo_t* info = (fbinfo_t*)arg;
-		memcpy(info, &_fbinfo, sizeof(fbinfo_t));
+		memcpy(info, &_fb_info, sizeof(fbinfo_t));
 	}
 	return 0;
 }
 
 int32_t fb_dev_write(dev_t* dev, const void* buf, uint32_t size) {
 	(void)dev;
-	uint32_t sz = (_fbinfo.depth/8) * _fbinfo.width * _fbinfo.height;
+	uint32_t sz = (_fb_info.depth/8) * _fb_info.width * _fb_info.height;
 	if(size > sz)
 		size = sz;
-	memcpy((void*)_framebuffer_base, buf, size);
+	memcpy((void*)_fb_info.pointer, buf, size);
 	return (int32_t)size;
 }
+
