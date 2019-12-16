@@ -69,8 +69,7 @@ static void init_allocable_mem(void) {
 	kalloc_init(ALLOCATABLE_MEMORY_START, P2V(_hw_info.phy_mem_size));
 }
 
-#ifdef RUN_INIT
-static void load_init(void) {
+static int32_t load_init(void) {
 	const char* prog = "/sbin/init";
 	int32_t sz;
 
@@ -79,10 +78,11 @@ static void load_init(void) {
 		proc_t *proc = proc_create(PROC_TYPE_PROC);
 		str_cpy(proc->cmd, prog);
 		proc_load_elf(proc, elf, sz);
+		kfree(elf);
+		return 0;
 	}
-	kfree(elf);
+	return -1;
 }
-#endif
 
 static void fs_init(void) {
 	vfs_init();
@@ -101,7 +101,7 @@ void _kernel_entry_c(context_t* ctx) {
 	km_init();
 	printf("kernel: %39s [ok]\n", "kmalloc initing");
 
-	init_allocable_mem(); /*init the rest allocable memory VM*/
+	init_allocable_mem(); //init the rest allocable memory VM
 	printf("kernel: %39s [ok]\n", "whole allocable memory initing");
 
 	shm_init();
@@ -122,10 +122,11 @@ void _kernel_entry_c(context_t* ctx) {
 	irq_init();
 	printf("kernel: %39s [ok]\n", "irq initing");
 
-#ifdef RUN_INIT
-	load_init();
+	if(load_init() != 0) {
+		printf("kernel: %39s [failed!]\n", "loading first process(init)");
+		while(1);
+	}
 	printf("kernel: %39s [ok]\n", "loading first process(init)");
-#endif
 
 	timer_set_interval(0, 0x40); //0.001 sec sequence
 	printf("kernel: start timer.\n");

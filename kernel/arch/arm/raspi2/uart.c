@@ -1,6 +1,7 @@
 #include <dev/uart.h>
 #include <buffer.h>
 #include <mm/mmu.h>
+#include <kernel/system.h>
 
 enum {
 	// The GPIO registers base address.
@@ -38,11 +39,6 @@ enum {
 	UART0_TDR = (UART0_BASE_OFF + 0x8C),
 };
 
-static void delay(int32_t count) {
-	__asm__ volatile("__delay_%=: subs %[count], %[count], #1; bne __delay_%=\n"
-			: : [count]"r"(count) : "cc");
-}
-
 int32_t uart_init(void) {
 	// Disable UART0.
 	put32(MMIO_BASE+UART0_CR, 0x00000000);
@@ -50,11 +46,11 @@ int32_t uart_init(void) {
 
 	// Disable pull up/down for all GPIO pins & delay for 150 cycles.
 	put32(MMIO_BASE+GPPUD, 0x00000000);
-	delay(150);
+	_delay(150);
 
 	// Disable pull up/down for pin 14,15 & delay for 150 cycles.
 	put32(MMIO_BASE+GPPUDCLK0, (1 << 14) | (1 << 15));
-	delay(150);
+	_delay(150);
 
 	// Write 0 to GPPUDCLK0 to make it take effect.
 	put32(MMIO_BASE+GPPUDCLK0, 0x00000000);

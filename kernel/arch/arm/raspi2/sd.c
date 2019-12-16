@@ -1,259 +1,180 @@
-//TODO
+#include "gpio.h"
+#include "spi.h"
+#include <dev/sd.h>
 #include <kernel/system.h>
 #include <mm/mmu.h>
-#include <mm/kmalloc.h>
-#include <kstring.h>
-#include <dev/kdevice.h>
-#include <dev/device.h>
-#include <kernel/proc.h>
-#include <dev/sd.h>
+/*----------------------------------------------------------------------------*/
+#define SPI_CLK_DIVIDE_TEST 1024
+/*
+  512      488 kHz
+  1024      244 kHz
+*/
+/*----------------------------------------------------------------------------*/
+#define SDCARD_CMD00 0x00
+#define SDCARD_CMD00_CRC 0x95
+#define SDCARD_CMD01 0x01
+#define SDCARD_CMD01_CRC 0xF9
+#define SDCARD_CMD08 0x08
+#define SDCARD_CMD08_ARG 0x000001AA
+#define SDCARD_CMD08_CRC 0x87
+#define SDCARD_CMD12 0x0C
+#define SDCARD_CMD16 0x10
+#define SDCARD_CMD17 0x11
+#define SDCARD_CMD41 0x29
+/** CMD41 arg/crc assumes HCS (high capacity?), else 0x00000000 & 0xE5 */
+#define SDCARD_CMD41_ARG 0x40000000
+#define SDCARD_CMD41_CRC 0x77
+#define SDCARD_CMD55 0x37
+#define SDCARD_CMD55_CRC 0x65
+#define SDCARD_CMD59 0x3B
+/*----------------------------------------------------------------------------*/
+#define SDCARD_SWRESET SDCARD_CMD00
+#define SDCARD_DOINIT SDCARD_CMD01
+#define SDCARD_STOPTX SDCARD_CMD12
+#define SDCARD_CHBSIZE SDCARD_CMD16
+#define SDCARD_RDBLOCK SDCARD_CMD17
+#define SDCARD_APPCMD SDCARD_CMD55
+#define SDCARD_NOCRC SDCARD_CMD59
+/*----------------------------------------------------------------------------*/
+#define SDCARD_ARG_NONE_ 0x00000000
+#define SDCARD_DUMMY_DATA 0xFF
+#define SDCARD_DUMMY_CRC SDCARD_DUMMY_DATA
+/*----------------------------------------------------------------------------*/
+#define SDCARD_MMC_MASK 0xC0
+#define SDCARD_MMC_CMD_ 0x40
+#define SDCARD_SECTOR_SIZE 512
+/*----------------------------------------------------------------------------*/
+#define SDCARD_RESP_SUCCESS 0x00
+#define SDCARD_RESP_R1_IDLE 0x01
+#define SDCARD_RESP_ILLEGAL 0x05
+#define SDCARD_RESP_INVALID 0xFF
+#define SDCARD_RESP_WAIT_STEP 100
+/*----------------------------------------------------------------------------*/
+#define RESP_R1_IDLE_STATE  0x01
+#define RESP_R1_ERASE_RESET 0x02
+#define RESP_R1_ILLEGAL_CMD 0x04
+#define RESP_R1_CMD_CRC_ERR 0x08
+#define RESP_R1_ERASESQ_ERR 0x10
+#define RESP_R1_ADDRESS_ERR 0x20
+#define RESP_R1_PARAM_ERROR 0x40
+/*----------------------------------------------------------------------------*/
+#define SDCARD_FLUSH_R1 1
+#define SDCARD_FLUSH_R7 4
+/*----------------------------------------------------------------------------*/
+int32_t sd_init(dev_t* dev)
+{
+	(void)dev;
+	/** initialize gpio */
+	gpio_init();
+	spi_init(SPI_CLK_DIVIDE_TEST);
+	spi_select(SPI_SELECT_1);
 
-#define CONFIG_ARM_PL180_MMCI_CLOCK_FREQ 6250000
-#define MMC_RSP_PRESENT (1 << 0)
-#define MMC_RSP_136 (1 << 1)    /* 136 bit response */
-#define MMC_RSP_CRC (1 << 2)    /* expect valid crc */
-#define MMC_RSP_BUSY  (1 << 3)    /* card may send busy */
-#define MMC_RSP_OPCODE  (1 << 4)    /* response contains opcode */
-
-#define MMC_RSP_NONE  (0)
-#define MMC_RSP_R1  (MMC_RSP_PRESENT|MMC_RSP_CRC|MMC_RSP_OPCODE)
-#define MMC_RSP_R1b (MMC_RSP_PRESENT|MMC_RSP_CRC|MMC_RSP_OPCODE| \
-		MMC_RSP_BUSY)
-#define MMC_RSP_R2  (MMC_RSP_PRESENT|MMC_RSP_136|MMC_RSP_CRC)
-#define MMC_RSP_R3  (MMC_RSP_PRESENT)
-#define MMC_RSP_R4  (MMC_RSP_PRESENT)
-#define MMC_RSP_R5  (MMC_RSP_PRESENT|MMC_RSP_CRC|MMC_RSP_OPCODE)
-#define MMC_RSP_R6  (MMC_RSP_PRESENT|MMC_RSP_CRC|MMC_RSP_OPCODE)
-#define MMC_RSP_R7  (MMC_RSP_PRESENT|MMC_RSP_CRC|MMC_RSP_OPCODE)
-
-/* SDI Status register bits */
-#define SDI_STA_CCRCFAIL  0x00000001
-#define SDI_STA_DCRCFAIL  0x00000002
-#define SDI_STA_CTIMEOUT  0x00000004
-#define SDI_STA_DTIMEOUT  0x00000008
-#define SDI_STA_TXUNDERR  0x00000010
-#define SDI_STA_RXOVERR   0x00000020
-#define SDI_STA_CMDREND   0x00000040
-#define SDI_STA_CMDSENT   0x00000080
-#define SDI_STA_DATAEND   0x00000100
-#define SDI_STA_STBITERR  0x00000200
-#define SDI_STA_DBCKEND   0x00000400
-#define SDI_STA_CMDACT    0x00000800
-#define SDI_STA_TXACT   0x00001000
-#define SDI_STA_RXACT   0x00002000
-#define SDI_STA_TXFIFOBW  0x00004000
-#define SDI_STA_RXFIFOBR  0x00008000
-#define SDI_STA_TXFIFOF   0x00010000
-#define SDI_STA_RXFIFOF   0x00020000
-#define SDI_STA_TXFIFOE   0x00040000
-#define SDI_STA_RXFIFOE   0x00080000
-#define SDI_STA_TXDAVL    0x00100000
-#define SDI_STA_RXDAVL    0x00200000
-#define SDI_STA_SDIOIT    0x00400000
-#define SDI_STA_CEATAEND  0x00800000
-#define SDI_STA_CARDBUSY  0x01000000
-#define SDI_STA_BOOTMODE  0x02000000
-#define SDI_STA_BOOTACKERR  0x04000000
-#define SDI_STA_BOOTACKTIMEOUT  0x08000000
-#define SDI_STA_RSTNEND   0x10000000
-
-/******* PL180 Register offsets from BASE *******/
-#define POWER         0x00
-#define CLOCK         0x04
-#define ARGUMENT      0x08
-#define COMMAND       0x0c
-#define RESPCOMMAND   0x10
-#define RESPONSE0     0x14
-#define RESPONSE1     0x18
-#define RESPONSE2     0x1c
-#define RESPONSE3     0x20
-#define DATATIMER     0x24
-#define DATALENGTH    0x28
-#define DATACTRL      0x2c
-#define DATACOUNT     0x30
-#define STATUS        0x34
-#define STATUS_CLEAR  0x38
-#define MASK0         0x3c
-#define MASK1         0x40
-#define CARD_SELECT   0x44
-#define FIFO_COUNT    0x48
-#define FIFO          0x80
-
-#define SD_RCA  0x45670000 // QEMU's hard-coded RCA
-#define SD_BASE (MMIO_BASE + 0x5000) // PL180 SD_BASE address
-
-// shared variables between SDC driver and interrupt handler
-typedef struct {
-	char *rxbuf_index;
-	char rxbuf[SD_BLOCK_SIZE];
-	char txbuf[SD_BLOCK_SIZE];
-	const char *txbuf_index;
-	uint32_t rxcount, txcount, rxdone, txdone;
-} sd_t;
-
-static sd_t _sdc;
-
-static inline void do_command(int32_t cmd, int32_t arg, int32_t resp) {
-	put32(SD_BASE + ARGUMENT, arg);
-	put32(SD_BASE + COMMAND, 0x400 | (resp<<6) | cmd);
-}
-
-int32_t sd_init(dev_t* dev) {
-	sd_t* sdc = &_sdc;
-	memset(sdc, 0, sizeof(sd_t));
-	sdc->rxdone = 1;
-	sdc->txdone = 1;
-	dev->io.block.data = (void*)sdc;
-
-	put32(SD_BASE + POWER, 0xBF); // power on
-	put32(SD_BASE + CLOCK, 0xC6); // default CLK
-
-	// send init command sequence
-	do_command(0, 0, MMC_RSP_NONE);// idle state
-	do_command(55, 0, MMC_RSP_R1);  // ready state  
-	do_command(41, 1, MMC_RSP_R3);  // argument must not be zero
-	do_command(2, 0, MMC_RSP_R2);  // ask card CID
-	do_command(3, SD_RCA, MMC_RSP_R1);  // assign RCA
-	do_command(7, SD_RCA, MMC_RSP_R1);  // transfer state: must use RCA
-	do_command(16, 512, MMC_RSP_R1);  // set data block length
-
-	// set interrupt MASK0 registers bits = RxFULL(17)|TxEmpty(18)
-	put32(SD_BASE + MASK0, (1<<17)|(1<<18));
-	return 0;
-}
-
-static int32_t sd_read_block(dev_t* dev, int32_t block) {
-	uint32_t cmd, arg;
-	sd_t* sdc = (sd_t*)dev->io.block.data;
-	if(sdc->rxdone == 0) {
-		return -1;
+	int32_t loop;
+	/* sdc/mmc init flow (spi) */
+	_delay_msec(1000); /* wait at least 1ms */
+	/* send 74 dummy clock cycles? 10 x 8-bit data?*/
+	spi_activate(SPI_ACTIVATE);
+	for (loop=0;loop<10;loop++) {
+		spi_transfer(SDCARD_DUMMY_DATA);
 	}
-
-	//printf("getblock %d ", block);
-	sdc->rxbuf_index = sdc->rxbuf; 
-	sdc->rxcount = SD_BLOCK_SIZE;
-	sdc->rxdone = 0;
-
-	put32(SD_BASE + DATATIMER, 0xFFFF0000);
-	// write data_len to datalength reg
-	put32(SD_BASE + DATALENGTH, SD_BLOCK_SIZE);
-
-	cmd = 18; // CMD17 = READ single sector; 18=read block
-	arg = ((block*2)*512); // absolute byte offset in disk
-	do_command(cmd, arg, MMC_RSP_R1);
-
-	//printf("dataControl=%x\n", 0x93);
-	// 0x93=|9|0011|=|9|DMA=0,0=BLOCK,1=Host<-Card,1=Enable
-	put32(SD_BASE + DATACTRL, 0x93);
-	//printf("getblock return\n");
+	spi_activate(SPI_DEACTIVATE);
 	return 0;
 }
-
-static inline int32_t sd_read_done(dev_t* dev, void* buf) {
-	sd_t* sdc = (sd_t*)dev->io.block.data;
-	if(sdc->rxdone == 0) {
-		return -1;
+/*----------------------------------------------------------------------------*/
+uint32_t sd_command(int32_t cmd, uint32_t arg, int32_t crc)
+{
+	uint32_t res, cnt = SDCARD_RESP_WAIT_STEP;
+	spi_activate(SPI_ACTIVATE);
+	spi_transfer(cmd|SDCARD_MMC_CMD_);
+	spi_transfer((arg>>24)&0xff);
+	spi_transfer((arg>>16)&0xff);
+	spi_transfer((arg>>8)&0xff);
+	spi_transfer((arg)&0xff);
+	spi_transfer(crc);
+	do
+	{
+		/* wait card to be ready  */
+		if ((res=spi_transfer(SDCARD_DUMMY_DATA))!=SDCARD_RESP_INVALID)
+			break;
 	}
-	memcpy(buf, (void*)sdc->rxbuf, SD_BLOCK_SIZE);
-	return 0;
+	while(--cnt>0);
+	spi_activate(SPI_DEACTIVATE);
+	return res;
 }
-
-static int32_t sd_write_block(dev_t* dev, int32_t block, const void* buf) {
-	sd_t* sdc = (sd_t*)dev->io.block.data;
-	uint32_t cmd, arg;
-	if(sdc->txdone == 0) {
-		return -1;
+/*----------------------------------------------------------------------------*/
+void sd_doflush(int32_t count,unsigned char *pbuff)
+{
+	int32_t loop, test;
+	spi_activate(SPI_ACTIVATE);
+	for (loop=0;loop<count;loop++)
+	{
+		test = (int) spi_transfer(SDCARD_DUMMY_DATA);
+		if (pbuff) pbuff[loop] = (unsigned char) (test&0xff);
 	}
-	memcpy(sdc->txbuf, buf, SD_BLOCK_SIZE);
-	sdc->txbuf_index = sdc->txbuf; sdc->txcount = SD_BLOCK_SIZE;
-	sdc->txdone = 0;
-
-	put32(SD_BASE + DATATIMER, 0xFFFF0000);
-	put32(SD_BASE + DATALENGTH, SD_BLOCK_SIZE);
-
-	cmd = 25;                  // CMD24 = Write single sector; 25=write block
-	arg = (uint32_t)((block*2)*512);  // absolute byte offset in diks
-	do_command(cmd, arg, MMC_RSP_R1);
-
-	// write 0x91=|9|0001|=|9|DMA=0,BLOCK=0,0=Host->Card, Enable
-	put32(SD_BASE + DATACTRL, 0x91); // Host->card
-	return 0;
+	spi_activate(SPI_DEACTIVATE);
 }
-
-static inline int32_t sd_write_done(dev_t* dev) {
-	sd_t* sdc = (sd_t*)dev->io.block.data;
-	if(sdc->txdone == 0) {
-		return -1;
+/*----------------------------------------------------------------------------*/
+uint32_t sd_read_block(uint32_t sector, unsigned char* buffer)
+{
+	int32_t loop;
+	uint32_t res, cnt = SDCARD_RESP_WAIT_STEP;
+	do
+	{
+		/* sector size = 512, checksum should already be disabled? */
+		res = sd_command(SDCARD_RDBLOCK,sector<<9,SDCARD_DUMMY_CRC);
+		sd_doflush(SDCARD_FLUSH_R1,0x0);
+		if (res==0x00) break;
 	}
-	return 0;
+	while(--cnt>0);
+	if (cnt == 0) 
+		return res;
+	/* wait?? */
+	spi_activate(SPI_ACTIVATE);
+	cnt = SDCARD_RESP_WAIT_STEP;
+	do
+	{
+		if ((res=spi_transfer(SDCARD_DUMMY_DATA))==0xFE) break;
+	}
+	while(--cnt>0);
+	if (cnt == 0) 
+		return res;
+	/* get the data */
+	for (loop=0;loop<SDCARD_SECTOR_SIZE;loop++)
+		buffer[loop] = spi_transfer(SDCARD_DUMMY_DATA);
+	/* 16-bit dummy crc? */
+	spi_transfer(SDCARD_DUMMY_CRC);
+	spi_transfer(SDCARD_DUMMY_CRC);
+	spi_activate(SPI_DEACTIVATE);
+	return SDCARD_SECTOR_SIZE;
 }
 
 void sd_dev_handle(dev_t* dev) {
-	sd_t* sdc = (sd_t*)dev->io.block.data;
-	int32_t status, status_err;
-	int32_t i; 
-	uint32_t *up;
-
-	// read status register to find out TXempty or RxAvail
-	status = get32(SD_BASE + STATUS);
-
-	if (status & (1<<17)){ // RxFull: read 16 uint32_t at a time;
-		//printf("SDC RX interrupt: ");
-		up = (uint32_t *)sdc->rxbuf_index;
-		status_err = status & (SDI_STA_DCRCFAIL|SDI_STA_DTIMEOUT|SDI_STA_RXOVERR);
-		if (!status_err && sdc->rxcount) {
-			//printf("R%d ", sdc->rxcount);
-			for (i = 0; i < 16; i++)
-				*(up + i) = get32(SD_BASE + FIFO);
-			up += 16;
-			sdc->rxcount -= 64;
-			sdc->rxbuf_index += 64;
-			status = get32(SD_BASE + STATUS); // read status to clear Rx interrupt
-		}
-		if (sdc->rxcount == 0){
-			do_command(12, 0, MMC_RSP_R1); // stop transmission
-			sdc->rxdone = 1;
-			proc_wakeup((uint32_t)dev);
-			//printf("SDC handler done ");
-		}
-	}
-	else if (status & (1<<18)){ // TXempty: write 16 uint32_t at a time
-		//printf("TX interrupt: ");
-		up = (uint32_t *)sdc->txbuf_index;
-		status_err = status & (SDI_STA_DCRCFAIL | SDI_STA_DTIMEOUT);
-
-		if (!status_err && sdc->txcount) {
-			// printf("W%d ", sdc->txcount);
-			for (i = 0; i < 16; i++)
-				put32(SD_BASE + FIFO, *(up + i));
-			up += 16;
-			sdc->txcount -= 64;
-			sdc->txbuf_index += 64;            // advance sdc->txbuf_index for next write  
-			status = get32(SD_BASE + STATUS); // read status to clear Tx interrupt
-		}
-		if (sdc->txcount == 0){
-			do_command(12, 0, MMC_RSP_R1); // stop transmission
-			sdc->txdone = 1;
-			proc_wakeup((uint32_t)dev);
-		}
-	}
-	//printf("write to clear register\n");
-	put32(SD_BASE + STATUS_CLEAR, 0xFFFFFFFF);
-	// printf("SDC interrupt handler done\n");
+	(void)dev;
 }
 
+static int32_t _block = 0;
+
 int32_t sd_dev_read(dev_t* dev, int32_t block) {
-	return sd_read_block(dev, block);
+	(void)dev;
+	_block = block;
+	return 0;
 }
 
 int32_t sd_dev_read_done(dev_t* dev, void* buf) {
-	return sd_read_done(dev, buf);
+	(void)dev;
+	if(sd_read_block(_block, (unsigned char*)buf) == 0)
+		return -1;
+	return 0;
 }
 
-int32_t sd_dev_write(dev_t* dev, int32_t block, const void* buf) {
-	return sd_write_block(dev, block, buf);
+int32_t sd_dev_write(dev_t* dev, int32_t block, const void* buf) { //TODO
+	(void)dev;
+	(void)block;
+	(void)buf;
+	return 0;
 }
 
-int32_t sd_dev_write_done(dev_t* dev) {
-	return sd_write_done(dev);
+int32_t sd_dev_write_done(dev_t* dev) { //TODO
+	(void)dev;
+	return 0;
 }

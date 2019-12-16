@@ -45,8 +45,8 @@ CFLAGS += \
 
 LDS = mkos.lds.sd.S
 
-#CFLAGS += -g
-CFLAGS += -O2
+CFLAGS += -g
+#CFLAGS += -O2
 
 ASFLAGS = -g -I. -Iinclude -mcpu=$(CPU)
 
@@ -64,6 +64,8 @@ ARCH_OBJS = \
 	${ARCH_DIR}/${ARCH}/irq_arch.o \
 	${ARCH_DIR}/${ARCH}/framebuffer.o \
 	${ARCH_DIR}/${ARCH}/sd.o \
+	${ARCH_DIR}/${ARCH}/spi.o \
+	${ARCH_DIR}/${ARCH}/gpio.o \
 	${ARCH_DIR}/${ARCH}/timer.o 
 
 LIB_DIR = lib
@@ -97,6 +99,7 @@ OBJS = ${ARCH_OBJS} \
 	${KERNEL_DIR}/schedule.o \
 	${KERNEL_DIR}/vfs.o \
 	${KERNEL_DIR}/dev/kdevice.o \
+	${KERNEL_DIR}/system.o \
 	${KERNEL_DIR}/kernel.o
 
 BUILD_DIR = build
