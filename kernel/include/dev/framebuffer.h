@@ -4,8 +4,10 @@
 #include <dev/fbinfo.h>
 #include <dev/kdevice.h>
 
-extern char _framebuffer_base[];
-extern char _framebuffer_end[];
+extern char* _framebuffer_base;
+extern char* _framebuffer_end;
+extern char _framebuffer_base_raw[];
+extern char _framebuffer_end_raw[];
 
 extern int32_t fb_dev_init(int32_t res);
 extern uint32_t fb_dev_get_size(void);

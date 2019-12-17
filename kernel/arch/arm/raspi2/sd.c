@@ -120,8 +120,7 @@ static sd_t _sdc;
  */
 static int32_t sd_status(uint32_t mask) {
 	int32_t cnt = 1000000; 
-	while((*EMMC_STATUS & mask) != 0 && (*EMMC_INTERRUPT & INT_ERROR_MASK) == 0 && cnt > 0)
-		_delay_msec(1);
+	while((*EMMC_STATUS & mask) != 0 && (*EMMC_INTERRUPT & INT_ERROR_MASK) == 0 && cnt > 0);
 	return (cnt <= 0 || (*EMMC_INTERRUPT & INT_ERROR_MASK)) ? SD_ERROR : SD_OK;
 }
 
@@ -132,9 +131,7 @@ static int32_t sd_int(uint32_t mask, int32_t wait) {
 	uint32_t r, m = (mask | INT_ERROR_MASK);
 	int32_t cnt = 1000000; 
 	while((*EMMC_INTERRUPT & m) == 0 && cnt--) {
-		if(wait != 0)
-			_delay_msec(1);
-		else 
+		if(wait == 0)
 			return -1;
 	}
 
@@ -173,9 +170,9 @@ static int32_t sd_cmd(uint32_t code, uint32_t arg) {
 	*EMMC_ARG1 = arg;
 	*EMMC_CMDTM = code;
 	if(code == CMD_SEND_OP_COND)
-		_delay_msec(1000); 
+		_delay(10000); 
 	else if(code==CMD_SEND_IF_COND || code==CMD_APP_CMD)
-		_delay_msec(100);
+		_delay(1000);
 
 	if((r = sd_int(INT_CMD_DONE, 1))) {
 		sd_err = r;
@@ -281,14 +278,13 @@ static int32_t sd_writeblock(uint32_t lba, unsigned char *buffer, uint32_t num) 
 static int32_t sd_clk(uint32_t f) {
 	uint32_t d, c=41666666/f, x , s=32, h=0;
 	int32_t cnt = 100000;
-	while((*EMMC_STATUS & (SR_CMD_INHIBIT|SR_DAT_INHIBIT)) && cnt--) 
-		_delay_msec(1);
+	while((*EMMC_STATUS & (SR_CMD_INHIBIT|SR_DAT_INHIBIT)) && cnt--);
 	if(cnt<=0) {
 		return SD_ERROR;
 	}
 
 	*EMMC_CONTROL1 &= ~C1_CLK_EN;
-	_delay_msec(10);
+	_delay(10000);
 	x=c-1;
 	if(!x)
 		s=0; 
@@ -314,12 +310,12 @@ static int32_t sd_clk(uint32_t f) {
 
 	d = (((d&0x0ff)<<8)|h);
 	*EMMC_CONTROL1 = (*EMMC_CONTROL1&0xffff003f) | d;
-	_delay_msec(10);
+	_delay(10000);
 	*EMMC_CONTROL1 |= C1_CLK_EN;
-	_delay_msec(10);
+	_delay(10000);
 	cnt=10000; 
 	while(!(*EMMC_CONTROL1 & C1_CLK_STABLE) && cnt--)
-		_delay_msec(10);
+		_delay(10000);
 	if(cnt<=0) {
 		return SD_ERROR;
 	}
@@ -379,14 +375,14 @@ int32_t sd_init(dev_t* dev) {
 	*EMMC_CONTROL1 |= C1_SRST_HC;
 	cnt = 10000;
 	do{
-		_delay_msec(10);
+		_delay(10000);
 	} while((*EMMC_CONTROL1 & C1_SRST_HC) && cnt-- );
 
 	if(cnt<=0)
 		return SD_ERROR;
 
 	*EMMC_CONTROL1 |= C1_CLK_INTLEN | C1_TOUNIT_MAX;
-	_delay_msec(10);
+	_delay(10000);
 	// Set clock to setup frequency.
 	if((r = sd_clk(400000)))
 		return r;
@@ -440,8 +436,6 @@ int32_t sd_init(dev_t* dev) {
 	r=0; cnt=100000; while(r<2 && cnt) {
 		if( *EMMC_STATUS & SR_READ_AVAILABLE )
 			sd_scr[r++] = *EMMC_DATA;
-		else
-			_delay_msec(1);
 	}
 	if(r != 2) 
 		return SD_TIMEOUT;

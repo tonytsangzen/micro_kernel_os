@@ -35,9 +35,9 @@ SECTIONS
 	_svc_stack = .;
 
 	. = ALIGN(8);
-	PROVIDE(_framebuffer_base = .); 
+	PROVIDE(_framebuffer_base_raw = .); 
 	. += framebuffer_size;
-	PROVIDE(_framebuffer_end = .); 
+	PROVIDE(_framebuffer_end_raw = .); 
 
 	. = ALIGN(8);
 	PROVIDE(_kernel_end = .);

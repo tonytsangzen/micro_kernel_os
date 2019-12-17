@@ -31,6 +31,9 @@ static int32_t video_init(fbinfo_t *fbinfo) {
 
 static fbinfo_t _fbinfo __attribute__((aligned(16)));
 
+char* _framebuffer_base = NULL;
+char* _framebuffer_end = NULL;
+
 int32_t fb_dev_init(int32_t res) {
 	_res = res;
 
@@ -57,10 +60,16 @@ int32_t fb_dev_init(int32_t res) {
 	_fbinfo.depth = 32;
 	_fbinfo.xoffset = 0;
 	_fbinfo.yoffset = 0;
-	_fbinfo.pointer = V2P(_framebuffer_base);
+	_fbinfo.pointer = V2P(_framebuffer_base_raw);
 	_fbinfo.size = 0;
 
-	return video_init(&_fbinfo);
+	int32_t r = video_init(&_fbinfo);
+	if(r != 0)
+		return -1;
+	
+	_framebuffer_base = _framebuffer_base_raw;
+	_framebuffer_end = _framebuffer_end_raw;
+	return 0;
 }
 
 uint32_t fb_dev_get_size(void) {

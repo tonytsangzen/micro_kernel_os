@@ -48,6 +48,9 @@ uint32_t fb_dev_get_size(void) {
 
 fbinfo_t _fb_info __attribute__((aligned(16)));
 
+char* _framebuffer_base = NULL;
+char* _framebuffer_end = NULL;
+
 int32_t fb_dev_init(int32_t res) {
 	(void)res;
 	tags_info_t info;
@@ -64,7 +67,12 @@ int32_t fb_dev_init(int32_t res) {
 	_fb_info.pointer = 0;
 	_fb_info.size = 0;
 
-	return video_init(&_fb_info);
+	int32_t r = video_init(&_fb_info);
+	if(r != 0)
+		return -1;
+	_framebuffer_base = (char*)_fb_info.pointer;
+	_framebuffer_end = _framebuffer_base + _fb_info.height*_fb_info.width*4;
+	return 0;
 }
 
 int32_t fb_dev_op(dev_t* dev, int32_t opcode, int32_t arg) {
