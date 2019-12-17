@@ -103,6 +103,9 @@ void _kernel_entry_c(context_t* ctx) {
 	shm_init();
 	printf("kernel: %39s [ok]\n", "share memory initing");
 
+	irq_init();
+	printf("kernel: %39s [ok]\n", "irq initing");
+
 	dev_init();
 	printf("kernel: %39s [ok]\n", "devices initing");
 
@@ -114,9 +117,6 @@ void _kernel_entry_c(context_t* ctx) {
 
 	procs_init();
 	printf("kernel: %39s [ok]\n", "processes initing");
-
-	irq_init();
-	printf("kernel: %39s [ok]\n", "irq initing");
 
 	if(load_init() != 0) {
 		printf("kernel: %39s [failed!]\n", "loading first process(init)");

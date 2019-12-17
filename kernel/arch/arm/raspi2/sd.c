@@ -110,41 +110,25 @@ typedef struct {
 	char txbuf[SD_BLOCK_SIZE];
 	char *rxbuf_index;
 	const char *txbuf_index;
-	uint32_t rxcount, txcount, rxdone, txdone;
+	uint32_t rxcount, txcount, rxdone, txdone, cmd_done;
 } sd_t;
 
 static sd_t _sdc;
 
-/**
- * Wait for data or command ready
- */
-static int32_t sd_status(uint32_t mask) {
-	int32_t cnt = 1000000; 
-	while((*EMMC_STATUS & mask) != 0 && (*EMMC_INTERRUPT & INT_ERROR_MASK) == 0 && cnt > 0);
+int sd_status(uint32_t mask) {
+	int cnt = 500000; 
+	while((*EMMC_STATUS & mask) && !(*EMMC_INTERRUPT & INT_ERROR_MASK) && cnt--);
 	return (cnt <= 0 || (*EMMC_INTERRUPT & INT_ERROR_MASK)) ? SD_ERROR : SD_OK;
 }
 
 /**
  * Wait for interrupt
  */
-static int32_t sd_int(uint32_t mask, int32_t wait) {
-	uint32_t r, m = (mask | INT_ERROR_MASK);
+static int32_t sd_wait_int(void) {
 	int32_t cnt = 1000000; 
-	while((*EMMC_INTERRUPT & m) == 0 && cnt--) {
-		if(wait == 0)
-			return -1;
-	}
-
-	r = *EMMC_INTERRUPT;
-	if(cnt<=0 || (r & INT_CMD_TIMEOUT) != 0 || (r & INT_DATA_TIMEOUT) != 0) {
-		*EMMC_INTERRUPT = r; 
-		return SD_TIMEOUT;
-	}
-	else if((r & INT_ERROR_MASK) != 0) { 
-		*EMMC_INTERRUPT = r;
-		return SD_ERROR;
-	}
-	*EMMC_INTERRUPT = mask;
+	while(_sdc.cmd_done == 0 && cnt--);
+	if(cnt<=0)
+		return -1;
 	return 0;
 }
 
@@ -162,11 +146,13 @@ static int32_t sd_cmd(uint32_t code, uint32_t arg) {
 		}
 		code &= ~CMD_NEED_APP;
 	}
-	if(sd_status(SR_CMD_INHIBIT)) { 
-		sd_err = SD_TIMEOUT;
+	if(sd_status(SR_CMD_INHIBIT)) {
+		sd_err= SD_TIMEOUT;
 		return 0;
 	}
-	*EMMC_INTERRUPT = *EMMC_INTERRUPT; 
+
+	_sdc.cmd_done = 0;
+ 	*EMMC_INTERRUPT = *EMMC_INTERRUPT;
 	*EMMC_ARG1 = arg;
 	*EMMC_CMDTM = code;
 	if(code == CMD_SEND_OP_COND)
@@ -174,8 +160,8 @@ static int32_t sd_cmd(uint32_t code, uint32_t arg) {
 	else if(code==CMD_SEND_IF_COND || code==CMD_APP_CMD)
 		_delay(1000);
 
-	if((r = sd_int(INT_CMD_DONE, 1))) {
-		sd_err = r;
+	if(sd_wait_int() != 0) {
+		sd_err = SD_ERROR;
 		return 0;
 	}
 
@@ -199,7 +185,6 @@ static int32_t sd_cmd(uint32_t code, uint32_t arg) {
 		return r & CMD_RCA_MASK;
 	}
 	return r & CMD_ERRORS_MASK;
-	return 0;
 }
 
 /**
@@ -207,9 +192,9 @@ static int32_t sd_cmd(uint32_t code, uint32_t arg) {
  * returns 0 on error.
  */
 static int32_t sd_readblock(uint32_t lba) {
-	if(sd_status(SR_DAT_INHIBIT)) {
-		sd_err = SD_TIMEOUT;
-		return -1;
+	if(sd_status(SR_CMD_INHIBIT)) {
+		sd_err= SD_TIMEOUT;
+		return 0;
 	}
 
 	*EMMC_BLKSIZECNT = (1 << 16) | 512;
@@ -226,13 +211,14 @@ static int32_t sd_readblock(uint32_t lba) {
  * returns 0 on error.
  */
 static int32_t sd_writeblock(uint32_t lba, unsigned char *buffer, uint32_t num) {
-	uint32_t r, d, c = 0;
-	if(num < 1)
-		num = 1;
-	if(sd_status(SR_DAT_INHIBIT | SR_WRITE_AVAILABLE)) {
-		sd_err = SD_TIMEOUT;
+	if(sd_status(SR_CMD_INHIBIT)) {
+		sd_err= SD_TIMEOUT;
 		return 0;
 	}
+
+	uint32_t d, c = 0;
+	if(num < 1)
+		num = 1;
 	uint32_t *buf = (uint32_t *)buffer;
 	if(sd_scr[0] & SCR_SUPP_CCS) {
 		if(num > 1 && (sd_scr[0] & SCR_SUPP_SET_BLKCNT)) {
@@ -254,8 +240,8 @@ static int32_t sd_writeblock(uint32_t lba, unsigned char *buffer, uint32_t num) 
 			if(sd_err) 
 				return 0;
 		}
-		if((r = sd_int(INT_WRITE_RDY, 1))){
-			sd_err = r;
+		if(sd_wait_int() != 0) {
+			sd_err = SD_ERROR;
 			return 0;
 		}
 		for(d=0; d<128; d++) 
@@ -263,8 +249,8 @@ static int32_t sd_writeblock(uint32_t lba, unsigned char *buffer, uint32_t num) 
 		c++;
 		buf+=128;
 	}
-	if((r = sd_int(INT_DATA_DONE, 1))) {
-		sd_err = r;
+	if(sd_wait_int() != 0) {
+		sd_err = SD_ERROR;
 		return 0;
 	}
 	if(num > 1 && (sd_scr[0] & SCR_SUPP_SET_BLKCNT) == 0 && (sd_scr[0] & SCR_SUPP_CCS) != 0) 
@@ -329,6 +315,7 @@ int32_t sd_init(dev_t* dev) {
 	(void)dev;
 	_sdc.rxdone = 1;
 	_sdc.txdone = 1;
+	_sdc.cmd_done = 1;
 
 	int64_t r, cnt, ccs = 0;
 	// GPIO_CD
@@ -386,8 +373,9 @@ int32_t sd_init(dev_t* dev) {
 	// Set clock to setup frequency.
 	if((r = sd_clk(400000)))
 		return r;
-	*EMMC_INT_EN   = 0xffffffff;
-	*EMMC_INT_MASK = 0xffffffff;
+	*EMMC_INT_EN   = 0x00ff0003;
+	*EMMC_INT_MASK = 0x00ff0003;
+
 	sd_scr[0] = sd_scr[1] = sd_rca = sd_err = 0;
 	sd_cmd(CMD_GO_IDLE, 0);
 	if(sd_err)
@@ -424,27 +412,32 @@ int32_t sd_init(dev_t* dev) {
 	if(sd_err)
 		return sd_err;
 
+	/*
 	if(sd_status(SR_DAT_INHIBIT))
 		return SD_TIMEOUT;
 	*EMMC_BLKSIZECNT = (1<<16) | 8;
 	sd_cmd(CMD_SEND_SCR, 0);
 	if(sd_err)
 		return sd_err;
-	if(sd_int(INT_READ_RDY, 1))
+	if(sd_wait_int() != 0)
 		return SD_TIMEOUT;
 
-	r=0; cnt=100000; while(r<2 && cnt) {
+	r=0;
+	cnt=100000;
+	while(r<2 && cnt) {
 		if( *EMMC_STATUS & SR_READ_AVAILABLE )
 			sd_scr[r++] = *EMMC_DATA;
 	}
 	if(r != 2) 
 		return SD_TIMEOUT;
+
 	if(sd_scr[0] & SCR_SD_BUS_WIDTH_4) {
 		sd_cmd(CMD_SET_BUS_WIDTH, sd_rca|2);
 		if(sd_err)
 			return sd_err;
 		*EMMC_CONTROL0 |= C0_HCTL_DWITDH;
 	}
+	*/
 	// add software flag
 	sd_scr[0] &= ~SCR_SUPP_CCS;
 	sd_scr[0] |= ccs;
@@ -452,27 +445,29 @@ int32_t sd_init(dev_t* dev) {
 }
 
 void sd_dev_handle(dev_t* dev) {
-	if(_sdc.rxdone == 1)
-		return;
-
-	uint32_t d;
-	if((sd_int(INT_READ_RDY, 0)) != 0) {
-		return;
+  uint32_t r = *EMMC_INTERRUPT;
+  if (r & INT_CMD_DONE) {
+		_sdc.cmd_done = 1;
+ 		*EMMC_INTERRUPT = r;
 	}
-	uint32_t* buf = (uint32_t*)_sdc.rxbuf_index;
-	for(d=0; d<128; d++)
-		buf[d] = *EMMC_DATA;
 
-	_sdc.rxbuf_index += 512;
-	_sdc.rxcount -= 512;
-	proc_wakeup((uint32_t)dev);
-	if(_sdc.rxcount == 0) {
-		_sdc.rxdone = 1;
-		sd_cmd(CMD_STOP_TRANS,0);
-		return;
+	if(_sdc.rxdone == 0) {
+		uint32_t d;
+		uint32_t* buf = (uint32_t*)_sdc.rxbuf_index;
+		for(d=0; d<128; d++)
+			buf[d] = *EMMC_DATA;
+		*EMMC_STATUS = *EMMC_STATUS;
+		_sdc.rxbuf_index += 512;
+		_sdc.rxcount -= 512;
+		proc_wakeup((uint32_t)dev);
+		if(_sdc.rxcount == 0) {
+			_sdc.rxdone = 1;
+			sd_cmd(CMD_STOP_TRANS,0);
+			return;
+		}
+		_sdc.block++;
+		sd_readblock(_sdc.block);
 	}
-	_sdc.block++;
-	sd_readblock(_sdc.block);
 }
 
 int32_t sd_dev_read(dev_t* dev, int32_t block) {
