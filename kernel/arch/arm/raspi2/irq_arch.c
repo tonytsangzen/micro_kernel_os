@@ -7,6 +7,7 @@
 #include <kstring.h>
 #include <arch.h>
 #include "timer_arch.h"
+#include <dev/sd.h>
 
 /* memory mapping for the prime interrupt controller */
 #define PIC (MMIO_BASE + 0xB200)
@@ -76,5 +77,6 @@ uint32_t gic_get_irqs(void) {
 	if(uart_ready_to_recv() == 0) {
 		ret |= IRQ_UART0;
 	}
+	ret |= IRQ_SDC;
 	return ret;
 }

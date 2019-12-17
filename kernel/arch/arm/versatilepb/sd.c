@@ -83,9 +83,9 @@
 
 // shared variables between SDC driver and interrupt handler
 typedef struct {
-	char *rxbuf_index;
 	char rxbuf[SD_BLOCK_SIZE];
 	char txbuf[SD_BLOCK_SIZE];
+	char *rxbuf_index;
 	const char *txbuf_index;
 	uint32_t rxcount, txcount, rxdone, txdone;
 } sd_t;

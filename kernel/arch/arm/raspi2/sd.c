@@ -1,7 +1,9 @@
 #include "gpio.h"
 #include <dev/sd.h>
 #include <kernel/system.h>
+#include <kernel/proc.h>
 #include <mm/mmu.h>
+#include <kstring.h>
 
 #define SD_OK                0
 #define SD_TIMEOUT          -1
@@ -101,6 +103,18 @@
 uint32_t sd_scr[2], sd_ocr, sd_rca, sd_hv;
 int32_t sd_err;
 
+// shared variables between SDC driver and interrupt handler
+typedef struct {
+	int32_t block;
+	char rxbuf[SD_BLOCK_SIZE];
+	char txbuf[SD_BLOCK_SIZE];
+	char *rxbuf_index;
+	const char *txbuf_index;
+	uint32_t rxcount, txcount, rxdone, txdone;
+} sd_t;
+
+static sd_t _sdc;
+
 /**
  * Wait for data or command ready
  */
@@ -114,11 +128,15 @@ static int32_t sd_status(uint32_t mask) {
 /**
  * Wait for interrupt
  */
-static int32_t sd_int(uint32_t mask) {
+static int32_t sd_int(uint32_t mask, int32_t wait) {
 	uint32_t r, m = (mask | INT_ERROR_MASK);
 	int32_t cnt = 1000000; 
-	while((*EMMC_INTERRUPT & m) == 0 && cnt--)
-		_delay_msec(1);
+	while((*EMMC_INTERRUPT & m) == 0 && cnt--) {
+		if(wait != 0)
+			_delay_msec(1);
+		else 
+			return -1;
+	}
 
 	r = *EMMC_INTERRUPT;
 	if(cnt<=0 || (r & INT_CMD_TIMEOUT) != 0 || (r & INT_DATA_TIMEOUT) != 0) {
@@ -159,7 +177,7 @@ static int32_t sd_cmd(uint32_t code, uint32_t arg) {
 	else if(code==CMD_SEND_IF_COND || code==CMD_APP_CMD)
 		_delay_msec(100);
 
-	if((r = sd_int(INT_CMD_DONE))) {
+	if((r = sd_int(INT_CMD_DONE, 1))) {
 		sd_err = r;
 		return 0;
 	}
@@ -191,49 +209,19 @@ static int32_t sd_cmd(uint32_t code, uint32_t arg) {
  * read a block from sd card and return the number of bytes read
  * returns 0 on error.
  */
-static int32_t sd_readblock(uint32_t lba, unsigned char *buffer, uint32_t num) {
-	uint32_t r, d, c = 0;
-	if(num < 1) 
-		num = 1;
+static int32_t sd_readblock(uint32_t lba) {
 	if(sd_status(SR_DAT_INHIBIT)) {
 		sd_err = SD_TIMEOUT;
-		return 0;
+		return -1;
 	}
 
-	uint32_t *buf = (uint32_t *)buffer;
-	if(sd_scr[0] & SCR_SUPP_CCS) {
-		if(num > 1 && (sd_scr[0] & SCR_SUPP_SET_BLKCNT)) {
-			sd_cmd(CMD_SET_BLOCKCNT,num);
-			if(sd_err)
-				return 0;
-		}
-		*EMMC_BLKSIZECNT = (num << 16) | 512;
-		sd_cmd(num == 1 ? CMD_READ_SINGLE : CMD_READ_MULTI,lba);
-		if(sd_err)
-			return 0;
-	} 
-	else {
-		*EMMC_BLKSIZECNT = (1 << 16) | 512;
+	*EMMC_BLKSIZECNT = (1 << 16) | 512;
+	if((sd_scr[0] & SCR_SUPP_CCS) == 0) {
+		sd_cmd(CMD_READ_SINGLE, (lba)*512);
+		if(sd_err != 0)
+			return -1;
 	}
-
-	while( c < num ) {
-		if((sd_scr[0] & SCR_SUPP_CCS) == 0) {
-			sd_cmd(CMD_READ_SINGLE, (lba+c)*512);
-			if(sd_err != 0)
-				return 0;
-		}
-		if((r = sd_int(INT_READ_RDY)) != 0) {
-			sd_err = r;
-			return 0;
-		}
-		for(d=0; d<128; d++)
-			buf[d] = *EMMC_DATA;
-		c++;
-		buf+=128;
-	}
-	if( num > 1 && (sd_scr[0] & SCR_SUPP_SET_BLKCNT) == 0 && (sd_scr[0] & SCR_SUPP_CCS) != 0)
-		sd_cmd(CMD_STOP_TRANS,0);
-	return sd_err!=SD_OK || c!=num? 0 : num*512;
+	return 0;
 }
 
 /**
@@ -269,7 +257,7 @@ static int32_t sd_writeblock(uint32_t lba, unsigned char *buffer, uint32_t num) 
 			if(sd_err) 
 				return 0;
 		}
-		if((r = sd_int(INT_WRITE_RDY))){
+		if((r = sd_int(INT_WRITE_RDY, 1))){
 			sd_err = r;
 			return 0;
 		}
@@ -278,7 +266,7 @@ static int32_t sd_writeblock(uint32_t lba, unsigned char *buffer, uint32_t num) 
 		c++;
 		buf+=128;
 	}
-	if((r = sd_int(INT_DATA_DONE))) {
+	if((r = sd_int(INT_DATA_DONE, 1))) {
 		sd_err = r;
 		return 0;
 	}
@@ -343,6 +331,9 @@ static int32_t sd_clk(uint32_t f) {
  */
 int32_t sd_init(dev_t* dev) {
 	(void)dev;
+	_sdc.rxdone = 1;
+	_sdc.txdone = 1;
+
 	int64_t r, cnt, ccs = 0;
 	// GPIO_CD
 	r = *GPFSEL4;
@@ -443,7 +434,7 @@ int32_t sd_init(dev_t* dev) {
 	sd_cmd(CMD_SEND_SCR, 0);
 	if(sd_err)
 		return sd_err;
-	if(sd_int(INT_READ_RDY))
+	if(sd_int(INT_READ_RDY, 1))
 		return SD_TIMEOUT;
 
 	r=0; cnt=100000; while(r<2 && cnt) {
@@ -467,22 +458,47 @@ int32_t sd_init(dev_t* dev) {
 }
 
 void sd_dev_handle(dev_t* dev) {
-	(void)dev;
-}
+	if(_sdc.rxdone == 1)
+		return;
 
-static int32_t _block = 0;
+	uint32_t d;
+	if((sd_int(INT_READ_RDY, 0)) != 0) {
+		return;
+	}
+	uint32_t* buf = (uint32_t*)_sdc.rxbuf_index;
+	for(d=0; d<128; d++)
+		buf[d] = *EMMC_DATA;
+
+	_sdc.rxbuf_index += 512;
+	_sdc.rxcount -= 512;
+	proc_wakeup((uint32_t)dev);
+	if(_sdc.rxcount == 0) {
+		_sdc.rxdone = 1;
+		sd_cmd(CMD_STOP_TRANS,0);
+		return;
+	}
+	_sdc.block++;
+	sd_readblock(_sdc.block);
+}
 
 int32_t sd_dev_read(dev_t* dev, int32_t block) {
 	(void)dev;
-	_block = block;
-	return 0;
+	if(_sdc.rxdone == 0)
+		return -1;
+
+	int32_t n = SD_BLOCK_SIZE/512;
+	_sdc.block = block*n;
+	_sdc.rxcount = SD_BLOCK_SIZE;
+	_sdc.rxdone = 0;
+	_sdc.rxbuf_index = _sdc.rxbuf;
+	return sd_readblock(_sdc.block);
 }
 
 int32_t sd_dev_read_done(dev_t* dev, void* buf) {
 	(void)dev;
-	int32_t n = SD_BLOCK_SIZE/512;
-	if(sd_readblock(_block*n, (unsigned char*)buf, n) == 0)
+	if(_sdc.rxdone == 0)
 		return -1;
+	memcpy(buf, _sdc.rxbuf, SD_BLOCK_SIZE);
 	return 0;
 }
 
