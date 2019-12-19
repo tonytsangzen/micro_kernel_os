@@ -206,7 +206,7 @@ static int32_t sd_cmd(uint32_t code, uint32_t arg) {
  * read a block from sd card and return the number of bytes read
  * returns 0 on error.
  */
-static int32_t sd_readblock(uint32_t lba) {
+static int32_t sd_read_sector(uint32_t lba) {
 	if(sd_status(SR_DAT_INHIBIT)) {
 		sd_err = SD_TIMEOUT;
 		return -1;
@@ -225,7 +225,7 @@ static int32_t sd_readblock(uint32_t lba) {
  * write a block to the sd card and return the number of bytes written
  * returns 0 on error.
  */
-static int32_t sd_writeblock(uint32_t lba, unsigned char *buffer, uint32_t num) {
+static int32_t sd_write_sector(uint32_t lba, unsigned char *buffer, uint32_t num) {
 	uint32_t r, d, c = 0;
 	if(num < 1)
 		num = 1;
@@ -475,7 +475,7 @@ void sd_dev_handle(dev_t* dev) {
 		return;
 	}
 	_sdc.block++;
-	sd_readblock(_sdc.block);
+	sd_read_sector(_sdc.block);
 }
 
 int32_t sd_dev_read(dev_t* dev, int32_t block) {
@@ -488,7 +488,7 @@ int32_t sd_dev_read(dev_t* dev, int32_t block) {
 	_sdc.rxcount = SD_BLOCK_SIZE;
 	_sdc.rxdone = 0;
 	_sdc.rxbuf_index = _sdc.rxbuf;
-	return sd_readblock(_sdc.block);
+	return sd_read_sector(_sdc.block);
 }
 
 int32_t sd_dev_read_done(dev_t* dev, void* buf) {
@@ -503,7 +503,7 @@ int32_t sd_dev_read_done(dev_t* dev, void* buf) {
 int32_t sd_dev_write(dev_t* dev, int32_t block, const void* buf) {
 	(void)dev;
 	int32_t n = SD_BLOCK_SIZE/512;
-	if(sd_writeblock(block*n, (unsigned char*)buf, n) == 0)
+	if(sd_write_sector(block*n, (unsigned char*)buf, n) == 0)
 		return -1;
 	return 0;
 }
