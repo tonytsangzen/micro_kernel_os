@@ -21,6 +21,7 @@ static pic_regs_t* _pic;
 #define IRQ_IS_GPU2(x) ((x) >= 32 && (x) < 64 )
 #define IRQ_IS_GPU1(x) ((x) < 32 )
 
+/*
 static void enable_irq(uint32_t id) {
 	uint32_t irq_pos;
 	if(IRQ_IS_BASIC(id)) {
@@ -36,6 +37,7 @@ static void enable_irq(uint32_t id) {
 		_pic->irq_gpu_enable1 |= (1 << irq_pos);
 	}
 }
+*/
 
 #define CORE0_TIMER__irqCNTL 0x40000040
 #define GPU_INTERRUPTS_ROUTING 0x4000000C
@@ -61,6 +63,7 @@ void irq_arch_init(void) {
 }
 
 void gic_set_irqs(uint32_t irqs) {
+	(void)irqs;
 	/*
   if((irqs & IRQ_SDC) != 0) {
 		enable_irq((PIC_INT_SDC + 32)); //pic->irq_enable2 EMMC int routing enabled.
