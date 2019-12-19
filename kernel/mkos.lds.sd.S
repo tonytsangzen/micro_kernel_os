@@ -5,7 +5,6 @@ INCLUDE linker.lds.S
 SECTIONS
 {
 	/*kernel will be compiled with virtual address base at 2GB*/
-	/*base_start_address = (0x80010000)*/
 	. = base_address + start_address;
 
 	PROVIDE(_kernel_start = .);
