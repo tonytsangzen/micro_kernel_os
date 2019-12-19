@@ -61,14 +61,16 @@ void irq_arch_init(void) {
 }
 
 void gic_set_irqs(uint32_t irqs) {
+	/*
   if((irqs & IRQ_SDC) != 0) {
 		enable_irq((PIC_INT_SDC + 32)); //pic->irq_enable2 EMMC int routing enabled.
 		uint32_t offset = GPU_INTERRUPTS_ROUTING - _hw_info.phy_mmio_base;
 		uint32_t vbase = MMIO_BASE+offset;
 		put32(vbase, 0x00);
 	}
-  //if((irqs & IRQ_UART0) != 0)  
-	//	enable_irq(PIC_INT_UART0);
+  if((irqs & IRQ_UART0) != 0)  
+		enable_irq(PIC_INT_UART0);
+	*/
 }
 
 uint32_t gic_get_irqs(void) {
@@ -80,18 +82,20 @@ uint32_t gic_get_irqs(void) {
 		write_cntv_tval(_timer_frq); 
 	}
 
-	if (pending & (1 << 8)) { //GPU_INT
+	/*if (pending & (1 << 8)) { //GPU_INT
 		if(_pic->irq_basic_pending & (1 << 9)) { //pending2
 			if(_pic->irq_gpu_pending2 & (1 << PIC_INT_SDC)) { //sdc int
 				ret |= IRQ_SDC;
 			}
 		}
 	}
+	*/
 
   //if((_pic->irq_basic_pending & PIC_INT_UART0) != 0)
 
 	if(uart_ready_to_recv() == 0) {
 		ret |= IRQ_UART0;
 	}
+	ret |= IRQ_SDC;
 	return ret;
 }
