@@ -53,10 +53,12 @@ static void sys_dev_block_read_done(context_t* ctx, uint32_t type, void* buf) {
 		proc_wakeup(type);
 		return;
 	}
-
+	/*
 	proc_t* proc = _current_proc;
 	proc_block_on(ctx, (uint32_t)dev);
 	proc->ctx.gpr[0] = -1;
+	*/
+	ctx->gpr[0] = -1;
 }
 
 static void sys_dev_block_write_done(context_t* ctx, uint32_t type) {
@@ -73,9 +75,12 @@ static void sys_dev_block_write_done(context_t* ctx, uint32_t type) {
 		return;
 	}
 
+	/*
 	proc_t* proc = _current_proc;
 	proc_block_on(ctx, (uint32_t)dev);
 	proc->ctx.gpr[0] = -1;
+	*/
+	ctx->gpr[0] = -1;
 }
 
 static int32_t sys_dev_op(uint32_t type, int32_t opcode, int32_t arg) {
