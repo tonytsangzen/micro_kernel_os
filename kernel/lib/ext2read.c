@@ -16,7 +16,6 @@ static int32_t sd_read(int32_t block, void* buf) {
 		return -1;
 
 	while(1) {
-		sd_dev_handle(dev);
 		if(dev_block_read_done(dev, buf)  == 0)
 			break;
 	}

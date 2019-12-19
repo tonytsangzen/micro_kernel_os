@@ -496,6 +496,7 @@ int32_t sd_dev_read(dev_t* dev, int32_t block) {
 
 int32_t sd_dev_read_done(dev_t* dev, void* buf) {
 	(void)dev;
+	sd_dev_handle(dev);
 	if(_sdc.rxdone == 0)
 		return -1;
 	memcpy(buf, _sdc.rxbuf, SD_BLOCK_SIZE);
