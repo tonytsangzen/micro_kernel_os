@@ -120,7 +120,7 @@ static sd_t _sdc;
  */
 static int32_t sd_status(uint32_t mask) {
 	int32_t cnt = 1000000; 
-	while((*EMMC_STATUS & mask) != 0 && (*EMMC_INTERRUPT & INT_ERROR_MASK) == 0 && cnt > 0); //_delay(10000);
+	while((*EMMC_STATUS & mask) != 0 && (*EMMC_INTERRUPT & INT_ERROR_MASK) == 0 && cnt > 0); //_delay(100);
 	return (cnt <= 0 || (*EMMC_INTERRUPT & INT_ERROR_MASK)) ? SD_ERROR : SD_OK;
 }
 
@@ -170,9 +170,9 @@ static int32_t sd_cmd(uint32_t code, uint32_t arg) {
 	*EMMC_ARG1 = arg;
 	*EMMC_CMDTM = code;
 	if(code == CMD_SEND_OP_COND)
-		_delay(1000); 
+		_delay(100); 
 	else if(code==CMD_SEND_IF_COND || code==CMD_APP_CMD)
-		_delay(1000);
+		_delay(100);
 
 	if((r = sd_int(INT_CMD_DONE, 1))) {
 		sd_err = r;
