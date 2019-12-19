@@ -82,20 +82,19 @@ uint32_t get_free_mem_size(void) {
 	uint32_t result = 0;
 	page_list_t *current_page = 0;
 
-	/* iterate over free 1k pages */
+	// iterate over free 1k pages
 	current_page = _free_list1k;
 	while (current_page != 0) {
 		result += 1024;
 		current_page = current_page->next;
 	}
 
-	/* iterate over free 4k pages */
+	// iterate over free 4k pages
 	current_page = _free_list4k;
 	while (current_page != 0) {
 		result += 4096;
 		current_page = current_page->next;
 	}
-
 	return result;
 }
 

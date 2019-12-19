@@ -62,7 +62,7 @@ static void init_allocable_mem(void) {
 		_hw_info.phy_mem_size,
 		AP_RW_D);
 
-	kalloc_init(ALLOCATABLE_MEMORY_START, P2V(_hw_info.phy_mem_size));
+	kalloc_init(ALLOCATABLE_MEMORY_START, P2V(_hw_info.phy_mem_size) - 64*MB);
 }
 
 static int32_t load_init(void) {

@@ -335,7 +335,6 @@ static int32_t sys_vfs_get_by_fd(int32_t fd, fsinfo_t* info) {
 static int32_t sys_load_elf(context_t* ctx, const char* cmd, void* elf, uint32_t elf_size) {
 	if(elf == NULL)
 		return -1;
-	
 	str_cpy(_current_proc->cmd, cmd);
 	if(proc_load_elf(_current_proc, elf, elf_size) != 0)
 		return -1;

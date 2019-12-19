@@ -9,6 +9,12 @@ enum {
 };
 
 enum {
+	DEV_STATE_OFF = 0,
+	DEV_STATE_ON,
+	DEV_STATE_INITED
+};
+
+enum {
 	DEV_NULL = 0,
 	DEV_UART0,
 	DEV_KEYB,

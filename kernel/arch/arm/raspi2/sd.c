@@ -132,9 +132,7 @@ static int32_t sd_int(uint32_t mask, int32_t wait) {
 	uint32_t r, m = (mask | INT_ERROR_MASK);
 	int32_t cnt = 1000000; 
 	while((*EMMC_INTERRUPT & m) == 0 && cnt--) {
-		if(wait != 0)
-			_delay(100000);
-		else 
+		if(wait == 0)
 			return -1;
 	}
 

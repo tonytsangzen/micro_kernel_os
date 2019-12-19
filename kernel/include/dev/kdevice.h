@@ -6,6 +6,7 @@
 
 typedef struct st_dev {
 	int32_t type;
+	uint32_t state;
 
 	int32_t (*ready_read)(struct st_dev* p);
 	int32_t (*ready_write)(struct st_dev* p);

@@ -40,6 +40,7 @@ void dev_init(void) {
 	dev->io.ch.inputch = uart_inputch;
 	dev->io.ch.read = char_dev_read;
 	dev->io.ch.write = uart_write;
+	dev->state = DEV_STATE_INITED;
 
 	keyb_init();
 	dev = &_devs[DEV_KEYB];
@@ -49,6 +50,7 @@ void dev_init(void) {
 	//dev->ready_read = char_dev_ready_read;
 	dev->io.ch.read = char_dev_read;
 	dev->op = keyb_dev_op;
+	dev->state = DEV_STATE_INITED;
 
 	mouse_init();
 	dev = &_devs[DEV_MOUSE];
@@ -57,6 +59,7 @@ void dev_init(void) {
 	dev->type = DEV_TYPE_CHAR;
 	dev->io.ch.read = char_dev_read;
 	dev->op = mouse_dev_op;
+	dev->state = DEV_STATE_INITED;
 
 	fb_dev_init(RES_1024x768);
 	dev = &_devs[DEV_FRAMEBUFFER];
@@ -64,6 +67,7 @@ void dev_init(void) {
 	dev->type = DEV_TYPE_CHAR;
 	dev->io.ch.write = fb_dev_write;
 	dev->op = fb_dev_op;
+	dev->state = DEV_STATE_INITED;
 
 	dev = &_devs[DEV_SD];
 	memset(dev, 0, sizeof(dev_t));
@@ -73,6 +77,7 @@ void dev_init(void) {
 	dev->io.block.read_done = sd_dev_read_done;
 	dev->io.block.write = sd_dev_write;
 	dev->io.block.write_done = sd_dev_write_done;
+	dev->state = DEV_STATE_INITED;
 }
 
 dev_t* get_dev(uint32_t type) {
