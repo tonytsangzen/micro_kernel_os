@@ -145,8 +145,8 @@ const char* str_from_int(int value, int base) {
     return _str_result;
 }
 
-const char* str_from_bool(uint8_t b) {
-	return b == 0 ? "false":"true";
+const char* str_from_bool(bool b) {
+	return b ? "true":"false";
 }
 
 const char* str_from_float(float i) {
@@ -167,6 +167,13 @@ int str_to_int(const char* str) {
 	else
 		i = (int)atoi_base(str, 10);
 	return i;
+}
+
+bool str_to_bool(const char* str) {
+	if(strcmp(str, "true") == 0 ||
+			strcmp(str, "TRUE") == 0)
+		return true;
+	return false;
 }
 
 float str_to_float(const char* str) {

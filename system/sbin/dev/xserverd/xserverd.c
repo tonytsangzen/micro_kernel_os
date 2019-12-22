@@ -228,27 +228,37 @@ static void x_push_event(xview_t* view, xview_event_t* e, uint8_t must) {
 }
 
 static void push_view(x_t* x, xview_t* view) {
-	if(x->view_tail != NULL) {
+	if((view->xinfo.style & X_STYLE_NO_FOCUS) == 0) {
+		if(x->view_tail != NULL) {
+			xview_event_t* e = (xview_event_t*)malloc(sizeof(xview_event_t));
+			e->next = NULL;
+			e->event.type = XEVT_WIN;
+			e->event.value.window.event = XEVT_WIN_UNFOCUS;
+			x_push_event(x->view_tail, e, 1);
+
+			x->view_tail->next = view;
+			view->prev = x->view_tail;
+			x->view_tail = view;
+		}
+		else {
+			x->view_tail = x->view_head = view;
+		}
 		xview_event_t* e = (xview_event_t*)malloc(sizeof(xview_event_t));
 		e->next = NULL;
 		e->event.type = XEVT_WIN;
-		e->event.value.window.event = XEVT_WIN_UNFOCUS;
-		x_push_event(x->view_tail, e, 1);
-
-		x->view_tail->next = view;
-		view->prev = x->view_tail;
-		x->view_tail = view;
+		e->event.value.window.event = XEVT_WIN_FOCUS;
+		x_push_event(view, e, 1);
 	}
 	else {
-		x->view_tail = x->view_head = view;
+		if(x->view_head != NULL) {
+			x->view_head->prev = view;
+			view->next = x->view_head;
+			x->view_head = view;
+		}
+		else {
+			x->view_tail = x->view_head = view;
+		}
 	}
-
-	xview_event_t* e = (xview_event_t*)malloc(sizeof(xview_event_t));
-	e->next = NULL;
-	e->event.type = XEVT_WIN;
-	e->event.value.window.event = XEVT_WIN_FOCUS;
-	x_push_event(view, e, 1);
-
 	x_dirty(x);
 }
 

@@ -97,7 +97,7 @@ int main(int argc, char* argv[]) {
 			24,
 			items.icon_size, 
 			items.icon_size * items.num,
-			"launcher", X_STYLE_NO_FRAME | X_STYLE_ALPHA);
+			"launcher", X_STYLE_NO_FRAME | X_STYLE_ALPHA | X_STYLE_NO_FOCUS);
 	draw(x, &items);
 
 	xinfo_t xinfo;

@@ -22,10 +22,13 @@
 typedef struct {
 	int fb_fd;
 	int shm_id;
+	int console_num;
+	int cid;
+	bool start_x;
 	console_t console;
-} init_console_t;
+} init_t;
 
-static void init_console(init_console_t* console) {
+static void init_console(init_t* init) {
 	int fb_fd = open("/dev/fb0", O_RDONLY);
 	if(fb_fd < 0) {
 		return;
@@ -57,20 +60,21 @@ static void init_console(init_console_t* console) {
 	graph_t* g = graph_new(gbuf, info.width, info.height);
 	proto_clear(&out);
 
-	console->fb_fd = fb_fd;
-	console->shm_id = id;
-	console_init(&console->console);
-	console->console.g = g;
-	console->console.font = font_by_name("8x16");
-	console->console.fg_color = 0xffffffff;
-	console->console.bg_color = 0xff000000;
-	console_reset(&console->console);
+	init->fb_fd = fb_fd;
+	init->shm_id = id;
+	console_init(&init->console);
+	init->console.g = g;
+	init->console.font = font_by_name("8x16");
+	init->console.fg_color = 0xffffffff;
+	init->console.bg_color = 0xff000000;
+	console_reset(&init->console);
 }
 
-static void close_console(init_console_t* console) {
-	graph_free(console->console.g);
-	shm_unmap(console->shm_id);
-	close(console->fb_fd);
+static void close_console(init_t* init) {
+	graph_free(init->console.g);
+	shm_unmap(init->shm_id);
+	close(init->fb_fd);
+	init->fb_fd = -1;
 }
 
 static void outc(char c, void* p) {
@@ -78,22 +82,22 @@ static void outc(char c, void* p) {
 	s[0] = c;
 	s[1] = 0;
 
-	init_console_t* console = (init_console_t*)p;
-	if(console->fb_fd < 0) {
+	init_t* init = (init_t*)p;
+	if(init->fb_fd < 0) {
 		uprintf("%s", s);
 		return;
 	}
-	console_put_string(&console->console, s);
+	console_put_string(&init->console, s);
 }
  
-static void console_out(init_console_t* console, const char* format, ...) {
+static void console_out(init_t* init, const char* format, ...) {
 	va_list ap;
   va_start(ap, format);
-  v_printf(outc, console, format, ap);
+  v_printf(outc, init, format, ap);
   va_end(ap);
 
-	if(console->fb_fd >= 0) {
-		flush(console->fb_fd);
+	if(init->fb_fd >= 0) {
+		flush(init->fb_fd);
 	}
 }
 
@@ -102,7 +106,7 @@ static void set_keyb_table(int type) {
 	syscall3(SYS_DEV_OP, DEV_KEYB, DEV_OP_SET, type);
 }
 
-static void check_keyb_table(init_console_t* console) {
+static void check_keyb_table(init_t* init) {
 	const char* fname = "/etc/keyb.conf";
 	const char* key = "keyb_table";
 	sconf_t* conf = sconf_load(fname);
@@ -117,7 +121,7 @@ static void check_keyb_table(init_console_t* console) {
 	sconf_free(conf);
 
 	int type = 0;
-	console_out(console, "\n  ENTER to continue......\n");
+	console_out(init, "\n  ENTER to continue......\n");
 	while(1) {
 		uint8_t v;
 		int rd = syscall3(SYS_DEV_CHAR_READ, (int32_t)DEV_KEYB, (int32_t)&v, 1);
@@ -145,8 +149,8 @@ static void check_keyb_table(init_console_t* console) {
 }
 */
 
-static void run_init_root(init_console_t* console, const char* cmd) {
-	console_out(console, "init: mounting %32s ", "/");
+static void run_init_root(init_t* init, const char* cmd) {
+	console_out(init, "init: mounting %32s ", "/");
 	int pid = fork();
 	if(pid == 0) {
 		ext2_t ext2;
@@ -164,12 +168,12 @@ static void run_init_root(init_console_t* console, const char* cmd) {
 		free(data);
 	}
 	vfs_mount_wait("/dev", pid);
-	console_out(console, "[ok]\n");
+	console_out(init, "[ok]\n");
 }
 
-static void run_dev(init_console_t* console, const char* cmd, const char* mnt, bool prompt) {
+static void run_dev(init_t* init, const char* cmd, const char* mnt, bool prompt) {
 	if(prompt)
-		console_out(console, "init: mounting %32s ", mnt);
+		console_out(init, "init: mounting %32s ", mnt);
 
 	int pid = fork();
 	if(pid == 0) {
@@ -180,7 +184,7 @@ static void run_dev(init_console_t* console, const char* cmd, const char* mnt, b
 	vfs_mount_wait(mnt, pid);
 
 	if(prompt)
-		console_out(console, "[ok]\n");
+		console_out(init, "[ok]\n");
 }
 
 static void run(const char* cmd) {
@@ -196,80 +200,114 @@ static void init_stdio(void) {
 	dup2(fd, 1);
 }
 
-static int _cid;
-static int _cnum;
-
-static void kevent_handle(int32_t type, rawdata_t* data) {
+static void kevent_handle(init_t* init, int32_t type, rawdata_t* data) {
 	(void)data;
 	if(type == KEV_CONSOLE_SWITCH) {
 		char id[2];
 		const char* s = get_global("current_console");
 		if(s[0] == 'x') {
 			set_global("current_console", "0");
-			_cid = 0;
+			init->cid = 0;
 		}
 		else {
-			_cid++;
-			if(_cid >= _cnum) {
-				set_global("current_console", "x");
-				_cid = 0;
+			init->cid++;
+			if(init->cid >= init->console_num) {
+				if(init->start_x)
+					set_global("current_console", "x");
+				else
+					set_global("current_console", "0");
+				init->cid = 0;
 			}
 			else {
 				id[1] = 0;
-				id[0] = '0' + _cid;
+				id[0] = '0' + init->cid;
 				set_global("current_console", id);
 			}
 		}
 	}
 }
 
-int main(int argc, char** argv) {
-	(void)argc;
-	(void)argv;
-	init_console_t console;
-	console.fb_fd = -1;
+static int32_t read_conf(init_t* init, const char* fname) {
+	init->console_num = 2;
+	init->start_x = false;
 
-	setenv("OS", "mkos");
-	setenv("PATH", "/sbin:/bin");
-	set_global("current_console", "x");
+	sconf_t *sconf = sconf_load(fname);	
+	if(sconf == NULL)
+		return -1;
 
-	console_out(&console, "\n[init process started]\n");
-	/*mount root fs*/
-	run_init_root(&console, "/sbin/dev/sdd");
+	const char* v = sconf_get(sconf, "console_num");
+	if(v[0] != 0) 
+		init->console_num = atoi(v);
+	v = sconf_get(sconf, "start_x");
+	if(v[0] != 0) 
+		init->start_x = str_to_bool(v);
+	sconf_free(sconf);
+	return 0;
+}
 
-	run_dev(&console, "/sbin/dev/ttyd", "/dev/tty0", true);
+static void tty_shell(init_t* init) {
 	/*run tty shell*/
+	run_dev(init, "/sbin/dev/ttyd", "/dev/tty0", true);
 	init_stdio();
 	setenv("CONSOLE_ID", "tty");
 	run("/bin/session");
+}
 
+static void init_fb(init_t* init) {
 	/*mount framebuffer device*/
-	run_dev(&console, "/sbin/dev/fbd", "/dev/fb0", false);
-	/*init framebuffer console*/
-	init_console(&console);
-	//check_keyb_table(&console);
+	run_dev(init, "/sbin/dev/fbd", "/dev/fb0", false);
+	/*init framebuffer init*/
+	init_console(init);
+	//check_keyb_table(&init);
+}
+	
+static void load_devs(init_t* init) {
+	run_dev(init, "/sbin/dev/nulld", "/dev/null", true);
+	run_dev(init, "/sbin/dev/moused", "/dev/mouse0", true);
+	run_dev(init, "/sbin/dev/keybd", "/dev/keyb0", true);
+	close_console(init);
+}
 
-	run_dev(&console, "/sbin/dev/nulld", "/dev/null", true);
-	run_dev(&console, "/sbin/dev/moused", "/dev/mouse0", true);
-	run_dev(&console, "/sbin/dev/keybd", "/dev/keyb0", true);
-	run_dev(&console, "/sbin/dev/xserverd", "/dev/x", true);
-	close_console(&console);
-
-	/*run screen console shell*/
-	_cnum = 2;
-	_cid = 0;
+static void console_shells(init_t* init) {
+	/*run screen init shell*/
 	int i = 0;
-	while(i < _cnum) {
+	while(i < init->console_num) {
 		char cmd[64];
 		char cid[16];
-		snprintf(cid, 15, "console-%d/%d", i+1, _cnum);
+		snprintf(cid, 15, "console-%d/%d", i+1, init->console_num);
 		setenv("CONSOLE_ID", cid);
 		snprintf(cmd, 64, "/bin/console %d", i);
 		run(cmd);
 		i++;
 	}
+}
 
-	run("/bin/launcher");
+int main(int argc, char** argv) {
+	(void)argc;
+	(void)argv;
+	init_t init;
+	memset(&init, 0, sizeof(init_t));
+	init.fb_fd = -1;
+
+	setenv("OS", "mkos");
+	setenv("PATH", "/sbin:/bin");
+	set_global("current_console", "0");
+
+	console_out(&init, "\n[init process started]\n");
+	/*mount root fs*/
+	run_init_root(&init, "/sbin/dev/sdd");
+	read_conf(&init, "/etc/init.conf");
+
+	tty_shell(&init);
+	init_fb(&init);
+	load_devs(&init);
+	console_shells(&init);
+
+	if(init.start_x) {
+		set_global("current_console", "x");
+		run_dev(&init, "/sbin/dev/xserverd", "/dev/x", false);
+		run("/bin/launcher");
+	}
 
 	while(1) {
 		int32_t type;
@@ -277,7 +315,7 @@ int main(int argc, char** argv) {
 		if(syscall2(SYS_GET_KEVENT, (int32_t)&type, (int32_t)&data) != 0) {
 			continue;
 		}
-		kevent_handle(type, &data);
+		kevent_handle(&init, type, &data);
 	}
 	return 0;
 }

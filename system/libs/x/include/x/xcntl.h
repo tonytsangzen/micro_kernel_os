@@ -24,6 +24,7 @@ enum {
 #define X_STYLE_NO_FRAME  0x1
 #define X_STYLE_NO_TITLE  0x2
 #define X_STYLE_ALPHA     0x4
+#define X_STYLE_NO_FOCUS  0x8
 
 #define X_TITLE_MAX 64
 typedef struct {

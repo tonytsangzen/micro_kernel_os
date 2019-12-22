@@ -2,6 +2,7 @@
 #define MARIO_STRING
 
 #include <stdint.h>
+#include <stdbool.h>
 
 /**
 string functions.
@@ -24,8 +25,9 @@ char* str_add_float(str_t* str, float f);
 void str_free(str_t* str);
 const char* str_from_int(int i, int base);
 const char* str_from_float(float f);
-const char* str_from_bool(uint8_t b);
+const char* str_from_bool(bool b);
 int str_to_int(const char* str);
+bool str_to_bool(const char* str);
 float str_to_float(const char* str);
 int str_to(const char* str, char c, str_t* res, uint8_t skipspace);
 
