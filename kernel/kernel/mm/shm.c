@@ -5,6 +5,7 @@
 #include <kernel/kernel.h>
 #include <kernel/hw_info.h>
 #include <kernel/proc.h>
+#include <kernel/system.h>
 #include <kstring.h>
 #include <kprintf.h>
 
@@ -168,7 +169,7 @@ int32_t shm_alloced_size(void) {
 
 
 static share_mem_t* free_item(share_mem_t* it) {
-	//shm_unmap_pages(it->addr, it->pages);
+	shm_unmap_pages(it->addr, it->pages);
 	it->used = 0;
 	if(it->next != NULL && !it->next->used) { //merge right free items
 		share_mem_t* p = it->next;
@@ -258,6 +259,7 @@ void* shm_proc_map(int32_t pid, int32_t id) {
 		addr += PAGE_SIZE;
 	}
 	it->refs++;
+	_flush_tlb();
 	return (void*)it->addr;
 }
 
@@ -292,6 +294,7 @@ int32_t shm_proc_unmap(int32_t pid, int32_t id) {
 	if(it->refs <= 0) {
 		free_item(it);
 	}
+	_flush_tlb();
 	return 0;
 }
 

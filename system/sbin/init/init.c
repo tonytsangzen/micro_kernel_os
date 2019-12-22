@@ -167,8 +167,10 @@ static void run_init_root(init_console_t* console, const char* cmd) {
 	console_out(console, "[ok]\n");
 }
 
-static void run_dev(init_console_t* console, const char* cmd, const char* mnt) {
-	console_out(console, "init: mounting %32s ", mnt);
+static void run_dev(init_console_t* console, const char* cmd, const char* mnt, bool prompt) {
+	if(prompt)
+		console_out(console, "init: mounting %32s ", mnt);
+
 	int pid = fork();
 	if(pid == 0) {
 		char fcmd[FS_FULL_NAME_MAX];
@@ -176,7 +178,9 @@ static void run_dev(init_console_t* console, const char* cmd, const char* mnt) {
 		exec(fcmd);
 	}
 	vfs_mount_wait(mnt, pid);
-	console_out(console, "[ok]\n");
+
+	if(prompt)
+		console_out(console, "[ok]\n");
 }
 
 static void run(const char* cmd) {
@@ -232,25 +236,24 @@ int main(int argc, char** argv) {
 	console_out(&console, "\n[init process started]\n");
 	/*mount root fs*/
 	run_init_root(&console, "/sbin/dev/sdd");
-	/*mount framebuffer device*/
-	run_dev(&console, "/sbin/dev/fbd", "/dev/fb0");
-	/*init framebuffer console*/
-	init_console(&console);
-	//check_keyb_table(&console);
 
-	/*load reset devices*/
-	run_dev(&console, "/sbin/dev/ttyd", "/dev/tty0");
-	run_dev(&console, "/sbin/dev/nulld", "/dev/null");
-	run_dev(&console, "/sbin/dev/moused", "/dev/mouse0");
-	run_dev(&console, "/sbin/dev/keybd", "/dev/keyb0");
-	run_dev(&console, "/sbin/dev/xserverd", "/dev/x");
-
-	close_console(&console);
-
+	run_dev(&console, "/sbin/dev/ttyd", "/dev/tty0", true);
 	/*run tty shell*/
 	init_stdio();
 	setenv("CONSOLE_ID", "tty");
 	run("/bin/session");
+
+	/*mount framebuffer device*/
+	run_dev(&console, "/sbin/dev/fbd", "/dev/fb0", false);
+	/*init framebuffer console*/
+	init_console(&console);
+	//check_keyb_table(&console);
+
+	run_dev(&console, "/sbin/dev/nulld", "/dev/null", true);
+	run_dev(&console, "/sbin/dev/moused", "/dev/mouse0", true);
+	run_dev(&console, "/sbin/dev/keybd", "/dev/keyb0", true);
+	run_dev(&console, "/sbin/dev/xserverd", "/dev/x", true);
+	close_console(&console);
 
 	/*run screen console shell*/
 	_cnum = 2;

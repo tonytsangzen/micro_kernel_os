@@ -52,11 +52,9 @@ static int32_t proc_expand(void* p, int32_t page_num) {
 	return proc_expand_mem((proc_t*)p, page_num);
 }
 
-/*
 static void proc_shrink(void* p, int32_t page_num) {
 	proc_shrink_mem((proc_t*)p, page_num);
 }
-*/
 
 static void proc_init_space(proc_t* proc) {
 	page_dir_entry_t *vm = _proc_vm[proc->pid];
@@ -70,7 +68,7 @@ static void proc_init_space(proc_t* proc) {
 	proc->space->malloc_man.head = NULL;
 	proc->space->malloc_man.tail = NULL;
 	proc->space->malloc_man.expand = proc_expand;
-	//proc->space->malloc_man.shrink = proc_shrink;
+	proc->space->malloc_man.shrink = proc_shrink;
 	proc->space->malloc_man.get_mem_tail = proc_get_mem_tail;
 	memset(&proc->space->envs, 0, sizeof(env_t)*ENV_MAX);
 }
@@ -89,18 +87,21 @@ void proc_switch(context_t* ctx, proc_t* to){
 		page_dir_entry_t *vm = to->space->vm;
 		__set_translation_table_base((uint32_t) V2P(vm));
 		_current_proc = to;
+		_flush_tlb();
 	}
 }
 
 /* proc_exapnad_memory expands the heap size of the given process. */
 int32_t proc_expand_mem(proc_t *proc, int32_t page_num) {
 	int32_t i;
+	int32_t res = 0;
 	for (i = 0; i < page_num; i++) {
 		char *page = kalloc4k();
 		if(page == NULL) {
 			printf("proc expand failed!! free mem size: (%x), pid:%d, pages ask:%d\n", get_free_mem_size(), proc->pid, page_num);
-			//proc_shrink_mem(proc, i);
-			return -1;
+			proc_shrink_mem(proc, i);
+			res = -1;
+			break;
 		}
 		memset(page, 0, PAGE_SIZE);
 		map_page(proc->space->vm,
@@ -109,7 +110,8 @@ int32_t proc_expand_mem(proc_t *proc, int32_t page_num) {
 				AP_RW_RW);
 		proc->space->heap_size += PAGE_SIZE;
 	}
-	return 0;
+	_flush_tlb();
+	return res;
 }
 
 /* proc_shrink_memory shrinks the heap size of the given process. */
@@ -129,6 +131,7 @@ void proc_shrink_mem(proc_t* proc, int32_t page_num) {
 		if (proc->space->heap_size == 0)
 			break;
 	}
+	_flush_tlb();
 }
 
 static void proc_close_files(proc_t *proc) {
@@ -364,6 +367,7 @@ static void proc_free_heap(proc_t* proc) {
 	proc_shrink_mem(proc, proc->space->heap_size/PAGE_SIZE);
 	proc->space->malloc_man.head = NULL;
 	proc->space->malloc_man.tail = NULL;
+	_flush_tlb();
 }
 
 /* proc_load loads the given ELF process image into the given process. */

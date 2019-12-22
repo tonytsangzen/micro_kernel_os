@@ -550,6 +550,7 @@ static int32_t sys_framebuffer(void) {
   uint32_t fb_base = (uint32_t)V2P(_framebuffer_base); //framebuffer addr
   uint32_t fb_end = (uint32_t)V2P(_framebuffer_end); //framebuffer addr
   map_pages(_current_proc->space->vm, fb_base, fb_base, fb_end, AP_RW_RW);
+	_flush_tlb();
 	return fb_base;
 }
 
