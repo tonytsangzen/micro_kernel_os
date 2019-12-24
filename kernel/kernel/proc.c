@@ -366,7 +366,6 @@ static void proc_free_heap(proc_t* proc) {
 	proc_shrink_mem(proc, proc->space->heap_size/PAGE_SIZE);
 	proc->space->malloc_man.head = NULL;
 	proc->space->malloc_man.tail = NULL;
-	_flush_tlb();
 }
 
 /* proc_load loads the given ELF process image into the given process. */
