@@ -9,7 +9,7 @@
 #define KCLK  0x0C
 #define KISTA 0x10
 
-#define KEYBOARD_BASE (MMIO_BASE+0x6000)
+#define KEYBOARD_BASE (_mmio_base+0x6000)
 
 int32_t keyb_init() {
   put8(KEYBOARD_BASE + KCNTL, 0x10); // bit4=Enable bit0=INT on

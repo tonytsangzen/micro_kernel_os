@@ -79,7 +79,7 @@
 #define FIFO          0x80
 
 #define SD_RCA  0x45670000 // QEMU's hard-coded RCA
-#define SD_BASE (MMIO_BASE + 0x5000) // PL180 SD_BASE address
+#define SD_BASE (_mmio_base + 0x5000) // PL180 SD_BASE address
 
 // shared variables between SDC driver and interrupt handler
 typedef struct {

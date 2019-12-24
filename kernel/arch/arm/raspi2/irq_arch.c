@@ -11,7 +11,7 @@
 #include <dev/sd.h>
 
 /* memory mapping for the prime interrupt controller */
-#define PIC (MMIO_BASE + 0xB200)
+#define PIC (_mmio_base + 0xB200)
 #define PIC_INT_UART0 (25+64)
 #define PIC_INT_SDC (30)
 
@@ -44,7 +44,7 @@ static void enable_irq(uint32_t id) {
 
 static void routing_core0_irq(void) {
   uint32_t offset = CORE0_TIMER__irqCNTL - _hw_info.phy_mmio_base;
-  uint32_t vbase = MMIO_BASE+offset;
+  uint32_t vbase = _mmio_base+offset;
   put32(vbase, 0x08);
 }
 
@@ -52,7 +52,7 @@ static void routing_core0_irq(void) {
 static uint32_t read_core0_pending(void) {
   uint32_t tmp;
   uint32_t offset = CORE0__irq_SOURCE -  _hw_info.phy_mmio_base;
-  uint32_t vbase = MMIO_BASE+offset;
+  uint32_t vbase = _mmio_base+offset;
   tmp = get32(vbase);
   return tmp;
 }
@@ -68,7 +68,7 @@ void gic_set_irqs(uint32_t irqs) {
   if((irqs & IRQ_SDC) != 0) {
 		enable_irq((PIC_INT_SDC + 32)); //pic->irq_enable2 EMMC int routing enabled.
 		uint32_t offset = GPU_INTERRUPTS_ROUTING - _hw_info.phy_mmio_base;
-		uint32_t vbase = MMIO_BASE+offset;
+		uint32_t vbase = _mmio_base+offset;
 		put32(vbase, 0x00);
 	}
   if((irqs & IRQ_UART0) != 0)  

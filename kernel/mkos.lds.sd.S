@@ -9,9 +9,10 @@ SECTIONS
 
 	PROVIDE(_kernel_start = .);
 
- .text : AT(start_address)
+	.text : AT(start_address)
 	{
-		*(.text)
+		KEEP(*(.text.boot))
+			*(.text)
 	}
 
 	.data : 

@@ -3,7 +3,7 @@
 #include <kernel/irq.h>
 #include "timer_arch.h"
 
-/*#define ARM_TIMER_BASE (MMIO_BASE + 0xB400)
+/*#define ARM_TIMER_BASE (_mmio_base + 0xB400)
 #define ARM_TIMER_LOAD ARM_TIMER_BASE
 #define ARM_TIMER_CTRL ARM_TIMER_BASE+(4*2)
 #define ARM_TIMER_CTRL_32BIT (1<<1)
@@ -11,7 +11,7 @@
 #define ARM_TIMER_CTRL_IRQ_ENABLE (1<<5)
 #define ARM_TIMER_CTRL_PRESCALE_256 (2<<2)
 
-#define PIC_BASE (MMIO_BASE + 0xB200)
+#define PIC_BASE (_mmio_base + 0xB200)
 #define PIC_ENABLE_BASIC_IRQ (PIC_BASE+(4*6))
 #define IRQ_ARM_TIMER_BIT 0
 

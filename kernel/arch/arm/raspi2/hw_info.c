@@ -10,7 +10,7 @@ void hw_info_init(void) {
 	_hw_info.mmio_size = 4*MB;
 }
 
-#define MAILBOX_BASE (MMIO_BASE | 0x0000B880)
+#define MAILBOX_BASE (_mmio_base | 0x0000B880)
 
 #define MAIL0_BASE    (MAILBOX_BASE+0x00)
 #define MAIL0_READ    (MAILBOX_BASE+0x00)

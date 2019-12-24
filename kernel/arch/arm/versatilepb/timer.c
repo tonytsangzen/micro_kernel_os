@@ -2,16 +2,17 @@
 #include <dev/timer.h>
 #include <kernel/irq.h>
 #include <dev/gic.h>
+#include <dev/kdevice.h>
 
 /*
 The ARM Versatile 926EJS board contains two ARM SB804 dual timer modules [ARM Timers 2004]. Each timer module contains two timers, which are driven by the same clock. The base addresses of the timers are:
   Timer0: 0x101E2000, Timer1: 0x101E2020
   Timer2: 0x101E3000, Timer3: 0x101E3020
 */
-#define TIMER0 ((volatile uint32_t*)(MMIO_BASE+0x001e2000))
-#define TIMER1 ((volatile uint32_t*)(MMIO_BASE+0x001e2020))
-#define TIMER2 ((volatile uint32_t*)(MMIO_BASE+0x001e3000))
-#define TIMER3 ((volatile uint32_t*)(MMIO_BASE+0x001e3020))
+#define TIMER0 ((volatile uint32_t*)(_mmio_base+0x001e2000))
+#define TIMER1 ((volatile uint32_t*)(_mmio_base+0x001e2020))
+#define TIMER2 ((volatile uint32_t*)(_mmio_base+0x001e3000))
+#define TIMER3 ((volatile uint32_t*)(_mmio_base+0x001e3020))
 
 #define TIMER_LOAD    0x00
 #define TIMER_VALUE   0x01

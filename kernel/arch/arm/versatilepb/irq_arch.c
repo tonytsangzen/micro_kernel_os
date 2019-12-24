@@ -4,9 +4,9 @@
 #include <arch.h>
 
 /* memory mapping for the prime interrupt controller */
-#define PIC (MMIO_BASE + 0x00140000)
+#define PIC (_mmio_base + 0x00140000)
 /* memory mapping for the slave interrupt controller */
-#define SIC (MMIO_BASE + 0x00003000)
+#define SIC (_mmio_base + 0x00003000)
 
 #define PIC_INT_TIMER0 (1 << 4)
 #define PIC_INT_UART0 (1 << 12)

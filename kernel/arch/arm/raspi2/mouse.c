@@ -30,7 +30,7 @@
 #define MOUSE_IIR_TXINTR		(1 << 1)
 #define MOUSE_IIR_RXINTR		(1 << 0)
 
-#define MOUSE_BASE (MMIO_BASE+0x7000)
+#define MOUSE_BASE (_mmio_base+0x7000)
 
 static inline int32_t kmi_write(uint8_t data) {
 	int32_t timeout = 1000;

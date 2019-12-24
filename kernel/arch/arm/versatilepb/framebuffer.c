@@ -7,25 +7,25 @@ static int32_t _res = RES_640x480;
 
 static int32_t video_init(fbinfo_t *fbinfo) {
 	if(_res == RES_640x480) {
-		put32((MMIO_BASE | 0x1c), 0x2c77);
-		put32((MMIO_BASE | 0x00120000), 0x3f1f3f9c);
-		put32((MMIO_BASE | 0x00120004), 0x090b61df); 
-		put32((MMIO_BASE | 0x00120008), 0x067f1800); 
+		put32((_mmio_base | 0x1c), 0x2c77);
+		put32((_mmio_base | 0x00120000), 0x3f1f3f9c);
+		put32((_mmio_base | 0x00120004), 0x090b61df); 
+		put32((_mmio_base | 0x00120008), 0x067f1800); 
 	}
 	else if(_res == RES_800x600) {
-		put32((MMIO_BASE | 0x1c), 0x2cac);
-		put32((MMIO_BASE | 0x00120000), 0x1313a4c4);
-		put32((MMIO_BASE | 0x00120004), 0x0505f6f7);
-		put32((MMIO_BASE | 0x00120008), 0x071f1800); 
+		put32((_mmio_base | 0x1c), 0x2cac);
+		put32((_mmio_base | 0x00120000), 0x1313a4c4);
+		put32((_mmio_base | 0x00120004), 0x0505f6f7);
+		put32((_mmio_base | 0x00120008), 0x071f1800); 
 	}
 	else {
 		//1024x768
-		put32((MMIO_BASE | 0x00120000), 0x3F << 2);
-		put32((MMIO_BASE | 0x00120004), 767);
+		put32((_mmio_base | 0x00120000), 0x3F << 2);
+		put32((_mmio_base | 0x00120004), 767);
 	}	
 	
-	put32((MMIO_BASE | 0x00120010), fbinfo->pointer);
-	put32((MMIO_BASE | 0x00120018), 0x082b);
+	put32((_mmio_base | 0x00120010), fbinfo->pointer);
+	put32((_mmio_base | 0x00120018), 0x082b);
 	return 0;
 }
 

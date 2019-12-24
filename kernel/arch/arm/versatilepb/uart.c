@@ -3,7 +3,7 @@
 #include <buffer.h>
 
 /* memory mapping for the serial port */
-#define UART0 ((volatile uint32_t*)(MMIO_BASE+0x001f1000))
+#define UART0 ((volatile uint32_t*)(_mmio_base+0x001f1000))
 /* serial port register offsets */
 #define UART_DATA        0x00 
 #define UART_FLAGS       0x18
