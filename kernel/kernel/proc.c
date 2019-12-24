@@ -87,7 +87,7 @@ void proc_switch(context_t* ctx, proc_t* to){
 		page_dir_entry_t *vm = to->space->vm;
 		__set_translation_table_base((uint32_t) V2P(vm));
 		_current_proc = to;
-		_flush_tlb();
+		//_flush_tlb();
 	}
 }
 
@@ -110,7 +110,6 @@ int32_t proc_expand_mem(proc_t *proc, int32_t page_num) {
 				AP_RW_RW);
 		proc->space->heap_size += PAGE_SIZE;
 	}
-	_flush_tlb();
 	return res;
 }
 

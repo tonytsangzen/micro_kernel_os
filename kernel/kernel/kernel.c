@@ -89,6 +89,7 @@ void _kernel_entry_c(context_t* ctx) {
 	hw_info_init();
 	init_kernel_vm();  
 	uart_init();
+	uart_write(NULL, "test\n", 5);
 
 	printf("\n"
 			"------Ewok micro-kernel-------\n"
