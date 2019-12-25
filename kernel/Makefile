@@ -11,11 +11,11 @@ OBJDUMP = arm-none-eabi-objdump
 
 export QEMU_AUDIO_DRV=none
 
-ifeq ($(HOST),raspi)
+ifeq ($(MACH),raspi)
 ARCH=arm/raspi
 CFLAGS = -DRASPI
 else
-ifeq ($(HOST),raspi2)
+ifeq ($(MACH),raspi2)
 ARCH=arm/raspi
 CFLAGS = -DRASPI2
 else
@@ -49,8 +49,8 @@ CFLAGS += \
 
 LDS = mkos.lds.sd.S
 
-CFLAGS += -g
-#CFLAGS += -O2
+#CFLAGS += -g
+CFLAGS += -O2
 
 ASFLAGS = -O2 -I. -Iinclude -marm $(ARCH_QEMU_CFLAGS)
 

@@ -5,7 +5,8 @@ __entry:
 	msr cpsr, #0xD3             @ enter SVC mode with IRQ and FIQ interrupts disabled
 	ldr sp, = _svc_stack        @ initialise SVC mode stack
 	sub sp, #KERNEL_BASE
-	bl _kernel_entry_low
+	bl _kernel_entry_init
+
 	bl __enable_paging
 	bl __jump2_high_mem
 
@@ -31,10 +32,6 @@ __entry:
 	ldmia sp, { r0-r12, sp, lr }^ @ load   USR mode registers
 	add   sp, sp, #60             @ update SVC mode SP
 	movs  pc, lr                  @ return from interrupt
-
-.global dummy
-dummy:
-	bx lr
 
 halt:
 	b halt

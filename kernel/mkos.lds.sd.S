@@ -11,14 +11,16 @@ SECTIONS
 
 	.text : AT(start_address)
 	{
-			*(.text)
+		KEEP(*(.boot))
+		KEEP(*(.text.startup))
+		*(.text)
+		*(.rodata*)
 	}
-
-	.data : 
-	{ 
-		*(.data) 
+	.data : { /** data segment */
+		*(COMMON)
+		*(.data)
+		*(.bss)
 	}
-
 	.bss : 
 	{ 
 		*(.bss*)

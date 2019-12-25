@@ -88,18 +88,7 @@ static void fs_init(void) {
 	vfs_init();
 }
 
-void flush_led(void) {
-	uint32_t i = 0;
-	while(i < 2) {
-		act_led(true);
-		_delay(0x100000);
-		act_led(false);
-		_delay(0x100000);
-		i++;
-	}
-}
-
-void _kernel_entry_low(void) {
+void _kernel_entry_init(void) {
 	hw_info_init();
 	_mmio_base = get_hw_info()->phy_mmio_base;
 	flush_led();
@@ -111,7 +100,6 @@ void _kernel_entry_c(context_t* ctx) {
 	init_kernel_vm();  
 	flush_led();
 	uart_init();
-
 	printf("\n"
 			"------Ewok micro-kernel-------\n"
 			"kernel: %39s [ok]\n", "kernel mmu initing");

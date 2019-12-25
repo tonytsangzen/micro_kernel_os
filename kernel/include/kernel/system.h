@@ -14,5 +14,6 @@ extern void _delay(uint32_t count);
 extern void _delay_msec(uint32_t count);
 
 extern void _flush_tlb(void);
+extern void flush_led(void);
 
 #endif
