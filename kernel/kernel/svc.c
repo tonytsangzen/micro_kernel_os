@@ -396,7 +396,7 @@ static void	sys_get_sysinfo(sysinfo_t* info) {
 		return;
 
 	info->free_mem = get_free_mem_size();
-	info->total_mem = _hw_info.phy_mem_size;
+	info->total_mem = get_hw_info()->phy_mem_size;
 	info->shm_mem = shm_alloced_size();
 	info->kernel_tic = _kernel_tic;
 }

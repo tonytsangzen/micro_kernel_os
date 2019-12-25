@@ -10,9 +10,8 @@ typedef struct {
 	uint32_t mmio_size;
 } hw_info_t;
 
-extern hw_info_t _hw_info;
-
 extern void hw_info_init(void);
+extern hw_info_t*  get_hw_info(void);
 extern void arch_vm(page_dir_entry_t* vm);
 
 #endif

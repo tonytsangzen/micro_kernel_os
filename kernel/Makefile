@@ -11,11 +11,16 @@ OBJDUMP = arm-none-eabi-objdump
 
 export QEMU_AUDIO_DRV=none
 
-ifneq ($(HOST),)
-ARCH=$(HOST)
+ifeq ($(HOST),raspi)
+ARCH=arm/raspi
+CFLAGS = -DRASPI
 else
-CFLAGS = -DRUN_INIT
+ifeq ($(HOST),raspi2)
+ARCH=arm/raspi
+CFLAGS = -DRASPI2
+else
 ARCH=arm/versatilepb
+endif
 endif
 
 ARCH_DIR=arch
@@ -40,15 +45,14 @@ CFLAGS += \
 	-fno-builtin-strlen \
 	-fno-builtin-strncpy \
 	-fno-builtin-strncmp \
-	-std=c99 \
-	-mcpu=$(CPU)
+	-std=c99
 
 LDS = mkos.lds.sd.S
 
-#CFLAGS += -g
-CFLAGS += -O2
+CFLAGS += -g
+#CFLAGS += -O2
 
-ASFLAGS = -g -I. -Iinclude -mcpu=$(CPU)
+ASFLAGS = -O2 -I. -Iinclude -marm $(ARCH_QEMU_CFLAGS)
 
 all: $(OS).bin 
 
@@ -63,6 +67,7 @@ ARCH_OBJS = \
 	${ARCH_DIR}/${ARCH}/mouse.o \
 	${ARCH_DIR}/${ARCH}/irq_arch.o \
 	${ARCH_DIR}/${ARCH}/framebuffer.o \
+	${ARCH_DIR}/${ARCH}/actled.o \
 	${ARCH_DIR}/${ARCH}/sd.o \
 	${ARCH_DIR}/${ARCH}/timer.o 
 
@@ -97,7 +102,7 @@ OBJS = ${ARCH_OBJS} \
 	${KERNEL_DIR}/schedule.o \
 	${KERNEL_DIR}/vfs.o \
 	${KERNEL_DIR}/dev/kdevice.o \
-	${KERNEL_DIR}/system.o \
+	${KERNEL_DIR}/systemc.o \
 	${KERNEL_DIR}/kernel.o
 
 BUILD_DIR = build
@@ -114,6 +119,9 @@ SDEXT2 = $(SYS_DIR)/build/sd.ext2
 run: 
 	qemu-system-arm $(QEMU_FLAGS) -kernel ${BUILD_DIR}/$(OS).bin -sd ${SDEXT2}
 
+runasm: 
+	qemu-system-arm $(QEMU_FLAGS) -kernel ${BUILD_DIR}/$(OS).bin -sd ${SDEXT2} -d in_asm
+
 debug:
 	qemu-system-arm $(QEMU_FLAGS) -gdb tcp::26000 -S -kernel ${BUILD_DIR}/$(OS).bin -sd ${SDEXT2}
 
@@ -122,8 +130,8 @@ debugasm:
 
 gdb: 
 	echo "target remote :26000" > /tmp/gdbinit
-	#arm-none-eabi-gdb ${BUILD_DIR}/$(OS).elf -x /tmp/gdbinit
-	gdb-multiarch ${BUILD_DIR}/$(OS).elf -x /tmp/gdbinit #for ubuntu 18.04 without arm-none-eabi-gdb
+	arm-none-eabi-gdb ${BUILD_DIR}/$(OS).elf -x /tmp/gdbinit
+	#gdb-multiarch ${BUILD_DIR}/$(OS).elf -x /tmp/gdbinit #for ubuntu 18.04 without arm-none-eabi-gdb
 
 clean:
 	rm -f $(OBJS)

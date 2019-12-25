@@ -2,6 +2,7 @@
 #include <dev/sd.h>
 #include <kernel/system.h>
 #include <kernel/proc.h>
+#include <basic_math.h>
 #include <mm/mmu.h>
 #include <kstring.h>
 
@@ -276,7 +277,7 @@ static int32_t sd_write_sector(uint32_t lba, unsigned char *buffer, uint32_t num
  * set SD clock to frequency in Hz
  */
 static int32_t sd_clk(uint32_t f) {
-	uint32_t d, c=41666666/f, x , s=32, h=0;
+	uint32_t d, c=div_u32(41666666,f), x , s=32, h=0;
 	int32_t cnt = 100000;
 	while((*EMMC_STATUS & (SR_CMD_INHIBIT|SR_DAT_INHIBIT)) && cnt--) 
 		_delay(100000);

@@ -18,14 +18,16 @@ __set_domain_access_control:
 .global __set_translation_table_base
 __set_translation_table_base:
 	mcr p15, 0, r0, c2, c0, 0 //set ttbase
+	mcr p15, 0, r0, c2, c0, 1 //set ttbase
 	mcr p15, 0, r0, c8, c7, 0 //flush tlb
 	mov pc, lr
 
 .global __enable_paging
 __enable_paging:
-	mov r2, lr /*lr(R14) return PC stored*/
+	push {lr} /*lr(R14) return PC stored*/
 
-	mov r0, #1
+	mov r0, #0x1
+	//bic r0, #0xc
 	bl __set_domain_access_control /*system.S*/
 
 	ldr r0, =_startup_page_dir /*kernel/src/mm/startup.c*/
@@ -33,10 +35,13 @@ __enable_paging:
 	bl __set_translation_table_base /*system.S*/
 
 	bl __read_control_register /*system.S*/
-	orr r0, #1 /*enable paging*/
+	orr r0, #0x1 
+	//orr r0, #0x4 
+	//orr r0, #0x1000 
 	bl __set_control_register /*system.S*/
 
-	mov pc, r2 /*return*/
+	pop {lr}
+	mov pc, lr /*return*/
 
 .global __jump2_high_mem
 __jump2_high_mem:

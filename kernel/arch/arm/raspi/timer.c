@@ -1,6 +1,7 @@
 #include <mm/mmu.h>
 #include <dev/timer.h>
 #include <kernel/irq.h>
+#include <basic_math.h>
 #include "timer_arch.h"
 
 /*#define ARM_TIMER_BASE (_mmio_base + 0xB400)
@@ -53,7 +54,7 @@ void timer_set_interval(uint32_t id, uint32_t interval_microsecond) {
 	(void)id;
   if(interval_microsecond == 0)
     interval_microsecond = 100;
-  _timer_frq = (read_cntfrq() /(interval_microsecond*10));
+  _timer_frq = div_u32(read_cntfrq() , (interval_microsecond*10));
   write_cntv_tval(_timer_frq);
   enable_cntv();
 }

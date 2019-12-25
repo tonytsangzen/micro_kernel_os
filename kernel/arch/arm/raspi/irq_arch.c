@@ -43,7 +43,7 @@ static void enable_irq(uint32_t id) {
 #define GPU_INTERRUPTS_ROUTING 0x4000000C
 
 static void routing_core0_irq(void) {
-  uint32_t offset = CORE0_TIMER__irqCNTL - _hw_info.phy_mmio_base;
+  uint32_t offset = CORE0_TIMER__irqCNTL - get_hw_info()->phy_mmio_base;
   uint32_t vbase = _mmio_base+offset;
   put32(vbase, 0x08);
 }
@@ -51,7 +51,7 @@ static void routing_core0_irq(void) {
 #define CORE0__irq_SOURCE 0x40000060
 static uint32_t read_core0_pending(void) {
   uint32_t tmp;
-  uint32_t offset = CORE0__irq_SOURCE -  _hw_info.phy_mmio_base;
+  uint32_t offset = CORE0__irq_SOURCE -  get_hw_info()->phy_mmio_base;
   uint32_t vbase = _mmio_base+offset;
   tmp = get32(vbase);
   return tmp;
@@ -67,7 +67,7 @@ void gic_set_irqs(uint32_t irqs) {
 	/*
   if((irqs & IRQ_SDC) != 0) {
 		enable_irq((PIC_INT_SDC + 32)); //pic->irq_enable2 EMMC int routing enabled.
-		uint32_t offset = GPU_INTERRUPTS_ROUTING - _hw_info.phy_mmio_base;
+		uint32_t offset = GPU_INTERRUPTS_ROUTING - get_hw_info()->phy_mmio_base;
 		uint32_t vbase = _mmio_base+offset;
 		put32(vbase, 0x00);
 	}

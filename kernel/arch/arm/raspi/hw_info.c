@@ -2,12 +2,20 @@
 #include <kernel/system.h>
 #include "mailbox.h"
 
-hw_info_t _hw_info;
+static hw_info_t _hw_info;
 
 void hw_info_init(void) {
 	_hw_info.phy_mem_size = 512*MB;
+#ifdef RASPI
+	_hw_info.phy_mmio_base = 0x20000000;
+#else
 	_hw_info.phy_mmio_base = 0x3F000000;
+#endif
 	_hw_info.mmio_size = 4*MB;
+}
+
+inline hw_info_t* get_hw_info(void) {
+	return &_hw_info;
 }
 
 #define MAILBOX_BASE (_mmio_base | 0x0000B880)

@@ -12,6 +12,7 @@
 #define GPSET0          ((volatile uint32_t*)(_mmio_base+0x0020001C))
 #define GPSET1          ((volatile uint32_t*)(_mmio_base+0x00200020))
 #define GPCLR0          ((volatile uint32_t*)(_mmio_base+0x00200028))
+#define GPCLR1          ((volatile uint32_t*)(_mmio_base+0x0020002C))
 #define GPLEV0          ((volatile uint32_t*)(_mmio_base+0x00200034))
 #define GPLEV1          ((volatile uint32_t*)(_mmio_base+0x00200038))
 #define GPEDS0          ((volatile uint32_t*)(_mmio_base+0x00200040))

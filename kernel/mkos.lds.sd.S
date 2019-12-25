@@ -11,7 +11,6 @@ SECTIONS
 
 	.text : AT(start_address)
 	{
-		KEEP(*(.text.boot))
 			*(.text)
 	}
 
@@ -22,7 +21,7 @@ SECTIONS
 
 	.bss : 
 	{ 
-		*(.bss COMMON)
+		*(.bss*)
 	}
 	. = ALIGN(8);
 	. = . + 0x10000;

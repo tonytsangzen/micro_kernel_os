@@ -1,4 +1,5 @@
 #include <dev/kdevice.h>
+#include <dev/actled.h>
 #include <dev/framebuffer.h>
 #include <mm/mmu.h>
 #include <mm/kalloc.h>
@@ -33,7 +34,8 @@ static void set_kernel_init_vm(page_dir_entry_t* vm) {
 	//map kernel malloc mem
 	map_pages(vm, KMALLOC_BASE, V2P(KMALLOC_BASE), V2P(ALLOCATABLE_MEMORY_START), AP_RW_D);
 	//map MMIO to high(virtual) mem.
-	map_pages(vm, MMIO_BASE, _hw_info.phy_mmio_base, _hw_info.phy_mmio_base + _hw_info.mmio_size, AP_RW_D);
+	hw_info_t* hw_info = get_hw_info();
+	map_pages(vm, MMIO_BASE, hw_info->phy_mmio_base, hw_info->phy_mmio_base + hw_info->mmio_size, AP_RW_D);
 	arch_vm(vm);
 }
 
@@ -42,7 +44,7 @@ void set_kernel_vm(page_dir_entry_t* vm) {
 	map_pages(vm, 
 		ALLOCATABLE_MEMORY_START, 
 		V2P(ALLOCATABLE_MEMORY_START),
-		_hw_info.phy_mem_size,
+		get_hw_info()->phy_mem_size,
 		AP_RW_D);
 }
 
@@ -61,10 +63,10 @@ static void init_allocable_mem(void) {
 	map_pages(_kernel_vm,
 		ALLOCATABLE_MEMORY_START,
 		V2P(ALLOCATABLE_MEMORY_START),
-		_hw_info.phy_mem_size,
+		get_hw_info()->phy_mem_size,
 		AP_RW_D);
 
-	kalloc_init(ALLOCATABLE_MEMORY_START, P2V(_hw_info.phy_mem_size));
+	kalloc_init(ALLOCATABLE_MEMORY_START, P2V(get_hw_info()->phy_mem_size));
 }
 
 static int32_t load_init(void) {
@@ -86,10 +88,28 @@ static void fs_init(void) {
 	vfs_init();
 }
 
+void flush_led(void) {
+	uint32_t i = 0;
+	while(i < 2) {
+		act_led(true);
+		_delay(0x100000);
+		act_led(false);
+		_delay(0x100000);
+		i++;
+	}
+}
+
+void _kernel_entry_low(void) {
+	hw_info_init();
+	_mmio_base = get_hw_info()->phy_mmio_base;
+	flush_led();
+}
+
 void _kernel_entry_c(context_t* ctx) {
 	(void)ctx;
 	hw_info_init();
 	init_kernel_vm();  
+	flush_led();
 	uart_init();
 
 	printf("\n"
@@ -131,3 +151,4 @@ void _kernel_entry_c(context_t* ctx) {
 
 	while(1) __asm__("MOV r0, #0; MCR p15,0,R0,c7,c0,4"); // CPU enter WFI state
 }
+
