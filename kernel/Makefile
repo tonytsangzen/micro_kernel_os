@@ -11,16 +11,10 @@ OBJDUMP = arm-none-eabi-objdump
 
 export QEMU_AUDIO_DRV=none
 
-ifeq ($(MACH),raspi)
-ARCH=arm/raspi
-CFLAGS = -DRASPI
-else
-ifeq ($(MACH),raspi2)
-ARCH=arm/raspi
-CFLAGS = -DRASPI2
+ifneq ($(MACH),)
+ARCH=arm/$(MACH)
 else
 ARCH=arm/versatilepb
-endif
 endif
 
 ARCH_DIR=arch
@@ -49,8 +43,8 @@ CFLAGS += \
 
 LDS = mkos.lds.sd.S
 
-#CFLAGS += -g
-CFLAGS += -O2
+CFLAGS += -g
+#CFLAGS += -O2
 
 ASFLAGS = -O2 -I. -Iinclude -marm $(ARCH_QEMU_CFLAGS)
 
@@ -130,8 +124,8 @@ debugasm:
 
 gdb: 
 	echo "target remote :26000" > /tmp/gdbinit
-	arm-none-eabi-gdb ${BUILD_DIR}/$(OS).elf -x /tmp/gdbinit
-	#gdb-multiarch ${BUILD_DIR}/$(OS).elf -x /tmp/gdbinit #for ubuntu 18.04 without arm-none-eabi-gdb
+	#arm-none-eabi-gdb ${BUILD_DIR}/$(OS).elf -x /tmp/gdbinit
+	gdb-multiarch ${BUILD_DIR}/$(OS).elf -x /tmp/gdbinit #for ubuntu 18.04 without arm-none-eabi-gdb
 
 clean:
 	rm -f $(OBJS)
