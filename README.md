@@ -18,14 +18,17 @@
 
 .Environment & Tools
 
+	QEMU: 
+		download modified qemu-4.2.0 from https://github.com/MisaZhu/qemu_raspi
+		./configure --enable-kvm --enable-hax --target-list=arm-softmmu
+		make and make install
 	Linux:	
-		Ubuntu Linux 16.04 with "qemu-system-arm","gcc-arm-none-eabi","gdb-arm-none-eabi","fuseext2"
+		Ubuntu Linux 16.04 with "gcc-arm-none-eabi","gdb-arm-none-eabi","fuseext2"
 		installed(can install by "apt")
 
 	Mac OSX(with brew installed):	
 		brew tap PX4/homebrew-px4
 		brew install gcc-arm-none-eabi-49
-		brew install qemu
 		(set the right PATH environment after installed)
 		
 	How to create/mount ext2 image in macosx
