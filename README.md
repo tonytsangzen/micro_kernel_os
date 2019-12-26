@@ -17,6 +17,7 @@
 	-SD card
 
 .Environment & Tools
+
 	QEMU: 
 		download modified qemu-4.2.0 from https://github.com/MisaZhu/qemu_raspi
 		./configure --enable-kvm --enable-hax --target-list=arm-softmmu
