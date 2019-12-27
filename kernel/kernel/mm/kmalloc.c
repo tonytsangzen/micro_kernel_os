@@ -31,6 +31,7 @@ static void* km_get_mem_tail(void* arg) {
 }
 
 void km_init() {
+	memset(&_kmalloc, 0, sizeof(malloc_t));
 	_kmalloc_mem_tail = KMALLOC_BASE;
 	_kmalloc.expand = km_expand;
 	_kmalloc.shrink = km_shrink;

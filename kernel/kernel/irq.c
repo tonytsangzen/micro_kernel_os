@@ -19,8 +19,9 @@ static void uart_handler(void) {
 			break;
 		rd++;
 	}
-	if(rd > 0)
+	if(rd > 0) {
 		proc_wakeup((uint32_t)DEV_UART0);
+	}
 }
 
 static void keyb_handler(void) {
@@ -58,7 +59,7 @@ void irq_handler(context_t* ctx) {
 	}
 	if((irqs & IRQ_TIMER0) != 0) {
 		timer_clear_interrupt(0);
-		if(_timer_count == 1000) {
+		if(_timer_count >= 1000) {
 			_kernel_tic++;
 			_timer_count = 0;
 		}
@@ -88,6 +89,6 @@ void irq_init(void) {
 	irq_arch_init();
 	gic_set_irqs( IRQ_UART0 | IRQ_TIMER0 | IRQ_KEY | IRQ_MOUSE | IRQ_SDC);
 	__irq_enable();
+	_timer_count = 0;
+	_kernel_tic = 0;
 }
-
-

@@ -2,64 +2,29 @@
 #include <dev/timer.h>
 #include <kernel/irq.h>
 #include <basic_math.h>
-#include "timer_arch.h"
 
-/*#define ARM_TIMER_BASE (_mmio_base + 0xB400)
-#define ARM_TIMER_LOAD ARM_TIMER_BASE
-#define ARM_TIMER_CTRL ARM_TIMER_BASE+(4*2)
-#define ARM_TIMER_CTRL_32BIT (1<<1)
-#define ARM_TIMER_CTRL_ENABLE (1<<7)
-#define ARM_TIMER_CTRL_IRQ_ENABLE (1<<5)
-#define ARM_TIMER_CTRL_PRESCALE_256 (2<<2)
-
-#define PIC_BASE (_mmio_base + 0xB200)
-#define PIC_ENABLE_BASIC_IRQ (PIC_BASE+(4*6))
-#define IRQ_ARM_TIMER_BIT 0
+#define ARM_TIMER_LOD (_mmio_base+0x0B400)
+#define ARM_TIMER_VAL (_mmio_base+0x0B404)
+#define ARM_TIMER_CTL (_mmio_base+0x0B408)
+#define ARM_TIMER_CLI (_mmio_base+0x0B40C)
+#define ARM_TIMER_RIS (_mmio_base+0x0B410)
+#define ARM_TIMER_MIS (_mmio_base+0x0B414)
+#define ARM_TIMER_RLD (_mmio_base+0x0B418)
+#define ARM_TIMER_DIV (_mmio_base+0x0B41C)
+#define ARM_TIMER_CNT (_mmio_base+0x0B420)
 
 void timer_set_interval(uint32_t id, uint32_t interval_microsecond) {
 	(void)id;
-	put32(PIC_ENABLE_BASIC_IRQ, 1 << IRQ_ARM_TIMER_BIT);
-	put32(ARM_TIMER_LOAD, interval_microsecond);
-	put32(ARM_TIMER_CTRL, ARM_TIMER_CTRL_32BIT |
-			ARM_TIMER_CTRL_ENABLE |
-			ARM_TIMER_CTRL_IRQ_ENABLE | ARM_TIMER_CTRL_PRESCALE_256);
-}
-*/
-
-uint32_t read_cntfrq(void) {
-  uint32_t val;
-  __asm__ volatile ("mrc p15, 0, %0, c14, c0, 0" : "=r"(val) );
-  return val;
-}
-
-uint32_t _timer_frq  = 0;
-void write_cntv_tval(uint32_t val) {
-  __asm__ volatile ("mcr p15, 0, %0, c14, c3, 0" :: "r"(val) );
-}
-
-static void enable_cntv(void) {
-  uint32_t cntv_ctl;
-  cntv_ctl = 1;
-  __asm__ volatile ("mcr p15, 0, %0, c14, c3, 1" :: "r"(cntv_ctl) ); // write CNTV_CTL
-}
-
-/*static void disable_cntv(void) {
-  uint32_t cntv_ctl;
-  cntv_ctl = 0;
-  __asm__ volatile ("mcr p15, 0, %0, c14, c3, 1" :: "r"(cntv_ctl) ); // write CNTV_CTL
-}
-*/
-
-void timer_set_interval(uint32_t id, uint32_t interval_microsecond) {
-	(void)id;
-  if(interval_microsecond == 0)
-    interval_microsecond = 100;
-  _timer_frq = div_u32(read_cntfrq() , (interval_microsecond*10));
-  write_cntv_tval(_timer_frq);
-  enable_cntv();
+  put32(ARM_TIMER_CTL,0x003E0000);
+	put32(ARM_TIMER_LOD,interval_microsecond*10-1);
+	put32(ARM_TIMER_RLD,interval_microsecond*10-1);
+  put32(ARM_TIMER_CLI,0);
+  put32(ARM_TIMER_CTL,0x003E00A2);
+  put32(ARM_TIMER_CLI,0);
 }
 
 void timer_clear_interrupt(uint32_t id) {
 	(void)id;
+	put32(ARM_TIMER_CLI,0);
 }
 

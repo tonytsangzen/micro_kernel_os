@@ -5,8 +5,8 @@
 static hw_info_t _hw_info;
 
 void hw_info_init(void) {
-	//_hw_info.phy_mem_size = 512*MB;
-	_hw_info.phy_mem_size = 256*MB;
+	_hw_info.phy_mem_size = 512*MB;
+	//_hw_info.phy_mem_size = 256*MB;
 	_hw_info.phy_mmio_base = 0x20000000;
 	_hw_info.mmio_size = 4*MB;
 }
@@ -292,10 +292,6 @@ uint32_t* mailbox_get_video_info(tags_info_t* info) {
 	return (uint32_t*)mbbuff;
 }
 
-#define CORE0_ROUTING 0x40000000
 void arch_vm(page_dir_entry_t* vm) {
-	uint32_t offset = CORE0_ROUTING - _hw_info.phy_mmio_base;
-	uint32_t vbase = MMIO_BASE + offset;
-	uint32_t pbase = _hw_info.phy_mmio_base + offset;
-	map_pages(vm, vbase, pbase, pbase+16*KB, AP_RW_D);
+	(void)vm;
 }
