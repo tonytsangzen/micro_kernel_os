@@ -1,7 +1,8 @@
 #include <dev/uart.h>
+#include <dev/gpio.h>
 #include <buffer.h>
 #include <mm/mmu.h>
-#include "gpio.h"
+#include "gpio_arch.h"
 #include <kernel/system.h>
 
 #define AUX_OFFSET 0x00215000

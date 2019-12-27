@@ -6,6 +6,7 @@
 #include <dev/framebuffer.h>
 #include <dev/sd.h>
 #include <kstring.h>
+#include <kprintf.h>
 
 static dev_t _devs[DEV_NUM];
 
@@ -32,6 +33,7 @@ static int32_t char_dev_ready_read(dev_t* dev) {
 void dev_init(void) {
 	dev_t* dev;
 
+	printf("\n    %16s ...... ", "uart");
 	//uart_init(); //did at kerne_entry
 	dev = &_devs[DEV_UART0];
 	memset(dev, 0, sizeof(dev_t));
@@ -41,7 +43,9 @@ void dev_init(void) {
 	dev->io.ch.read = char_dev_read;
 	dev->io.ch.write = uart_write;
 	dev->state = DEV_STATE_INITED;
+	printf("[OK]\n");
 
+	printf("    %16s ...... ", "keyboard");
 	keyb_init();
 	dev = &_devs[DEV_KEYB];
 	memset(dev, 0, sizeof(dev_t));
@@ -51,7 +55,9 @@ void dev_init(void) {
 	dev->io.ch.read = char_dev_read;
 	dev->op = keyb_dev_op;
 	dev->state = DEV_STATE_INITED;
+	printf("[OK]\n");
 
+	printf("    %16s ...... ", "mouse");
 	mouse_init();
 	dev = &_devs[DEV_MOUSE];
 	memset(dev, 0, sizeof(dev_t));
@@ -60,7 +66,9 @@ void dev_init(void) {
 	dev->io.ch.read = char_dev_read;
 	dev->op = mouse_dev_op;
 	dev->state = DEV_STATE_INITED;
+	printf("[OK]\n");
 
+	/*printf("    %16s ...... ", "framebuffer");
 	fb_dev_init(RES_1024x768);
 	dev = &_devs[DEV_FRAMEBUFFER];
 	memset(dev, 0, sizeof(dev_t));
@@ -68,7 +76,9 @@ void dev_init(void) {
 	dev->io.ch.write = fb_dev_write;
 	dev->op = fb_dev_op;
 	dev->state = DEV_STATE_INITED;
+	printf("[OK]\n");
 
+	printf("    %16s ...... ", "mmc_sd");
 	dev = &_devs[DEV_SD];
 	memset(dev, 0, sizeof(dev_t));
 	sd_init(dev);
@@ -78,6 +88,8 @@ void dev_init(void) {
 	dev->io.block.write = sd_dev_write;
 	dev->io.block.write_done = sd_dev_write_done;
 	dev->state = DEV_STATE_INITED;
+	printf("[OK]\n");
+	*/
 }
 
 dev_t* get_dev(uint32_t type) {

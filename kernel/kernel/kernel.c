@@ -107,29 +107,35 @@ void _kernel_entry_c(context_t* ctx) {
 		"whole allocable memory initing", 
 		div_u32(get_hw_info()->phy_mem_size-V2P(ALLOCATABLE_MEMORY_START), 1*MB));
 
-	shm_init();
-	printf("kernel: %39s [ok]\n", "share memory initing");
-
-	irq_init();
-	printf("kernel: %39s [ok]\n", "irq initing");
-
-	dev_init();
-	printf("kernel: %39s [ok]\n", "devices initing");
-
-	fs_init();
-	printf("kernel: %39s [ok]\n", "vfs initing");
-
+	printf("kernel: %39s ", "global env initing");
 	init_global();
-	printf("kernel: %39s [ok]\n", "global env initing");
+	printf("[ok]\n");
 
+	printf("kernel: %39s ", "share memory initing");
+	shm_init();
+	printf("[ok]\n");
+
+	printf("kernel: %39s ", "irq initing");
+	irq_init();
+	printf("[ok]\n");
+
+	printf("kernel: %39s ", "devices initing");
+	dev_init();
+
+	printf("kernel: %39s ", "processes initing");
 	procs_init();
-	printf("kernel: %39s [ok]\n", "processes initing");
+	printf("[ok]\n");
 
+	printf("kernel: %39s ", "vfs initing");
+	fs_init();
+	printf("[ok]\n");
+
+	printf("kernel: %39s ", "loading first process(init)");
 	if(load_init() != 0) {
-		printf("kernel: %39s [failed!]\n", "loading first process(init)");
+		printf("[failed!]\n");
 		while(1);
 	}
-	printf("kernel: %39s [ok]\n", "loading first process(init)");
+	printf("[ok]\n");
 
 	timer_set_interval(0, 0x40); //0.001 sec sequence
 	printf("kernel: start timer.\n");

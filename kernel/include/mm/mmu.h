@@ -19,9 +19,9 @@
 #define USER_STACK_TOP                 (KERNEL_BASE - PAGE_SIZE)
 
 #define KERNEL_PAGE_DIR_BASE           ALIGN_UP((uint32_t)_kernel_end, PAGE_DIR_SIZE)
-#define KERNEL_PAGE_DIR_END            (KERNEL_PAGE_DIR_BASE + 256*KB)
+#define KERNEL_PAGE_DIR_END            (KERNEL_PAGE_DIR_BASE + 128*KB)
 
-#define KMALLOC_BASE                   KERNEL_PAGE_DIR_END
+#define KMALLOC_BASE                   ALIGN_UP(KERNEL_PAGE_DIR_END, PAGE_SIZE)
 #define KMALLOC_END                    (KMALLOC_BASE + 32*MB)
 
 #define ALLOCATABLE_PAGE_DIR_BASE      KMALLOC_END

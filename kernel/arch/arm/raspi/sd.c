@@ -1,4 +1,4 @@
-#include "gpio.h"
+#include "gpio_arch.h"
 #include <dev/sd.h>
 #include <kernel/system.h>
 #include <kernel/proc.h>
