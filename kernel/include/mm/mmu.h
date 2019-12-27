@@ -13,16 +13,21 @@
 #define PAGE_DIR_NUM 4096
 #define PAGE_DIR_SIZE (PAGE_DIR_NUM*4)
 
-#define KERNEL_BASE 0x80000000 //=2G virtual address start base.
-#define MMIO_BASE (KERNEL_BASE + 1*GB)
-#define INTERRUPT_VECTOR_BASE 0xffff0000
-#define USER_STACK_TOP (KERNEL_BASE - PAGE_SIZE)
+#define KERNEL_BASE                    0x80000000 //=2G virtual address start base.
+#define MMIO_BASE                      (KERNEL_BASE + 1*GB)
+#define INTERRUPT_VECTOR_BASE          0xffff0000
+#define USER_STACK_TOP                 (KERNEL_BASE - PAGE_SIZE)
 
-#define KERNEL_PAGE_DIR ALIGN_UP((uint32_t)_kernel_end, PAGE_DIR_SIZE)
-#define KMALLOC_BASE (KERNEL_PAGE_DIR + 128*KB)
-#define ALLOCATABLE_PAGE_TABLES_START (KMALLOC_BASE + 32*MB)
-//1MB reserved for _kernel_vm page_dir and kalloc
-#define ALLOCATABLE_MEMORY_START (ALLOCATABLE_PAGE_TABLES_START + 1*MB)
+#define KERNEL_PAGE_DIR_BASE           ALIGN_UP((uint32_t)_kernel_end, PAGE_DIR_SIZE)
+#define KERNEL_PAGE_DIR_END            (KERNEL_PAGE_DIR_BASE + 256*KB)
+
+#define KMALLOC_BASE                   KERNEL_PAGE_DIR_END
+#define KMALLOC_END                    (KMALLOC_BASE + 32*MB)
+
+#define ALLOCATABLE_PAGE_DIR_BASE      KMALLOC_END
+#define ALLOCATABLE_PAGE_DIR_END       (ALLOCATABLE_PAGE_DIR_BASE + 1*MB)
+
+#define ALLOCATABLE_MEMORY_START       ALLOCATABLE_PAGE_DIR_END
 
 
 #define V2P(V) ((uint32_t)V - KERNEL_BASE)

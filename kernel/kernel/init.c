@@ -1,5 +1,6 @@
 #include <mm/mmu.h>
-#include <types.h>
+#include <kernel/hw_info.h>
+#include <dev/actled.h>
 
 /*Copy interrupt talbe to phymen address 0x00000000.
 	Virtual address #INTERRUPT_VECTOR_BASE(0xFFFF0000 for ARM) must mapped to phymen 0x00000000.
@@ -14,3 +15,8 @@ void __attribute__((optimize("O0"))) _copy_interrupt_table(void) {
 	}
 }
 
+void _boot_init(void) {
+	hw_info_init();
+	_mmio_base = get_hw_info()->phy_mmio_base;
+	flush_led();
+}

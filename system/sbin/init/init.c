@@ -25,6 +25,7 @@ typedef struct {
 	int console_num;
 	int cid;
 	bool start_x;
+	bool framebuffer;
 	console_t console;
 } init_t;
 
@@ -230,6 +231,7 @@ static void kevent_handle(init_t* init, int32_t type, rawdata_t* data) {
 static int32_t read_conf(init_t* init, const char* fname) {
 	init->console_num = 2;
 	init->start_x = false;
+	init->framebuffer = false;
 
 	sconf_t *sconf = sconf_load(fname);	
 	if(sconf == NULL)
@@ -241,12 +243,16 @@ static int32_t read_conf(init_t* init, const char* fname) {
 	v = sconf_get(sconf, "start_x");
 	if(v[0] != 0) 
 		init->start_x = str_to_bool(v);
+	v = sconf_get(sconf, "framebuffer");
+	if(v[0] != 0) 
+		init->framebuffer = str_to_bool(v);
 	sconf_free(sconf);
 	return 0;
 }
 
 static void tty_shell(init_t* init) {
 	/*run tty shell*/
+	run_dev(init, "/sbin/dev/nulld", "/dev/null", true);
 	run_dev(init, "/sbin/dev/ttyd", "/dev/tty0", true);
 	init_stdio();
 	setenv("CONSOLE_ID", "tty");
@@ -257,15 +263,12 @@ static void init_fb(init_t* init) {
 	/*mount framebuffer device*/
 	run_dev(init, "/sbin/dev/fbd", "/dev/fb0", false);
 	/*init framebuffer init*/
-	init_console(init);
 	//check_keyb_table(&init);
 }
 	
-static void load_devs(init_t* init) {
-	run_dev(init, "/sbin/dev/nulld", "/dev/null", true);
+static void load_ui_devs(init_t* init) {
 	run_dev(init, "/sbin/dev/moused", "/dev/mouse0", true);
 	run_dev(init, "/sbin/dev/keybd", "/dev/keyb0", true);
-	close_console(init);
 }
 
 static void console_shells(init_t* init) {
@@ -296,17 +299,22 @@ int main(int argc, char** argv) {
 	console_out(&init, "\n[init process started]\n");
 	/*mount root fs*/
 	run_init_root(&init, "/sbin/dev/sdd");
-	read_conf(&init, "/etc/init.conf");
-
 	tty_shell(&init);
-	init_fb(&init);
-	load_devs(&init);
-	console_shells(&init);
 
-	if(init.start_x) {
-		set_global("current_console", "x");
-		run_dev(&init, "/sbin/dev/xserverd", "/dev/x", false);
-		run("/bin/launcher");
+	read_conf(&init, "/etc/init.conf");
+	if(init.framebuffer) {
+		init_fb(&init);
+		init_console(&init);
+		load_ui_devs(&init);
+		close_console(&init);
+
+		console_shells(&init);
+	
+		if(init.start_x) {
+			set_global("current_console", "x");
+			run_dev(&init, "/sbin/dev/xserverd", "/dev/x", false);
+			run("/bin/launcher");
+		}
 	}
 
 	while(1) {

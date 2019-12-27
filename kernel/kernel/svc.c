@@ -15,7 +15,6 @@
 #include <kprintf.h>
 #include <buffer.h>
 #include <dev/kdevice.h>
-#include <dev/framebuffer.h>
 #include <rawdata.h>
 
 static void sys_exit(context_t* ctx, int32_t res) {
@@ -543,16 +542,6 @@ static int32_t sys_shm_ref(int32_t id) {
 	return shm_proc_ref(_current_proc->pid, id);
 }
 
-static int32_t sys_framebuffer(void) {
-	if(_current_proc->owner != 0)
-		return -1;
-
-  uint32_t fb_base = (uint32_t)V2P(_framebuffer_base); //framebuffer addr
-  uint32_t fb_end = (uint32_t)V2P(_framebuffer_end); //framebuffer addr
-  map_pages(_current_proc->space->vm, fb_base, fb_base, fb_end, AP_RW_RW);
-	return fb_base;
-}
-
 static int32_t sys_send_msg(int32_t topid, rawdata_t* data, int32_t id) {
 	proc_msg_t* msg = proc_send_msg(topid, data, id);
 	if(msg == NULL)
@@ -644,9 +633,6 @@ void svc_handler(int32_t code, int32_t arg0, int32_t arg1, int32_t arg2, context
 		return;
 	case SYS_DEV_OP:
 		ctx->gpr[0] = sys_dev_op(arg0, arg1, arg2);
-		return;
-	case SYS_FRAMEBUFFER:
-		ctx->gpr[0] = (int32_t)sys_framebuffer();
 		return;
 	case SYS_EXIT:
 		sys_exit(ctx, arg0);

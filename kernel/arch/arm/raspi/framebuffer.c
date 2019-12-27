@@ -42,7 +42,11 @@ int32_t video_init(fbinfo_t *p_fbinfo) {
 	return test;
 }
 
-static fbinfo_t _fb_info __attribute__((aligned(16)));
+uint32_t fb_dev_get_size(void) {
+	return 1*MB;
+}
+
+fbinfo_t _fb_info __attribute__((aligned(16)));
 
 char* _framebuffer_base = NULL;
 char* _framebuffer_end = NULL;

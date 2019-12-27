@@ -21,7 +21,10 @@ ARCH_DIR=arch
 include ${ARCH_DIR}/${ARCH}/config.mk
 
 # flags
-CFLAGS += \
+#OPTM = -g
+OPTM = -O2
+
+CFLAGS += $(OPTM) \
 	-I. -I../include -Iinclude \
 	-I${ARCH_DIR}/${ARCH} \
 	-marm $(ARCH_QEMU_CFLAGS) \
@@ -43,15 +46,12 @@ CFLAGS += \
 
 LDS = mkos.lds.sd.S
 
-CFLAGS += -g
-#CFLAGS += -O2
-
-ASFLAGS = -O2 -I. -Iinclude -marm $(ARCH_QEMU_CFLAGS)
+ASFLAGS = $(OPTM) -I. -Iinclude -marm $(ARCH_QEMU_CFLAGS)
 
 all: $(OS).bin 
 
 ARCH_OBJS = \
-	${ARCH_DIR}/arm/common/boot.o \
+	${ARCH_DIR}/${ARCH}/boot.o \
 	${ARCH_DIR}/arm/common/interrupt.o \
 	${ARCH_DIR}/arm/common/system.o \
 	${ARCH_DIR}/arm/common/memcpy.o \

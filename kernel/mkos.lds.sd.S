@@ -11,21 +11,22 @@ SECTIONS
 
 	.text : AT(start_address)
 	{
-		KEEP(*(.boot))
-		KEEP(*(.text.startup))
+		KEEP(*(.text.boot))
 		*(.text)
-		*(.rodata*)
 	}
+	. = ALIGN(4096);
+
 	.data : { /** data segment */
-		*(COMMON)
-		*(.data)
-		*(.bss)
+		*(.data*)
 	}
+	. = ALIGN(4096);
+
 	.bss : 
 	{ 
 		*(.bss*)
 	}
-	. = ALIGN(8);
+	. = ALIGN(4096);
+
 	. = . + 0x10000;
 	_irq_stack = .;
 
@@ -35,11 +36,11 @@ SECTIONS
 	. = . + 0x10000;
 	_svc_stack = .;
 
-	. = ALIGN(8);
+	. = ALIGN(4096);
 	PROVIDE(_framebuffer_base_raw = .); 
 	. += framebuffer_size;
 	PROVIDE(_framebuffer_end_raw = .); 
 
-	. = ALIGN(8);
+	. = ALIGN(4096);
 	PROVIDE(_kernel_end = .);
 }

@@ -16,17 +16,14 @@ typedef struct {
 	int32_t shm_id;
 } fb_dma_t;
 
-static uint32_t _fb_kaddr = 0;
-
 static int fb_mount(fsinfo_t* mnt_point, mount_info_t* mnt_info, void* p) {
 	(void)p;
 	fsinfo_t info;
 	memset(&info, 0, sizeof(fsinfo_t));
 	strcpy(info.name, mnt_point->name);
 	info.type = FS_TYPE_DEV;
+	info.data = DEV_FRAMEBUFFER;
 	vfs_new_node(&info);
-
-	_fb_kaddr = (uint32_t)syscall0(SYS_FRAMEBUFFER);
 
 	if(vfs_mount(mnt_point, &info, mnt_info) != 0) {
 		vfs_del(&info);
@@ -41,8 +38,7 @@ static int fb_flush(int fd, int from_pid, fsinfo_t* info, void* p) {
 	(void)from_pid;
 	(void)info;
 	fb_dma_t* dma = (fb_dma_t*)p;
-	//return syscall3(SYS_DEV_WRITE, (int32_t)info->data, (int32_t)dma->data, dma->size);
-	memcpy((void*)_fb_kaddr, dma->data, dma->size);
+	return syscall3(SYS_DEV_CHAR_WRITE, (int32_t)info->data, (int32_t)dma->data, dma->size);
 	return 0;
 }
 

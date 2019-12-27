@@ -72,10 +72,6 @@ int32_t fb_dev_init(int32_t res) {
 	return 0;
 }
 
-uint32_t fb_dev_get_size(void) {
-	return 1*MB;
-}
-
 int32_t fb_dev_op(dev_t* dev, int32_t opcode, int32_t arg) {
 	(void)dev;
 

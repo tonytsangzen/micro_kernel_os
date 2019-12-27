@@ -17,6 +17,7 @@
 #include <vfs.h>
 #include <dev/uart.h>
 #include <ext2read.h>
+#include <basic_math.h>
 
 page_dir_entry_t* _kernel_vm = NULL;
 uint32_t _mmio_base = 0;
@@ -24,15 +25,13 @@ uint32_t _mmio_base = 0;
 static void set_kernel_init_vm(page_dir_entry_t* vm) {
 	memset(vm, 0, PAGE_DIR_SIZE);
 
-	map_pages(vm, 0, 0, PAGE_SIZE, AP_RW_D);
 	//map interrupt vector to high(virtual) mem
+	map_pages(vm, 0, 0, PAGE_SIZE, AP_RW_D);
 	map_pages(vm, INTERRUPT_VECTOR_BASE, 0, PAGE_SIZE, AP_RW_D);
-	//map kernel image to high(virtual) mem
-	map_pages(vm, KERNEL_BASE+PAGE_SIZE, PAGE_SIZE, V2P(_kernel_end), AP_RW_D);
-	//map kernel page dir to high(virtual) mem
-	map_pages(vm, (uint32_t)_kernel_vm, V2P(_kernel_vm), V2P(KMALLOC_BASE), AP_RW_D);
-	//map kernel malloc mem
-	map_pages(vm, KMALLOC_BASE, V2P(KMALLOC_BASE), V2P(ALLOCATABLE_MEMORY_START), AP_RW_D);
+
+	//map kernel image, page dir, kernel malloc mem
+	map_pages(vm, KERNEL_BASE+PAGE_SIZE, PAGE_SIZE, V2P(ALLOCATABLE_PAGE_DIR_END), AP_RW_D);
+
 	//map MMIO to high(virtual) mem.
 	hw_info_t* hw_info = get_hw_info();
 	map_pages(vm, MMIO_BASE, hw_info->phy_mmio_base, hw_info->phy_mmio_base + hw_info->mmio_size, AP_RW_D);
@@ -49,16 +48,18 @@ void set_kernel_vm(page_dir_entry_t* vm) {
 }
 
 static void init_kernel_vm(void) {
-	_kernel_vm = (page_dir_entry_t*)KERNEL_PAGE_DIR;
-	kalloc_init((uint32_t)_kernel_vm, KMALLOC_BASE);
+	_kernel_vm = (page_dir_entry_t*)KERNEL_PAGE_DIR_BASE;
+	//get kalloc ready just for kernel page tables.
+	kalloc_init(KERNEL_PAGE_DIR_BASE+PAGE_DIR_SIZE, KERNEL_PAGE_DIR_END); 
 	set_kernel_init_vm(_kernel_vm);
+
 	//Use physical address of kernel virtual memory as the new virtual memory page dir table base.
 	__set_translation_table_base(V2P((uint32_t)_kernel_vm));
 	_mmio_base = MMIO_BASE;
 }
 
 static void init_allocable_mem(void) {
-	kalloc_init(ALLOCATABLE_PAGE_TABLES_START, ALLOCATABLE_MEMORY_START);
+	kalloc_init(ALLOCATABLE_PAGE_DIR_BASE, ALLOCATABLE_PAGE_DIR_END);
 
 	map_pages(_kernel_vm,
 		ALLOCATABLE_MEMORY_START,
@@ -88,12 +89,6 @@ static void fs_init(void) {
 	vfs_init();
 }
 
-void _kernel_entry_init(void) {
-	hw_info_init();
-	_mmio_base = get_hw_info()->phy_mmio_base;
-	flush_led();
-}
-
 void _kernel_entry_c(context_t* ctx) {
 	(void)ctx;
 	hw_info_init();
@@ -105,10 +100,13 @@ void _kernel_entry_c(context_t* ctx) {
 			"kernel: %39s [ok]\n", "kernel mmu initing");
 
 	km_init();
-	printf("kernel: %39s [ok]\n", "kmalloc initing");
+	printf("kernel: %39s [ok %dMB]\n", "kmalloc initing", 
+		div_u32(KMALLOC_END-KMALLOC_BASE, 1*MB));
 
 	init_allocable_mem(); //init the rest allocable memory VM
-	printf("kernel: %39s [ok]\n", "whole allocable memory initing");
+	printf("kernel: %39s [ok %dMB]\n", 
+		"whole allocable memory initing", 
+		div_u32(get_hw_info()->phy_mem_size-V2P(ALLOCATABLE_MEMORY_START), 1*MB));
 
 	shm_init();
 	printf("kernel: %39s [ok]\n", "share memory initing");

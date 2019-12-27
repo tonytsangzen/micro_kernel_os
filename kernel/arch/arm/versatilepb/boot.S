@@ -5,7 +5,8 @@ __entry:
 	msr cpsr, #0xD3             @ enter SVC mode with IRQ and FIQ interrupts disabled
 	ldr sp, = _svc_stack        @ initialise SVC mode stack
 	sub sp, #KERNEL_BASE
-	bl _kernel_entry_init
+
+	bl _boot_init
 
 	bl __enable_paging
 	bl __jump2_high_mem
