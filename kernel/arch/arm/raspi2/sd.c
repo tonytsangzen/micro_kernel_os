@@ -333,43 +333,43 @@ int32_t sd_init(dev_t* dev) {
 	_sdc.txdone = 1;
 
 	int64_t r, cnt, ccs = 0;
-	// GPIO_CD
-	r = *GPFSEL4;
+	// GPIO__IO_CD
+	r = *GPIO__FSEL4;
 	r &= ~(7<<(7*3));
-	*GPFSEL4 = r;
-	*GPPUD=2;
+	*GPIO__FSEL4 = r;
+	*GPIO__PUD=2;
 	_delay(150);
 	
-	*GPPUDCLK1 = (1<<15);
+	*GPIO__PUDCLK1 = (1<<15);
 	_delay(150);
 	
-	*GPPUD = 0;
-	*GPPUDCLK1 = 0;
-	r = *GPHEN1;
+	*GPIO__PUD = 0;
+	*GPIO__PUDCLK1 = 0;
+	r = *GPIO__HEN1;
 	r |= 1<<15;
-	*GPHEN1 = r;
+	*GPIO__HEN1 = r;
 
-	// GPIO_CLK, GPIO_CMD
-	r = *GPFSEL4;
+	// GPIO__IO_CLK, GPIO__IO_CMD
+	r = *GPIO__FSEL4;
 	r |= (7<<(8*3)) | (7<<(9*3));
-	*GPFSEL4 = r;
-	*GPPUD=2;
+	*GPIO__FSEL4 = r;
+	*GPIO__PUD=2;
 	_delay(150);
-	*GPPUDCLK1 = (1<<16)|(1<<17); 
+	*GPIO__PUDCLK1 = (1<<16)|(1<<17); 
 	_delay(150);
-	*GPPUD = 0; 
-	*GPPUDCLK1 = 0;
+	*GPIO__PUD = 0; 
+	*GPIO__PUDCLK1 = 0;
 
-	// GPIO_DAT0, GPIO_DAT1, GPIO_DAT2, GPIO_DAT3
-	r = *GPFSEL5;
+	// GPIO__IO_DAT0, GPIO__IO_DAT1, GPIO__IO_DAT2, GPIO__IO_DAT3
+	r = *GPIO__FSEL5;
 	r |= (7<<(0*3)) | (7<<(1*3)) | (7<<(2*3)) | (7<<(3*3));
-	*GPFSEL5 = r;
-	*GPPUD = 2; 
+	*GPIO__FSEL5 = r;
+	*GPIO__PUD = 2; 
 	_delay(150);
-	*GPPUDCLK1 = (1<<18) | (1<<19) | (1<<20) | (1<<21);
+	*GPIO__PUDCLK1 = (1<<18) | (1<<19) | (1<<20) | (1<<21);
 	_delay(150);
-	*GPPUD = 0;
-	*GPPUDCLK1 = 0;
+	*GPIO__PUD = 0;
+	*GPIO__PUDCLK1 = 0;
 
 	sd_hv = (*EMMC_SLOTISR_VER & HOST_SPEC_NUM) >> HOST_SPEC_NUM_SHIFT;
 	// Reset the card.

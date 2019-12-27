@@ -1,5 +1,5 @@
-#ifndef GPIO_IO_H
-#define GPIO_IO_H
+#ifndef GPIO_ARCH_H
+#define GPIO_ARCH_H
 
 #include <mm/mmu.h>
 
@@ -39,19 +39,5 @@
 #define GPIO_PULL_DOWN 0x01
 #define GPIO_PULL_UP   0x02
 #define GPIO_PULL_MASK 0x03
-
-void gpio_config(int32_t gpio_num, int32_t gpio_sel);
-
-void gpio_pull(int32_t gpio_num, int32_t pull_dir);
-
-void gpio_set(int32_t gpio_num);
-
-void gpio_clr(int32_t gpio_num);
-
-void gpio_write(int32_t gpio_num, int32_t value);
-
-uint32_t gpio_read(int32_t gpio_num);
-
-void gpio_toggle(int32_t gpio_num);
 
 #endif

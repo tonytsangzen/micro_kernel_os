@@ -1,101 +1,80 @@
 #include <dev/uart.h>
 #include <buffer.h>
 #include <mm/mmu.h>
+#include "gpio.h"
 #include <kernel/system.h>
 
-enum {
-	// The GPIO registers base address.
-	GPIO_BASE_OFF = 0x00200000, 
+#define AUX_OFFSET 0x00215000
+#define UART_OFFSET 0x00215040
 
-	// The offsets for reach register.
+#define AUX_BASE (_mmio_base | AUX_OFFSET)
+#define UART_BASE (_mmio_base | UART_OFFSET)
 
-	// Controls actuation of pull up/down to ALL GPIO pins.
-	GPPUD = (GPIO_BASE_OFF + 0x94),
+#define AUX_ENABLES (AUX_BASE+0x04)
+#define UART_AUX_ENABLE 0x01
 
-	// Controls actuation of pull up/down for specific GPIO pin.
-	GPPUDCLK0 = (GPIO_BASE_OFF + 0x98),
+#define UART_IO_REG   (UART_BASE+0x00)
+#define UART_IER_REG  (UART_BASE+0x04)
+#define UART_IIR_REG  (UART_BASE+0x08)
+#define UART_LCR_REG  (UART_BASE+0x0C)
+#define UART_MCR_REG  (UART_BASE+0x10)
+#define UART_LSR_REG  (UART_BASE+0x14)
+#define UART_MSR_REG  (UART_BASE+0x18)
+#define UART_SCRATCH  (UART_BASE+0x1C)
+#define UART_CNTL_REG (UART_BASE+0x20)
+#define UART_STAT_REG (UART_BASE+0x24)
+#define UART_BAUD_REG (UART_BASE+0x28)
 
-	// The base address for UART.
-	UART0_BASE_OFF = 0x00201000, 
+#define UART_BAUD_115200 270
+#define UART_BAUD_9600 3254
+#define UART_BAUD_DEFAULT UART_BAUD_115200
 
-	// The offsets for reach register for the UART.
-	UART0_DR = (UART0_BASE_OFF + 0x00),
-	UART0_RSRECR = (UART0_BASE_OFF + 0x04),
-	UART0_FR = (UART0_BASE_OFF + 0x18),
-	UART0_ILPR = (UART0_BASE_OFF + 0x20),
-	UART0_IBRD = (UART0_BASE_OFF + 0x24),
-	UART0_FBRD = (UART0_BASE_OFF + 0x28),
-	UART0_LCRH = (UART0_BASE_OFF + 0x2C),
-	UART0_CR = (UART0_BASE_OFF + 0x30),
-	UART0_IFLS = (UART0_BASE_OFF + 0x34),
-	UART0_IMSC = (UART0_BASE_OFF + 0x38),
-	UART0_RIS = (UART0_BASE_OFF + 0x3C),
-	UART0_MIS = (UART0_BASE_OFF + 0x40),
-	UART0_ICR = (UART0_BASE_OFF + 0x44),
-	UART0_DMACR = (UART0_BASE_OFF + 0x48),
-	UART0_ITCR = (UART0_BASE_OFF + 0x80),
-	UART0_ITIP = (UART0_BASE_OFF + 0x84),
-	UART0_ITOP = (UART0_BASE_OFF + 0x88),
-	UART0_TDR = (UART0_BASE_OFF + 0x8C),
-};
+#define UART_TXD_GPIO 14
+#define UART_RXD_GPIO 15
 
 int32_t uart_init(void) {
-	// Disable UART0.
-	put32(_mmio_base+UART0_CR, 0x00000000);
-	// Setup the GPIO pin 14 && 15.
-
-	// Disable pull up/down for all GPIO pins & delay for 150 cycles.
-	put32(_mmio_base+GPPUD, 0x00000000);
-	_delay(150);
-
-	// Disable pull up/down for pin 14,15 & delay for 150 cycles.
-	put32(_mmio_base+GPPUDCLK0, (1 << 14) | (1 << 15));
-	_delay(150);
-
-	// Write 0 to GPPUDCLK0 to make it take effect.
-	put32(_mmio_base+GPPUDCLK0, 0x00000000);
-
-	// Clear pending interrupts.
-	put32(_mmio_base+UART0_ICR, 0x7FF);
-
-	// Set integer & fractional part of baud rate.
-	// Divider = UART_CLOCK/(16 * Baud)
-	// Fraction part register = (Fractional part * 64) + 0.5
-	// UART_CLOCK = 3000000; Baud = 115200.
-
-	// Divider = 3000000 / (16 * 115200) = 1.627 = ~1.
-	put32(_mmio_base+UART0_IBRD, 1);
-	// Fractional part register = (.627 * 64) + 0.5 = 40.6 = ~40.
-	put32(_mmio_base+UART0_FBRD, 40);
-
-	// Enable FIFO & 8 bit data transmissio (1 stop bit, no parity).
-	put32(_mmio_base+UART0_LCRH, (1 << 4) | (1 << 5) | (1 << 6));
-
-	// Mask all interrupts.
-	put32(_mmio_base+UART0_IMSC, (1 << 1) | (1 << 4) | (1 << 5) | (1 << 6) | (1 << 7) |
-			(1 << 8) | (1 << 9) | (1 << 10));
-
-	// Enable UART0, receive & transfer part of UART.
-	put32(_mmio_base+UART0_CR, (1 << 0) | (1 << 8) | (1 << 9));
+	unsigned int data = get32(AUX_ENABLES);
+	/* enable uart */
+	put32(AUX_ENABLES, data|UART_AUX_ENABLE);
+	/* configure uart */
+	put32(UART_LCR_REG, 0x03); /** 8-bit data (errata in manual 0x01) */
+	put32(UART_MCR_REG, 0x00);
+	put32(UART_IER_REG, 0x00); /** no need interrupt */
+	/** check requested baudrate **/
+	/** baudrate count = ((sys_clk/baudrate)/8)-1 */
+	put32(UART_BAUD_REG, UART_BAUD_DEFAULT); /** 16-bit baudrate counter */
+	/* disable pull-down default on tx/rx pins */
+	gpio_pull(UART_TXD_GPIO, GPIO_PULL_NONE);
+	gpio_pull(UART_RXD_GPIO, GPIO_PULL_NONE);
+	/* setup uart TX1/RX1 at pins 14/15 (ALTF5) */
+	gpio_config(UART_TXD_GPIO, GPIO_ALTF5);
+	gpio_config(UART_RXD_GPIO, GPIO_ALTF5);
+	/** ready to go? */
+	put32(UART_IIR_REG, 0xC6); /** clear TX/RX FIFO */
+	put32(UART_CNTL_REG, 0x03); /** enable TX/RX */
 	return 0;
 }
-
-static void uart_trans(char c) {
-	// Wait for UART to become ready to transmit.
-	while (get32(_mmio_base+UART0_FR) & (1 << 5)) {}
-	if(c == '\r')
-		c = '\n';
-	put32(_mmio_base+UART0_DR, c);
+/*----------------------------------------------------------------------------*/
+#define UART_TXFIFO_EMPTY 0x20
+#define UART_RXFIFO_AVAIL 0x01
+/*----------------------------------------------------------------------------*/
+void uart_trans(uint32_t data) {
+	while(!(get32(UART_LSR_REG) & UART_TXFIFO_EMPTY));
+	if(data == '\r')
+		data = '\n';
+	put32(UART_IO_REG, data);
 }
 
+/*----------------------------------------------------------------------------*/
 int32_t uart_ready_to_recv(void) {
-	if(get32(_mmio_base+UART0_FR) & (1 << 4)) 
+	if((get32(UART_LSR_REG)&UART_RXFIFO_AVAIL) == 0)
 		return -1;
 	return 0;
 }
 
+/*----------------------------------------------------------------------------*/
 int32_t uart_recv(void) {
-	return get32(_mmio_base+UART0_DR);
+	return get32(UART_IO_REG) & 0xFF;
 }
 
 int32_t uart_inputch(dev_t* dev, int32_t loop) {

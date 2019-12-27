@@ -57,6 +57,7 @@ ARCH_OBJS = \
 	${ARCH_DIR}/arm/common/memcpy.o \
 	${ARCH_DIR}/${ARCH}/hw_info.o \
 	${ARCH_DIR}/${ARCH}/uart.o \
+	${ARCH_DIR}/${ARCH}/gpio.o \
 	${ARCH_DIR}/${ARCH}/keyb.o \
 	${ARCH_DIR}/${ARCH}/mouse.o \
 	${ARCH_DIR}/${ARCH}/irq_arch.o \
