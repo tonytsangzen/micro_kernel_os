@@ -15,4 +15,14 @@ void *kalloc1k(void);
 void kfree1k(void *page);
 uint32_t get_free_mem_size(void);
 
+typedef struct {
+	uint32_t base;	
+	uint32_t end;	
+} ram_hole_t;
+
+#define RAM_HOLE_MAX 4
+ram_hole_t _ram_holes[RAM_HOLE_MAX];
+
+void kmake_hole(uint32_t base, uint32_t end);
+
 #endif

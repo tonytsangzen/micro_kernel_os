@@ -1,4 +1,5 @@
 #include <mm/kalloc.h>
+#include <kernel/kernel.h>
 #include <mm/mmu.h>
 #include <kernel/system.h>
 
@@ -15,18 +16,45 @@ static page_list_t *page_list_prepend(page_list_t *page_list,
 static page_list_t *_free_list4k = 0;
 static page_list_t *_free_list1k = 0;
 
+void kmake_hole(uint32_t base, uint32_t end) {
+	if(base == 0 || base >= end || base <= ALLOCATABLE_MEMORY_START)
+		return;
+
+	int32_t i;
+	for(i=0; i<RAM_HOLE_MAX; i++) {
+		if(_ram_holes[i].base == 0) {
+			_ram_holes[i].base = ALIGN_DOWN(base, PAGE_SIZE);
+			_ram_holes[i].end = ALIGN_UP(end, PAGE_SIZE);
+			return;
+		}
+	}
+}
+
+static inline bool not_in_hole(uint32_t addr) {
+	int32_t i;
+	for(i=0; i<RAM_HOLE_MAX; i++) {
+		if(_ram_holes[i].base != 0) {
+			if(addr >= _ram_holes[i].base && addr < _ram_holes[i].end)
+				return false;
+		}
+	}
+	return true;
+}
+
 /* kalloc_init adds the given address range to the free list. */
 void kalloc_init(uint32_t start, uint32_t end) {
 	char *start_address = (char *) ALIGN_UP(start, PAGE_SIZE);
 	char *end_address = (char *) ALIGN_DOWN(end, PAGE_SIZE);
 	char *current_page = 0;
+
 	_free_list4k = 0;
 	_free_list1k = 0;
 
 	/* add each of the pages to the free list */
 	for (current_page = start_address; current_page != end_address;
 	     current_page += PAGE_SIZE) {
-		_free_list4k = page_list_prepend(_free_list4k, current_page);
+		if(not_in_hole((uint32_t)current_page))
+			_free_list4k = page_list_prepend(_free_list4k, current_page);
 	}
 }
 

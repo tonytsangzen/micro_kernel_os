@@ -48,6 +48,7 @@ void set_kernel_vm(page_dir_entry_t* vm) {
 }
 
 static void init_kernel_vm(void) {
+	memset(&_ram_holes, 0, sizeof(_ram_holes));
 	_kernel_vm = (page_dir_entry_t*)KERNEL_PAGE_DIR_BASE;
 	//get kalloc ready just for kernel page tables.
 	kalloc_init(KERNEL_PAGE_DIR_BASE+PAGE_DIR_SIZE, KERNEL_PAGE_DIR_END); 
@@ -102,11 +103,6 @@ void _kernel_entry_c(context_t* ctx) {
 	printf("kernel: %39s [ok] : %dMB\n", "kmalloc initing", 
 		div_u32(KMALLOC_END-KMALLOC_BASE, 1*MB));
 
-	init_allocable_mem(); //init the rest allocable memory VM
-	printf("kernel: %39s [ok] : %dMB\n", 
-		"whole allocable memory initing", 
-		div_u32(get_hw_info()->phy_mem_size-V2P(ALLOCATABLE_MEMORY_START), 1*MB));
-
 	printf("kernel: %39s ", "global env initing");
 	init_global();
 	printf("[ok]\n");
@@ -129,6 +125,11 @@ void _kernel_entry_c(context_t* ctx) {
 	printf("kernel: %39s ", "vfs initing");
 	fs_init();
 	printf("[ok]\n");
+
+	init_allocable_mem(); //init the rest allocable memory VM
+	printf("kernel: %39s [ok] : %dMB\n", 
+		"whole allocable memory initing", 
+		div_u32(get_free_mem_size(), 1*MB));
 
 	printf("kernel: %39s ", "loading first process(init)");
 	if(load_init() != 0) {

@@ -1,5 +1,6 @@
 #include "mm/mmu.h"
 #include "mm/kmalloc.h"
+#include "mm/kalloc.h"
 #include "kstring.h"
 #include "dev/fbinfo.h"
 #include "dev/framebuffer.h"
@@ -55,6 +56,7 @@ int32_t fb_dev_init(uint32_t w, uint32_t h, uint32_t dep) {
 
 	_framebuffer_base = (char*)_fb_info.pointer;
 	_framebuffer_end = _framebuffer_base + _fb_info.height*_fb_info.width*(_fb_info.depth/8);
+	kmake_hole(P2V(_framebuffer_base), P2V(_framebuffer_end));
 	return 0;
 }
 
