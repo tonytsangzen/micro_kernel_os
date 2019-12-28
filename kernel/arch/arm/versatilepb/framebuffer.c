@@ -31,8 +31,14 @@ int32_t fb_dev_init(uint32_t w, uint32_t h, uint32_t dep) {
 		put32((_mmio_base | 0x00120004), 0x0505f6f7);
 		put32((_mmio_base | 0x00120008), 0x071f1800); 
 	}
-	else if(w == 1024 && h == 768) {
+	else {
 		//1024x768
+		w = 1024;
+		h = 768;
+		_fbinfo.width = w;
+		_fbinfo.height = h;
+		_fbinfo.vwidth = w;
+		_fbinfo.vheight = h;
 		put32((_mmio_base | 0x00120000), 0x3F << 2);
 		put32((_mmio_base | 0x00120004), 767);
 	}	

@@ -70,7 +70,7 @@ void dev_init(void) {
 	printf("[OK]\n");
 #endif
 	printf("    %16s ", "framebuffer");
-	fb_dev_init(1024, 768, 32);
+	fb_dev_init(1280, 720, 32);
 	dev = &_devs[DEV_FRAMEBUFFER];
 	memset(dev, 0, sizeof(dev_t));
 	dev->type = DEV_TYPE_CHAR;
