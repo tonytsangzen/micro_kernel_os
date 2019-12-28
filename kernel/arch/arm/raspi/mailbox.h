@@ -1,189 +1,103 @@
-/*----------------------------------------------------------------------------*/
-#ifndef __MY1MAILBOXH__
-#define __MY1MAILBOXH__
-/*----------------------------------------------------------------------------*/
+#ifndef MAILBOX_H
+#define MAILBOX_H
+
 #include <types.h>
 
-#define MAIL_CHANNEL_MASK 0x0000000F
-#define MAIL_CH_POWER 0x00000000
-#define MAIL_CH_FBUFF 0x00000001
-#define MAIL_CH_VUART 0x00000002
-#define MAIL_CH_VCHIQ 0x00000003
-#define MAIL_CH_LEDS  0x00000004
-#define MAIL_CH_BUTTS 0x00000005
-#define MAIL_CH_TOUCH 0x00000006
-#define MAIL_CH_NOUSE 0x00000007
-#define MAIL_CH_TAGAV 0x00000008
-#define MAIL_CH_TAGVA 0x00000009
-/*----------------------------------------------------------------------------*/
+#define MAILBOX_BASE (_mmio_base+0xB880)
+#define MAIL0_READ (((mail_message_t *)(0x00 + MAILBOX_BASE)))
+#define MAIL0_STATUS (((mail_status_t *)(0x18 + MAILBOX_BASE)))
+#define MAIL0_WRITE (((mail_message_t *)(0x20 + MAILBOX_BASE)))
+#define PROPERTY_CHANNEL 8
+#define FRAMEBUFFER_CHANNEL 1
+
+typedef struct {
+    uint8_t channel: 4;
+    uint32_t data: 28;
+} mail_message_t;
+
+typedef struct {
+    uint32_t reserved: 30;
+    uint8_t empty: 1;
+    uint8_t full:1;
+} mail_status_t;
+
+mail_message_t mailbox_read(int channel);
+void mailbox_send(mail_message_t msg, int channel);
+
 /**
-0: Power management
-1: Framebuffer
-2: Virtual UART
-3: VCHIQ
-4: LEDs
-5: Buttons
-6: Touch screen
-7: <NOT USED?>
-8: Property tags (ARM -> VC)
-9: Property tags (VC -> ARM)
-**/
-/*----------------------------------------------------------------------------*/
-void mailbox_init(void);
-uint32_t mailbox_read(uint32_t channel);
-void mailbox_write(uint32_t channel,uint32_t value);
-/*----------------------------------------------------------------------------*/
-#define TAGS_STATUS_REQUEST 0x00000000
-#define TAGS_STATUS_SUCCESS 0x80000000
-#define TAGS_STATUS_FAILURE 0x80000001
-/*----------------------------------------------------------------------------*/
-#define TAGS_END 				0x00000000
-#define TAGS_MASK_SET			0x00008000
-#define TAGS_REQUESTS			0x00000000
-#define TAGS_RESPONSE			0x80000000
-/*----------------------------------------------------------------------------*/
-/** number of 32-bit buffer allocated for tags response */
-#define TAGS_RESPONSE_SIZE		2
-/*----------------------------------------------------------------------------*/
-/** VideoCore */
-#define TAGS_FIRMWARE_REVISION	0x00000001
-/*----------------------------------------------------------------------------*/
-#define TAGS_SET_CURSOR_INFO	(0x00000010|TAGS_MASK_SET)
-#define TAGS_SET_CURSOR_STATE	(0x00000011|TAGS_MASK_SET)
-/*----------------------------------------------------------------------------*/
-/** Hardware */
-#define TAGS_BOARD_MODEL		0x00010001
-#define TAGS_BOARD_REVISION		0x00010002
-#define TAGS_BOARD_MAC_ADDR		0x00010003
-#define TAGS_BOARD_SERIAL		0x00010004
-#define TAGS_ARM_MEMORY			0x00010005
-#define TAGS_VC_MEMORY			0x00010006
-#define TAGS_CLOCKS				0x00010007
-/*----------------------------------------------------------------------------*/
-#define TAGS_POWER_STATE		0x00020001
-#define TAGS_TIMING				0x00020002
-/*----------------------------------------------------------------------------*/
-#define TAGS_SET_POWER_STATE	(TAGS_POWER_STATE|TAGS_MASK_SET)
-/*----------------------------------------------------------------------------*/
-#define TAGS_CLOCK_STATE		0x00030001
-#define TAGS_CLOCK_RATE			0x00030002
-#define TAGS_VOLTAGE			0x00030003
-#define TAGS_MAX_CLOCK_RATE		0x00030004
-#define TAGS_MAX_VOLTAGE		0x00030005
-#define TAGS_TEMPERATURE		0x00030006
-#define TAGS_MIN_CLOCK_RATE		0x00030007
-#define TAGS_MIN_VOLTAGE		0x00030008
-#define TAGS_TURBO				0x00030009
-#define TAGS_MAX_TEMPERATURE	0x0003000a
-#define TAGS_STC				0x0003000b
-#define TAGS_ALLOCATE_MEMORY	0x0003000c
-#define TAGS_LOCK_MEMORY		0x0003000d
-#define TAGS_UNLOCK_MEMORY		0x0003000e
-#define TAGS_RELEASE_MEMORY		0x0003000f
-#define TAGS_EXECUTE_CODE		0x00030010
-#define TAGS_EXECUTE_QPU		0x00030011
-#define TAGS_ENABLE_QPU			0x00030012
-#define TAGS_X_RES_MEM_HANDLE	0x00030014
-#define TAGS_EDID_BLOCK			0x00030020
-#define TAGS_CUSTOMER_OTP		0x00030021
-#define TAGS_DOMAIN_STATE		0x00030030
-#define TAGS_GPIO_STATE			0x00030041
-#define TAGS_GPIO_CONFIG		0x00030043
-/*----------------------------------------------------------------------------*/
-#define TAGS_SET_CLOCK_STATE	(TAGS_CLOCK_STATE|TAGS_MASK_SET)
-#define TAGS_SET_CLOCK_RATE		(TAGS_CLOCK_RATE|TAGS_MASK_SET)
-#define TAGS_SET_VOLTAGE		(TAGS_VOLTAGE|TAGS_MASK_SET)
-#define TAGS_SET_TURBO			(TAGS_TURBO|TAGS_MASK_SET)
-#define TAGS_SET_CUSTOMER_OTP	(TAGS_CUSTOMER_OTP|TAGS_MASK_SET)
-#define TAGS_SET_DOMAIN_STATE	(TAGS_DOMAIN_STATE|TAGS_MASK_SET)
-#define TAGS_SET_GPIO_STATE		(TAGS_GPIO_STATE|TAGS_MASK_SET)
-#define TAGS_SET_SDHOST_CLOCK	(0x00038042|TAGS_MASK_SET)
-#define TAGS_SET_GPIO_CONFIG	(TAGS_GPIO_CONFIG|TAGS_MASK_SET)
-/*----------------------------------------------------------------------------*/
-#define TAGS_FB_ALLOCATE		0x00040001
-#define TAGS_FB_BLANK			0x00040002
-#define TAGS_FB_PHYS_DIMS		0x00040003
-#define TAGS_FB_VIRT_DIMS		0x00040004
-#define TAGS_FB_DEPTH			0x00040005
-#define TAGS_FB_PIXEL_ORDER		0x00040006
-#define TAGS_FB_ALPHA_MODE		0x00040007
-#define TAGS_FB_PITCH			0x00040008
-#define TAGS_FB_VIROFFSET		0x00040009
-#define TAGS_FB_OVERSCAN		0x0004000a
-#define TAGS_FB_PALETTE			0x0004000b
-#define TAGS_FB_TOUCHBUF		0x0004000f
-#define TAGS_FB_GPIOVIRTBUF		0x00040010
-/*----------------------------------------------------------------------------*/
-#define TAGS_FBT_PHYS_DIMS		0x00044003
-#define TAGS_FBT_VIRT_DIMS		0x00044004
-#define TAGS_FBT_DEPTH			0x00044005
-#define TAGS_FBT_PIXEL_ORDER	0x00044006
-#define TAGS_FBT_ALPHA_MODE		0x00044007
-#define TAGS_FBT_VIROFFSET		0x00044009
-#define TAGS_FBT_OVERSCAN		0x0004400a
-#define TAGS_FBT_PALETTE		0x0004400b
-#define TAGS_FBT_VSYNC			0x0004400e
-/*----------------------------------------------------------------------------*/
-#define TAGS_FB_RELEASE			(TAGS_FB_ALLOCATE|TAGS_MASK_SET)
-#define TAGS_FB_SET_PHYS_DIMS	(TAGS_FB_PHYS_DIMS|TAGS_MASK_SET)
-#define TAGS_FB_SET_VIRT_DIMS	(TAGS_FB_VIRT_DIMS|TAGS_MASK_SET)
-#define TAGS_FB_SET_DEPTH		(TAGS_FB_DEPTH|TAGS_MASK_SET)
-#define TAGS_FB_SET_PIXEL_ORDER	(TAGS_FB_PIXEL_ORDER|TAGS_MASK_SET)
-#define TAGS_FB_SET_ALPHA_MODE	(TAGS_FBT_ALPHA_MODE|TAGS_MASK_SET)
-#define TAGS_FB_SET_VIROFFSET	(TAGS_FB_VIROFFSET|TAGS_MASK_SET)
-#define TAGS_FB_SET_OVERSCAN	(TAGS_FB_OVERSCAN|TAGS_MASK_SET)
-#define TAGS_FB_SET_PALETTE		(TAGS_FB_PALETTE|TAGS_MASK_SET)
-#define TAGS_FB_SET_TOUCHBUF	(0x0004801f|TAGS_MASK_SET)
-#define TAGS_FB_SET_GPIOVIRTBUF	(0x00048020|TAGS_MASK_SET)
-#define TAGS_FB_SET_VSYNC		(0x0004800e|TAGS_MASK_SET)
-#define TAGS_FB_SET_BACKLIGHT	(0x0004800f|TAGS_MASK_SET)
-#define TAGS_VCHIQ_INIT			(0x00048010|TAGS_MASK_SET)
-/*----------------------------------------------------------------------------*/
-#define TAGS_COMMAND_LINE		0x00050001
-#define TAGS_DMA_CHANNELS		0x00060001
-/*----------------------------------------------------------------------------*/
-typedef struct _tags_head_t {
-	uint32_t tags_id;
-	uint32_t vbuf_size; /* usually 8-bytes */
-	uint32_t req_res; /* req:0x00000000, res: 0x80000000 | value length */
-	uint32_t vbuffer[2]; /* most tag response is 8-bytes long */
-}
-tags_head_t;
-/*----------------------------------------------------------------------------*/
-#define INFO_STATUS_OK 0
-#define INFO_STATUS_UNKNOWN_ERROR_ 1
-#define INFO_STATUS_INVALID_BUFFER 2
-#define INFO_STATUS_REQUEST_FAILED 3
-#define INFO_STATUS_REQUEST_ERROR_ 4
-#define INFO_STATUS_READING_TAGS 5
-/*----------------------------------------------------------------------------*/
-typedef struct _tags_info_t {
-	uint32_t info_status;
-	uint32_t test, temp;
-	volatile uint32_t *buff;
-	/* hardware/board info */
-	uint32_t vc_revision;
-	uint32_t board_model;
-	uint32_t board_revision;
-	uint32_t board_mac_addrl; /* 6-bytes actually! */
-	uint32_t board_mac_addrh;
-	uint32_t board_serial_l;
-	uint32_t board_serial_h;
-	uint32_t memory_arm_base;
-	uint32_t memory_arm_size;
-	uint32_t memory_vc_base;
-	uint32_t memory_vc_size;
-	/* framebuffer info */
-	uint32_t fb_width, fb_height;
-	uint32_t fb_vwidth, fb_vheight;
-	uint32_t fb_depth, fb_pixel_order;
-	uint32_t fb_alpha_mode, fb_pitch;
-	uint32_t fb_vx_offset, fb_vy_offset;
-}
-tags_info_t;
-/*----------------------------------------------------------------------------*/
-uint32_t* mailbox_get_board_info(tags_info_t* info);
-uint32_t* mailbox_get_video_info(tags_info_t* info);
-/*----------------------------------------------------------------------------*/
+ * A property message can either be a request, or a response, and a response can be successfull or an error
+ */
+#define REQUEST           0x00000000
+#define RESPONSE_SUCCESS  0x80000000
+#define RESPONSE_ERROR    0x80000001
+
+/*
+ * A buffer that holds many property messages.
+ * The last tag must be a 4 byte zero, and then padding to make the whole thing 4 byte aligned
+ */
+typedef struct {
+    uint32_t size;                      // Size includes the size itself
+    uint32_t req_res_code;
+    uint32_t tags[1];                    // A concatenated sequence of tags. will use overrun to make large enough
+} property_message_buffer_t;
+
+
+/**
+ * A message is identified by a tag. These are some of the possible tags
+ */
+typedef enum {
+    NULL_TAG = 0,
+    FB_ALLOCATE_BUFFER = 0x00040001,
+    FB_RELESE_BUFFER = 0x00048001,
+    FB_GET_PHYSICAL_DIMENSIONS = 0x00040003,
+    FB_SET_PHYSICAL_DIMENSIONS = 0x00048003,
+    FB_GET_VIRTUAL_DIMENSIONS = 0x00040004,
+    FB_SET_VIRTUAL_DIMENSIONS = 0x00048004,
+    FB_GET_BITS_PER_PIXEL = 0x00040005,
+    FB_SET_BITS_PER_PIXEL = 0x00048005,
+    FB_GET_BYTES_PER_ROW = 0x00040008
+} property_tag_t;
+
+/**
+ * For each possible tag, we create a struct corresponding to the request value buffer, and the response value buffer
+ */
+
+typedef struct {
+    void * fb_addr;
+    uint32_t fb_size;
+} fb_allocate_res_t;
+
+typedef struct {
+    uint32_t width;
+    uint32_t height;
+} fb_screen_size_t;
+
+
+/*
+ * The value buffer can be any one of these types
+ */
+typedef union {
+    uint32_t fb_allocate_align;
+    fb_allocate_res_t fb_allocate_res;
+    fb_screen_size_t fb_screen_size;
+    uint32_t fb_bits_per_pixel;
+    uint32_t fb_bytes_per_row;
+} value_buffer_t;
+
+/*
+ * A message_buffer can contain any number of these
+ */
+typedef struct {
+    property_tag_t proptag;
+    value_buffer_t value_buffer;
+} property_message_tag_t;
+
+
+/**
+ * given an array of tags, will send all of the tags given, and will populate that array with the responses.
+ * the given array should end with a "null tag" with the proptag field set to 0.
+ * returns 0 on success
+ */
+int send_messages(property_message_tag_t * tags);
+
 #endif
-/*----------------------------------------------------------------------------*/

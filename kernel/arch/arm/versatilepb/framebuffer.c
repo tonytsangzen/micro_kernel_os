@@ -3,69 +3,41 @@
 #include "dev/fbinfo.h"
 #include "dev/framebuffer.h"
 
-static int32_t _res = RES_640x480;
-
-static int32_t video_init(fbinfo_t *fbinfo) {
-	if(_res == RES_640x480) {
-		put32((_mmio_base | 0x1c), 0x2c77);
-		put32((_mmio_base | 0x00120000), 0x3f1f3f9c);
-		put32((_mmio_base | 0x00120004), 0x090b61df); 
-		put32((_mmio_base | 0x00120008), 0x067f1800); 
-	}
-	else if(_res == RES_800x600) {
-		put32((_mmio_base | 0x1c), 0x2cac);
-		put32((_mmio_base | 0x00120000), 0x1313a4c4);
-		put32((_mmio_base | 0x00120004), 0x0505f6f7);
-		put32((_mmio_base | 0x00120008), 0x071f1800); 
-	}
-	else {
-		//1024x768
-		put32((_mmio_base | 0x00120000), 0x3F << 2);
-		put32((_mmio_base | 0x00120004), 767);
-	}	
-	
-	put32((_mmio_base | 0x00120010), fbinfo->pointer);
-	put32((_mmio_base | 0x00120018), 0x082b);
-	return 0;
-}
-
 static fbinfo_t _fbinfo __attribute__((aligned(16)));
-
 char* _framebuffer_base = NULL;
 char* _framebuffer_end = NULL;
 
-int32_t fb_dev_init(int32_t res) {
-	_res = res;
-
-	if(_res == RES_640x480) {
-		_fbinfo.height = 480;
-		_fbinfo.width = 640;
-		_fbinfo.vheight = 480;
-		_fbinfo.vwidth = 640;
-	}
-	else if(_res == RES_800x600) {
-		_fbinfo.height = 600;
-		_fbinfo.width = 800;
-		_fbinfo.vheight = 600;
-		_fbinfo.vwidth = 800;
-	}
-	else {
-		_fbinfo.height = 768;
-		_fbinfo.width = 1024;
-		_fbinfo.vheight = 768;
-		_fbinfo.vwidth = 1024;
-	}
-
+int32_t fb_dev_init(uint32_t w, uint32_t h, uint32_t dep) {
+	_fbinfo.width = w;
+	_fbinfo.height = h;
+	_fbinfo.vwidth = w;
+	_fbinfo.vheight = h;
+	_fbinfo.depth = dep;
 	_fbinfo.pitch = 0;
-	_fbinfo.depth = 32;
 	_fbinfo.xoffset = 0;
 	_fbinfo.yoffset = 0;
 	_fbinfo.pointer = V2P(_framebuffer_base_raw);
 	_fbinfo.size = 0;
 
-	int32_t r = video_init(&_fbinfo);
-	if(r != 0)
-		return -1;
+	if(w == 640 && h == 480) {
+		put32((_mmio_base | 0x1c), 0x2c77);
+		put32((_mmio_base | 0x00120000), 0x3f1f3f9c);
+		put32((_mmio_base | 0x00120004), 0x090b61df); 
+		put32((_mmio_base | 0x00120008), 0x067f1800); 
+	}
+	else if(w == 800 && h == 600) {
+		put32((_mmio_base | 0x1c), 0x2cac);
+		put32((_mmio_base | 0x00120000), 0x1313a4c4);
+		put32((_mmio_base | 0x00120004), 0x0505f6f7);
+		put32((_mmio_base | 0x00120008), 0x071f1800); 
+	}
+	else if(w == 1024 && h == 768) {
+		//1024x768
+		put32((_mmio_base | 0x00120000), 0x3F << 2);
+		put32((_mmio_base | 0x00120004), 767);
+	}	
+	put32((_mmio_base | 0x00120010), _fbinfo.pointer);
+	put32((_mmio_base | 0x00120018), 0x082b);
 	
 	_framebuffer_base = _framebuffer_base_raw;
 	_framebuffer_end = _framebuffer_end_raw;

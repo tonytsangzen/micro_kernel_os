@@ -130,14 +130,12 @@ void _kernel_entry_c(context_t* ctx) {
 	fs_init();
 	printf("[ok]\n");
 
-/*
 	printf("kernel: %39s ", "loading first process(init)");
 	if(load_init() != 0) {
 		printf("[failed!]\n");
 		while(1);
 	}
 	printf("[ok]\n");
-	*/
 
 	timer_set_interval(0, 0x40); //0.001 sec sequence
 	printf("kernel: start timer.\n");

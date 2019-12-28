@@ -69,9 +69,8 @@ void dev_init(void) {
 	dev->state = DEV_STATE_INITED;
 	printf("[OK]\n");
 #endif
-/*
 	printf("    %16s ", "framebuffer");
-	fb_dev_init(RES_1024x768);
+	fb_dev_init(1024, 768, 32);
 	dev = &_devs[DEV_FRAMEBUFFER];
 	memset(dev, 0, sizeof(dev_t));
 	dev->type = DEV_TYPE_CHAR;
@@ -79,7 +78,6 @@ void dev_init(void) {
 	dev->op = fb_dev_op;
 	dev->state = DEV_STATE_INITED;
 	printf("[OK]\n");
-	*/
 
 	printf("    %16s ", "mmc_sd");
 	dev = &_devs[DEV_SD];
