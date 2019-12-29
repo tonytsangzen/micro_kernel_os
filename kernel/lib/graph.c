@@ -1,7 +1,7 @@
-#include <graph/graph.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
+#include <graph.h>
+#include <kstring.h>
+#include <dev/device.h>
+#include <mm/kmalloc.h>
 
 inline uint32_t argb(uint32_t a, uint32_t r, uint32_t g, uint32_t b) {
 	return a << 24 | b << 16 | g << 8 | r;
@@ -18,7 +18,7 @@ uint32_t argb_int(uint32_t c) {
 }
 
 graph_t* graph_new(uint32_t* buffer, uint32_t w, uint32_t h) {
-	graph_t* ret = (graph_t*)malloc(sizeof(graph_t));
+	graph_t* ret = (graph_t*)kmalloc(sizeof(graph_t));
 	ret->w = w;
 	ret->h = h;
 	if(buffer != NULL) {
@@ -26,7 +26,7 @@ graph_t* graph_new(uint32_t* buffer, uint32_t w, uint32_t h) {
 		ret->need_free = 0;
 	}
 	else {
-		ret->buffer = (uint32_t*)malloc(w*h*4);
+		ret->buffer = (uint32_t*)kmalloc(w*h*4);
 		ret->need_free = 1;
 	}
 	return ret;
@@ -36,8 +36,8 @@ void graph_free(graph_t* g) {
 	if(g == NULL)
 		return;
 	if(g->buffer != NULL && g->need_free == 1)
-		free(g->buffer);
-	free(g);
+		kfree(g->buffer);
+	kfree(g);
 }
 
 inline void pixel(graph_t* g, int32_t x, int32_t y, uint32_t color) {

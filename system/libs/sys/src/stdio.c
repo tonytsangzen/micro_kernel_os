@@ -33,13 +33,13 @@ void printf(const char *format, ...) {
 	str_free(buf);
 }
 
-void uprintf(const char *format, ...) {
+void kprintf(const char *format, ...) {
 	va_list ap;
 	str_t* buf = str_new("");
 	va_start(ap, format);
 	v_printf(outc, buf, format, ap);
 	va_end(ap);
-	syscall3(SYS_DEV_CHAR_WRITE, DEV_UART0, (int32_t)buf->cstr, (int32_t)buf->len);
+	syscall2(SYS_KPRINT, (int32_t)buf->cstr, (int32_t)buf->len);
 	str_free(buf);
 }
 

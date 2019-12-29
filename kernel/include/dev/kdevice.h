@@ -32,6 +32,7 @@ typedef struct st_dev {
 	} io;
 } dev_t;
 
+extern int32_t fb_init(uint32_t w, uint32_t h, uint32_t dep);
 extern void    dev_init(void);
 extern dev_t*  get_dev(uint32_t type);
 extern int32_t dev_ready_read(dev_t* dev);

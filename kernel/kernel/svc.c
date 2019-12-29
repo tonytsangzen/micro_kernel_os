@@ -31,6 +31,11 @@ static int32_t sys_dev_block_read(uint32_t type, int32_t bid) {
 	return dev_block_read(dev, bid);
 }
 
+static void sys_kprint(const char* s, int32_t len) {
+	(void)len;
+	printf("%s", s);
+}
+
 static int32_t sys_dev_block_write(uint32_t type, int32_t bid, const char* buf) {
 	dev_t* dev = get_dev(type);
 	if(dev == NULL) {
@@ -807,6 +812,9 @@ void svc_handler(int32_t code, int32_t arg0, int32_t arg1, int32_t arg2, context
 		return;
 	case SYS_UNLOCK:
 		sys_unlock(arg0);
+		return;
+	case SYS_KPRINT:
+		sys_kprint((const char*)arg0, arg1);
 		return;
 	}
 	printf("pid:%d, code(%d) error!\n", _current_proc->pid, code);

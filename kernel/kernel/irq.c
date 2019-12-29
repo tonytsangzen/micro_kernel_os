@@ -58,13 +58,13 @@ void irq_handler(context_t* ctx) {
 		sd_handler();
 	}
 	if((irqs & IRQ_TIMER0) != 0) {
-		timer_clear_interrupt(0);
 		if(_timer_count >= 1000) {
 			_kernel_tic++;
 			_timer_count = 0;
 		}
 		_timer_count++;
 		renew_sleep_counter();
+		timer_clear_interrupt(0);
 
 		schedule(ctx);
 		return;

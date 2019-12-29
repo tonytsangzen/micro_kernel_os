@@ -18,6 +18,7 @@
 #include <dev/uart.h>
 #include <ext2read.h>
 #include <basic_math.h>
+#include <graph.h>
 
 page_dir_entry_t* _kernel_vm = NULL;
 uint32_t _mmio_base = 0;
@@ -48,7 +49,9 @@ void set_kernel_vm(page_dir_entry_t* vm) {
 }
 
 static void init_kernel_vm(void) {
-	memset(&_ram_holes, 0, sizeof(_ram_holes));
+	for(int32_t i=0; i<RAM_HOLE_MAX; i++)
+		_ram_holes[i].base = _ram_holes[i].end = 0;
+
 	_kernel_vm = (page_dir_entry_t*)KERNEL_PAGE_DIR_BASE;
 	//get kalloc ready just for kernel page tables.
 	kalloc_init(KERNEL_PAGE_DIR_BASE+PAGE_DIR_SIZE, KERNEL_PAGE_DIR_END); 
@@ -94,14 +97,35 @@ void _kernel_entry_c(context_t* ctx) {
 	(void)ctx;
 	hw_info_init();
 	init_kernel_vm();  
+	console_t* console = get_console();
+	console_init(console);
 	uart_init();
 	printf("\n"
 			"------Ewok micro-kernel-------\n"
 			"kernel: %39s [ok]\n", "kernel mmu initing");
+	flush_led();
 
 	km_init();
 	printf("kernel: %39s [ok] : %dMB\n", "kmalloc initing", 
 		div_u32(KMALLOC_END-KMALLOC_BASE, 1*MB));
+
+	printf("kernel: %39s ", "irq initing");
+	irq_init();
+	printf("[ok]\n");
+
+	printf("kernel: %39s ", "framebuffer initing");
+	if(fb_init(1024, 768, 32) == 0) {
+		fbinfo_t* info = fb_get_info();
+		printf("[OK] : %dx%d %dbits\n", info->width, info->height, info->depth);
+		graph_t* g = graph_new((uint32_t*)_framebuffer_base, info->width, info->height);
+		console->g = g;
+		console_reset(console);
+	}
+	else
+		printf("[Failed!]\n");
+
+	printf("kernel: %39s ", "devices initing");
+	dev_init();
 
 	printf("kernel: %39s ", "global env initing");
 	init_global();
@@ -111,12 +135,10 @@ void _kernel_entry_c(context_t* ctx) {
 	shm_init();
 	printf("[ok]\n");
 
-	printf("kernel: %39s ", "irq initing");
-	irq_init();
-	printf("[ok]\n");
-
-	printf("kernel: %39s ", "devices initing");
-	dev_init();
+	init_allocable_mem(); //init the rest allocable memory VM
+	printf("kernel: %39s [ok] : %dMB\n", 
+		"whole allocable memory initing", 
+		div_u32(get_free_mem_size(), 1*MB));
 
 	printf("kernel: %39s ", "processes initing");
 	procs_init();
@@ -125,11 +147,6 @@ void _kernel_entry_c(context_t* ctx) {
 	printf("kernel: %39s ", "vfs initing");
 	fs_init();
 	printf("[ok]\n");
-
-	init_allocable_mem(); //init the rest allocable memory VM
-	printf("kernel: %39s [ok] : %dMB\n", 
-		"whole allocable memory initing", 
-		div_u32(get_free_mem_size(), 1*MB));
 
 	printf("kernel: %39s ", "loading first process(init)");
 	if(load_init() != 0) {
@@ -142,5 +159,9 @@ void _kernel_entry_c(context_t* ctx) {
 	printf("kernel: start timer.\n");
 
 	while(1) __asm__("MOV r0, #0; MCR p15,0,R0,c7,c0,4"); // CPU enter WFI state
-}
 
+	if(console->g != NULL) {
+		graph_free(console->g);
+		console_close(console);
+	}
+}

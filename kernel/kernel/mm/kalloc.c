@@ -30,15 +30,15 @@ void kmake_hole(uint32_t base, uint32_t end) {
 	}
 }
 
-static inline bool not_in_hole(uint32_t addr) {
+static inline bool in_hole(uint32_t addr) {
 	int32_t i;
 	for(i=0; i<RAM_HOLE_MAX; i++) {
 		if(_ram_holes[i].base != 0) {
 			if(addr >= _ram_holes[i].base && addr < _ram_holes[i].end)
-				return false;
+				return true;
 		}
 	}
-	return true;
+	return false;
 }
 
 /* kalloc_init adds the given address range to the free list. */
@@ -53,7 +53,7 @@ void kalloc_init(uint32_t start, uint32_t end) {
 	/* add each of the pages to the free list */
 	for (current_page = start_address; current_page != end_address;
 	     current_page += PAGE_SIZE) {
-		if(not_in_hole((uint32_t)current_page))
+		if(!in_hole((uint32_t)current_page))
 			_free_list4k = page_list_prepend(_free_list4k, current_page);
 	}
 }

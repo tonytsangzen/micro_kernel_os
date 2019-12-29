@@ -4,7 +4,7 @@
 #include <fcntl.h>
 
 void printf(const char *format, ...);
-void uprintf(const char *format, ...);
+void kprintf(const char *format, ...);
 void dprintf(int fd, const char *format, ...);
 
 int getch(void);

@@ -116,12 +116,20 @@ typedef struct {
 
 static sd_t _sdc;
 
+static inline void wait_usec(uint32_t n) {
+	while(n > 0) {
+		_delay(10000);
+		n--;
+	}
+}
+
 /**
  * Wait for data or command ready
  */
 static int32_t sd_status(uint32_t mask) {
 	int32_t cnt = 1000000; 
-	while((*EMMC_STATUS & mask) != 0 && (*EMMC_INTERRUPT & INT_ERROR_MASK) == 0 && cnt > 0); //_delay(100);
+	while((*EMMC_STATUS & mask) != 0 && (*EMMC_INTERRUPT & INT_ERROR_MASK) == 0 && cnt > 0)
+		wait_usec(1);
 	return (cnt <= 0 || (*EMMC_INTERRUPT & INT_ERROR_MASK)) ? SD_ERROR : SD_OK;
 }
 
@@ -130,8 +138,9 @@ static int32_t sd_status(uint32_t mask) {
  */
 static int32_t sd_int(uint32_t mask, int32_t wait) {
 	uint32_t r, m = (mask | INT_ERROR_MASK);
-	int32_t cnt = 1000000; 
+	int32_t cnt = 10000; 
 	while((*EMMC_INTERRUPT & m) == 0 && cnt--) {
+		wait_usec(1);
 		if(wait == 0)
 			return -1;
 	}
@@ -156,7 +165,7 @@ static int32_t sd_cmd(uint32_t code, uint32_t arg) {
 	int32_t r = 0;
 	sd_err = SD_OK;
 	if(code & CMD_NEED_APP) {
-		r = sd_cmd(CMD_APP_CMD|(sd_rca?CMD_RSPNS_48:0),sd_rca);
+		r = sd_cmd(CMD_APP_CMD|(sd_rca?CMD_RSPNS_48:0), sd_rca);
 		if(sd_rca != 0 && r != 0) {
 			sd_err = SD_ERROR;
 			return 0;
@@ -171,9 +180,9 @@ static int32_t sd_cmd(uint32_t code, uint32_t arg) {
 	*EMMC_ARG1 = arg;
 	*EMMC_CMDTM = code;
 	if(code == CMD_SEND_OP_COND)
-		_delay(100); 
+		wait_usec(1000);
 	else if(code==CMD_SEND_IF_COND || code==CMD_APP_CMD)
-		_delay(100);
+		wait_usec(100);
 
 	if((r = sd_int(INT_CMD_DONE, 1))) {
 		sd_err = r;
@@ -183,8 +192,9 @@ static int32_t sd_cmd(uint32_t code, uint32_t arg) {
 	r = *EMMC_RESP0;
 	if(code==CMD_GO_IDLE || code==CMD_APP_CMD)
 		return 0; 
-	else if(code==(CMD_APP_CMD|CMD_RSPNS_48))
+	else if(code==(CMD_APP_CMD|CMD_RSPNS_48)) {
 		return r&SR_APP_CMD; 
+	}
 	else if(code==CMD_SEND_OP_COND)
 		return r;
 	else if(code==CMD_SEND_IF_COND)
@@ -200,7 +210,6 @@ static int32_t sd_cmd(uint32_t code, uint32_t arg) {
 		return r & CMD_RCA_MASK;
 	}
 	return r & CMD_ERRORS_MASK;
-	return 0;
 }
 
 /**
@@ -280,13 +289,13 @@ static int32_t sd_clk(uint32_t f) {
 	uint32_t d, c=div_u32(41666666,f), x , s=32, h=0;
 	int32_t cnt = 100000;
 	while((*EMMC_STATUS & (SR_CMD_INHIBIT|SR_DAT_INHIBIT)) && cnt--) 
-		_delay(100000);
+		wait_usec(1);
 	if(cnt<=0) {
 		return SD_ERROR;
 	}
 
 	*EMMC_CONTROL1 &= ~C1_CLK_EN;
-	_delay(1000000);
+	wait_usec(10);
 	x=c-1;
 	if(!x)
 		s=0; 
@@ -377,14 +386,14 @@ int32_t sd_init(dev_t* dev) {
 	*EMMC_CONTROL1 |= C1_SRST_HC;
 	cnt = 10000;
 	do{
-		_delay(1000000);
+		wait_usec(10);
 	} while((*EMMC_CONTROL1 & C1_SRST_HC) && cnt-- );
 
 	if(cnt<=0)
 		return SD_ERROR;
 
 	*EMMC_CONTROL1 |= C1_CLK_INTLEN | C1_TOUNIT_MAX;
-	_delay(1000000);
+	wait_usec(10);
 	// Set clock to setup frequency.
 	if((r = sd_clk(400000)))
 		return r;
@@ -403,12 +412,14 @@ int32_t sd_init(dev_t* dev) {
 	while(!(r&ACMD41_CMD_COMPLETE) && cnt--) {
 		_delay(400);
 		r = sd_cmd(CMD_SEND_OP_COND, ACMD41_ARG_HC);
-		if(r & ACMD41_CMD_COMPLETE)
-			if(r & ACMD41_VOLTAGE)
-				if(r & ACMD41_CMD_CCS)
-					if(sd_err!=SD_TIMEOUT && sd_err!=SD_OK)
-						return sd_err;
+		if((r & ACMD41_CMD_COMPLETE) &&
+				(r & ACMD41_VOLTAGE) &&
+				(r & ACMD41_CMD_CCS) &&
+				(sd_err!=SD_TIMEOUT && sd_err!=SD_OK)) {
+			return sd_err;
+		}
 	}
+
 	if(!(r & ACMD41_CMD_COMPLETE) || !cnt ) 
 		return SD_TIMEOUT;
 	if(!(r & ACMD41_VOLTAGE))
@@ -421,28 +432,31 @@ int32_t sd_init(dev_t* dev) {
 		return sd_err;
 	if((r=sd_clk(25000000)))
 		return r;
-
 	sd_cmd(CMD_CARD_SELECT, sd_rca);
 	if(sd_err)
 		return sd_err;
-
 	if(sd_status(SR_DAT_INHIBIT))
 		return SD_TIMEOUT;
 	*EMMC_BLKSIZECNT = (1<<16) | 8;
+
+/*
 	sd_cmd(CMD_SEND_SCR, 0);
 	if(sd_err)
 		return sd_err;
 	if(sd_int(INT_READ_RDY, 1))
 		return SD_TIMEOUT;
 
-	r=0; cnt=100000; while(r<2 && cnt) {
+	r=0; cnt=100000; 
+	while(r<2 && cnt) {
 		if( *EMMC_STATUS & SR_READ_AVAILABLE )
 			sd_scr[r++] = *EMMC_DATA;
 		else
-			_delay(100000);
+			wait_usec(1);
 	}
 	if(r != 2) 
 		return SD_TIMEOUT;
+	*/
+
 	if(sd_scr[0] & SCR_SD_BUS_WIDTH_4) {
 		sd_cmd(CMD_SET_BUS_WIDTH, sd_rca|2);
 		if(sd_err)

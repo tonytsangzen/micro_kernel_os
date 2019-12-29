@@ -30,6 +30,20 @@ static int32_t char_dev_ready_read(dev_t* dev) {
 	return -1;
 }
 
+int32_t fb_init(uint32_t w, uint32_t h, uint32_t dep) {
+	if(fb_dev_init(w, h, dep) == 0) {
+		dev_t* dev;
+		dev = &_devs[DEV_FRAMEBUFFER];
+		memset(dev, 0, sizeof(dev_t));
+		dev->type = DEV_TYPE_CHAR;
+		dev->io.ch.write = fb_dev_write;
+		dev->op = fb_dev_op;
+		dev->state = DEV_STATE_INITED;
+		return 0;
+	}
+	return -1;
+}
+
 void dev_init(void) {
 	dev_t* dev;
 
@@ -47,50 +61,49 @@ void dev_init(void) {
 
 #ifdef VERSATILEPB
 	printf("    %16s ", "keyboard");
-	keyb_init();
-	dev = &_devs[DEV_KEYB];
-	memset(dev, 0, sizeof(dev_t));
-	dev->type = DEV_TYPE_CHAR;
-	dev->io.ch.inputch = keyb_inputch;
-	//dev->ready_read = char_dev_ready_read;
-	dev->io.ch.read = char_dev_read;
-	dev->op = keyb_dev_op;
-	dev->state = DEV_STATE_INITED;
-	printf("[OK]\n");
+	if(keyb_init() == 0) {
+		dev = &_devs[DEV_KEYB];
+		memset(dev, 0, sizeof(dev_t));
+		dev->type = DEV_TYPE_CHAR;
+		dev->io.ch.inputch = keyb_inputch;
+		//dev->ready_read = char_dev_ready_read;
+		dev->io.ch.read = char_dev_read;
+		dev->op = keyb_dev_op;
+		dev->state = DEV_STATE_INITED;
+		printf("[OK]\n");
+	}
+	else
+		printf("[Failed!]\n");
 
 	printf("    %16s ", "mouse");
-	mouse_init();
-	dev = &_devs[DEV_MOUSE];
-	memset(dev, 0, sizeof(dev_t));
-	//dev->ready_read = char_dev_ready_read;
-	dev->type = DEV_TYPE_CHAR;
-	dev->io.ch.read = char_dev_read;
-	dev->op = mouse_dev_op;
-	dev->state = DEV_STATE_INITED;
-	printf("[OK]\n");
+	if(mouse_init() == 0) {
+		dev = &_devs[DEV_MOUSE];
+		memset(dev, 0, sizeof(dev_t));
+		//dev->ready_read = char_dev_ready_read;
+		dev->type = DEV_TYPE_CHAR;
+		dev->io.ch.read = char_dev_read;
+		dev->op = mouse_dev_op;
+		dev->state = DEV_STATE_INITED;
+		printf("[OK]\n");
+	}
+	else
+		printf("[Failed!]\n");
 #endif
-	printf("    %16s ", "framebuffer");
-	//fb_dev_init(1024, 768, 32);
-	fb_dev_init(1920, 1080, 32);
-	dev = &_devs[DEV_FRAMEBUFFER];
-	memset(dev, 0, sizeof(dev_t));
-	dev->type = DEV_TYPE_CHAR;
-	dev->io.ch.write = fb_dev_write;
-	dev->op = fb_dev_op;
-	dev->state = DEV_STATE_INITED;
-	printf("[OK]\n");
 
 	printf("    %16s ", "mmc_sd");
 	dev = &_devs[DEV_SD];
 	memset(dev, 0, sizeof(dev_t));
-	sd_init(dev);
-	dev->type = DEV_TYPE_BLOCK;
-	dev->io.block.read = sd_dev_read;
-	dev->io.block.read_done = sd_dev_read_done;
-	dev->io.block.write = sd_dev_write;
-	dev->io.block.write_done = sd_dev_write_done;
-	dev->state = DEV_STATE_INITED;
-	printf("[OK]\n\n");
+	if(sd_init(dev) == 0) {
+		dev->type = DEV_TYPE_BLOCK;
+		dev->io.block.read = sd_dev_read;
+		dev->io.block.read_done = sd_dev_read_done;
+		dev->io.block.write = sd_dev_write;
+		dev->io.block.write_done = sd_dev_write_done;
+		dev->state = DEV_STATE_INITED;
+		printf("[OK]\n\n");
+	}
+	else
+		printf("[Failed!]\n");
 }
 
 dev_t* get_dev(uint32_t type) {

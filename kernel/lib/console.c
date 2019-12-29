@@ -1,9 +1,8 @@
-#include <unistd.h>
-#include <stdio.h>
-#include <stdlib.h>
 #include <basic_math.h>
-#include <string.h>
+#include <kstring.h>
 #include <console.h>
+#include <graph.h>
+#include <mm/kmalloc.h>
 
 #define T_W 2 /*tab width*/
 
@@ -24,7 +23,7 @@ int32_t console_reset(console_t* console) {
 	int old_total = console->content.total;
 	int old_line_w = console->content.line_w;
 	int old_start_line = console->content.start_line;
-	char* old_data = (char*)malloc(old_total);
+	char* old_data = (char*)kmalloc(old_total);
 	memcpy(old_data, console->content.data, old_total);
 
 	console->content.size = 0;
@@ -37,8 +36,8 @@ int32_t console_reset(console_t* console) {
 	uint32_t data_size = console->content.line_num*console->content.line_w;
 	console->content.total = data_size;
 	if(console->content.data != NULL)
-		free(console->content.data);
-	console->content.data = (char*)malloc(data_size);
+		kfree(console->content.data);
+	console->content.data = (char*)kmalloc(data_size);
 	memset(console->content.data, 0, data_size);
 	cons_clear(console);
 
@@ -59,21 +58,21 @@ int32_t console_reset(console_t* console) {
 			console_put_char(console, '\n');
 		}
 	}
-	free(old_data);
+	kfree(old_data);
 	return 0;
 }
 
 int32_t console_init(console_t* console) {
 	console->g = NULL;
-	console->bg_color = argb(0xff, 0x22, 0x22, 0x66);
-	console->fg_color = argb(0xff, 0xaa, 0xbb, 0xaa);
+	console->fg_color = argb(0xff, 0xff, 0xff, 0xff);
+	console->bg_color = argb(0xff, 0x00, 0x00, 0x00);
 	console->font = font_by_name("8x16");
 	memset(&console->content, 0, sizeof(content_t));
 	return 0;
 }
 
 void console_close(console_t* console) {
-	free(console->content.data);
+	kfree(console->content.data);
 	console->content.size = 0;
 	console->content.data = NULL;
 	console->g = NULL;

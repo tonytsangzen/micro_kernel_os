@@ -50,6 +50,10 @@ int32_t fb_dev_init(uint32_t w, uint32_t h, uint32_t dep) {
 	return 0;
 }
 
+inline fbinfo_t* fb_get_info(void) {
+	return &_fbinfo;
+}
+
 int32_t fb_dev_op(dev_t* dev, int32_t opcode, int32_t arg) {
 	(void)dev;
 

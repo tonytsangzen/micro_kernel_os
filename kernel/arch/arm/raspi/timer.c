@@ -25,6 +25,6 @@ void timer_set_interval(uint32_t id, uint32_t interval_microsecond) {
 
 void timer_clear_interrupt(uint32_t id) {
 	(void)id;
-	put32(ARM_TIMER_CLI,0);
+	//put32(ARM_TIMER_CLI,0);
 }
 
