@@ -30,6 +30,28 @@ static int32_t char_dev_ready_read(dev_t* dev) {
 	return -1;
 }
 
+void dev_init(void) {
+	int32_t i;
+	for(i=0; i<DEV_NUM; i++) {
+		memset(&_devs[i], 0, sizeof(dev_t));
+	}
+}
+
+int32_t uart_init(void) {
+	if(uart_dev_init() == 0) {
+		dev_t* dev = &_devs[DEV_UART0];
+		memset(dev, 0, sizeof(dev_t));
+		dev->type = DEV_TYPE_CHAR;
+		dev->ready_read = char_dev_ready_read;
+		dev->io.ch.inputch = uart_inputch;
+		dev->io.ch.read = char_dev_read;
+		dev->io.ch.write = uart_write;
+		dev->state = DEV_STATE_INITED;
+		return 0;
+	}
+	return -1;
+}
+
 int32_t fb_init(uint32_t w, uint32_t h, uint32_t dep) {
 	if(fb_dev_init(w, h, dep) == 0) {
 		dev_t* dev;
@@ -44,20 +66,8 @@ int32_t fb_init(uint32_t w, uint32_t h, uint32_t dep) {
 	return -1;
 }
 
-void dev_init(void) {
+void dev_setup(void) {
 	dev_t* dev;
-
-	printf("\n    %16s ", "uart");
-	//uart_init(); //did at kerne_entry
-	dev = &_devs[DEV_UART0];
-	memset(dev, 0, sizeof(dev_t));
-	dev->type = DEV_TYPE_CHAR;
-	dev->ready_read = char_dev_ready_read;
-	dev->io.ch.inputch = uart_inputch;
-	dev->io.ch.read = char_dev_read;
-	dev->io.ch.write = uart_write;
-	dev->state = DEV_STATE_INITED;
-	printf("[OK]\n");
 
 #ifdef VERSATILEPB
 	printf("    %16s ", "keyboard");

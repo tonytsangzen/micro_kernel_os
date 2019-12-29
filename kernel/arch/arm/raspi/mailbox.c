@@ -4,36 +4,32 @@
 #include <kstring.h>
 #include "mailbox.h"
 
-mail_message_t mailbox_read(int channel) {
-    mail_status_t stat;
-    mail_message_t res;
+void mailbox_read(int channel, mail_message_t *msg) {
+	mail_status_t stat;
 
-    // Make sure that the message is from the right channel
-    do {
-        // Make sure there is mail to recieve
-        do {
-            stat = *MAIL0_STATUS;
-        } while (stat.empty);
+	// Make sure that the message is from the right channel
+	do {
+		// Make sure there is mail to recieve
+		do {
+			stat = *MAIL0_STATUS;
+		} while (stat.empty);
 
-        // Get the message
-        res = *MAIL0_READ;
-    } while (res.channel != channel);
-
-    return res;
+		// Get the message
+		*msg = *MAIL0_READ;
+	} while (msg->channel != channel);
 }
 
-void mailbox_send(mail_message_t msg, int channel) {
-    mail_status_t stat;
-    msg.channel = channel;
+void mailbox_send(int channel, mail_message_t* msg) {
+	mail_status_t stat;
+	msg->channel = channel;
 
+	// Make sure you can send mail
+	do {
+		stat = *MAIL0_STATUS;
+	} while (stat.full);
 
-    // Make sure you can send mail
-    do {
-        stat = *MAIL0_STATUS;
-    } while (stat.full);
-
-    // send the message
-    *MAIL0_WRITE = msg;
+	// send the message
+	*MAIL0_WRITE = *msg;
 }
 
 /**
@@ -95,8 +91,8 @@ int send_messages(property_message_tag_t * tags) {
     // Send the message
     mail.data = ((uint32_t)msg) >>4;
 
-    mailbox_send(mail, PROPERTY_CHANNEL);
-    mail = mailbox_read(PROPERTY_CHANNEL);
+    mailbox_send(PROPERTY_CHANNEL, &mail);
+    mailbox_read(PROPERTY_CHANNEL, &mail);
 
 
     if (msg->req_res_code == REQUEST) {

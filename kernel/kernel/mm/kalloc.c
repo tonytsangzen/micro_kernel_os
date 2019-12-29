@@ -3,6 +3,7 @@
 #include <mm/mmu.h>
 #include <kernel/system.h>
 
+ram_hole_t _ram_holes[RAM_HOLE_MAX];
 /*physical memory split to pages for paging mmu, managed by kalloc/kfree, phymem page state must be occupied or free*/
 
 static page_list_t *page_list_prepend(page_list_t *page_list,
@@ -34,7 +35,7 @@ static inline bool in_hole(uint32_t addr) {
 	int32_t i;
 	for(i=0; i<RAM_HOLE_MAX; i++) {
 		if(_ram_holes[i].base != 0) {
-			if(addr >= _ram_holes[i].base && addr < _ram_holes[i].end)
+			if(addr >= _ram_holes[i].base && addr <= _ram_holes[i].end)
 				return true;
 		}
 	}
@@ -42,7 +43,7 @@ static inline bool in_hole(uint32_t addr) {
 }
 
 /* kalloc_init adds the given address range to the free list. */
-void kalloc_init(uint32_t start, uint32_t end) {
+void kalloc_init(uint32_t start, uint32_t end, bool skip_hole) {
 	char *start_address = (char *) ALIGN_UP(start, PAGE_SIZE);
 	char *end_address = (char *) ALIGN_DOWN(end, PAGE_SIZE);
 	char *current_page = 0;
@@ -51,10 +52,19 @@ void kalloc_init(uint32_t start, uint32_t end) {
 	_free_list1k = 0;
 
 	/* add each of the pages to the free list */
-	for (current_page = start_address; current_page != end_address;
-	     current_page += PAGE_SIZE) {
-		if(!in_hole((uint32_t)current_page))
+
+	if(skip_hole) {
+		for (current_page = start_address; current_page != end_address;
+				current_page += PAGE_SIZE) {
+			if(!in_hole((uint32_t)current_page))
+				_free_list4k = page_list_prepend(_free_list4k, current_page);
+		}
+	}
+	else {
+		for (current_page = start_address; current_page != end_address;
+				current_page += PAGE_SIZE) {
 			_free_list4k = page_list_prepend(_free_list4k, current_page);
+		}
 	}
 }
 

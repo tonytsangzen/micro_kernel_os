@@ -33,7 +33,7 @@
 #define UART_TXD_GPIO 14
 #define UART_RXD_GPIO 15
 
-int32_t uart_init(void) {
+int32_t uart_dev_init(void) {
 	unsigned int data = get32(AUX_ENABLES);
 	/* enable uart */
 	put32(AUX_ENABLES, data|UART_AUX_ENABLE);

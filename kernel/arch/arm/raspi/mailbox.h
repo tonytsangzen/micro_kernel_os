@@ -21,8 +21,8 @@ typedef struct {
     uint8_t full:1;
 } mail_status_t;
 
-mail_message_t mailbox_read(int channel);
-void mailbox_send(mail_message_t msg, int channel);
+void mailbox_read(int channel, mail_message_t* msg);
+void mailbox_send(int channel, mail_message_t* msg);
 
 /**
  * A property message can either be a request, or a response, and a response can be successfull or an error

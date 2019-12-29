@@ -5,7 +5,7 @@
 
 static hw_info_t _hw_info;
 
-void hw_info_init(void) {
+inline void hw_info_init(void) {
 	_hw_info.phy_mem_size = 512*MB;
 	//_hw_info.phy_mem_size = 256*MB;
 	_hw_info.phy_mmio_base = 0x20000000;

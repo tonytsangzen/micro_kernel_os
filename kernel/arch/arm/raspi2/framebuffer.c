@@ -1,6 +1,5 @@
 #include "mm/mmu.h"
 #include "mm/kmalloc.h"
-#include "kernel/kernel.h"
 #include "mm/kalloc.h"
 #include "kstring.h"
 #include "dev/fbinfo.h"
@@ -9,12 +8,13 @@
 #include "dev/framebuffer.h"
 #include "kstring.h"
 #include <kernel/system.h>
+#include <kernel/kernel.h>
 
 static fbinfo_t _fb_info __attribute__((aligned(16)));
 char* _framebuffer_base = NULL;
 char* _framebuffer_end = NULL;
 
-int32_t fb_dev_init(uint32_t w, uint32_t h, uint32_t dep) {
+int32_t __attribute__((optimize("O0"))) fb_dev_init(uint32_t w, uint32_t h, uint32_t dep) {
 	property_message_tag_t tags[5];
 
 	tags[0].proptag = FB_SET_PHYSICAL_DIMENSIONS;
@@ -56,9 +56,12 @@ int32_t fb_dev_init(uint32_t w, uint32_t h, uint32_t dep) {
 	_fb_info.yoffset = 0;
 
 	_framebuffer_base = (char*)_fb_info.pointer;
+	if((uint32_t)_framebuffer_base < KERNEL_BASE) {
+		_framebuffer_base = (char*)P2V(_framebuffer_base);
+	}
 	_framebuffer_end = _framebuffer_base + _fb_info.height*_fb_info.width*(_fb_info.depth/8);
-	map_pages(_kernel_vm, (uint32_t)_framebuffer_base, (uint32_t)_framebuffer_base, (uint32_t)_framebuffer_end, AP_RW_D);
-	kmake_hole(P2V(_framebuffer_base), P2V(_framebuffer_end));
+	map_pages(_kernel_vm, (uint32_t)_framebuffer_base, V2P(_framebuffer_base), V2P(_framebuffer_end), AP_RW_D);
+	kmake_hole((uint32_t)_framebuffer_base, (uint32_t)_framebuffer_end);
 	return 0;
 }
 
