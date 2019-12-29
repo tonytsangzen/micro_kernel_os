@@ -17,7 +17,6 @@ static void cons_clear(console_t* console) {
 int32_t console_reset(console_t* console) {
 	if(console->g == NULL)
 		return -1;
-
 	//save content data
 	int old_size = console->content.size;
 	int old_total = console->content.total;

@@ -26,19 +26,19 @@ typedef struct {
 
 
 static void outc(char c, void* p) {
-	(void)p;
-	char s[2];
-	s[0] = c;
-	s[1] = 0;
-
-	kprintf("%s", s);
+	str_t* buf = (str_t*)p;
+	str_addc(buf, c);
 }
- 
+
 static void console_out(init_t* init, const char* format, ...) {
+	(void)init;
 	va_list ap;
-  va_start(ap, format);
-  v_printf(outc, init, format, ap);
-  va_end(ap);
+	va_start(ap, format);
+	str_t* buf = str_new("");
+	v_printf(outc, buf, format, ap);
+	va_end(ap);
+	kprintf("%s", buf->cstr);
+	str_free(buf);
 }
 
 static void run_init_root(init_t* init, const char* cmd) {

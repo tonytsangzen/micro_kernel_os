@@ -89,7 +89,7 @@ int send_messages(property_message_tag_t * tags) {
     msg->tags[bufpos] = 0;
 
     // Send the message
-    mail.data = ((uint32_t)msg) >>4;
+    mail.data = (((uint32_t)msg)+0x40000000) >>4;
 
     mailbox_send(PROPERTY_CHANNEL, &mail);
     mailbox_read(PROPERTY_CHANNEL, &mail);

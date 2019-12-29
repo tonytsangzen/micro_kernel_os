@@ -64,16 +64,16 @@ static void init_kernel_vm(void) {
 
 static void init_allocable_mem(void) {
 	kalloc_init(ALLOCATABLE_PAGE_DIR_BASE, ALLOCATABLE_PAGE_DIR_END, false);
-
 	map_pages(_kernel_vm,
 		ALLOCATABLE_MEMORY_START,
 		V2P(ALLOCATABLE_MEMORY_START),
 		get_hw_info()->phy_mem_size,
 		AP_RW_D);
 
-	kalloc_init(ALLOCATABLE_MEMORY_START, P2V(get_hw_info()->phy_mem_size), true);
+	kalloc_init(ALLOCATABLE_MEMORY_START, P2V(get_hw_info()->phy_mem_size), false);
 }
 
+#ifndef RASPI
 static int32_t load_init(void) {
 	const char* prog = "/sbin/init";
 	int32_t sz;
@@ -88,6 +88,7 @@ static int32_t load_init(void) {
 	}
 	return -1;
 }
+#endif
 
 static void fs_init(void) {
 	vfs_init();
@@ -115,26 +116,29 @@ void _kernel_entry_c(context_t* ctx) {
 		div_u32(KMALLOC_END-KMALLOC_BASE, 1*MB));
 
 	printf("kernel: %39s ", "framebuffer initing");
-	if(fb_init(1280, 720, 32) == 0) {
+	if(fb_init(1280, 720, 16) == 0) {
 		fbinfo_t* info = fb_get_info();
-		printf("[OK] : %dx%d %dbits, addr: 0x%X-0x%X\n", 
-				info->width, info->height, info->depth, 
-				_framebuffer_base, _framebuffer_end);
-		/*
-		graph_t* g = graph_new((uint32_t*)_framebuffer_base, info->width, info->height);
+		printf("[OK] : %dx%d %dbits, addr: 0x%X, size:%d\n", 
+				info->width, info->height, info->depth,
+				info->pointer, info->size);
+		memset((void*)info->pointer, 0, info->size);
+		graph_t* g = graph_new(NULL, info->width, info->height);
 		console->g = g;
 		console_reset(console);
-		*/
 	}
 	else
 		printf("[Failed!]\n");
+	flush_led();
 
 	printf("kernel: %39s ", "whole allocable memory initing");
 	init_allocable_mem(); //init the rest allocable memory VM
-	printf("[ok] : %dMB\n", div_u32(get_free_mem_size(), 1*MB));
+	//printf("[ok] : %dMB\n", div_u32(get_free_mem_size(), 1*MB));
+	printf("[ok]\n");
+	flush_led();
 
 	printf("kernel: devices initing\n");
 	dev_setup();
+	flush_led();
 
 	printf("kernel: %39s ", "global env initing");
 	init_global();
@@ -156,6 +160,12 @@ void _kernel_entry_c(context_t* ctx) {
 	irq_init();
 	printf("[ok]\n");
 
+#ifdef RASPI
+	while(true) {
+		flush_led();
+	}
+
+#else
 	printf("kernel: %39s ", "loading first process(init)");
 	if(load_init() != 0) 
 		printf("[failed!]\n");
@@ -164,12 +174,12 @@ void _kernel_entry_c(context_t* ctx) {
 
 	timer_set_interval(0, 0x40); //0.001 sec sequence
 	printf("kernel: start timer.\n");
+#endif
 
 	while(1) __asm__("MOV r0, #0; MCR p15,0,R0,c7,c0,4"); // CPU enter WFI state
-	/*
+	
 	if(console->g != NULL) {
 		graph_free(console->g);
 		console_close(console);
 	}
-	*/
 }
