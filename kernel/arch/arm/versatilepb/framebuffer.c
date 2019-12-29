@@ -8,6 +8,7 @@ char* _framebuffer_base = NULL;
 char* _framebuffer_end = NULL;
 
 int32_t fb_dev_init(uint32_t w, uint32_t h, uint32_t dep) {
+	dep = 32;
 	_fbinfo.width = w;
 	_fbinfo.height = h;
 	_fbinfo.vwidth = w;
@@ -16,8 +17,7 @@ int32_t fb_dev_init(uint32_t w, uint32_t h, uint32_t dep) {
 	_fbinfo.pitch = 0;
 	_fbinfo.xoffset = 0;
 	_fbinfo.yoffset = 0;
-	_fbinfo.pointer = V2P(_framebuffer_base_raw);
-	_fbinfo.size = 0;
+	_fbinfo.pointer = (uint32_t)_framebuffer_base_raw;
 
 	if(w == 640 && h == 480) {
 		put32((_mmio_base | 0x1c), 0x2c77);
@@ -42,11 +42,12 @@ int32_t fb_dev_init(uint32_t w, uint32_t h, uint32_t dep) {
 		put32((_mmio_base | 0x00120000), 0x3F << 2);
 		put32((_mmio_base | 0x00120004), 767);
 	}	
-	put32((_mmio_base | 0x00120010), _fbinfo.pointer);
+	put32((_mmio_base | 0x00120010), V2P(_fbinfo.pointer));
 	put32((_mmio_base | 0x00120018), 0x082b);
 	
-	_framebuffer_base = _framebuffer_base_raw;
-	_framebuffer_end = _framebuffer_end_raw;
+	_fbinfo.size = _fbinfo.width * _fbinfo.height * (_fbinfo.depth/8);
+	_framebuffer_base = (char*)_fbinfo.pointer;
+	_framebuffer_end = _framebuffer_base + _fbinfo.size;
 	return 0;
 }
 
