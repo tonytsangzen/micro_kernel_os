@@ -9,6 +9,7 @@
 #include <mm/mmu.h>
 #include <dev/gpio.h>
 #include <dev/spi.h>
+#include <kernel/system.h>
 
 #define SPI0_OFFSET 0x00204000
 #define SPI1_OFFSET 0x00215080
@@ -71,7 +72,8 @@
 #define SPI_ACTIVATE 1
 #define SPI_DEACTIVATE 0
 
-#define GPIO_ALTF0  0x0b100
+#define GPIO_ALTF0  0x04
+#define GPIO_OUTP  0x01
 #define SPI0_CS_CPOL                 0x00000008 ///< Clock Polarity
 #define SPI0_CS_CPHA                 0x00000004 ///< Clock Phase
 
@@ -82,10 +84,6 @@ static void peri_set_bits(volatile uint32_t addr, uint32_t value, uint32_t mask)
 }
 
 void spi_init(int32_t clk_divide) {
-	uint32_t a = get32(SPI_ENABLES);
-	a |= 1;
-	put32(SPI_ENABLES, a);
-
 	/* setup spi pins (ALTF0) */
 	gpio_config(SPI_SCLK, GPIO_ALTF0);
 	gpio_config(SPI_MOSI, GPIO_ALTF0);
@@ -98,23 +96,29 @@ void spi_init(int32_t clk_divide) {
 	uint32_t data = SPI_CNTL_CLMASK; /* clear both rx/tx fifo */
 	/* clear spi fifo */
 	put32(SPI_CS_REG, data);
+
+	/* set data mode*/
+	uint32_t data_mode = 0;  //
+	peri_set_bits(SPI_CS_REG, data_mode << 2, SPI_CNTL_CPOL | SPI_CNTL_CPHA) ;
+
 	/* set largest clock divider */
 	clk_divide &= SPI_CLK_DIVIDE_MASK; /* 16-bit value */
 	put32(SPI_CLK_REG, clk_divide); /** 0=65536, power of 2, rounded down */
+	
+	peri_set_bits(SPI_CS_REG, 0, SPI_CNTL_CSMASK); //select chip 0
 
-	uint32_t data_mode = 0; 
-	peri_set_bits(SPI_CS_REG, data_mode << 2, SPI_CNTL_CPOL | SPI_CNTL_CPHA) ;
+	gpio_config(25, GPIO_OUTP);
 }
 
 void spi_write(uint32_t data) {
 	peri_set_bits(SPI_CS_REG, SPI_CNTL_CLMASK, SPI_CNTL_CLMASK);
 	peri_set_bits(SPI_CS_REG, SPI_CNTL_TRXACT, SPI_CNTL_TRXACT);
 	/* wait if fifo is full */
-	while (!(get32(SPI_CS_REG)&SPI_STAT_TXDATA));
+	while (!(get32(SPI_CS_REG)&SPI_STAT_TXDATA)) _delay(100);
 	/* write a byte */
 	put32(SPI_FIFO_REG, data&0xff);
 	/* wait until done */
-	while (!(get32(SPI_CS_REG)&SPI_STAT_TXDONE));
+	while (!(get32(SPI_CS_REG)&SPI_STAT_TXDONE)) _delay(100);
 	peri_set_bits(SPI_CS_REG, 0, SPI_CNTL_TRXACT);
 }
 
@@ -122,13 +126,13 @@ uint32_t spi_transfer(uint32_t data) {
 	peri_set_bits(SPI_CS_REG, SPI_CNTL_CLMASK, SPI_CNTL_CLMASK);
 	peri_set_bits(SPI_CS_REG, SPI_CNTL_TRXACT, SPI_CNTL_TRXACT);
 	/* wait if fifo is full */
-	while (!(get32(SPI_CS_REG)&SPI_STAT_TXDATA));
+	while (!(get32(SPI_CS_REG)&SPI_STAT_TXDATA)) _delay(100);
 	/* write a byte */
 	put32(SPI_FIFO_REG, data&0xff);
 	/* wait until done */
-	while (!(get32(SPI_CS_REG)&SPI_STAT_TXDONE));
+	while (!(get32(SPI_CS_REG)&SPI_STAT_TXDONE)) _delay(100);
 	/* should get a byte? */
-	while (!(get32(SPI_CS_REG)&SPI_STAT_RXDATA));
+	while (!(get32(SPI_CS_REG)&SPI_STAT_RXDATA)) _delay(100);
 	/* read a byte */
 	uint32_t r = get32(SPI_FIFO_REG)&0xff;
 	peri_set_bits(SPI_CS_REG, 0, SPI_CNTL_TRXACT);
