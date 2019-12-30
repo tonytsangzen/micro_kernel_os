@@ -100,6 +100,9 @@ void _kernel_entry_c(context_t* ctx) {
 	init_kernel_vm();  
 	flush_led();
 
+	//epaper_test();
+	//flush_led();
+
 	dev_init();
 	uart_init();
 	flush_led();
@@ -116,7 +119,7 @@ void _kernel_entry_c(context_t* ctx) {
 		div_u32(KMALLOC_END-KMALLOC_BASE, 1*MB));
 
 	printf("kernel: %39s ", "framebuffer initing");
-	if(fb_init(1280, 720, 16) == 0) {
+	if(fb_init(800, 480, 16) == 0) {
 		fbinfo_t* info = fb_get_info();
 		printf("[OK] : %dx%d %dbits, addr: 0x%X, size:%d\n", 
 				info->width, info->height, info->depth,

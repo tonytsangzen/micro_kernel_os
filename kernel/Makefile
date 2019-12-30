@@ -64,6 +64,7 @@ ARCH_OBJS = \
 	${ARCH_DIR}/${ARCH}/framebuffer.o \
 	${ARCH_DIR}/${ARCH}/actled.o \
 	${ARCH_DIR}/${ARCH}/sd.o \
+	${ARCH_DIR}/${ARCH}/spi.o \
 	${ARCH_DIR}/${ARCH}/timer.o \
 	${ARCH_DIR}/${ARCH}/mailbox.o 
 
@@ -83,9 +84,14 @@ LIB_OBJS = \
 	${LIB_DIR}/ext2read.o \
 	${LIB_DIR}/kprintf.o
 
+EXTRA_DIR = extra
+EXTRA_OBJS = \
+	${EXTRA_DIR}/epaper/epaper.o
+
 KERNEL_DIR = kernel
 OBJS = ${ARCH_OBJS} \
 	${LIB_OBJS} \
+	${EXTRA_OBJS} \
 	${KERNEL_DIR}/mm/startup.o \
 	${KERNEL_DIR}/mm/kalloc.o \
 	${KERNEL_DIR}/mm/mmu.o \
@@ -130,8 +136,8 @@ debugasm:
 
 gdb: 
 	echo "target remote :26000" > /tmp/gdbinit
-	#arm-none-eabi-gdb ${BUILD_DIR}/$(OS).elf -x /tmp/gdbinit
-	gdb-multiarch ${BUILD_DIR}/$(OS).elf -x /tmp/gdbinit #for ubuntu 18.04 without arm-none-eabi-gdb
+	arm-none-eabi-gdb ${BUILD_DIR}/$(OS).elf -x /tmp/gdbinit
+	#gdb-multiarch ${BUILD_DIR}/$(OS).elf -x /tmp/gdbinit #for ubuntu 18.04 without arm-none-eabi-gdb
 
 clean:
 	rm -f $(OBJS)
