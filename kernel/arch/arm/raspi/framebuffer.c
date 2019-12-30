@@ -9,6 +9,7 @@
 #include "kstring.h"
 #include <kernel/system.h>
 #include <kernel/kernel.h>
+#include <graph.h>
 
 static fbinfo_t _fb_info __attribute__((aligned(16)));
 char* _framebuffer_base = NULL;

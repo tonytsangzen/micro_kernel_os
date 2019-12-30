@@ -15,6 +15,7 @@
 #define SPI2_OFFSET 0x002150C0
 
 #define SPI_BASE (_mmio_base | SPI0_OFFSET)
+#define SPI_ENABLES    (_mmio_base | 0x00215004)
 
 #define SPI_CS_REG   (SPI_BASE+0x00)
 #define SPI_FIFO_REG (SPI_BASE+0x04)
@@ -70,63 +71,56 @@
 #define SPI_ACTIVATE 1
 #define SPI_DEACTIVATE 0
 
-#define GPIO_ALTF0  0x04
+#define GPIO_ALTF0  0x0b100
+#define SPI0_CS_CPOL                 0x00000008 ///< Clock Polarity
+#define SPI0_CS_CPHA                 0x00000004 ///< Clock Phase
 
-static uint32_t spi_which = SPI_SELECT_DEFAULT;
+static void peri_set_bits(volatile uint32_t addr, uint32_t value, uint32_t mask) {
+	uint32_t v = get32(addr);
+	v = (v & ~mask) | (value & mask);
+	put32(addr, v);
+}
 
 void spi_init(int32_t clk_divide) {
-	uint32_t data = SPI_CNTL_CLMASK; /* clear both rx/tx fifo */
-	/* clear spi fifo */
-	put32(SPI_CS_REG, data);
-	/* set largest clock divider */
-	clk_divide &= SPI_CLK_DIVIDE_MASK; /* 16-bit value */
-	put32(SPI_CLK_REG, clk_divide); /** 0=65536, power of 2, rounded down */
+	uint32_t a = get32(SPI_ENABLES);
+	a |= 1;
+	put32(SPI_ENABLES, a);
+
 	/* setup spi pins (ALTF0) */
 	gpio_config(SPI_SCLK, GPIO_ALTF0);
 	gpio_config(SPI_MOSI, GPIO_ALTF0);
 	gpio_config(SPI_MISO, GPIO_ALTF0);
 	gpio_config(SPI_CE0N, GPIO_ALTF0);
 	gpio_config(SPI_CE1N, GPIO_ALTF0);
-}
 
-void spi_select(uint32_t which) {
-	switch (which) {
-		case SPI_SELECT_0:
-		case SPI_SELECT_1:
-			spi_which = which;
-			break;
-		default:
-			spi_which = SPI_SELECT_DEFAULT;
-	}
-}
+	put32(SPI_CS_REG, 0);
 
-static void spi_activate(uint32_t enable) {
-	uint32_t data = SPI_CNTL_TRXACT;
-	if (enable) {
-		/* activate transfer on selected channel 0 or 1 */
-		put32(SPI_CS_REG, data|(spi_which>>1));
-	}
-	else {
-		/* de-activate transfer */
-		put32(SPI_CS_REG, get32(SPI_CS_REG)&~SPI_CNTL_TRXACT);
-	}
+	uint32_t data = SPI_CNTL_CLMASK; /* clear both rx/tx fifo */
+	/* clear spi fifo */
+	put32(SPI_CS_REG, data);
+	/* set largest clock divider */
+	clk_divide &= SPI_CLK_DIVIDE_MASK; /* 16-bit value */
+	put32(SPI_CLK_REG, clk_divide); /** 0=65536, power of 2, rounded down */
+
+	uint32_t data_mode = 0; 
+	peri_set_bits(SPI_CS_REG, data_mode << 2, SPI_CNTL_CPOL | SPI_CNTL_CPHA) ;
 }
 
 void spi_write(uint32_t data) {
-	gpio_write(25, 1);
-	spi_activate(1);
+	peri_set_bits(SPI_CS_REG, SPI_CNTL_CLMASK, SPI_CNTL_CLMASK);
+	peri_set_bits(SPI_CS_REG, SPI_CNTL_TRXACT, SPI_CNTL_TRXACT);
 	/* wait if fifo is full */
 	while (!(get32(SPI_CS_REG)&SPI_STAT_TXDATA));
 	/* write a byte */
 	put32(SPI_FIFO_REG, data&0xff);
 	/* wait until done */
 	while (!(get32(SPI_CS_REG)&SPI_STAT_TXDONE));
-	spi_activate(0);
+	peri_set_bits(SPI_CS_REG, 0, SPI_CNTL_TRXACT);
 }
 
 uint32_t spi_transfer(uint32_t data) {
-	gpio_write(25, 1);
-	spi_activate(1);
+	peri_set_bits(SPI_CS_REG, SPI_CNTL_CLMASK, SPI_CNTL_CLMASK);
+	peri_set_bits(SPI_CS_REG, SPI_CNTL_TRXACT, SPI_CNTL_TRXACT);
 	/* wait if fifo is full */
 	while (!(get32(SPI_CS_REG)&SPI_STAT_TXDATA));
 	/* write a byte */
@@ -137,6 +131,6 @@ uint32_t spi_transfer(uint32_t data) {
 	while (!(get32(SPI_CS_REG)&SPI_STAT_RXDATA));
 	/* read a byte */
 	uint32_t r = get32(SPI_FIFO_REG)&0xff;
-	spi_activate(0);
+	peri_set_bits(SPI_CS_REG, 0, SPI_CNTL_TRXACT);
 	return r;
 }

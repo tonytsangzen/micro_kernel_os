@@ -100,8 +100,8 @@ void _kernel_entry_c(context_t* ctx) {
 	init_kernel_vm();  
 	flush_led();
 
-	//epaper_test();
-	//flush_led();
+	epaper_test();
+	flush_led();
 
 	dev_init();
 	uart_init();

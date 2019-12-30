@@ -105,7 +105,6 @@ void epaper_clear(void) {
 
 void epaper_test(void) {
 	spi_init(SPI_CLK_DIVIDE_TEST);
-	spi_select(SPI_SELECT_0);
 	epaper_init();
 	epaper_clear();
 }
