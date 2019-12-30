@@ -84,9 +84,11 @@ LIB_OBJS = \
 	${LIB_DIR}/ext2read.o \
 	${LIB_DIR}/kprintf.o
 
-EXTRA_DIR = extra
+ifeq ($(MACH),raspi)
+EXTRA_DIR = arch/extra
 EXTRA_OBJS = \
 	${EXTRA_DIR}/epaper/epaper.o
+endif
 
 KERNEL_DIR = kernel
 OBJS = ${ARCH_OBJS} \
