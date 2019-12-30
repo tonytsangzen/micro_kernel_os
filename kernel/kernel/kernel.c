@@ -98,10 +98,9 @@ void _kernel_entry_c(context_t* ctx) {
 	(void)ctx;
 	hw_info_init();
 	init_kernel_vm();  
-	flush_led();
 
 	epaper_test();
-	flush_led();
+	while(1);
 
 	dev_init();
 	uart_init();

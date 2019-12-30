@@ -1,5 +1,6 @@
 #include <dev/gpio.h>
 #include <dev/spi.h>
+#include <dev/actled.h>
 #include <kernel/system.h>
 
 #define EPD_RST_PIN      17
@@ -16,7 +17,7 @@ void epaper_reset(void) {
 	gpio_write(EPD_RST_PIN, 0);
 	_delay(200);
 	gpio_write(EPD_RST_PIN, 1);
-	_delay(20);
+	_delay(200);
 }
  
 void epaper_cmd(uint8_t reg) {
@@ -34,7 +35,7 @@ void epaper_write(uint8_t data) {
 }
 
 void epaper_wait(void) {
-	while(gpio_read(EPD_BUSY_PIN) == 0) {
+	while(gpio_read(EPD_BUSY_PIN) == 1) {
 		_delay(100000);
 	}
 }
@@ -82,7 +83,7 @@ void epaper_clear(void) {
 	epaper_cmd(0x10);
 	for (uint32_t j = 0; j < h; j++) {
 		for (uint32_t i = 0; i < w; i++) {
-			epaper_write(0xFF);
+			epaper_write(0x22);
 		}
 	}
 	epaper_cmd(0x92);
@@ -91,7 +92,7 @@ void epaper_clear(void) {
 	epaper_cmd(0x13);
 	for (uint32_t j = 0; j < h; j++) {
 		for (uint32_t i = 0; i < w; i++) {
-			epaper_write(0xFF);
+			epaper_write(0x6);
 		}
 	}
 	epaper_cmd(0x92);
@@ -100,11 +101,13 @@ void epaper_clear(void) {
 }
 
 #define SPI_CLK_DIVIDE_TEST 128
-#define SPI_SELECT_0 0x01
-#define SPI_SELECT_1 0x02
 
 void epaper_test(void) {
 	spi_init(SPI_CLK_DIVIDE_TEST);
+	flush_led();
 	epaper_init();
+	flush_led();
 	epaper_clear();
+	_delay(1000000);
+	flush_led();
 }
