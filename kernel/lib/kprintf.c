@@ -2,6 +2,7 @@
 #include "vprintf.h"
 #include "dev/uart.h"
 #include "dev/framebuffer.h"
+#include "dev/actled.h"
 #include "kstring.h"
 #include "mstr.h"
 #include "graph.h"
@@ -17,9 +18,19 @@ static void outc(char c, void* p) {
 	str_addc(buf, c);
 }
 
+void flush_actled(void) {
+	act_led(1);
+	_delay_msec(500);
+	act_led(0);
+	_delay_msec(500);
+}
+
 void printf(const char *format, ...) {
 	if(get_dev(DEV_UART0)->state == DEV_STATE_OFF)
 		return;
+
+	act_led(1);
+	_delay_msec(100);
 
 	va_list ap;
 	va_start(ap, format);
@@ -28,6 +39,8 @@ void printf(const char *format, ...) {
 	va_end(ap);
 	
 	uart_out(buf->cstr);
+	act_led(0);
+
 	if(_console.g != NULL) {
 		fbinfo_t* info = fb_get_info();
 		console_put_string(&_console, buf->cstr);

@@ -3,6 +3,10 @@
 #include <kernel/irq.h>
 #include <basic_math.h>
 
+#define SYSTEM_TIMER_BASE (_mmio_base+0x3000)
+#define SYSTEM_TIMER_LOW  0x0004 // System Timer Counter Upper 32 bits
+#define SYSTEM_TIMER_HI   0x0008 // System Timer Counter Upper 32 bits
+
 #define ARM_TIMER_LOD (_mmio_base+0x0B400)
 #define ARM_TIMER_VAL (_mmio_base+0x0B404)
 #define ARM_TIMER_CTL (_mmio_base+0x0B408)
@@ -28,3 +32,8 @@ void timer_clear_interrupt(uint32_t id) {
 	//put32(ARM_TIMER_CLI,0);
 }
 
+uint64_t timer_read_sys_msec(void) { //read microsec
+	uint64_t r = get32(SYSTEM_TIMER_BASE + SYSTEM_TIMER_HI/4);
+	r <<= 32;
+	return (r + get32(SYSTEM_TIMER_BASE + SYSTEM_TIMER_LOW/4));
+}

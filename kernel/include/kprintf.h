@@ -5,5 +5,6 @@
 void uart_out(const char* s);
 void printf(const char *format, ...);
 console_t* get_console(void);
+void flush_actled(void);
 
 #endif

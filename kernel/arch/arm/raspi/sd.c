@@ -439,7 +439,6 @@ int32_t sd_init(dev_t* dev) {
 		return SD_TIMEOUT;
 	*EMMC_BLKSIZECNT = (1<<16) | 8;
 
-/*
 	sd_cmd(CMD_SEND_SCR, 0);
 	if(sd_err)
 		return sd_err;
@@ -455,7 +454,6 @@ int32_t sd_init(dev_t* dev) {
 	}
 	if(r != 2) 
 		return SD_TIMEOUT;
-	*/
 
 	if(sd_scr[0] & SCR_SD_BUS_WIDTH_4) {
 		sd_cmd(CMD_SET_BUS_WIDTH, sd_rca|2);

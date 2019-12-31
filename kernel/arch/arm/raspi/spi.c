@@ -79,14 +79,9 @@ static void peri_set_bits(volatile uint32_t addr, uint32_t value, uint32_t mask)
 	uint32_t v = get32(addr);
 	v = (v & ~mask) | (value & mask);
 	put32(addr, v);
-	put32(addr, v);
 }
 
 void spi_init(int32_t clk_divide) {
-	uint32_t a = get32(SPI_ENABLES);
-	a |= 1;
-	put32(SPI_ENABLES, a);
-
 	/* setup spi pins (ALTF0) */
 	gpio_config(SPI_SCLK, GPIO_ALTF0);
 	gpio_config(SPI_MOSI, GPIO_ALTF0);
@@ -94,7 +89,6 @@ void spi_init(int32_t clk_divide) {
 	gpio_config(SPI_CE0N, GPIO_ALTF0);
 	gpio_config(SPI_CE1N, GPIO_ALTF0);
 
-	put32(SPI_CS_REG, 0);
 	put32(SPI_CS_REG, 0);
 
 	uint32_t data = SPI_CNTL_CLMASK; /* clear both rx/tx fifo */

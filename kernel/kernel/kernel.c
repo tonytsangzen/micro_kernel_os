@@ -73,7 +73,6 @@ static void init_allocable_mem(void) {
 	kalloc_init(ALLOCATABLE_MEMORY_START, P2V(get_hw_info()->phy_mem_size), false);
 }
 
-#ifndef RASPI
 static int32_t load_init(void) {
 	const char* prog = "/sbin/init";
 	int32_t sz;
@@ -88,7 +87,6 @@ static int32_t load_init(void) {
 	}
 	return -1;
 }
-#endif
 
 static void fs_init(void) {
 	vfs_init();
@@ -99,21 +97,21 @@ void _kernel_entry_c(context_t* ctx) {
 	hw_info_init();
 	init_kernel_vm();  
 
-#ifdef RASPI
+#ifdef EPAPER
 	epaper_test();
 	while(1);
 #endif
 
 	dev_init();
 	uart_init();
-	flush_led();
-
-	console_t* console = get_console();
-	console_init(console);
-
 	uart_out("\n\n"
 			"------Ewok micro-kernel-------\n"
 			"kernel: mmu inited\n");
+
+	flush_actled();
+
+	console_t* console = get_console();
+	console_init(console);
 
 	km_init();
 	printf("kernel: %39s [ok] : %dMB\n", "kmalloc initing", 
@@ -132,17 +130,14 @@ void _kernel_entry_c(context_t* ctx) {
 	}
 	else
 		printf("[Failed!]\n");
-	flush_led();
 
 	printf("kernel: %39s ", "whole allocable memory initing");
 	init_allocable_mem(); //init the rest allocable memory VM
 	//printf("[ok] : %dMB\n", div_u32(get_free_mem_size(), 1*MB));
 	printf("[ok]\n");
-	flush_led();
 
 	printf("kernel: devices initing\n");
 	dev_setup();
-	flush_led();
 
 	printf("kernel: %39s ", "global env initing");
 	init_global();
@@ -163,27 +158,23 @@ void _kernel_entry_c(context_t* ctx) {
 	printf("kernel: %39s ", "irq initing");
 	irq_init();
 	printf("[ok]\n");
+	
+	timer_set_interval(0, 0x40); //0.001 sec sequence
+	printf("kernel: start timer.\n");
 
-#ifdef RASPI
-	while(true) {
-		flush_led();
+	if(get_dev(DEV_SD)->state == DEV_STATE_OFF) {
+		while(true) flush_actled();
 	}
 
-#else
 	printf("kernel: %39s ", "loading first process(init)");
 	if(load_init() != 0) 
 		printf("[failed!]\n");
 	else
 		printf("[ok]\n");
 
-	timer_set_interval(0, 0x40); //0.001 sec sequence
-	printf("kernel: start timer.\n");
-#endif
-
-	while(1) __asm__("MOV r0, #0; MCR p15,0,R0,c7,c0,4"); // CPU enter WFI state
-	
 	if(console->g != NULL) {
 		graph_free(console->g);
 		console_close(console);
 	}
+	while(1) __asm__("MOV r0, #0; MCR p15,0,R0,c7,c0,4"); // CPU enter WFI state
 }

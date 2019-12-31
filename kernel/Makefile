@@ -17,6 +17,10 @@ else
 ARCH=arm/versatilepb
 endif
 
+ifeq ($(EPAPER),yes)
+CFLAGS = -DEPAPER
+endif
+
 ARCH_DIR=arch
 include ${ARCH_DIR}/${ARCH}/config.mk
 
