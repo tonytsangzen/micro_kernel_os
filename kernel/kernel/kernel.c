@@ -108,7 +108,7 @@ void _kernel_entry_c(context_t* ctx) {
 			"------Ewok micro-kernel-------\n"
 			"kernel: mmu inited\n");
 
-	flush_actled();
+	//flush_actled();
 
 	console_t* console = get_console();
 	console_init(console);
@@ -158,9 +158,6 @@ void _kernel_entry_c(context_t* ctx) {
 	printf("kernel: %39s ", "irq initing");
 	irq_init();
 	printf("[ok]\n");
-	
-	timer_set_interval(0, 0x40); //0.001 sec sequence
-	printf("kernel: start timer.\n");
 
 	if(get_dev(DEV_SD)->state == DEV_STATE_OFF) {
 		while(true) flush_actled();
@@ -171,10 +168,14 @@ void _kernel_entry_c(context_t* ctx) {
 		printf("[failed!]\n");
 	else
 		printf("[ok]\n");
+	
+	timer_set_interval(0, 0x40); //0.001 sec sequence
+	printf("kernel: start timer.\n");
+
+	while(1) __asm__("MOV r0, #0; MCR p15,0,R0,c7,c0,4"); // CPU enter WFI state
 
 	if(console->g != NULL) {
 		graph_free(console->g);
 		console_close(console);
 	}
-	while(1) __asm__("MOV r0, #0; MCR p15,0,R0,c7,c0,4"); // CPU enter WFI state
 }

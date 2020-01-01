@@ -11,6 +11,7 @@ extern uint32_t __int_off(void);
 extern void __int_on(uint32_t);
 extern void __mem_barrier(void);
 extern void _delay(uint32_t count);
+extern void _delay_usec(uint64_t count);
 extern void _delay_msec(uint32_t count);
 
 extern void _flush_tlb(void);

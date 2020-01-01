@@ -6,6 +6,7 @@
 #include "kstring.h"
 #include "mstr.h"
 #include "graph.h"
+#include "kernel/system.h"
 
 static console_t _console;
 
@@ -20,9 +21,9 @@ static void outc(char c, void* p) {
 
 void flush_actled(void) {
 	act_led(1);
-	_delay_msec(500);
+	_delay(1000000);
 	act_led(0);
-	_delay_msec(500);
+	_delay(1000000);
 }
 
 void printf(const char *format, ...) {

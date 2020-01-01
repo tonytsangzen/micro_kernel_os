@@ -32,8 +32,8 @@ void timer_clear_interrupt(uint32_t id) {
 	//put32(ARM_TIMER_CLI,0);
 }
 
-uint64_t timer_read_sys_msec(void) { //read microsec
-	uint64_t r = get32(SYSTEM_TIMER_BASE + SYSTEM_TIMER_HI/4);
+uint64_t timer_read_sys_usec(void) { //read microsec
+	uint64_t r = get32(SYSTEM_TIMER_BASE + SYSTEM_TIMER_HI);
 	r <<= 32;
-	return (r + get32(SYSTEM_TIMER_BASE + SYSTEM_TIMER_LOW/4));
+	return (r + get32(SYSTEM_TIMER_BASE + SYSTEM_TIMER_LOW));
 }

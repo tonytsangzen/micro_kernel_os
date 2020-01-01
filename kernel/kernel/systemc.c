@@ -10,9 +10,16 @@ inline void _delay(uint32_t count) {
 	}
 }
 
-void _delay_msec(uint32_t count) {
-	uint64_t s = timer_read_sys_msec() + count;
-	while(timer_read_sys_msec() < s);
+inline void _delay_usec(uint64_t count) {
+	uint64_t s = timer_read_sys_usec();
+	uint64_t t = s + count;
+	while(s < t) {
+		s = timer_read_sys_usec();
+	}
+}
+
+inline void _delay_msec(uint32_t count) {
+	_delay_usec(count*1000);
 }
 
 inline void __attribute__((optimize("O0"))) _flush_tlb(void) {
