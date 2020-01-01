@@ -67,3 +67,8 @@ void timer_clear_interrupt(uint32_t id) {
   put32(t + TIMER_INTCTRL, 0xFFFFFFFF);
 }
 
+static uint32_t _sys_usec_tic = 0;
+uint64_t timer_read_sys_usec(void) { //read microsec
+	_sys_usec_tic += 20;
+	return _sys_usec_tic;
+}

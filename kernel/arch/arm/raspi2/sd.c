@@ -321,12 +321,12 @@ static int32_t sd_clk(uint32_t f) {
 
 	d = (((d&0x0ff)<<8)|h);
 	*EMMC_CONTROL1 = (*EMMC_CONTROL1&0xffff003f) | d;
-	_delay(1000000);
+	_delay_usec(10);
 	*EMMC_CONTROL1 |= C1_CLK_EN;
-	_delay(1000000);
+	_delay_usec(10);
 	cnt=10000; 
 	while(!(*EMMC_CONTROL1 & C1_CLK_STABLE) && cnt--)
-		_delay(1000000);
+		_delay_usec(10);
 	if(cnt<=0) {
 		return SD_ERROR;
 	}
@@ -430,8 +430,6 @@ int32_t sd_init(dev_t* dev) {
 	sd_rca = sd_cmd(CMD_SEND_REL_ADDR, 0);
 	if(sd_err)
 		return sd_err;
-	if((r=sd_clk(25000000)))
-		return r;
 	sd_cmd(CMD_CARD_SELECT, sd_rca);
 	if(sd_err)
 		return sd_err;
@@ -439,29 +437,36 @@ int32_t sd_init(dev_t* dev) {
 		return SD_TIMEOUT;
 	*EMMC_BLKSIZECNT = (1<<16) | 8;
 
+	//if((r=sd_clk(25000000)))
+	//	return r;
+
 	sd_cmd(CMD_SEND_SCR, 0);
-	if(!sd_err) {
-		if(sd_int(INT_READ_RDY, 1))
-			return SD_TIMEOUT;
+	if(sd_err)
+		return sd_err;
+/*
 
-		r=0; cnt=100000; 
-		while(r<2 && cnt) {
-			if( *EMMC_STATUS & SR_READ_AVAILABLE )
-				sd_scr[r++] = *EMMC_DATA;
-			else
-				wait_usec(1);
-		}
-		if(r != 2) 
-			return SD_TIMEOUT;
+	if(sd_int(INT_READ_RDY, 1))
+		return SD_TIMEOUT;
 
-		if(sd_scr[0] & SCR_SD_BUS_WIDTH_4) {
-			sd_cmd(CMD_SET_BUS_WIDTH, sd_rca|2);
-			if(sd_err)
-				return sd_err;
-			*EMMC_CONTROL0 |= C0_HCTL_DWITDH;
-		}
-		// add software flag
+	r=0; cnt=100000; 
+	while(r<2 && cnt) {
+		if( *EMMC_STATUS & SR_READ_AVAILABLE )
+			sd_scr[r++] = *EMMC_DATA;
+		else
+			wait_usec(1);
 	}
+	if(r != 2) 
+		return SD_TIMEOUT;
+
+	if(sd_scr[0] & SCR_SD_BUS_WIDTH_4) {
+		sd_cmd(CMD_SET_BUS_WIDTH, sd_rca|2);
+		if(sd_err)
+			return sd_err;
+		*EMMC_CONTROL0 |= C0_HCTL_DWITDH;
+	}
+	*/
+
+	// add software flag
 	sd_scr[0] &= ~SCR_SUPP_CCS;
 	sd_scr[0] |= ccs;
 	return SD_OK;

@@ -11,5 +11,6 @@ void spi_write(uint32_t data) {
 
 uint32_t spi_transfer(uint32_t data) {
 	(void)data;
+	return 0;
 }
 

@@ -37,6 +37,7 @@
 // COMMANDs
 #define CMD_GO_IDLE         0x00000000
 #define CMD_ALL_SEND_CID    0x02010000
+#define CMD_ALL_SEND_CSD    0x09010000
 #define CMD_SEND_REL_ADDR   0x03020000
 #define CMD_CARD_SELECT     0x07030000
 #define CMD_SEND_IF_COND    0x08020000
@@ -424,24 +425,23 @@ int32_t sd_init(dev_t* dev) {
 		return SD_TIMEOUT;
 	if(!(r & ACMD41_VOLTAGE))
 		return SD_ERROR;
-	if(r & ACMD41_CMD_CCS)
+	if(r & ACMD41_CMD_CCS) 
 		ccs = SCR_SUPP_CCS;
 	sd_cmd(CMD_ALL_SEND_CID, 0);
 	sd_rca = sd_cmd(CMD_SEND_REL_ADDR, 0);
 	if(sd_err)
 		return sd_err;
-	if((r=sd_clk(25000000)))
-		return r;
 	sd_cmd(CMD_CARD_SELECT, sd_rca);
 	if(sd_err)
 		return sd_err;
 	if(sd_status(SR_DAT_INHIBIT))
 		return SD_TIMEOUT;
 	*EMMC_BLKSIZECNT = (1<<16) | 8;
+	if((r=sd_clk(25000000)))
+		return r;
 
+	/*
 	sd_cmd(CMD_SEND_SCR, 0);
-	if(sd_err)
-		return sd_err;
 	if(sd_int(INT_READ_RDY, 1))
 		return SD_TIMEOUT;
 
@@ -461,6 +461,7 @@ int32_t sd_init(dev_t* dev) {
 			return sd_err;
 		*EMMC_CONTROL0 |= C0_HCTL_DWITDH;
 	}
+	*/
 	// add software flag
 	sd_scr[0] &= ~SCR_SUPP_CCS;
 	sd_scr[0] |= ccs;
