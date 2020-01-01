@@ -439,31 +439,29 @@ int32_t sd_init(dev_t* dev) {
 		return SD_TIMEOUT;
 	*EMMC_BLKSIZECNT = (1<<16) | 8;
 
-/*
 	sd_cmd(CMD_SEND_SCR, 0);
-	if(sd_err)
-		return sd_err;
-	if(sd_int(INT_READ_RDY, 1))
-		return SD_TIMEOUT;
+	if(!sd_err) {
+		if(sd_int(INT_READ_RDY, 1))
+			return SD_TIMEOUT;
 
-	r=0; cnt=100000; 
-	while(r<2 && cnt) {
-		if( *EMMC_STATUS & SR_READ_AVAILABLE )
-			sd_scr[r++] = *EMMC_DATA;
-		else
-			wait_usec(1);
-	}
-	if(r != 2) 
-		return SD_TIMEOUT;
-	*/
+		r=0; cnt=100000; 
+		while(r<2 && cnt) {
+			if( *EMMC_STATUS & SR_READ_AVAILABLE )
+				sd_scr[r++] = *EMMC_DATA;
+			else
+				wait_usec(1);
+		}
+		if(r != 2) 
+			return SD_TIMEOUT;
 
-	if(sd_scr[0] & SCR_SD_BUS_WIDTH_4) {
-		sd_cmd(CMD_SET_BUS_WIDTH, sd_rca|2);
-		if(sd_err)
-			return sd_err;
-		*EMMC_CONTROL0 |= C0_HCTL_DWITDH;
+		if(sd_scr[0] & SCR_SD_BUS_WIDTH_4) {
+			sd_cmd(CMD_SET_BUS_WIDTH, sd_rca|2);
+			if(sd_err)
+				return sd_err;
+			*EMMC_CONTROL0 |= C0_HCTL_DWITDH;
+		}
+		// add software flag
 	}
-	// add software flag
 	sd_scr[0] &= ~SCR_SUPP_CCS;
 	sd_scr[0] |= ccs;
 	return SD_OK;

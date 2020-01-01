@@ -89,7 +89,8 @@ typedef struct {
 } fb_init_t;
 
 static fb_init_t fbinit __attribute__((aligned(16)));
-int32_t __attribute__((optimize("O0"))) fb_dev_init(uint32_t w, uint32_t h, uint32_t dep) {
+//int32_t __attribute__((optimize("O0"))) fb_dev_init(uint32_t w, uint32_t h, uint32_t dep) {
+int32_t fb_dev_init(uint32_t w, uint32_t h, uint32_t dep) {
 	mail_message_t msg;
 
 	dep = 16;

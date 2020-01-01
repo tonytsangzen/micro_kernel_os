@@ -25,8 +25,8 @@ ARCH_DIR=arch
 include ${ARCH_DIR}/${ARCH}/config.mk
 
 # flags
-OPTM = -g
-#OPTM = -O2
+#OPTM = -g
+OPTM = -O2
 
 CFLAGS += $(OPTM) \
 	-I. -I../include -Iinclude \

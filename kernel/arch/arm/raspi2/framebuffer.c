@@ -15,7 +15,8 @@ static fbinfo_t _fb_info __attribute__((aligned(16)));
 char* _framebuffer_base = NULL;
 char* _framebuffer_end = NULL;
 
-int32_t __attribute__((optimize("O0"))) fb_dev_init(uint32_t w, uint32_t h, uint32_t dep) {
+//int32_t __attribute__((optimize("O0"))) fb_dev_init(uint32_t w, uint32_t h, uint32_t dep) {
+int32_t fb_dev_init(uint32_t w, uint32_t h, uint32_t dep) {
 	property_message_tag_t tags[5];
 
 	memset(&tags[0], 0, sizeof(property_message_tag_t));
