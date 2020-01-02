@@ -102,14 +102,16 @@
 #define ACMD41_CMD_CCS      0x40000000
 #define ACMD41_ARG_HC       0x51ff8000
 
+#define SECTOR_SIZE         512 
+
 uint32_t sd_scr[2], sd_ocr, sd_rca, sd_hv;
 int32_t sd_err;
 
 // shared variables between SDC driver and interrupt handler
 typedef struct {
 	int32_t sector;
-	char rxbuf[SD_BLOCK_SIZE];
-	char txbuf[SD_BLOCK_SIZE];
+	char rxbuf[SECTOR_SIZE];
+	char txbuf[SECTOR_SIZE];
 	char *rxbuf_index;
 	const char *txbuf_index;
 	uint32_t rxcount, txcount, rxdone, txdone;
@@ -117,20 +119,13 @@ typedef struct {
 
 static sd_t _sdc;
 
-static inline void wait_usec(uint32_t n) {
-	while(n > 0) {
-		_delay(10000);
-		n--;
-	}
-}
-
 /**
  * Wait for data or command ready
  */
 static int32_t sd_status(uint32_t mask) {
 	int32_t cnt = 1000000; 
 	while((*EMMC_STATUS & mask) != 0 && (*EMMC_INTERRUPT & INT_ERROR_MASK) == 0 && cnt > 0)
-		wait_usec(1);
+		_delay_usec(1);
 	return (cnt <= 0 || (*EMMC_INTERRUPT & INT_ERROR_MASK)) ? SD_ERROR : SD_OK;
 }
 
@@ -141,7 +136,7 @@ static int32_t sd_int(uint32_t mask, int32_t wait) {
 	uint32_t r, m = (mask | INT_ERROR_MASK);
 	int32_t cnt = 10000; 
 	while((*EMMC_INTERRUPT & m) == 0 && cnt--) {
-		wait_usec(1);
+		_delay_usec(1);
 		if(wait == 0)
 			return -1;
 	}
@@ -181,9 +176,9 @@ static int32_t sd_cmd(uint32_t code, uint32_t arg) {
 	*EMMC_ARG1 = arg;
 	*EMMC_CMDTM = code;
 	if(code == CMD_SEND_OP_COND)
-		wait_usec(1000);
+		_delay_usec(1000);
 	else if(code==CMD_SEND_IF_COND || code==CMD_APP_CMD)
-		wait_usec(100);
+		_delay_usec(100);
 
 	if((r = sd_int(INT_CMD_DONE, 1))) {
 		sd_err = r;
@@ -214,17 +209,17 @@ static int32_t sd_cmd(uint32_t code, uint32_t arg) {
 }
 
 /**
- * read a block from sd card and return the number of bytes read
+ * read a sector from sd card and return the number of bytes read
  * returns 0 on error.
  */
 static int32_t sd_read_sector(uint32_t sector) {
-	*EMMC_BLKSIZECNT = (1 << 16) | 512;
+	*EMMC_BLKSIZECNT = (1 << 16) | SECTOR_SIZE;
 	if(sd_status(SR_DAT_INHIBIT)) {
 		sd_err = SD_TIMEOUT;
 		return -1;
 	}
 
-	sd_cmd(CMD_READ_SINGLE, (sector)*512);
+	sd_cmd(CMD_READ_SINGLE, (sector)*SECTOR_SIZE);
 	if(sd_err != 0) {
 		return -1;
 	}
@@ -232,54 +227,33 @@ static int32_t sd_read_sector(uint32_t sector) {
 }
 
 /**
- * write a block to the sd card and return the number of bytes written
+ * write a sector to the sd card and return the number of bytes written
  * returns 0 on error.
  */
-static int32_t sd_write_sector(uint32_t sector, unsigned char *buffer, uint32_t num) {
-	uint32_t r, d, c = 0;
-	if(num < 1)
-		num = 1;
+static int32_t sd_write_sector(uint32_t sector, unsigned char *buffer) {
+	uint32_t r, d;
 	if(sd_status(SR_DAT_INHIBIT | SR_WRITE_AVAILABLE)) {
 		sd_err = SD_TIMEOUT;
 		return 0;
 	}
 	uint32_t *buf = (uint32_t *)buffer;
-	if(sd_scr[0] & SCR_SUPP_CCS) {
-		if(num > 1 && (sd_scr[0] & SCR_SUPP_SET_BLKCNT)) {
-			sd_cmd(CMD_SET_BLOCKCNT,num);
-			if(sd_err) 
-				return 0;
-		}
-		*EMMC_BLKSIZECNT = (num << 16) | 512;
-		sd_cmd(num == 1 ? CMD_WRITE_SINGLE : CMD_WRITE_MULTI,sector);
-		if(sd_err)
-			return 0;
-	} 
-	else {
-		*EMMC_BLKSIZECNT = (1 << 16) | 512;
+	
+	*EMMC_BLKSIZECNT = (1 << 16) | SECTOR_SIZE;
+	sd_cmd(CMD_WRITE_SINGLE, (sector)*SECTOR_SIZE);
+	if(sd_err) 
+		return 0;
+	if((r = sd_int(INT_WRITE_RDY, 1))) {
+		sd_err = r;
+		return 0;
 	}
-	while( c < num ) {
-		if(!(sd_scr[0] & SCR_SUPP_CCS)) {
-			sd_cmd(CMD_WRITE_SINGLE,(sector+c)*512);
-			if(sd_err) 
-				return 0;
-		}
-		if((r = sd_int(INT_WRITE_RDY, 1))){
-			sd_err = r;
-			return 0;
-		}
-		for(d=0; d<128; d++) 
-			*EMMC_DATA = buf[d];
-		c++;
-		buf+=128;
-	}
+	for(d=0; d<SECTOR_SIZE/4; d++) 
+		*EMMC_DATA = buf[d];
+	
 	if((r = sd_int(INT_DATA_DONE, 1))) {
 		sd_err = r;
 		return 0;
 	}
-	if(num > 1 && (sd_scr[0] & SCR_SUPP_SET_BLKCNT) == 0 && (sd_scr[0] & SCR_SUPP_CCS) != 0) 
-		sd_cmd(CMD_STOP_TRANS,0);
-	return sd_err!=SD_OK || c!=num? 0 : num*512;
+	return sd_err!=SD_OK ? 0 : SECTOR_SIZE;
 }
 
 /**
@@ -289,13 +263,13 @@ static int32_t sd_clk(uint32_t f) {
 	uint32_t d, c=div_u32(41666666,f), x , s=32, h=0;
 	int32_t cnt = 100000;
 	while((*EMMC_STATUS & (SR_CMD_INHIBIT|SR_DAT_INHIBIT)) && cnt--) 
-		wait_usec(1);
+		_delay_usec(1);
 	if(cnt<=0) {
 		return SD_ERROR;
 	}
 
 	*EMMC_CONTROL1 &= ~C1_CLK_EN;
-	wait_usec(10);
+	_delay_usec(10);
 	x=c-1;
 	if(!x)
 		s=0; 
@@ -386,14 +360,14 @@ int32_t sd_init(dev_t* dev) {
 	*EMMC_CONTROL1 |= C1_SRST_HC;
 	cnt = 10000;
 	do{
-		wait_usec(10);
+		_delay_usec(10);
 	} while((*EMMC_CONTROL1 & C1_SRST_HC) && cnt-- );
 
 	if(cnt<=0)
 		return SD_ERROR;
 
 	*EMMC_CONTROL1 |= C1_CLK_INTLEN | C1_TOUNIT_MAX;
-	wait_usec(10);
+	_delay_usec(10);
 	// Set clock to setup frequency.
 	if((r = sd_clk(400000)))
 		return r;
@@ -440,7 +414,7 @@ int32_t sd_init(dev_t* dev) {
 	if(sd_status(SR_DAT_INHIBIT))
 		return SD_TIMEOUT;
 
-	*EMMC_BLKSIZECNT = (1<<16) | 512;
+	*EMMC_BLKSIZECNT = (1<<16) | SECTOR_SIZE;
 
 /*
 	sd_cmd(CMD_SEND_SCR, 0);
@@ -455,7 +429,7 @@ int32_t sd_init(dev_t* dev) {
 		if( *EMMC_STATUS & SR_READ_AVAILABLE )
 			sd_scr[r++] = *EMMC_DATA;
 		else
-			wait_usec(1);
+			_delay_usec(1);
 	}
 	if(r != 2) 
 		return SD_TIMEOUT;
@@ -483,29 +457,23 @@ void sd_dev_handle(dev_t* dev) {
 		return;
 	}
 	uint32_t* buf = (uint32_t*)_sdc.rxbuf_index;
-	for(d=0; d<128; d++)
+	for(d=0; d<SECTOR_SIZE/4; d++)
 		buf[d] = *EMMC_DATA;
 
-	_sdc.rxbuf_index += 512;
-	_sdc.rxcount -= 512;
+	_sdc.rxbuf_index += SECTOR_SIZE;
+	_sdc.rxcount -= SECTOR_SIZE;
 	proc_wakeup((uint32_t)dev);
-	if(_sdc.rxcount == 0) {
-		_sdc.rxdone = 1;
-		//sd_cmd(CMD_STOP_TRANS,0);
-		return;
-	}
-	_sdc.sector++;
-	sd_read_sector(_sdc.sector);
+	_sdc.rxdone = 1;
+	return;
 }
 
-int32_t sd_dev_read(dev_t* dev, int32_t block) {
+int32_t sd_dev_read(dev_t* dev, int32_t sector) {
 	(void)dev;
 	if(_sdc.rxdone == 0)
 		return -1;
 
-	int32_t n = SD_BLOCK_SIZE/512;
-	_sdc.sector = block*n;
-	_sdc.rxcount = SD_BLOCK_SIZE;
+	_sdc.sector = sector;
+	_sdc.rxcount = SECTOR_SIZE;
 	_sdc.rxdone = 0;
 	_sdc.rxbuf_index = _sdc.rxbuf;
 	return sd_read_sector(_sdc.sector);
@@ -516,14 +484,13 @@ int32_t sd_dev_read_done(dev_t* dev, void* buf) {
 	sd_dev_handle(dev);
 	if(_sdc.rxdone == 0)
 		return -1;
-	memcpy(buf, _sdc.rxbuf, SD_BLOCK_SIZE);
+	memcpy(buf, _sdc.rxbuf, SECTOR_SIZE);
 	return 0;
 }
 
-int32_t sd_dev_write(dev_t* dev, int32_t block, const void* buf) {
+int32_t sd_dev_write(dev_t* dev, int32_t sector, const void* buf) {
 	(void)dev;
-	int32_t n = SD_BLOCK_SIZE/512;
-	if(sd_write_sector(block*n, (unsigned char*)buf, n) == 0)
+	if(sd_write_sector(sector, (unsigned char*)buf) == 0)
 		return -1;
 	return 0;
 }

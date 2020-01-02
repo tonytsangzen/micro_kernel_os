@@ -7,18 +7,28 @@
 #include <dev/sd.h>
 #include <dev/device.h>
 
+#define EXT2_BLOCK_SIZE 1024
+
 static int32_t sd_read(int32_t block, void* buf) {
 	dev_t* dev = get_dev(DEV_SD);
 	if(dev == NULL) 
 		return -1;
+	int32_t n = EXT2_BLOCK_SIZE/512;
+	int32_t sector = block * n;
+	char* p = (char*)buf;
 
-	if(dev_block_read(dev, block) != 0)
-		return -1;
+	while(n > 0) {
+		if(dev_block_read(dev, sector) != 0)
+			return -1;
 
-	while(1) {
-		if(dev_block_read_done(dev, buf)  == 0) {
-			break;
+		while(1) {
+			if(dev_block_read_done(dev, p)  == 0) {
+				break;
+			}
 		}
+		sector++;
+		p += 512;
+		n--;
 	}
 	return 0;
 }
@@ -268,7 +278,7 @@ static void* ext2_readfile(ext2_t* ext2, const char* fname, int32_t* size) {
 			ret = data;
 			uint32_t rd = 0;
 			while(1) {
-				int sz = ext2_read(ext2, &inode, data, SD_BLOCK_SIZE, rd);
+				int sz = ext2_read(ext2, &inode, data, EXT2_BLOCK_SIZE, rd);
 				if(sz <= 0 || rd >= inode.i_size)
 					break;
 				data += sz;

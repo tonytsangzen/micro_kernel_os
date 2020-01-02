@@ -81,10 +81,12 @@
 #define SD_RCA  0x45670000 // QEMU's hard-coded RCA
 #define SD_BASE (_mmio_base + 0x5000) // PL180 SD_BASE address
 
+#define SECTOR_SIZE   512
+
 // shared variables between SDC driver and interrupt handler
 typedef struct {
-	char rxbuf[SD_BLOCK_SIZE];
-	char txbuf[SD_BLOCK_SIZE];
+	char rxbuf[SECTOR_SIZE];
+	char txbuf[SECTOR_SIZE];
 	char *rxbuf_index;
 	const char *txbuf_index;
 	uint32_t rxcount, txcount, rxdone, txdone;
@@ -114,37 +116,37 @@ int32_t sd_init(dev_t* dev) {
 	do_command(2, 0, MMC_RSP_R2);  // ask card CID
 	do_command(3, SD_RCA, MMC_RSP_R1);  // assign RCA
 	do_command(7, SD_RCA, MMC_RSP_R1);  // transfer state: must use RCA
-	do_command(16, 512, MMC_RSP_R1);  // set data block length
+	do_command(16, 512, MMC_RSP_R1);  // set data sector length
 
 	// set interrupt MASK0 registers bits = RxFULL(17)|TxEmpty(18)
 	put32(SD_BASE + MASK0, (1<<17)|(1<<18));
 	return 0;
 }
 
-static int32_t sd_read_block(dev_t* dev, int32_t block) {
+static int32_t sd_read_sector(dev_t* dev, int32_t sector) {
 	uint32_t cmd, arg;
 	sd_t* sdc = (sd_t*)dev->io.block.data;
 	if(sdc->rxdone == 0) {
 		return -1;
 	}
 
-	//printf("getblock %d ", block);
+	//printf("getsector %d ", sector);
 	sdc->rxbuf_index = sdc->rxbuf; 
-	sdc->rxcount = SD_BLOCK_SIZE;
+	sdc->rxcount = SECTOR_SIZE;
 	sdc->rxdone = 0;
 
 	put32(SD_BASE + DATATIMER, 0xFFFF0000);
 	// write data_len to datalength reg
-	put32(SD_BASE + DATALENGTH, SD_BLOCK_SIZE);
+	put32(SD_BASE + DATALENGTH, SECTOR_SIZE);
 
-	cmd = 18; // CMD17 = READ single sector; 18=read block
-	arg = ((block*2)*512); // absolute byte offset in disk
+	cmd = 18; // CMD17 = READ single sector; 18=read sector
+	arg = (uint32_t)(sector*SECTOR_SIZE);  // absolute byte offset in diks
 	do_command(cmd, arg, MMC_RSP_R1);
 
 	//printf("dataControl=%x\n", 0x93);
 	// 0x93=|9|0011|=|9|DMA=0,0=BLOCK,1=Host<-Card,1=Enable
 	put32(SD_BASE + DATACTRL, 0x93);
-	//printf("getblock return\n");
+	//printf("getsector return\n");
 	return 0;
 }
 
@@ -153,25 +155,25 @@ static inline int32_t sd_read_done(dev_t* dev, void* buf) {
 	if(sdc->rxdone == 0) {
 		return -1;
 	}
-	memcpy(buf, (void*)sdc->rxbuf, SD_BLOCK_SIZE);
+	memcpy(buf, (void*)sdc->rxbuf, SECTOR_SIZE);
 	return 0;
 }
 
-static int32_t sd_write_block(dev_t* dev, int32_t block, const void* buf) {
+static int32_t sd_write_sector(dev_t* dev, int32_t sector, const void* buf) {
 	sd_t* sdc = (sd_t*)dev->io.block.data;
 	uint32_t cmd, arg;
 	if(sdc->txdone == 0) {
 		return -1;
 	}
-	memcpy(sdc->txbuf, buf, SD_BLOCK_SIZE);
-	sdc->txbuf_index = sdc->txbuf; sdc->txcount = SD_BLOCK_SIZE;
+	memcpy(sdc->txbuf, buf, SECTOR_SIZE);
+	sdc->txbuf_index = sdc->txbuf; sdc->txcount = SECTOR_SIZE;
 	sdc->txdone = 0;
 
 	put32(SD_BASE + DATATIMER, 0xFFFF0000);
-	put32(SD_BASE + DATALENGTH, SD_BLOCK_SIZE);
+	put32(SD_BASE + DATALENGTH, SECTOR_SIZE);
 
-	cmd = 25;                  // CMD24 = Write single sector; 25=write block
-	arg = (uint32_t)((block*2)*512);  // absolute byte offset in diks
+	cmd = 25;                  // CMD24 = Write single sector; 25=write sector
+	arg = (uint32_t)(sector*SECTOR_SIZE);  // absolute byte offset in diks
 	do_command(cmd, arg, MMC_RSP_R1);
 
 	// write 0x91=|9|0001|=|9|DMA=0,BLOCK=0,0=Host->Card, Enable
@@ -241,16 +243,16 @@ void sd_dev_handle(dev_t* dev) {
 	// printf("SDC interrupt handler done\n");
 }
 
-int32_t sd_dev_read(dev_t* dev, int32_t block) {
-	return sd_read_block(dev, block);
+int32_t sd_dev_read(dev_t* dev, int32_t sector) {
+	return sd_read_sector(dev, sector);
 }
 
 int32_t sd_dev_read_done(dev_t* dev, void* buf) {
 	return sd_read_done(dev, buf);
 }
 
-int32_t sd_dev_write(dev_t* dev, int32_t block, const void* buf) {
-	return sd_write_block(dev, block, buf);
+int32_t sd_dev_write(dev_t* dev, int32_t sector, const void* buf) {
+	return sd_write_sector(dev, sector, buf);
 }
 
 int32_t sd_dev_write_done(dev_t* dev) {
