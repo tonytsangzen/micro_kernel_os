@@ -5,17 +5,17 @@
  *   = bcm2835 has 2 more mini-spi interfaces (spi1/spi2)
  *     $ part of auxiliary peripheral (along with mini-uart)
  *     $ NOT using these
-**/
+ **/
 #include <mm/mmu.h>
 #include <dev/gpio.h>
 #include <dev/spi.h>
-#include <kernel/system.h>
 
 #define SPI0_OFFSET 0x00204000
 #define SPI1_OFFSET 0x00215080
 #define SPI2_OFFSET 0x002150C0
 
 #define SPI_BASE (_mmio_base | SPI0_OFFSET)
+#define SPI_ENABLES    (_mmio_base | 0x00215004)
 
 #define SPI_CS_REG   (SPI_BASE+0x00)
 #define SPI_FIFO_REG (SPI_BASE+0x04)
@@ -71,83 +71,68 @@
 #define SPI_ACTIVATE 1
 #define SPI_DEACTIVATE 0
 
-#define GPIO_ALTF0  0x04
-#define GPIO_INTP  0x00
-#define GPIO_OUTP  0x01
+#define GPIO_ALTF0  0x0b100
 #define SPI0_CS_CPOL                 0x00000008 ///< Clock Polarity
 #define SPI0_CS_CPHA                 0x00000004 ///< Clock Phase
 
-static void peri_set_bits(volatile uint32_t addr, uint32_t value, uint32_t mask) {
-	uint32_t v = get32(addr);
-	v = (v & ~mask) | (value & mask);
-	put32(addr, v);
-	put32(addr, v);
-}
+static uint32_t spi_which = SPI_SELECT_DEFAULT;
 
 void spi_init(int32_t clk_divide) {
-	/* setup spi pins (ALTF0) */
-	gpio_config(SPI_SCLK, GPIO_OUTP);
-	gpio_config(SPI_MOSI, GPIO_OUTP);
-	gpio_config(SPI_MISO, GPIO_OUTP);
-	gpio_config(SPI_CE0N, GPIO_OUTP);
-	gpio_config(SPI_CE1N, GPIO_OUTP);
-	/*
-	gpio_config(SPI_SCLK, GPIO_ALTF0);
-	gpio_config(SPI_MOSI, GPIO_ALTF0);
-	gpio_config(SPI_MISO, GPIO_ALTF0);
-	gpio_config(SPI_CE0N, GPIO_ALTF0);
-	gpio_config(SPI_CE1N, GPIO_ALTF0);
-	*/
-
-
-	put32(SPI_CS_REG, 0);
-	put32(SPI_CS_REG, 0);
-
+	uint32_t data = SPI_CNTL_CLMASK; /* clear both rx/tx fifo */
 	/* clear spi fifo */
-	put32(SPI_CS_REG, SPI_CNTL_CLMASK);
-
-	/* set data mode*/
-	uint32_t data_mode = 0;  //
-	peri_set_bits(SPI_CS_REG, data_mode << 2, SPI_CNTL_CPOL | SPI_CNTL_CPHA) ;
-
+	put32(SPI_CS_REG,data);
 	/* set largest clock divider */
 	clk_divide &= SPI_CLK_DIVIDE_MASK; /* 16-bit value */
-	put32(SPI_CLK_REG, clk_divide); /** 0=65536, power of 2, rounded down */
-	put32(SPI_CLK_REG, clk_divide); 
-	
-	peri_set_bits(SPI_CS_REG, 0, SPI_CNTL_CSMASK); //select chip 0
+	put32(SPI_CLK_REG,clk_divide); /** 0=65536, power of 2, rounded down */
+	/* setup spi pins (ALTF0) */
+	gpio_config(SPI_SCLK,GPIO_ALTF0);
+	gpio_config(SPI_MOSI,GPIO_ALTF0);
+	gpio_config(SPI_MISO,GPIO_ALTF0);
+	gpio_config(SPI_CE0N,GPIO_ALTF0);
+	gpio_config(SPI_CE1N,GPIO_ALTF0);
+}
 
-	gpio_config(22, GPIO_INTP);
-	gpio_config(22, GPIO_OUTP);
-	gpio_config(25, GPIO_INTP);
-	gpio_config(25, GPIO_OUTP);
+void spi_select(uint32_t which) {
+	switch (which) {
+		case SPI_SELECT_0:
+		case SPI_SELECT_1:
+			spi_which = which;
+			break;
+		default:
+			spi_which = SPI_SELECT_DEFAULT;
+	}
+}
+
+void spi_activate(uint32_t enable) {
+	uint32_t data = SPI_CNTL_TRXACT;
+	if (enable) {
+		/* activate transfer on selected channel 0 or 1 */
+		put32(SPI_CS_REG,data|(spi_which>>1));
+	}
+	else {
+		/* de-activate transfer */
+		put32(SPI_CS_REG,get32(SPI_CS_REG)&~SPI_CNTL_TRXACT);
+	}
 }
 
 void spi_write(uint32_t data) {
-	peri_set_bits(SPI_CS_REG, SPI_CNTL_CLMASK, SPI_CNTL_CLMASK);
-	peri_set_bits(SPI_CS_REG, SPI_CNTL_TRXACT, SPI_CNTL_TRXACT);
 	/* wait if fifo is full */
 	while (!(get32(SPI_CS_REG)&SPI_STAT_TXDATA));
 	/* write a byte */
-	put32(SPI_FIFO_REG, data&0xff);
+	put32(SPI_FIFO_REG,data&0xff);
 	/* wait until done */
 	while (!(get32(SPI_CS_REG)&SPI_STAT_TXDONE));
-	peri_set_bits(SPI_CS_REG, 0, SPI_CNTL_TRXACT);
 }
 
 uint32_t spi_transfer(uint32_t data) {
-	peri_set_bits(SPI_CS_REG, SPI_CNTL_CLMASK, SPI_CNTL_CLMASK);
-	peri_set_bits(SPI_CS_REG, SPI_CNTL_TRXACT, SPI_CNTL_TRXACT);
 	/* wait if fifo is full */
 	while (!(get32(SPI_CS_REG)&SPI_STAT_TXDATA));
 	/* write a byte */
-	put32(SPI_FIFO_REG, data&0xff);
+	put32(SPI_FIFO_REG,data&0xff);
 	/* wait until done */
 	while (!(get32(SPI_CS_REG)&SPI_STAT_TXDONE));
 	/* should get a byte? */
 	while (!(get32(SPI_CS_REG)&SPI_STAT_RXDATA));
 	/* read a byte */
-	uint32_t r = get32(SPI_FIFO_REG)&0xff;
-	peri_set_bits(SPI_CS_REG, 0, SPI_CNTL_TRXACT);
-	return r;
+	return get32(SPI_FIFO_REG)&0xff;
 }
