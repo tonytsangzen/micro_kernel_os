@@ -104,6 +104,7 @@ int32_t sd_init(dev_t* dev) {
 	memset(sdc, 0, sizeof(sd_t));
 	sdc->rxdone = 1;
 	sdc->txdone = 1;
+	dev->io.block.block_size = SECTOR_SIZE;
 	dev->io.block.data = (void*)sdc;
 
 	put32(SD_BASE + POWER, 0xBF); // power on
@@ -132,15 +133,15 @@ static int32_t sd_read_sector(dev_t* dev, int32_t sector) {
 
 	//printf("getsector %d ", sector);
 	sdc->rxbuf_index = sdc->rxbuf; 
-	sdc->rxcount = SECTOR_SIZE;
+	sdc->rxcount = dev->io.block.block_size;
 	sdc->rxdone = 0;
 
 	put32(SD_BASE + DATATIMER, 0xFFFF0000);
 	// write data_len to datalength reg
-	put32(SD_BASE + DATALENGTH, SECTOR_SIZE);
+	put32(SD_BASE + DATALENGTH, dev->io.block.block_size);
 
 	cmd = 18; // CMD17 = READ single sector; 18=read sector
-	arg = (uint32_t)(sector*SECTOR_SIZE);  // absolute byte offset in diks
+	arg = (uint32_t)(sector*dev->io.block.block_size);  // absolute byte offset in diks
 	do_command(cmd, arg, MMC_RSP_R1);
 
 	//printf("dataControl=%x\n", 0x93);
@@ -155,7 +156,7 @@ static inline int32_t sd_read_done(dev_t* dev, void* buf) {
 	if(sdc->rxdone == 0) {
 		return -1;
 	}
-	memcpy(buf, (void*)sdc->rxbuf, SECTOR_SIZE);
+	memcpy(buf, (void*)sdc->rxbuf, dev->io.block.block_size);
 	return 0;
 }
 
@@ -165,15 +166,15 @@ static int32_t sd_write_sector(dev_t* dev, int32_t sector, const void* buf) {
 	if(sdc->txdone == 0) {
 		return -1;
 	}
-	memcpy(sdc->txbuf, buf, SECTOR_SIZE);
-	sdc->txbuf_index = sdc->txbuf; sdc->txcount = SECTOR_SIZE;
+	memcpy(sdc->txbuf, buf, dev->io.block.block_size);
+	sdc->txbuf_index = sdc->txbuf; sdc->txcount = dev->io.block.block_size;
 	sdc->txdone = 0;
 
 	put32(SD_BASE + DATATIMER, 0xFFFF0000);
-	put32(SD_BASE + DATALENGTH, SECTOR_SIZE);
+	put32(SD_BASE + DATALENGTH, dev->io.block.block_size);
 
 	cmd = 25;                  // CMD24 = Write single sector; 25=write sector
-	arg = (uint32_t)(sector*SECTOR_SIZE);  // absolute byte offset in diks
+	arg = (uint32_t)(sector*dev->io.block.block_size);  // absolute byte offset in diks
 	do_command(cmd, arg, MMC_RSP_R1);
 
 	// write 0x91=|9|0001|=|9|DMA=0,BLOCK=0,0=Host->Card, Enable
