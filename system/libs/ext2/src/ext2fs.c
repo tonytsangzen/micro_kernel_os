@@ -599,21 +599,25 @@ int32_t ext2_ino_by_fname(ext2_t* ext2, const char* filename) {
 	depth = split_fname(filename, name);
 
 	ino = -1;
-	if(ext2->read_block(ext2->gds[0].bg_inode_table, buf) == 0) {// read first inode block
-		ip = ((INODE *)buf) + 1;   // ip->root inode #2
-		/* serach for system name */
-		for (i=0; i<depth; i++) {
-			ino = search(ext2, ip, CS(name[i]));
-			if (ino < 0) {
-				ino = -1;
-				break;
-			}
-			ip = get_node_by_ino(ext2, ino, buf);
-			if(ip == NULL) {
-				ino = -1;
-				break;
+	for (int32_t j=0; j<ext2->group_num; j++) {
+		if(ext2->read_block((ext2->super.s_blocks_per_group * j) + ext2->gds[j].bg_inode_table, buf) == 0) {// read first inode block
+			ip = ((INODE *)buf) + 1;   // ip->root inode #2
+			/* serach for system name */
+			for (i=0; i<depth; i++) {
+				ino = search(ext2, ip, CS(name[i]));
+				if (ino < 0) {
+					ino = -1;
+					break;
+				}
+				ip = get_node_by_ino(ext2, ino, buf);
+				if(ip == NULL) {
+					ino = -1;
+					break;
+				}
 			}
 		}
+		if(ino >= 0)
+			break;
 	}
 	for (i=0; i<depth; i++) {
 		str_free(name[i]);
