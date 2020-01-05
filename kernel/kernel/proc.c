@@ -18,8 +18,8 @@ proc_t* _ready_proc = NULL;
 
 /* proc_init initializes the process sub-system. */
 void procs_init(void) {
-	int32_t i;
-	for (i = 0; i < PROC_MAX; i++)
+	proc_ipc_init();
+	for (int32_t i = 0; i < PROC_MAX; i++)
 		_proc_table[i].state = UNUSED;
 	_current_proc = NULL;
 	_ready_proc = NULL;

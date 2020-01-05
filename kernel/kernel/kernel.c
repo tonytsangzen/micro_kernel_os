@@ -17,6 +17,7 @@
 #include <vfs.h>
 #include <dev/uart.h>
 #include <ext2read.h>
+#include <partition.h>
 #include <basic_math.h>
 #include <graph.h>
 
@@ -81,9 +82,9 @@ static int32_t load_init(void) {
 	if(elf != NULL) {
 		proc_t *proc = proc_create(PROC_TYPE_PROC);
 		str_cpy(proc->cmd, prog);
-		proc_load_elf(proc, elf, sz);
+		int32_t res = proc_load_elf(proc, elf, sz);
 		kfree(elf);
-		return 0;
+		return res;
 	}
 	return -1;
 }
@@ -124,17 +125,19 @@ void _kernel_entry_c(context_t* ctx) {
 				info->width, info->height, info->depth,
 				info->pointer, info->size);
 		memset((void*)info->pointer, 0, info->size);
+		/*
 		graph_t* g = graph_new(NULL, info->width, info->height);
 		console->g = g;
 		console_reset(console);
+		*/
 	}
 	else
 		printf("[Failed!]\n");
 
 	printf("kernel: %39s ", "whole allocable memory initing");
 	init_allocable_mem(); //init the rest allocable memory VM
-	//printf("[ok] : %dMB\n", div_u32(get_free_mem_size(), 1*MB));
-	printf("[ok]\n");
+	printf("[ok] : %dMB\n", div_u32(get_free_mem_size(), 1*MB));
+	//printf("[ok]\n");
 
 	printf("kernel: devices initing\n");
 	dev_setup();
@@ -169,8 +172,8 @@ void _kernel_entry_c(context_t* ctx) {
 	else
 		printf("[ok]\n");
 	
-	timer_set_interval(0, 0x40); //0.001 sec sequence
 	printf("kernel: start timer.\n");
+	timer_set_interval(0, 0x40); //0.001 sec sequence
 
 	while(1) __asm__("MOV r0, #0; MCR p15,0,R0,c7,c0,4"); // CPU enter WFI state
 

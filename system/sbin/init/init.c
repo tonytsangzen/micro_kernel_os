@@ -45,6 +45,7 @@ static void run_init_root(init_t* init, const char* cmd) {
 	console_out(init, "init: mounting %32s ", "/");
 	int pid = fork();
 	if(pid == 0) {
+		sd_init();
 		ext2_t ext2;
 		ext2_init(&ext2, sd_read, sd_write);
 		str_t* fname = str_new("");
@@ -54,8 +55,10 @@ static void run_init_root(init_t* init, const char* cmd) {
 		str_free(fname);
 		ext2_quit(&ext2);
 
-		if(data == NULL)
+		if(data == NULL) {
+			console_out(init, "[error!]\n");
 			exit(-1);
+		}
 		exec_elf(cmd, data, sz);
 		free(data);
 	}
@@ -63,7 +66,7 @@ static void run_init_root(init_t* init, const char* cmd) {
 	console_out(init, "[ok]\n");
 }
 
-static void run_dev(init_t* init, const char* cmd, const char* mnt, bool prompt) {
+static int run_dev(init_t* init, const char* cmd, const char* mnt, bool prompt) {
 	if(prompt)
 		console_out(init, "init: mounting %32s ", mnt);
 
@@ -71,18 +74,24 @@ static void run_dev(init_t* init, const char* cmd, const char* mnt, bool prompt)
 	if(pid == 0) {
 		char fcmd[FS_FULL_NAME_MAX];
 		snprintf(fcmd, FS_FULL_NAME_MAX-1, "%s %s", cmd, mnt);
-		exec(fcmd);
+		if(exec(fcmd) != 0) {
+			if(prompt)
+				console_out(init, "[error!]\n");
+			return -1;
+		}
 	}
 	vfs_mount_wait(mnt, pid);
 
 	if(prompt)
 		console_out(init, "[ok]\n");
+	return 0;
 }
 
-static void run(const char* cmd) {
+static void run(init_t* init, const char* cmd) {
 	int pid = fork();
 	if(pid == 0) {
-		exec(cmd);
+		if(exec(cmd) != 0)
+			console_out(init, "init: run %38s [error!]", cmd);
 	}
 }
 
@@ -91,7 +100,7 @@ static void init_stdio(void) {
 	dup2(fd, 0);
 	dup2(fd, 1);
 }
-
+/*
 static void kevent_handle(init_t* init, int32_t type, rawdata_t* data) {
 	(void)data;
 	if(type == KEV_CONSOLE_SWITCH) {
@@ -118,6 +127,7 @@ static void kevent_handle(init_t* init, int32_t type, rawdata_t* data) {
 		}
 	}
 }
+*/
 
 static int32_t read_conf(init_t* init, const char* fname) {
 	init->console_num = 2;
@@ -141,11 +151,11 @@ static int32_t read_conf(init_t* init, const char* fname) {
 	return 0;
 }
 
-static void tty_shell(void) {
+static void tty_shell(init_t* init) {
 	/*run tty shell*/
 	init_stdio();
 	setenv("CONSOLE_ID", "tty");
-	run("/bin/session");
+	run(init, "/bin/session");
 }
 	
 static void load_devs(init_t* init) {
@@ -165,7 +175,7 @@ static void console_shells(init_t* init) {
 		snprintf(cid, 15, "console-%d/%d", i+1, init->console_num);
 		setenv("CONSOLE_ID", cid);
 		snprintf(cmd, 64, "/bin/console %d", i);
-		run(cmd);
+		run(init, cmd);
 		i++;
 	}
 }
@@ -185,25 +195,27 @@ int main(int argc, char** argv) {
 	run_init_root(&init, "/sbin/dev/sdd");
 
 	load_devs(&init);
-	tty_shell();
-
+	tty_shell(&init);
 	read_conf(&init, "/etc/init.conf");
 	if(init.framebuffer) {
 		console_shells(&init);
 		if(init.start_x) {
 			set_global("current_console", "x");
 			run_dev(&init, "/sbin/dev/xserverd", "/dev/x", false);
-			run("/bin/launcher");
+			run(&init, "/bin/launcher");
 		}
 	}
 
 	while(1) {
+	/*
 		int32_t type;
 		rawdata_t data;
 		if(syscall2(SYS_GET_KEVENT, (int32_t)&type, (int32_t)&data) != 0) {
 			continue;
 		}
 		kevent_handle(&init, type, &data);
+		*/
+		sleep(0);
 	}
 	return 0;
 }

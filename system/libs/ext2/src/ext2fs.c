@@ -350,14 +350,17 @@ int32_t ext2_read(ext2_t* ext2, INODE* node, char *buf, int32_t nbytes, int32_t 
 		int32_t num = count / 256;
 		int32_t pos_offset = count % 256;
 		int32_t double_buf1[256];
-		ext2->read_block(node->i_block[13], (char*)double_buf1);
+		if(ext2->read_block(node->i_block[13], (char*)double_buf1) != 0)
+			return -1;
 		int32_t double_buf2[256];
-		ext2->read_block(double_buf1[num], (char*)double_buf2);
+		if(ext2->read_block(double_buf1[num], (char*)double_buf2) != 0)
+			return -1;
 		blk = double_buf2[pos_offset];
 	}
 
 	char readbuf[BLOCK_SIZE];
-	ext2->read_block(blk, readbuf);
+	if(ext2->read_block(blk, readbuf) != 0)
+		return -1;
 	char *cp = readbuf + start_byte;
 	remain = BLOCK_SIZE - start_byte;
 	//(6)

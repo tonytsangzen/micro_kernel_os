@@ -10,6 +10,7 @@
 #include <sd.h>
 #include <ext2fs.h>
 #include <dev/device.h>
+#include <partition.h>
 #include <stdio.h>
 
 static void add_file(fsinfo_t* node_to, const char* name, INODE* inode, int32_t ino) {
@@ -194,6 +195,7 @@ int main(int argc, char** argv) {
 	dev.unlink = sdext2_unlink;
 	dev.umount = sdext2_umount;
 
+	sd_init();
 	ext2_t ext2;
 	ext2_init(&ext2, sd_read, sd_write);
 

@@ -6,30 +6,71 @@
 #include <mstr.h>
 #include <dev/sd.h>
 #include <dev/device.h>
+#include "dev/actled.h"
+#include <partition.h>
 
 #define EXT2_BLOCK_SIZE 1024
+
+static partition_t _partition;
+
+static int32_t sd_read_sector(int32_t sector, void* buf) {
+	dev_t* dev = get_dev(DEV_SD);
+	if(dev == NULL) 
+		return -1;
+	if(dev_block_read(dev, sector) != 0)
+		return -1;
+
+	while(1) {
+		if(dev_block_read_done(dev, buf)  == 0) {
+			break;
+		}
+	}
+	return 0;
+}
 
 static int32_t sd_read(int32_t block, void* buf) {
 	dev_t* dev = get_dev(DEV_SD);
 	if(dev == NULL) 
 		return -1;
 	int32_t n = EXT2_BLOCK_SIZE/512;
-	int32_t sector = block * n;
+	int32_t sector = block * n + _partition.start_sector;
 	char* p = (char*)buf;
 
 	while(n > 0) {
-		if(dev_block_read(dev, sector) != 0)
+		if(sd_read_sector(sector, p) != 0) {
 			return -1;
-
-		while(1) {
-			if(dev_block_read_done(dev, p)  == 0) {
-				break;
-			}
 		}
 		sector++;
 		p += 512;
 		n--;
 	}
+	return 0;
+}
+
+#define PARTITION_MAX 4
+static partition_t _partitions[PARTITION_MAX];
+
+int32_t read_partition(void) {
+	uint8_t sector[512];
+	if(sd_read_sector(0, sector) != 0)
+		return -1;
+	//check magic 
+	if(sector[510] != 0x55 || sector[511] != 0xAA) 
+		return -1;
+	uint8_t* p = sector + 0x1BE;
+	for(int32_t i=0; i<PARTITION_MAX; i++) {
+		memcpy(&_partitions[i], p, sizeof(partition_t));
+		p += sizeof(partition_t);
+//		printf("partition %d: start_sector: %d\n", i, _partitions[i].start_sector);
+	}
+
+	return 0;
+}
+
+int32_t partition_get(uint32_t id, partition_t* p) {
+	if(id >= PARTITION_MAX)
+		return -1;
+	memcpy(p, &_partitions[id], sizeof(partition_t));
 	return 0;
 }
 
@@ -240,6 +281,10 @@ static inline int32_t get_gd_num(ext2_t* ext2) {
 }
 
 static int32_t ext2_init(ext2_t* ext2, read_block_func_t read_block, write_block_func_t write_block) {
+	if(read_partition() != 0 || partition_get(1, &_partition) != 0) {
+		memset(&_partition, 0, sizeof(partition_t));
+	}
+
 	char buf[BLOCK_SIZE];
 	ext2->read_block = read_block;
 	ext2->write_block = write_block;

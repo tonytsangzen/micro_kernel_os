@@ -41,7 +41,6 @@ void printf(const char *format, ...) {
 	
 	uart_out(buf->cstr);
 	act_led(0);
-
 	if(_console.g != NULL) {
 		fbinfo_t* info = fb_get_info();
 		console_put_string(&_console, buf->cstr);

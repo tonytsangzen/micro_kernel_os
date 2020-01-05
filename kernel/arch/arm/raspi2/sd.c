@@ -112,9 +112,7 @@ typedef struct {
 	int32_t sector;
 	char rxbuf[SECTOR_SIZE];
 	char txbuf[SECTOR_SIZE];
-	char *rxbuf_index;
-	const char *txbuf_index;
-	uint32_t rxcount, txcount, rxdone, txdone;
+	uint32_t rxdone, txdone;
 } sd_t;
 
 static sd_t _sdc;
@@ -219,10 +217,13 @@ static int32_t sd_read_sector(dev_t* dev, uint32_t sector) {
 		return -1;
 	}
 
-	sd_cmd(CMD_READ_SINGLE, (sector)*dev->io.block.block_size);
-	if(sd_err != 0) {
+	if((sd_scr[0] & SCR_SUPP_CCS) != 0)
+		sd_cmd(CMD_READ_SINGLE, sector);
+	else
+		sd_cmd(CMD_READ_SINGLE, sector * dev->io.block.block_size);
+
+	if(sd_err != 0)
 		return -1;
-	}
 	return 0;
 }
 
@@ -239,7 +240,11 @@ static int32_t sd_write_sector(dev_t* dev, uint32_t sector, unsigned char *buffe
 	uint32_t *buf = (uint32_t *)buffer;
 	
 	*EMMC_BLKSIZECNT = (1 << 16) | dev->io.block.block_size;
-	sd_cmd(CMD_WRITE_SINGLE, (sector)*dev->io.block.block_size);
+	if((sd_scr[0] & SCR_SUPP_CCS) != 0)
+		sd_cmd(CMD_WRITE_SINGLE, sector);
+	else
+		sd_cmd(CMD_WRITE_SINGLE, sector * dev->io.block.block_size);
+
 	if(sd_err) 
 		return 0;
 	if((r = sd_int(INT_WRITE_RDY, 1))) {
@@ -456,12 +461,10 @@ void sd_dev_handle(dev_t* dev) {
 	if((sd_int(INT_READ_RDY, 0)) != 0) {
 		return;
 	}
-	uint32_t* buf = (uint32_t*)_sdc.rxbuf_index;
+	uint32_t* buf = (uint32_t*)_sdc.rxbuf;
 	for(d=0; d<dev->io.block.block_size/4; d++)
 		buf[d] = *EMMC_DATA;
 
-	_sdc.rxbuf_index += dev->io.block.block_size;
-	_sdc.rxcount -= dev->io.block.block_size;
 	proc_wakeup((uint32_t)dev);
 	_sdc.rxdone = 1;
 	return;
@@ -472,9 +475,7 @@ int32_t sd_dev_read(dev_t* dev, int32_t sector) {
 		return -1;
 
 	_sdc.sector = sector;
-	_sdc.rxcount = dev->io.block.block_size;
 	_sdc.rxdone = 0;
-	_sdc.rxbuf_index = _sdc.rxbuf;
 	return sd_read_sector(dev, _sdc.sector);
 }
 

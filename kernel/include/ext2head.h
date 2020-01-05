@@ -101,12 +101,7 @@ typedef int32_t (*read_block_func_t)(int32_t block, void* buf);
 typedef int32_t (*write_block_func_t)(int32_t block, const void* buf);
 
 typedef struct {
-	int32_t nblocks;
-	int32_t ninodes;
 	int32_t group_num;
-	int32_t inodes_per_group;
-	int32_t blocks_per_group;
-
 	SUPER super;
 	GD* gds;
 

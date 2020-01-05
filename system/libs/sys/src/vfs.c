@@ -96,25 +96,28 @@ int vfs_get_by_fd(int fd, fsinfo_t* info) {
 void* vfs_readfile(const char* fname, int* rsz) {
 	fname = vfs_fullname(fname);
 	fsinfo_t info;
-	if(vfs_get(fname, &info) != 0 || info.size == 0)
+	if(vfs_get(fname, &info) != 0 || info.size <= 0)
 		return NULL;
 	void* buf = malloc(info.size);
 	if(buf == NULL)
 		return NULL;
 	char* p = (char*)buf;
-
 	int fd = open(fname, O_RDONLY);
 	int fsize = info.size;
-	while(1) {
-		int sz = read(fd, p, fsize);
-		if(sz <= 0 && errno != EAGAIN)
-			break;
-		if(sz > 0) {
-			fsize -= sz;
-			p += sz;
+	if(fd >= 0) {
+		while(1) {
+			int sz = read(fd, p, fsize);
+			if(sz <= 0 && errno != EAGAIN)
+				break;
+			if(sz > 0) {
+				fsize -= sz;
+				p += sz;
+				if(fsize <= 0)
+					break;
+			}
 		}
+		close(fd);
 	}
-	close(fd);
 
 	if(fsize != 0) {
 		free(buf);
@@ -178,6 +181,8 @@ int vfs_create(const char* fname, fsinfo_t* ret, int type) {
 		vfs_del(ret);
 		return -1;
 	}
+	if(type == FS_TYPE_DEV)
+		return 0;
 	
 	proto_t in, out;
 	proto_init(&in, NULL, 0);

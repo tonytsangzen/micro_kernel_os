@@ -7,3 +7,4 @@ CLEAN += $(INIT_OBJS)
 
 $(INIT): $(INIT_OBJS) $(LIB_OBJS) $(LIB_CONSOLE_OBJS)
 	$(LD) -Ttext=100 $(INIT_OBJS) $(LIB_OBJS) $(LIB_CONSOLE_OBJS) -o $(INIT) $(LDFLAGS)
+	$(OBJDUMP) -D $(INIT) > $(BUILD_DIR)/asm/init.asm

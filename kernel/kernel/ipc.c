@@ -5,9 +5,13 @@
 #include <mm/kalloc.h>
 #include <mm/kmalloc.h>
 #include <kstring.h>
-#include <kprintf.h>
 
 static int32_t _msg_counter = 0;
+
+void proc_ipc_init(void) {
+	_msg_counter = 0;
+}
+
 static proc_msg_t* new_msg(proc_t* proc) {
 	proc_msg_t* msg = (proc_msg_t*)kmalloc(sizeof(proc_msg_t));
 	if(msg == NULL) {

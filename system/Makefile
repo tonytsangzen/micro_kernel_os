@@ -89,11 +89,11 @@ LIB_OBJS = $(LIB_SYS_DIR)/syscall.o \
 	$(LIB_SYS_DIR)/vdevice.o \
 	$(LIB_SYS_DIR)/fcntl.o \
 	$(LIB_SYS_DIR)/proto.o \
-	$(LIB_SYS_DIR)/sd.o \
 	$(LIB_SYS_DIR)/stdio.o \
 	$(LIB_SYS_DIR)/thread.o \
 	$(LIB_SYS_DIR)/basic_math.o \
 	$(LIB_SYS_DIR)/shm.o \
+	$(LIB_SYS_DIR)/sd.o \
 	$(LIB_SYS_DIR)/global.o \
 	$(LIB_SYS_DIR)/proclock.o \
 	$(LIB_SYS_DIR)/sys/wait.o \

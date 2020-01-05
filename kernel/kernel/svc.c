@@ -341,15 +341,20 @@ static int32_t sys_vfs_get_by_fd(int32_t fd, fsinfo_t* info) {
 	return 0;
 }
 
-static int32_t sys_load_elf(context_t* ctx, const char* cmd, void* elf, uint32_t elf_size) {
-	if(elf == NULL)
-		return -1;
-	str_cpy(_current_proc->cmd, cmd);
-	if(proc_load_elf(_current_proc, elf, elf_size) != 0)
-		return -1;
+static void sys_load_elf(context_t* ctx, const char* cmd, void* elf, uint32_t elf_size) {
+	if(elf == NULL) {
+		ctx->gpr[0] = -1;
+		return;
+	}
 
+	str_cpy(_current_proc->cmd, cmd);
+	if(proc_load_elf(_current_proc, elf, elf_size) != 0) {
+		ctx->gpr[0] = -1;
+		return;
+	}
+
+	ctx->gpr[0] = 0;
 	memcpy(ctx, &_current_proc->ctx, sizeof(context_t));
-	return 0;
 }
 
 static void sys_block_on(context_t* ctx, int32_t event) {
@@ -658,7 +663,7 @@ void svc_handler(int32_t code, int32_t arg0, int32_t arg1, int32_t arg2, context
 		sys_kill(ctx, arg0);
 		return;
 	case SYS_EXEC_ELF:
-		ctx->gpr[0] = sys_load_elf(ctx, (const char*)arg0, (void*)arg1, (uint32_t)arg2);
+		sys_load_elf(ctx, (const char*)arg0, (void*)arg1, (uint32_t)arg2);
 		return;
 	case SYS_FORK:
 		ctx->gpr[0] = sys_fork(ctx);

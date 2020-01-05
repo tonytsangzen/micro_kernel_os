@@ -53,16 +53,17 @@ static int ipc_recv(int* from_pid,  proto_t* pkg, int32_t id) {
 int ipc_call(int to_pid,  const proto_t* ipkg, proto_t* opkg) {
 	if(to_pid < 0 || ipkg == NULL)
 		return -1;
-
 	int32_t id = ipc_send(to_pid, ipkg, -1);
-	if(id < 0)
+	if(id < 0) {
 		return -1;
+	}
 	if(opkg == NULL)
 		return 0;
 
-	if(ipc_recv(NULL, opkg, id) == 0)
-		return 0;
-	return -1;
+	if(ipc_recv(NULL, opkg, id) != 0) {
+		return -1;
+	}
+	return 0;
 }
 
 int ipc_server(ipc_handle_t handle, void* p) {

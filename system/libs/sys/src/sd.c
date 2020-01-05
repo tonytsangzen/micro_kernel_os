@@ -32,15 +32,16 @@ int32_t sd_read(int32_t block, void* buf) {
   int32_t sector = block * n + _partition.start_sector;
   char* p = (char*)buf;
 
-printf("rd %x\n", sector);
 	while(n > 0) {
-		if(sd_read_sector(sector, p) != 0)
+		//kprintf("raw_sec: %d, sec: %d, p: %d\n", block*n, sector, _partition.start_sector);
+		if(sd_read_sector(sector, p) != 0) {
+			kprintf("ERR: raw_sec: %d, sec: %d, p: %d\n", block*n, sector, _partition.start_sector);
 			return -1;
+		}
 		sector++;
 		n--;
 		p += 512;
 	}
-printf("rd done\n");
 	return 0;
 }
 

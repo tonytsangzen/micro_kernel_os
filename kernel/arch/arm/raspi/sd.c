@@ -1,5 +1,6 @@
 #include "gpio_arch.h"
 #include <dev/sd.h>
+#include <dev/actled.h>
 #include <kernel/system.h>
 #include <kernel/proc.h>
 #include <basic_math.h>
@@ -112,9 +113,7 @@ typedef struct {
 	int32_t sector;
 	char rxbuf[SECTOR_SIZE];
 	char txbuf[SECTOR_SIZE];
-	char *rxbuf_index;
-	const char *txbuf_index;
-	uint32_t rxcount, txcount, rxdone, txdone;
+	uint32_t rxdone, txdone;
 } sd_t;
 
 static sd_t _sdc;
@@ -213,16 +212,20 @@ static int32_t sd_cmd(uint32_t code, uint32_t arg) {
  * returns 0 on error.
  */
 static int32_t sd_read_sector(dev_t* dev, uint32_t sector) {
-	*EMMC_BLKSIZECNT = (1 << 16) | dev->io.block.block_size;
 	if(sd_status(SR_DAT_INHIBIT)) {
 		sd_err = SD_TIMEOUT;
 		return -1;
 	}
 
-	sd_cmd(CMD_READ_SINGLE, (sector)*dev->io.block.block_size);
-	if(sd_err != 0) {
+	act_led(1);	
+	*EMMC_BLKSIZECNT = (1 << 16) | dev->io.block.block_size;
+	if((sd_scr[0] & SCR_SUPP_CCS) != 0)
+		sd_cmd(CMD_READ_SINGLE, sector);
+	else
+		sd_cmd(CMD_READ_SINGLE, sector * dev->io.block.block_size);
+
+	if(sd_err != 0)
 		return -1;
-	}
 	return 0;
 }
 
@@ -239,7 +242,11 @@ static int32_t sd_write_sector(dev_t* dev, uint32_t sector, unsigned char *buffe
 	uint32_t *buf = (uint32_t *)buffer;
 	
 	*EMMC_BLKSIZECNT = (1 << 16) | dev->io.block.block_size;
-	sd_cmd(CMD_WRITE_SINGLE, (sector)*dev->io.block.block_size);
+	if((sd_scr[0] & SCR_SUPP_CCS) != 0)
+		sd_cmd(CMD_WRITE_SINGLE, sector);
+	else
+		sd_cmd(CMD_WRITE_SINGLE, sector * dev->io.block.block_size);
+
 	if(sd_err) 
 		return 0;
 	if((r = sd_int(INT_WRITE_RDY, 1))) {
@@ -408,7 +415,7 @@ int32_t sd_init(dev_t* dev) {
 	if(sd_err)
 		return sd_err;
 	
-	if((r=sd_clk(25000000)))
+	if((r=sd_clk(12500000)))
 		return r;
 
 	if(sd_status(SR_DAT_INHIBIT))
@@ -456,12 +463,10 @@ void sd_dev_handle(dev_t* dev) {
 	if((sd_int(INT_READ_RDY, 0)) != 0) {
 		return;
 	}
-	uint32_t* buf = (uint32_t*)_sdc.rxbuf_index;
+	uint32_t* buf = (uint32_t*)_sdc.rxbuf;
 	for(d=0; d<dev->io.block.block_size/4; d++)
 		buf[d] = *EMMC_DATA;
 
-	_sdc.rxbuf_index += dev->io.block.block_size;
-	_sdc.rxcount -= dev->io.block.block_size;
 	proc_wakeup((uint32_t)dev);
 	_sdc.rxdone = 1;
 	return;
@@ -472,9 +477,7 @@ int32_t sd_dev_read(dev_t* dev, int32_t sector) {
 		return -1;
 
 	_sdc.sector = sector;
-	_sdc.rxcount = dev->io.block.block_size;
 	_sdc.rxdone = 0;
-	_sdc.rxbuf_index = _sdc.rxbuf;
 	return sd_read_sector(dev, _sdc.sector);
 }
 
@@ -483,6 +486,7 @@ int32_t sd_dev_read_done(dev_t* dev, void* buf) {
 	if(_sdc.rxdone == 0)
 		return -1;
 	memcpy(buf, _sdc.rxbuf, dev->io.block.block_size);
+	act_led(0);	
 	return 0;
 }
 
