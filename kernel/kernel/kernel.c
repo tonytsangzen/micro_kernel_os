@@ -71,7 +71,7 @@ static void init_allocable_mem(void) {
 		get_hw_info()->phy_mem_size,
 		AP_RW_D);
 
-	kalloc_init(ALLOCATABLE_MEMORY_START, P2V(get_hw_info()->phy_mem_size), false);
+	kalloc_init(ALLOCATABLE_MEMORY_START, P2V(get_hw_info()->phy_mem_size - 32*MB), false);
 }
 
 static int32_t load_init(void) {
@@ -109,8 +109,6 @@ void _kernel_entry_c(context_t* ctx) {
 			"------Ewok micro-kernel-------\n"
 			"kernel: mmu inited\n");
 
-	//flush_actled();
-
 	console_t* console = get_console();
 	console_init(console);
 
@@ -125,11 +123,9 @@ void _kernel_entry_c(context_t* ctx) {
 				info->width, info->height, info->depth,
 				info->pointer, info->size);
 		memset((void*)info->pointer, 0, info->size);
-		/*
 		graph_t* g = graph_new(NULL, info->width, info->height);
 		console->g = g;
 		console_reset(console);
-		*/
 	}
 	else
 		printf("[Failed!]\n");
@@ -137,7 +133,6 @@ void _kernel_entry_c(context_t* ctx) {
 	printf("kernel: %39s ", "whole allocable memory initing");
 	init_allocable_mem(); //init the rest allocable memory VM
 	printf("[ok] : %dMB\n", div_u32(get_free_mem_size(), 1*MB));
-	//printf("[ok]\n");
 
 	printf("kernel: devices initing\n");
 	dev_setup();
@@ -162,10 +157,6 @@ void _kernel_entry_c(context_t* ctx) {
 	irq_init();
 	printf("[ok]\n");
 
-	if(get_dev(DEV_SD)->state == DEV_STATE_OFF) {
-		while(true) flush_actled();
-	}
-
 	printf("kernel: %39s ", "loading first process(init)");
 	if(load_init() != 0) 
 		printf("[failed!]\n");
@@ -175,7 +166,9 @@ void _kernel_entry_c(context_t* ctx) {
 	printf("kernel: start timer.\n");
 	timer_set_interval(0, 0x40); //0.001 sec sequence
 
-	while(1) __asm__("MOV r0, #0; MCR p15,0,R0,c7,c0,4"); // CPU enter WFI state
+	while(1) {
+		__asm__("MOV r0, #0; MCR p15,0,R0,c7,c0,4"); // CPU enter WFI state
+	}
 
 	if(console->g != NULL) {
 		graph_free(console->g);

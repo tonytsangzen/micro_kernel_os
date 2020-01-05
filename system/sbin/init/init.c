@@ -100,7 +100,7 @@ static void init_stdio(void) {
 	dup2(fd, 0);
 	dup2(fd, 1);
 }
-/*
+
 static void kevent_handle(init_t* init, int32_t type, rawdata_t* data) {
 	(void)data;
 	if(type == KEV_CONSOLE_SWITCH) {
@@ -127,7 +127,6 @@ static void kevent_handle(init_t* init, int32_t type, rawdata_t* data) {
 		}
 	}
 }
-*/
 
 static int32_t read_conf(init_t* init, const char* fname) {
 	init->console_num = 2;
@@ -191,7 +190,7 @@ int main(int argc, char** argv) {
 	set_global("current_console", "0");
 
 	console_out(&init, "\n[init process started]\n");
-	/*mount root fs*/
+	//mount root fs
 	run_init_root(&init, "/sbin/dev/sdd");
 
 	load_devs(&init);

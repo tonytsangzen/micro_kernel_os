@@ -40,6 +40,7 @@ void printf(const char *format, ...) {
 	va_end(ap);
 	
 	uart_out(buf->cstr);
+	/*
 	act_led(0);
 	if(_console.g != NULL) {
 		fbinfo_t* info = fb_get_info();
@@ -49,6 +50,7 @@ void printf(const char *format, ...) {
 		else if(info->depth == 32)
 			memcpy((void*)info->pointer, _console.g->buffer, info->size);
 	}
+	*/
 	str_free(buf);
 }
 

@@ -6,16 +6,23 @@
 ram_hole_t _ram_holes[RAM_HOLE_MAX];
 /*physical memory split to pages for paging mmu, managed by kalloc/kfree, phymem page state must be occupied or free*/
 
-static page_list_t *page_list_prepend(page_list_t *page_list,
-					  char *page_address);
-
 /*
  * _list of pages that are free to be allocated by kalloc. Each of the
  * list nodes are stored in the beginning of the actual page, because
  * the page is free and we can use it for our purposes.
  */
-static page_list_t *_free_list4k = 0;
-static page_list_t *_free_list1k = 0;
+static __attribute__((__aligned__(PAGE_DIR_SIZE))) page_list_t *_free_list4k = 0;
+static __attribute__((__aligned__(1024))) page_list_t *_free_list1k = 0;
+
+/*
+ * page_list_prepend adds the given page to the beginning of the page list
+ * and returns the address of the new page list.
+ */
+static page_list_t *page_list_prepend(page_list_t *page_list, char *page_address) {
+	page_list_t *page = (page_list_t *) page_address;
+	page->next = page_list;
+	return page;
+}
 
 void kmake_hole(uint32_t base, uint32_t end) {
 	if(base == 0 || base >= end || base <= ALLOCATABLE_MEMORY_START)
@@ -136,13 +143,3 @@ uint32_t get_free_mem_size(void) {
 	return result;
 }
 
-/*
- * page_list_prepend adds the given page to the beginning of the page list
- * and returns the address of the new page list.
- */
-static page_list_t *page_list_prepend(page_list_t *page_list,
-					  char *page_address) {
-	page_list_t *page = (page_list_t *) page_address;
-	page->next = page_list;
-	return page;
-}
