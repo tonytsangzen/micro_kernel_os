@@ -15,6 +15,7 @@
 #include <kprintf.h>
 #include <buffer.h>
 #include <dev/kdevice.h>
+#include <dev/gpio.h>
 #include <rawdata.h>
 
 static void sys_exit(context_t* ctx, int32_t res) {
@@ -820,6 +821,18 @@ void svc_handler(int32_t code, int32_t arg0, int32_t arg1, int32_t arg2, context
 		return;
 	case SYS_KPRINT:
 		sys_kprint((const char*)arg0, arg1);
+		return;
+	case SYS_GPIO_CONFIG:
+		gpio_config(arg0, arg1);
+		return;
+	case SYS_GPIO_PULL:
+		gpio_pull(arg0, arg1);
+		return;
+	case SYS_GPIO_WRITE:
+		gpio_write(arg0, arg1);
+		return;
+	case SYS_GPIO_READ:
+		ctx->gpr[0] = gpio_read(arg0);
 		return;
 	}
 	printf("pid:%d, code(%d) error!\n", _current_proc->pid, code);

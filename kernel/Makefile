@@ -114,7 +114,6 @@ OBJS = ${ARCH_OBJS} \
 	${KERNEL_DIR}/schedule.o \
 	${KERNEL_DIR}/vfs.o \
 	${KERNEL_DIR}/dev/kdevice.o \
-	${KERNEL_DIR}/dev/gpio.o \
 	${KERNEL_DIR}/systemc.o \
 	${KERNEL_DIR}/kernel.o
 

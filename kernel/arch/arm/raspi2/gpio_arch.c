@@ -24,11 +24,11 @@ void gpio_pull(int32_t gpio_num, int32_t pull_dir) {
 	put32((uint32_t)GPIO_PUD+(index<<2), 0); /* disable ppud clock */
 }
 
-inline void gpio_set(int32_t gpio_num) {
+static inline void gpio_set(int32_t gpio_num) {
 	put32((uint32_t)GPIO_SET0 + ((gpio_num/32)<<2),1<<(gpio_num%32));
 }
 
-inline void gpio_clr(int32_t gpio_num) {
+static inline void gpio_clr(int32_t gpio_num) {
 	put32((uint32_t)GPIO_CLR0+((gpio_num/32)<<2),1<<(gpio_num%32));
 }
 
