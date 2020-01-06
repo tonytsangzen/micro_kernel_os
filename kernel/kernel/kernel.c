@@ -7,6 +7,7 @@
 #include <mm/shm.h>
 #include <kstring.h>
 #include <kernel/kernel.h>
+#include <kernel/kevent.h>
 #include <kernel/system.h>
 #include <kernel/hw_info.h>
 #include <kernel/proc.h>
@@ -105,7 +106,7 @@ void _kernel_entry_c(context_t* ctx) {
 	epaper_test();
 	while(1);
 #endif
-
+	kevent_init();
 	dev_init();
 	uart_init();
 	uart_out("\n\n"
@@ -133,6 +134,8 @@ void _kernel_entry_c(context_t* ctx) {
 	printf("kernel: %39s ", "whole allocable memory initing");
 	init_allocable_mem(); //init the rest allocable memory VM
 	printf("[ok] : %dMB\n", div_u32(get_free_mem_size(), 1*MB));
+
+
 
 	printf("kernel: devices initing\n");
 	dev_setup();

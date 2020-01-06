@@ -6,6 +6,11 @@
 static kevent_t* _event_queue_tail = NULL;
 static kevent_t* _event_queue_head = NULL;
 
+void kevent_init(void) {
+	_event_queue_head = NULL;
+	_event_queue_tail = NULL;
+}
+
 static kevent_t* new_event(void) {
 	kevent_t* event = (kevent_t*)kmalloc(sizeof(kevent_t));
 	if(event == NULL) {

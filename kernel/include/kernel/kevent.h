@@ -14,5 +14,6 @@ typedef struct st_kevent {
 
 extern int32_t kevent_push(int32_t type, rawdata_t* data);
 extern int32_t kevent_pop(int32_t *type, rawdata_t* data);
+extern void    kevent_init(void);
 
 #endif
