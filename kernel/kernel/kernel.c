@@ -117,7 +117,7 @@ void _kernel_entry_c(context_t* ctx) {
 		div_u32(KMALLOC_END-KMALLOC_BASE, 1*MB));
 
 	printf("kernel: %39s ", "framebuffer initing");
-	if(fb_init(1440, 900, 16) == 0) {
+	if(fb_init(1280, 720, 16) == 0) {
 		fbinfo_t* info = fb_get_info();
 		printf("[OK] : %dx%d %dbits, addr: 0x%X, size:%d\n", 
 				info->width, info->height, info->depth,
