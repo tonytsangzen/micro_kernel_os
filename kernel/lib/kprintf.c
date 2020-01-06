@@ -31,7 +31,7 @@ void printf(const char *format, ...) {
 		return;
 
 	act_led(1);
-	_delay_msec(100);
+	_delay_msec(20);
 
 	va_list ap;
 	va_start(ap, format);

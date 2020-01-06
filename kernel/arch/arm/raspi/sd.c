@@ -467,7 +467,7 @@ void sd_dev_handle(dev_t* dev) {
 	for(d=0; d<dev->io.block.block_size/4; d++)
 		buf[d] = *EMMC_DATA;
 
-	proc_wakeup((uint32_t)dev);
+	//proc_wakeup((uint32_t)dev);
 	_sdc.rxdone = 1;
 	return;
 }
