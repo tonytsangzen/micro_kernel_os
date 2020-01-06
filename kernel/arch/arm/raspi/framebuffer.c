@@ -28,9 +28,9 @@ typedef struct {
 	uint32_t size;
 } fb_init_t;
 
+static fb_init_t fbinit __attribute__((aligned(16)));
 int32_t __attribute__((optimize("O0"))) fb_dev_init(uint32_t w, uint32_t h, uint32_t dep) {
 //int32_t fb_dev_init(uint32_t w, uint32_t h, uint32_t dep) {
-	fb_init_t fbinit;
 	mail_message_t msg;
 
 	dep = 16;
@@ -67,9 +67,9 @@ int32_t __attribute__((optimize("O0"))) fb_dev_init(uint32_t w, uint32_t h, uint
 		_framebuffer_base = (char*)P2V(_framebuffer_base);
 	}
 	_framebuffer_end = _framebuffer_base + _fb_info.size;
+	map_pages(_kernel_vm, (uint32_t)_framebuffer_base, (uint32_t)(_fb_info.pointer), (uint32_t)(_fb_info.pointer+_fb_info.size), AP_RW_D);
+	//map_pages(_kernel_vm, (uint32_t)_framebuffer_base, V2P(_framebuffer_base), V2P(_framebuffer_end), AP_RW_D);
 	_fb_info.pointer = (uint32_t)_framebuffer_base;
-	//map_pages(_kernel_vm, (uint32_t)_framebuffer_base, (uint32_t)(_framebuffer_base), (uint32_t)(_framebuffer_end), AP_RW_D);
-	map_pages(_kernel_vm, (uint32_t)_framebuffer_base, V2P(_framebuffer_base), V2P(_framebuffer_end), AP_RW_D);
 	kmake_hole((uint32_t)_framebuffer_base, (uint32_t)_framebuffer_end);
 	return 0;
 }

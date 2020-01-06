@@ -41,16 +41,11 @@ void printf(const char *format, ...) {
 	
 	uart_out(buf->cstr);
 	act_led(0);
-	/*
 	if(_console.g != NULL) {
 		fbinfo_t* info = fb_get_info();
 		console_put_string(&_console, buf->cstr);
-		if(info->depth == 16)
-			dup16((uint16_t*)info->pointer, _console.g->buffer, info->width, info->height);
-		else if(info->depth == 32)
-			memcpy((void*)info->pointer, _console.g->buffer, info->size);
+		fb_dev_write(NULL, _console.g->buffer, info->width * info->height * (info->depth / 8));
 	}
-	*/
 	str_free(buf);
 }
 

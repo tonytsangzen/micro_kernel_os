@@ -71,7 +71,7 @@ static void init_allocable_mem(void) {
 		get_hw_info()->phy_mem_size,
 		AP_RW_D);
 
-	kalloc_init(ALLOCATABLE_MEMORY_START, P2V(get_hw_info()->phy_mem_size - 32*MB), true);
+	kalloc_init(ALLOCATABLE_MEMORY_START, P2V(get_hw_info()->phy_mem_size-32*MB), true);
 }
 
 static int32_t load_init(void) {
@@ -98,6 +98,9 @@ void _kernel_entry_c(context_t* ctx) {
 	hw_info_init();
 	init_kernel_vm();  
 
+	console_t* console = get_console();
+	console_init(console);
+
 #ifdef EPAPER
 	epaper_test();
 	while(1);
@@ -108,9 +111,6 @@ void _kernel_entry_c(context_t* ctx) {
 	uart_out("\n\n"
 			"------Ewok micro-kernel-------\n"
 			"kernel: mmu inited\n");
-
-	console_t* console = get_console();
-	console_init(console);
 
 	km_init();
 	printf("kernel: %39s [ok] : %dMB\n", "kmalloc initing", 
