@@ -55,7 +55,7 @@ static int read_pipe(fsinfo_t* info, void* buf, uint32_t size, int block) {
 	return 0; //res < 0 , pipe closed, return 0.
 }
 
-#define SHM_ON 128
+#define SHM_ON 32
 static int read_raw(int fd, fsinfo_t *info, void* buf, uint32_t size) {
 	mount_t mount;
 	if(vfs_get_mount(info, &mount) != 0)
