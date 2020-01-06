@@ -52,6 +52,7 @@ static void* sector_buf_get(uint32_t index) {
 static int32_t sd_read_sector(int32_t sector, void* buf) {
 	void* b = sector_buf_get(sector);
   if(b != NULL) {
+kprintf(".");
     memcpy(buf, b, SECTOR_SIZE);
     return 0;
   }
