@@ -62,14 +62,23 @@ static void do_read(vdevice_t* dev, int from_pid, proto_t *in, void* p) {
 	proto_init(&out, NULL, 0);
 
 	if(dev != NULL && dev->read != NULL) {
-		void* shm = shm_map(shm_id);
-		if(shm == NULL) {
+		void* buf;
+		if(shm_id < 0)
+			buf = malloc(size);
+		else
+			buf = shm_map(shm_id);
+		if(buf == NULL) {
 			proto_add_int(&out, -1);
 		}
 		else {
-			size = dev->read(fd, from_pid, &info, shm, size, offset, p);
+			size = dev->read(fd, from_pid, &info, buf, size, offset, p);
 			proto_add_int(&out, size);
-			shm_unmap(shm_id);
+			if(size > 0) {
+				if(shm_id < 0)
+					proto_add(&out, buf, size);
+			}
+			if(shm_id >= 0)
+				shm_unmap(shm_id);
 		}
 	}
 	else {

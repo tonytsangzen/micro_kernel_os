@@ -55,6 +55,7 @@ static int read_pipe(fsinfo_t* info, void* buf, uint32_t size, int block) {
 	return 0; //res < 0 , pipe closed, return 0.
 }
 
+#define SHM_ON 128
 static int read_raw(int fd, fsinfo_t *info, void* buf, uint32_t size) {
 	mount_t mount;
 	if(vfs_get_mount(info, &mount) != 0)
@@ -64,13 +65,17 @@ static int read_raw(int fd, fsinfo_t *info, void* buf, uint32_t size) {
 	if(offset < 0)
 		offset = 0;
 	
-	int32_t shm_id = shm_alloc(size, SHM_PUBLIC);
-	if(shm_id < 0)
-		return -1;
+	int32_t shm_id = -1;
+	void* shm = NULL;
+	if(size >= SHM_ON) {
+		shm_id = shm_alloc(size, SHM_PUBLIC);
+		if(shm_id < 0)
+			return -1;
 
-	void* shm = shm_map(shm_id);
-	if(shm == NULL) 
-		return -1;
+		shm = shm_map(shm_id);
+		if(shm == NULL) 
+			return -1;
+	}
 
 	proto_t in, out;
 	proto_init(&in, NULL, 0);
@@ -82,12 +87,16 @@ static int read_raw(int fd, fsinfo_t *info, void* buf, uint32_t size) {
 	proto_add_int(&in, size);
 	proto_add_int(&in, offset);
 	proto_add_int(&in, shm_id);
+
 	int res = -1;
 	if(ipc_call(mount.pid, &in, &out) == 0) {
 		int rd = proto_read_int(&out);
 		res = rd;
 		if(rd > 0) {
-			memcpy(buf, shm, rd);
+			if(shm != NULL)
+				memcpy(buf, shm, rd);
+			else
+				proto_read_to(&out, buf, size);
 			offset += rd;
 			syscall2(SYS_VFS_PROC_SEEK, fd, offset);
 		}
@@ -98,7 +107,8 @@ static int read_raw(int fd, fsinfo_t *info, void* buf, uint32_t size) {
 	}
 	proto_clear(&in);
 	proto_clear(&out);
-	shm_unmap(shm_id);
+	if(shm != NULL)
+		shm_unmap(shm_id);
 	return res;
 }
 
