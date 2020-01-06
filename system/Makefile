@@ -22,6 +22,18 @@ CFLAGS = -Wstrict-prototypes \
 #CFLAGS +=  -g
 CFLAGS +=  -O2
 
+ifneq ($(MACH),)
+ARCH=arm/$(MACH)
+else
+ARCH=arm/versatilepb
+endif
+
+ifeq ($(EPAPER),yes)
+CFLAGS = -DEPAPER
+endif
+
+ARCH_DIR=../kernel/arch
+
 LDFLAGS = -lc -lnosys
 
 LIB_INC = -I libs/sys/include \
@@ -167,8 +179,6 @@ sd:
 
 apps: ${PROGS}
 
-ARCH_DIR=../kernel/arch
-ARCH=arm/versatilepb
 KERNEL=../kernel/build/mkos.bin
 KERNEL_ELF=../kernel/build/mkos.elf
 include ${ARCH_DIR}/${ARCH}/config.mk

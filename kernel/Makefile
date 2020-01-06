@@ -61,7 +61,7 @@ ARCH_OBJS = \
 	${ARCH_DIR}/arm/common/memcpy.o \
 	${ARCH_DIR}/${ARCH}/hw_info.o \
 	${ARCH_DIR}/${ARCH}/uart.o \
-	${ARCH_DIR}/${ARCH}/gpio.o \
+	${ARCH_DIR}/${ARCH}/gpio_arch.o \
 	${ARCH_DIR}/${ARCH}/keyb.o \
 	${ARCH_DIR}/${ARCH}/mouse.o \
 	${ARCH_DIR}/${ARCH}/irq_arch.o \
@@ -114,6 +114,7 @@ OBJS = ${ARCH_OBJS} \
 	${KERNEL_DIR}/schedule.o \
 	${KERNEL_DIR}/vfs.o \
 	${KERNEL_DIR}/dev/kdevice.o \
+	${KERNEL_DIR}/dev/gpio.o \
 	${KERNEL_DIR}/systemc.o \
 	${KERNEL_DIR}/kernel.o
 

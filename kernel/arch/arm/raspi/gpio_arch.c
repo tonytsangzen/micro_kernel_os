@@ -24,28 +24,22 @@ void gpio_pull(int32_t gpio_num, int32_t pull_dir) {
 	put32((uint32_t)GPIO_PUD+(index<<2), 0); /* disable ppud clock */
 }
 
-void gpio_set(int32_t gpio_num) {
+inline void gpio_set(int32_t gpio_num) {
 	put32((uint32_t)GPIO_SET0 + ((gpio_num/32)<<2),1<<(gpio_num%32));
 }
 
-void gpio_clr(int32_t gpio_num) {
+inline void gpio_clr(int32_t gpio_num) {
 	put32((uint32_t)GPIO_CLR0+((gpio_num/32)<<2),1<<(gpio_num%32));
 }
 
-void gpio_write(int32_t gpio_num, int32_t value) {
+inline void gpio_write(int32_t gpio_num, int32_t value) {
 	if(value)
 		gpio_set(gpio_num);
 	else 
 		gpio_clr(gpio_num);
 }
 
-uint32_t gpio_read(int32_t gpio_num) {
+inline uint32_t gpio_read(int32_t gpio_num) {
 	return get32((uint32_t)GPIO_LEV0 + ((gpio_num/32)<<2))&(1<<(gpio_num%32));
 }
 
-void gpio_toggle(int32_t gpio_num) {
-	if(gpio_read(gpio_num))
-		gpio_clr(gpio_num);
-	else 
-		gpio_set(gpio_num);
-}
