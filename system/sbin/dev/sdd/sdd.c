@@ -198,6 +198,7 @@ int main(int argc, char** argv) {
 	sd_init();
 	ext2_t ext2;
 	ext2_init(&ext2, sd_read, sd_write);
+	sd_set_buffer(ext2.super.s_blocks_count);
 
 	fsinfo_t root_info;
 	vfs_get("/", &root_info);
@@ -209,5 +210,6 @@ int main(int argc, char** argv) {
 
 	device_run(&dev, &root_info, &mnt_info, &ext2, 1);
 	ext2_quit(&ext2);
+	sd_quit();
 	return 0;
 }

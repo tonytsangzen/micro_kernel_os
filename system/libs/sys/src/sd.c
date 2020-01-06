@@ -1,19 +1,68 @@
 #include <sd.h>
 #include <dev/device.h>
 #include <syscall.h>
+#include <stdlib.h>
 #include <partition.h>
 #include <string.h>
 
 #define EXT2_BLOCK_SIZE 1024
+#define SECTOR_SIZE 512
 static partition_t _partition;
 
+typedef struct {
+  uint32_t index;
+  uint32_t* data;
+} sector_buf_t;
+
+static sector_buf_t* _sector_buf = NULL;
+static uint32_t _sector_buf_num = 0;
+
+static sector_buf_t* sector_buf_new(uint32_t num) {
+  sector_buf_t* ret = (sector_buf_t*)malloc(sizeof(sector_buf_t)*num);
+  memset(ret, 0, sizeof(sector_buf_t)*num);
+  return ret;
+}
+
+static void sector_buf_free(sector_buf_t* buffer, uint32_t num) {
+  while(num > 0) {
+    if(buffer[num-1].data != NULL)
+      free(buffer[num-1].data);
+    num--;
+  }
+  free(buffer);
+}
+
+static void sector_buf_set(uint32_t index, const void* data) {
+  index -= _partition.start_sector;
+  if(_sector_buf == NULL || index >= _sector_buf_num)
+    return;
+  if(_sector_buf[index].data != NULL)
+    free(_sector_buf[index].data);
+  _sector_buf[index].data = malloc(SECTOR_SIZE);
+  memcpy(_sector_buf[index].data, data, SECTOR_SIZE);
+}
+
+static void* sector_buf_get(uint32_t index) {
+  index -= _partition.start_sector;
+  if(_sector_buf == NULL || index >= _sector_buf_num)
+    return NULL;
+  return _sector_buf[index].data;
+}
+
 static int32_t sd_read_sector(int32_t sector, void* buf) {
+	void* b = sector_buf_get(sector);
+  if(b != NULL) {
+    memcpy(buf, b, SECTOR_SIZE);
+    return 0;
+  }
+
 	if(syscall2(SYS_DEV_BLOCK_READ, DEV_SD, sector) != 0)
 		return -1;
 	while(1) {
 		if(syscall2(SYS_DEV_BLOCK_READ_DONE, DEV_SD, (int32_t)buf)  == 0)
 			break;
 	}
+	sector_buf_set(sector, buf);
 	return 0;
 }
 
@@ -24,6 +73,7 @@ static int32_t sd_write_sector(int32_t sector, const void* buf) {
 		if(syscall1(SYS_DEV_BLOCK_WRITE_DONE, DEV_SD)  == 0)
 			break;
 	}
+	sector_buf_set(sector, buf);
 	return 0;
 }
 
@@ -80,7 +130,23 @@ int32_t partition_get(uint32_t id, partition_t* p) {
 	return 0;
 }
 
+int32_t sd_set_buffer(uint32_t sector_num) {
+	_sector_buf = sector_buf_new(sector_num);
+	_sector_buf_num = sector_num;
+	return 0;
+}
+
+int32_t sd_quit(void) {
+	sector_buf_free(_sector_buf, _sector_buf_num);
+	_sector_buf = NULL;
+	_sector_buf_num = 0;
+	return 0;
+}
+
 int32_t sd_init(void) {
+	_sector_buf = NULL;
+	_sector_buf_num = 0;
+
 	if(read_partition() != 0 || partition_get(1, &_partition) != 0) {
 		memset(&_partition, 0, sizeof(partition_t));
 	}
