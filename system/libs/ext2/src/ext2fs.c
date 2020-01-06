@@ -316,7 +316,7 @@ static int32_t ext2_rm_child(ext2_t* ext2, INODE *ip, const char *name) {
 	return -1;
 }
 
-int32_t ext2_read(ext2_t* ext2, INODE* node, char *buf, int32_t nbytes, int32_t offset) {
+int32_t ext2_read_block(ext2_t* ext2, INODE* node, char *buf, int32_t nbytes, int32_t offset) {
 	//(2) count = 0
 	// avil = fileSize - OFT's offset // number of bytes still available in file.
 	int32_t count_read = 0;
@@ -384,6 +384,20 @@ int32_t ext2_read(ext2_t* ext2, INODE* node, char *buf, int32_t nbytes, int32_t 
 	}
 	return count_read;
 }	
+
+int32_t ext2_read(ext2_t* ext2, INODE* node, char *buf, int32_t nbytes, int32_t offset) {
+	char* p = buf;
+	int32_t ret = nbytes;
+	while(nbytes > 0) {
+		int32_t rd = ext2_read_block(ext2, node, p, nbytes, offset);
+		if(rd <= 0)
+			return 0;
+		nbytes -= rd;
+		offset += rd;
+		p += rd;
+	}
+	return ret;
+}
 
 static INODE* get_node_by_ino(ext2_t* ext2, int32_t ino, char* buf) {
 	int32_t bgid = get_gd_index_by_ino(ext2, ino);
