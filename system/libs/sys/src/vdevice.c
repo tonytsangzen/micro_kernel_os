@@ -7,6 +7,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <errno.h>
+#include <shm.h>
 #include <syscall.h>
 
 static void do_open(vdevice_t* dev, int from_pid, proto_t *in, void* p) {
@@ -49,23 +50,27 @@ static void do_closed(vdevice_t* dev, int from_pid, proto_t *in, void* p) {
 }
 
 static void do_read(vdevice_t* dev, int from_pid, proto_t *in, void* p) {
-	int size, offset;
+	int size, offset, shm_id;
 	fsinfo_t info;
 	int fd = proto_read_int(in);
 	proto_read_to(in, &info, sizeof(fsinfo_t));
 	size = proto_read_int(in);
 	offset = proto_read_int(in);
+	shm_id = proto_read_int(in);
 
 	proto_t out;
 	proto_init(&out, NULL, 0);
 
 	if(dev != NULL && dev->read != NULL) {
-		void* buf = malloc(size);
-		size = dev->read(fd, from_pid, &info, buf, size, offset, p);
-		proto_add_int(&out, size);
-		if(size > 0)
-			proto_add(&out, buf, size);
-		free(buf);
+		void* shm = shm_map(shm_id);
+		if(shm == NULL) {
+			proto_add_int(&out, -1);
+		}
+		else {
+			size = dev->read(fd, from_pid, &info, shm, size, offset, p);
+			proto_add_int(&out, size);
+			shm_unmap(shm_id);
+		}
 	}
 	else {
 		proto_add_int(&out, -1);

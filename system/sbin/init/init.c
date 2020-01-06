@@ -206,15 +206,12 @@ int main(int argc, char** argv) {
 	}
 
 	while(1) {
-	/*
 		int32_t type;
 		rawdata_t data;
 		if(syscall2(SYS_GET_KEVENT, (int32_t)&type, (int32_t)&data) != 0) {
 			continue;
 		}
 		kevent_handle(&init, type, &data);
-		*/
-		sleep(0);
 	}
 	return 0;
 }
