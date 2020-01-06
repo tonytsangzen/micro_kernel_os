@@ -1,5 +1,6 @@
 #include "dev/i2c.h"
-#include "gpio.h"
+#include "dev/gpio.h"
+#include "gpio_arch.h"
 #include "kernel/system.h"
 #include "dev/timer.h"
 

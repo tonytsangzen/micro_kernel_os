@@ -70,6 +70,7 @@ ARCH_OBJS = \
 	${ARCH_DIR}/${ARCH}/sd.o \
 	${ARCH_DIR}/${ARCH}/spi.o \
 	${ARCH_DIR}/${ARCH}/timer.o \
+	${ARCH_DIR}/${ARCH}/i2c.o \
 	${ARCH_DIR}/${ARCH}/mailbox.o 
 
 LIB_DIR = lib
@@ -114,7 +115,6 @@ OBJS = ${ARCH_OBJS} \
 	${KERNEL_DIR}/schedule.o \
 	${KERNEL_DIR}/vfs.o \
 	${KERNEL_DIR}/dev/kdevice.o \
-	${KERNEL_DIR}/dev/i2c.o \
 	${KERNEL_DIR}/systemc.o \
 	${KERNEL_DIR}/kernel.o
 
