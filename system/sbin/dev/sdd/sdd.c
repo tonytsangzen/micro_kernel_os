@@ -198,7 +198,7 @@ int main(int argc, char** argv) {
 	sd_init();
 	ext2_t ext2;
 	ext2_init(&ext2, sd_read, sd_write);
-	sd_set_buffer(ext2.super.s_blocks_count);
+	sd_set_buffer(ext2.super.s_blocks_count*2);
 
 	fsinfo_t root_info;
 	vfs_get("/", &root_info);

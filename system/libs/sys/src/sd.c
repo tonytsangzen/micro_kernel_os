@@ -44,8 +44,9 @@ static inline void sector_buf_set(uint32_t index, const void* data) {
 
 static inline void* sector_buf_get(uint32_t index) {
   index -= _partition.start_sector;
-  if(_sector_buf == NULL || index >= _sector_buf_num)
+  if(_sector_buf == NULL || index >= _sector_buf_num) {
     return NULL;
+	}
   return _sector_buf[index].data;
 }
 

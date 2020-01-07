@@ -356,8 +356,8 @@ static int32_t ext2_init(ext2_t* ext2, read_block_func_t read_block, write_block
 		get_gd(ext2, i, &ext2->gds[i]);
 	}
 
-	_sector_buf = sector_buf_new(ext2->super.s_blocks_count);
-	_sector_buf_num = ext2->super.s_blocks_count;
+	_sector_buf_num = ext2->super.s_blocks_count*(EXT2_BLOCK_SIZE/SECTOR_SIZE);
+	_sector_buf = sector_buf_new(_sector_buf_num);
 	return 0;
 }
 

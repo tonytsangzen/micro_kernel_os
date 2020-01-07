@@ -31,7 +31,7 @@ void printf(const char *format, ...) {
 		return;
 
 	act_led(1);
-	_delay_msec(20);
+	_delay_msec(10);
 
 	va_list ap;
 	va_start(ap, format);
@@ -41,11 +41,13 @@ void printf(const char *format, ...) {
 	
 	uart_out(buf->cstr);
 	act_led(0);
+	/*
 	if(_console.g != NULL) {
 		fbinfo_t* info = fb_get_info();
 		console_put_string(&_console, buf->cstr);
 		fb_dev_write(NULL, _console.g->buffer, info->width * info->height * (info->depth / 8));
 	}
+	*/
 	str_free(buf);
 }
 
