@@ -74,11 +74,15 @@ static void do_read(vdevice_t* dev, int from_pid, proto_t *in, void* p) {
 			size = dev->read(fd, from_pid, &info, buf, size, offset, p);
 			proto_add_int(&out, size);
 			if(size > 0) {
-				if(shm_id < 0)
+				if(shm_id < 0) {
 					proto_add(&out, buf, size);
+				}
 			}
+
 			if(shm_id >= 0)
 				shm_unmap(shm_id);
+			else
+				free(buf);
 		}
 	}
 	else {

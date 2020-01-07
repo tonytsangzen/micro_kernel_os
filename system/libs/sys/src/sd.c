@@ -32,7 +32,7 @@ static void sector_buf_free(sector_buf_t* buffer, uint32_t num) {
   free(buffer);
 }
 
-static void sector_buf_set(uint32_t index, const void* data) {
+static inline void sector_buf_set(uint32_t index, const void* data) {
   index -= _partition.start_sector;
   if(_sector_buf == NULL || index >= _sector_buf_num)
     return;
@@ -42,7 +42,7 @@ static void sector_buf_set(uint32_t index, const void* data) {
   memcpy(_sector_buf[index].data, data, SECTOR_SIZE);
 }
 
-static void* sector_buf_get(uint32_t index) {
+static inline void* sector_buf_get(uint32_t index) {
   index -= _partition.start_sector;
   if(_sector_buf == NULL || index >= _sector_buf_num)
     return NULL;
