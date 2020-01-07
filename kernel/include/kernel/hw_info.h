@@ -5,6 +5,7 @@
 #include <mm/mmu.h>
 
 typedef struct {
+	char machine[32];
 	uint32_t phy_mem_size;
 	uint32_t phy_mmio_base;
 	uint32_t mmio_size;

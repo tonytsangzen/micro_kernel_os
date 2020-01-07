@@ -1,13 +1,14 @@
 #include <kernel/hw_info.h>
 #include <kernel/system.h>
 #include <dev/framebuffer.h>
+#include <kstring.h>
 #include "mailbox.h"
 
 static hw_info_t _hw_info;
 
 inline void hw_info_init(void) {
+	strcpy(_hw_info.machine, "raspi");
 	_hw_info.phy_mem_size = 512*MB;
-	//_hw_info.phy_mem_size = 256*MB;
 	_hw_info.phy_mmio_base = 0x20000000;
 	_hw_info.mmio_size = 4*MB;
 }

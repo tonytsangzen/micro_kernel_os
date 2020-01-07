@@ -121,8 +121,8 @@ static int32_t sys_getpid(void) {
 	return _current_proc->pid;
 }
 
-static void sys_sleep(context_t* ctx, uint32_t count) {
-	proc_sleep(ctx, count);
+static void sys_usleep(context_t* ctx, uint32_t count) {
+	proc_usleep(ctx, count);
 }
 
 static void sys_kill(context_t* ctx, int32_t pid) {
@@ -405,6 +405,7 @@ static void	sys_get_sysinfo(sysinfo_t* info) {
 	if(info == NULL)
 		return;
 
+	strcpy(info->machine, get_hw_info()->machine);
 	info->free_mem = get_free_mem_size();
 	info->total_mem = get_hw_info()->phy_mem_size;
 	info->shm_mem = shm_alloced_size();
@@ -616,6 +617,14 @@ static void sys_unlock(int32_t arg) {
 	proc_wakeup((uint32_t)lock);
 }
 	
+static uint32_t sys_mmio_map(void) {
+	if(_current_proc->owner != 0)
+		return 0;
+	hw_info_t* hw_info = get_hw_info();
+	map_pages(_current_proc->space->vm, MMIO_BASE, hw_info->phy_mmio_base, hw_info->phy_mmio_base + hw_info->mmio_size, AP_RW_RW);
+	return MMIO_BASE;
+}
+
 void svc_handler(int32_t code, int32_t arg0, int32_t arg1, int32_t arg2, context_t* ctx, int32_t processor_mode) {
 	(void)arg1;
 	(void)arg2;
@@ -657,8 +666,8 @@ void svc_handler(int32_t code, int32_t arg0, int32_t arg1, int32_t arg2, context
 	case SYS_GET_PID:
 		ctx->gpr[0] = sys_getpid();
 		return;
-	case SYS_SLEEP:
-		sys_sleep(ctx, (uint32_t)arg0);
+	case SYS_USLEEP:
+		sys_usleep(ctx, (uint32_t)arg0);
 		return;
 	case SYS_KILL:
 		sys_kill(ctx, arg0);
@@ -833,6 +842,9 @@ void svc_handler(int32_t code, int32_t arg0, int32_t arg1, int32_t arg2, context
 		return;
 	case SYS_GPIO_READ:
 		ctx->gpr[0] = gpio_read(arg0);
+		return;
+	case SYS_MMIO_MAP:
+		ctx->gpr[0] = sys_mmio_map();
 		return;
 	}
 	printf("pid:%d, code(%d) error!\n", _current_proc->pid, code);

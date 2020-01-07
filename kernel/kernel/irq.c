@@ -38,7 +38,8 @@ static void sd_handler(void) {
 }
 
 uint32_t _kernel_tic = 0;
-static uint32_t _timer_count = 0;
+static uint64_t _timer_usec = 0;
+static uint32_t _timer_tic = 0;
 
 void irq_handler(context_t* ctx) {
 	__irq_disable();
@@ -58,12 +59,19 @@ void irq_handler(context_t* ctx) {
 		sd_handler();
 	}
 	if((irqs & IRQ_TIMER0) != 0) {
-		if(_timer_count >= 1000) {
-			_kernel_tic++;
-			_timer_count = 0;
+		if(_timer_usec == 0)
+			_timer_usec = timer_read_sys_usec();
+		else {
+			uint64_t usec = timer_read_sys_usec();
+			uint64_t usec_gap = usec - _timer_usec;
+			_timer_usec = usec;
+			_timer_tic += usec_gap;
+			if(_timer_tic >= 1000000) {
+				_kernel_tic++;
+				_timer_tic = 0;
+			}
+			renew_sleep_counter(usec_gap);
 		}
-		_timer_count++;
-		renew_sleep_counter();
 		timer_clear_interrupt(0);
 
 		schedule(ctx);
@@ -99,6 +107,7 @@ void irq_init(void) {
 	irq_arch_init();
 	gic_set_irqs( IRQ_UART0 | IRQ_TIMER0 | IRQ_KEY | IRQ_MOUSE | IRQ_SDC);
 	__irq_enable();
-	_timer_count = 0;
 	_kernel_tic = 0;
+	_timer_usec = 0;
+	_timer_tic = 0;
 }
