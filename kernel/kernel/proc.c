@@ -208,13 +208,14 @@ static void proc_ready(proc_t* proc) {
 		return;
 
 	proc->state = READY;
-	if(_ready_proc == NULL)
+	if(_ready_proc == NULL) {
 		_ready_proc = proc;
+	}
 
-	proc->next = _ready_proc;
-	proc->prev = _ready_proc->prev;
-	_ready_proc->prev->next = proc;
-	_ready_proc->prev = proc;
+	proc->prev = _ready_proc;
+	proc->next = _ready_proc->next;
+	_ready_proc->next->prev = proc;
+	_ready_proc->next = proc;
 }
 
 proc_t* proc_get_next_ready(void) {
