@@ -22,7 +22,7 @@ typedef struct {
 	int console_num;
 	int cid;
 	bool start_x;
-	bool framebuffer;
+	bool do_console;
 } init_t;
 
 
@@ -140,7 +140,6 @@ static void kevent_handle(init_t* init, int32_t type, rawdata_t* data) {
 static int32_t read_conf(init_t* init, const char* fname) {
 	init->console_num = 2;
 	init->start_x = false;
-	init->framebuffer = false;
 
 	sconf_t *sconf = sconf_load(fname);	
 	if(sconf == NULL)
@@ -152,9 +151,6 @@ static int32_t read_conf(init_t* init, const char* fname) {
 	v = sconf_get(sconf, "start_x");
 	if(v[0] != 0) 
 		init->start_x = str_to_bool(v);
-	v = sconf_get(sconf, "framebuffer");
-	if(v[0] != 0) 
-		init->framebuffer = str_to_bool(v);
 	sconf_free(sconf);
 	return 0;
 }
@@ -165,14 +161,17 @@ static void tty_shell(init_t* init) {
 	setenv("CONSOLE_ID", "tty");
 	run(init, "/bin/session");
 }
-	
+
 static void load_devs(init_t* init) {
 	run_dev(init, "/sbin/dev/nulld", "/dev/null", true);
 	run_dev(init, "/sbin/dev/fbd", "/dev/fb0", true);
 
-	run_arch_dev(init, "ttyd", "/dev/tty0");
-	run_arch_dev(init, "moused", "/dev/mouse0");
+	run_arch_dev(init, "ttyd", "/dev/tty0"); 
+
+	init->do_console = false;
 	run_arch_dev(init, "keybd", "/dev/keyb0");
+	if(run_arch_dev(init, "moused", "/dev/mouse0") == 0)
+		init->do_console = true;
 }
 
 static void console_shells(init_t* init) {
@@ -192,6 +191,7 @@ static void console_shells(init_t* init) {
 int main(int argc, char** argv) {
 	(void)argc;
 	(void)argv;
+
 	init_t init;
 	memset(&init, 0, sizeof(init_t));
 
@@ -206,13 +206,16 @@ int main(int argc, char** argv) {
 	load_devs(&init);
 	tty_shell(&init);
 	read_conf(&init, "/etc/init.conf");
-	if(init.framebuffer) {
+	if(init.do_console) {
 		console_shells(&init);
 		if(init.start_x) {
 			set_global("current_console", "x");
 			run_dev(&init, "/sbin/dev/xserverd", "/dev/x", false);
 			run(&init, "/bin/launcher");
 		}
+	}
+	else {
+		console_out(&init, "\ninput devices load failed, only do tty shell!\n");
 	}
 
 	while(1) {
