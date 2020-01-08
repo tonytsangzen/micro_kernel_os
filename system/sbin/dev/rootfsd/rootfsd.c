@@ -187,7 +187,7 @@ int main(int argc, char** argv) {
 
 	vdevice_t dev;
 	memset(&dev, 0, sizeof(vdevice_t));
-	strcpy(dev.name, "sd(ext2)");
+	strcpy(dev.name, "rootfs(ext2)");
 	dev.mount = sdext2_mount;
 	dev.read = sdext2_read;
 	dev.write = sdext2_write;

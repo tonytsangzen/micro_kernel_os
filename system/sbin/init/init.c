@@ -17,6 +17,7 @@
 #include <rawdata.h>
 #include <global.h>
 #include <kernel/kevent_type.h>
+#include "sdinit.h"
 
 typedef struct {
 	int console_num;
@@ -42,6 +43,41 @@ static void console_out(init_t* init, const char* format, ...) {
 	str_free(buf);
 }
 
+static inline void wait_ready(int pid) {
+	while(1) {
+		if(dev_ping(pid) == 0)
+			break;
+		sleep(1);
+	}
+}
+
+static void run_init_sd(init_t* init, const char* cmd) {
+	sysinfo_t sysinfo;
+	syscall1(SYS_GET_SYSINFO, (int32_t)&sysinfo);
+	char devfn[FS_FULL_NAME_MAX];
+	snprintf(devfn, FS_FULL_NAME_MAX-1, "/sbin/dev/%s/%s", sysinfo.machine, cmd);
+
+	console_out(init, "init: load sd  %32s ", "");
+	int pid = fork();
+	if(pid == 0) {
+		sdinit_init();
+		ext2_t ext2;
+		ext2_init(&ext2, sdinit_read, NULL);
+		int32_t sz;
+		void* data = ext2_readfile(&ext2, devfn, &sz);
+		ext2_quit(&ext2);
+
+		if(data == NULL) {
+			console_out(init, "[error!] (%s)\n", devfn);
+			exit(-1);
+		}
+		exec_elf(devfn, data, sz);
+		free(data);
+	}
+	wait_ready(pid);
+	console_out(init, "[ok]\n");
+}
+
 static void run_init_root(init_t* init, const char* cmd) {
 	console_out(init, "init: mounting %32s ", "/");
 	int pid = fork();
@@ -57,13 +93,13 @@ static void run_init_root(init_t* init, const char* cmd) {
 		ext2_quit(&ext2);
 
 		if(data == NULL) {
-			console_out(init, "[error!]\n");
+			console_out(init, "[error!] (%s)\n", cmd);
 			exit(-1);
 		}
 		exec_elf(cmd, data, sz);
 		free(data);
 	}
-	vfs_mount_wait("/dev", pid);
+	wait_ready(pid);
 	console_out(init, "[ok]\n");
 }
 
@@ -77,23 +113,23 @@ static int run_dev(init_t* init, const char* cmd, const char* mnt, bool prompt) 
 		snprintf(fcmd, FS_FULL_NAME_MAX-1, "%s %s", cmd, mnt);
 		if(exec(fcmd) != 0) {
 			if(prompt)
-				console_out(init, "[error!]\n");
+				console_out(init, "[error!] (%s)\n", cmd);
 			return -1;
 		}
 	}
-	vfs_mount_wait(mnt, pid);
+	wait_ready(pid);
 
 	if(prompt)
 		console_out(init, "[ok]\n");
 	return 0;
 }
 	
-static int run_arch_dev(init_t* init, const char* dev, const char* mnt) {
+static int run_arch_dev(init_t* init, const char* dev, const char* mnt, bool prompt) {
 	sysinfo_t sysinfo;
 	syscall1(SYS_GET_SYSINFO, (int32_t)&sysinfo);
 	char devfn[FS_FULL_NAME_MAX];
 	snprintf(devfn, FS_FULL_NAME_MAX-1, "/sbin/dev/%s/%s", sysinfo.machine, dev);
-	return run_dev(init, devfn, mnt, true);
+	return run_dev(init, devfn, mnt, prompt);
 }
 
 static void run(init_t* init, const char* cmd) {
@@ -163,14 +199,13 @@ static void tty_shell(init_t* init) {
 }
 
 static void load_devs(init_t* init) {
-	run_dev(init, "/sbin/dev/nulld", "/dev/null", true);
 	run_dev(init, "/sbin/dev/fbd", "/dev/fb0", true);
-
-	run_arch_dev(init, "ttyd", "/dev/tty0"); 
+	run_arch_dev(init, "ttyd", "/dev/tty0", true); 
+	run_dev(init, "/sbin/dev/nulld", "/dev/null", true);
 
 	init->do_console = false;
-	run_arch_dev(init, "keybd", "/dev/keyb0");
-	if(run_arch_dev(init, "moused", "/dev/mouse0") == 0)
+	run_arch_dev(init, "keybd", "/dev/keyb0", true);
+	if(run_arch_dev(init, "moused", "/dev/mouse0", true) == 0)
 		init->do_console = true;
 }
 
@@ -201,6 +236,7 @@ int main(int argc, char** argv) {
 
 	console_out(&init, "\n[init process started]\n");
 	//mount root fs
+	run_init_sd(&init, "sdd");
 	run_init_root(&init, "/sbin/dev/rootfsd");
 
 	load_devs(&init);

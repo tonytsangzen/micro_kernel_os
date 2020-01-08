@@ -10,6 +10,14 @@
 #include <shm.h>
 #include <syscall.h>
 
+static void do_ping(int from_pid, proto_t* in) {
+	proto_t out;
+	proto_init(&out, NULL, 0);
+	proto_add_int(&out, 0);
+	ipc_send(from_pid, &out, in->id);
+	proto_clear(&out);
+}
+
 static void do_open(vdevice_t* dev, int from_pid, proto_t *in, void* p) {
 	fsinfo_t info;
 	int oflag;
@@ -116,9 +124,6 @@ static void do_write(vdevice_t* dev, int from_pid, proto_t *in, void* p) {
 
 static void do_read_block(vdevice_t* dev, int from_pid, proto_t *in, void* p) {
 	int size, index, shm_id;
-	fsinfo_t info;
-	int fd = proto_read_int(in);
-	proto_read_to(in, &info, sizeof(fsinfo_t));
 	size = proto_read_int(in);
 	index = proto_read_int(in);
 	shm_id = proto_read_int(in);
@@ -136,7 +141,7 @@ static void do_read_block(vdevice_t* dev, int from_pid, proto_t *in, void* p) {
 			proto_add_int(&out, -1);
 		}
 		else {
-			size = dev->read_block(fd, from_pid, &info, buf, size, index, p);
+			size = dev->read_block(from_pid, buf, size, index, p);
 			proto_add_int(&out, size);
 			if(size > 0) {
 				if(shm_id < 0) {
@@ -159,9 +164,6 @@ static void do_read_block(vdevice_t* dev, int from_pid, proto_t *in, void* p) {
 
 static void do_write_block(vdevice_t* dev, int from_pid, proto_t *in, void* p) {
 	int32_t size, index;
-	fsinfo_t info;
-	int fd = proto_read_int(in);
-	memcpy(&info, proto_read(in, NULL), sizeof(fsinfo_t));
 	void* data = proto_read(in, &size);
 	index = proto_read_int(in);
 
@@ -169,7 +171,7 @@ static void do_write_block(vdevice_t* dev, int from_pid, proto_t *in, void* p) {
 	proto_init(&out, NULL, 0);
 
 	if(dev != NULL && dev->write_block != NULL) {
-		size = dev->write_block(fd, from_pid, &info, data, size, index, p);
+		size = dev->write_block(from_pid, data, size, index, p);
 		proto_add_int(&out, size);
 	}
 	else {
@@ -301,6 +303,9 @@ static void handle(vdevice_t* dev, int from_pid, proto_t *in, void* p) {
 	int cmd = proto_read_int(in);
 
 	switch(cmd) {
+	case FS_CMD_PING:
+		do_ping(from_pid, in);
+		return;
 	case FS_CMD_OPEN:
 		do_open(dev, from_pid, in, p);
 		return;
@@ -347,8 +352,10 @@ int device_run(vdevice_t* dev, fsinfo_t* mount_point, mount_info_t* mnt_info, vo
 	if(dev == NULL)
 		return -1;
 
-	if(dev->mount(mount_point, mnt_info, p) != 0)
-		return -1;
+	if(dev->mount != NULL) {
+		if(dev->mount(mount_point, mnt_info, p) != 0)
+			return -1;
+	}
 
 	proto_t pkg;
 	proto_init(&pkg, NULL, 0);
@@ -364,5 +371,8 @@ int device_run(vdevice_t* dev, fsinfo_t* mount_point, mount_info_t* mnt_info, vo
 			sleep(0);
 	}
 
-	return dev->umount(mount_point, p);
+	if(dev->umount != NULL) {
+		return dev->umount(mount_point, p);
+	}
+	return 0;
 }

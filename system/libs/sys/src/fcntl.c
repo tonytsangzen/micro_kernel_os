@@ -5,6 +5,21 @@
 #include <stddef.h>
 #include <string.h>
 
+int dev_ping(int pid) {
+	int res = -1;
+	proto_t in, out;
+	proto_init(&in, NULL, 0);
+	proto_init(&out, NULL, 0);
+
+	proto_add_int(&in, FS_CMD_PING);
+	if(ipc_call(pid, &in, &out) == 0) {
+		res = proto_read_int(&out);
+	}
+	proto_clear(&in);
+	proto_clear(&out);
+	return res;
+}
+
 int open(const char* fname, int oflag) {
 	int res = -1;
 	fsinfo_t info;

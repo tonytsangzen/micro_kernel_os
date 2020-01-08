@@ -19,7 +19,6 @@ int vfs_block(fsinfo_t* info);
 int vfs_get_mount(fsinfo_t* info, mount_t* mount);
 
 int vfs_mount(fsinfo_t* mount_to, fsinfo_t* info, mount_info_t* mnt_info);
-void vfs_mount_wait(const char* fname, int pid);
 int vfs_umount(fsinfo_t* info);
 
 int vfs_create(const char* fname, fsinfo_t* ret, int type);

@@ -69,22 +69,6 @@ int vfs_mount(fsinfo_t* mount_to, fsinfo_t* info, mount_info_t* mnt_info) {
 	return syscall3(SYS_VFS_MOUNT, (int32_t)mount_to, (int32_t)info, (int32_t)mnt_info);
 }
 
-void vfs_mount_wait(const char* fname, int pid) {
-	while(1) {
-		fsinfo_t info;
-		mount_t mnt_info;
-
-		if(vfs_get(fname, &info) != 0)
-			continue;
-		if(vfs_get_mount(&info, &mnt_info) != 0)
-			continue;
-
-		if(mnt_info.pid == pid)
-			break;
-		sleep(0);
-	}
-}
-
 int vfs_umount(fsinfo_t* info) {
 	return syscall1(SYS_VFS_UMOUNT, (int32_t)info);
 }

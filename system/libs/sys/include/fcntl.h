@@ -25,4 +25,6 @@ void close(int fd);
 int  dma(int fd, int* size);
 void flush(int fd);
 
+int dev_ping(int pid);
+
 #endif

@@ -151,6 +151,44 @@ int read(int fd, void* buf, uint32_t size) {
 	return res;
 }
 
+int read_block(int pid, void* buf, uint32_t size, int32_t index) {
+	int32_t shm_id = -1;
+	void* shm = NULL;
+	shm_id = shm_alloc(size, SHM_PUBLIC);
+	if(shm_id < 0)
+		return -1;
+
+	shm = shm_map(shm_id);
+	if(shm == NULL) 
+		return -1;
+
+	proto_t in, out;
+	proto_init(&in, NULL, 0);
+	proto_init(&out, NULL, 0);
+
+	proto_add_int(&in, FS_CMD_READ_BLOCK);
+	proto_add_int(&in, size);
+	proto_add_int(&in, index);
+	proto_add_int(&in, shm_id);
+
+	int res = -1;
+	if(ipc_call(pid, &in, &out) == 0) {
+		int rd = proto_read_int(&out);
+		res = rd;
+		if(rd > 0) {
+			memcpy(buf, shm, rd);
+		}
+		if(res == ERR_RETRY) {
+			errno = EAGAIN;
+			res = -1;
+		}
+	}
+	proto_clear(&in);
+	proto_clear(&out);
+	shm_unmap(shm_id);
+	return res;
+}
+
 static int write_pipe(fsinfo_t* info, const void* buf, uint32_t size, int block) {
 	rawdata_t data;
 	data.data = (void*)buf;
@@ -242,6 +280,29 @@ int write(int fd, const void* buf, uint32_t size) {
 			break;
 		sleep(0);
 	}
+	return res;
+}
+
+int write_block(int pid, const void* buf, uint32_t size, int32_t index) {
+	proto_t in, out;
+	proto_init(&in, NULL, 0);
+	proto_init(&out, NULL, 0);
+
+	proto_add_int(&in, FS_CMD_WRITE_BLOCK);
+	proto_add(&in, buf, size);
+	proto_add_int(&in, index);
+
+	int res = -1;
+	if(ipc_call(pid, &in, &out) == 0) {
+		int r = proto_read_int(&out);
+		res = r;
+		if(res == -2) {
+			errno = EAGAIN;
+			res = -1;
+		}
+	}
+	proto_clear(&in);
+	proto_clear(&out);
 	return res;
 }
 
