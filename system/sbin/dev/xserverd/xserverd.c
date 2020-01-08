@@ -785,7 +785,6 @@ static int xserver_loop_step(void* p) {
 	if(cc[0] == 'x') {
 		if(x->actived == 0) {
 			x_dirty(x);
-			syscall3(SYS_DEV_OP, DEV_MOUSE, DEV_OP_CLEAR_BUFFER, 0);
 		}
 		x->actived = 1;
 	}

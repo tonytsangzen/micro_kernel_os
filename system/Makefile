@@ -129,12 +129,13 @@ all: mkdirs $(LIB_OBJS) apps
 include $(ROOT_DIR)/sbin/init/build.mk
 include $(ROOT_DIR)/sbin/dev/ttyd/build.mk
 include $(ROOT_DIR)/sbin/dev/fbd/build.mk
-include $(ROOT_DIR)/sbin/dev/keybd/build.mk
-include $(ROOT_DIR)/sbin/dev/moused/build.mk
 include $(ROOT_DIR)/sbin/dev/nulld/build.mk
 include $(ROOT_DIR)/sbin/dev/xserverd/build.mk
 include $(ROOT_DIR)/sbin/dev/sdd/build.mk
 include $(ROOT_DIR)/sbin/x/xwm/build.mk
+
+include $(ROOT_DIR)/sbin/dev/arch/versatilepb/keybd/build.mk
+include $(ROOT_DIR)/sbin/dev/arch/versatilepb/moused/build.mk
 
 include $(ROOT_DIR)/bin/shell/build.mk
 include $(ROOT_DIR)/bin/pwd/build.mk

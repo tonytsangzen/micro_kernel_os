@@ -1,7 +1,6 @@
 #include <dev/device.h>
 #include <dev/kdevice.h>
 #include <dev/uart.h>
-#include <dev/mouse.h>
 #include <dev/keyb.h>
 #include <dev/framebuffer.h>
 #include <dev/sd.h>
@@ -68,37 +67,6 @@ int32_t fb_init(uint32_t w, uint32_t h, uint32_t dep) {
 
 void dev_setup(void) {
 	dev_t* dev;
-
-#ifdef VERSATILEPB
-	printf("    %16s ", "keyboard");
-	if(keyb_init() == 0) {
-		dev = &_devs[DEV_KEYB];
-		memset(dev, 0, sizeof(dev_t));
-		dev->type = DEV_TYPE_CHAR;
-		dev->io.ch.inputch = keyb_inputch;
-		//dev->ready_read = char_dev_ready_read;
-		dev->io.ch.read = char_dev_read;
-		dev->op = keyb_dev_op;
-		dev->state = DEV_STATE_INITED;
-		printf("[OK]\n");
-	}
-	else
-		printf("[Failed!]\n");
-
-	printf("    %16s ", "mouse");
-	if(mouse_init() == 0) {
-		dev = &_devs[DEV_MOUSE];
-		memset(dev, 0, sizeof(dev_t));
-		//dev->ready_read = char_dev_ready_read;
-		dev->type = DEV_TYPE_CHAR;
-		dev->io.ch.read = char_dev_read;
-		dev->op = mouse_dev_op;
-		dev->state = DEV_STATE_INITED;
-		printf("[OK]\n");
-	}
-	else
-		printf("[Failed!]\n");
-#endif
 
 	printf("    %16s ", "mmc_sd");
 	dev = &_devs[DEV_SD];

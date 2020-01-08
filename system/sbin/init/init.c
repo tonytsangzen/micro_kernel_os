@@ -161,8 +161,10 @@ static void load_devs(init_t* init) {
 	run_dev(init, "/sbin/dev/nulld", "/dev/null", true);
 	run_dev(init, "/sbin/dev/ttyd", "/dev/tty0", true);
 	run_dev(init, "/sbin/dev/fbd", "/dev/fb0", true);
-	run_dev(init, "/sbin/dev/moused", "/dev/mouse0", true);
-	run_dev(init, "/sbin/dev/keybd", "/dev/keyb0", true);
+	/*
+	run_dev(init, "/sbin/dev/versatilepb_moused", "/dev/mouse0", true);
+	run_dev(init, "/sbin/dev/versatilepb_keybd", "/dev/keyb0", true);
+	*/
 }
 
 static void console_shells(init_t* init) {

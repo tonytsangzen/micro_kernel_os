@@ -1,9 +1,12 @@
-#include <types.h>
-#include <kstring.h>
-#include <mm/mmu.h>
-#include <kernel/proc.h>
-#include <dev/kdevice.h>
-#include <basic_math.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <cmain.h>
+#include <string.h>
+#include <vfs.h>
+#include <vdevice.h>
+#include <sys/mmio.h>
+
 
 #define MOUSE_CR 0x00
 #define MOUSE_STAT 0x04
@@ -31,6 +34,8 @@
 
 #define MOUSE_BASE (_mmio_base+0x7000)
 
+static uint32_t _mmio_base = 0;
+
 static inline int32_t kmi_write(uint8_t data) {
 	int32_t timeout = 1000;
 
@@ -55,6 +60,7 @@ static inline int32_t kmi_read(uint8_t * data) {
 }
 
 int32_t mouse_init(void) {
+	_mmio_base = mmio_map();
 	uint8_t data;
 	uint32_t divisor = 1000;
 	put8(MOUSE_CLKDIV, divisor);
@@ -103,9 +109,14 @@ int32_t mouse_init(void) {
 	return 0;
 }
 
-void mouse_handler(void) {
-	dev_t* dev = get_dev(DEV_MOUSE);
+typedef struct {
+	int8_t btn;
+	int8_t rx;
+	int8_t ry;
+	int8_t rz;
+} mouse_info_t;
 
+int32_t mouse_handler(mouse_info_t *info) {
 	static uint8_t packet[4], index = 0;
 	static uint8_t btn_old = 0;
 	uint8_t btndown, btnup, btn;
@@ -113,7 +124,7 @@ void mouse_handler(void) {
 	int32_t rx, ry, rz;
 
 	status = get8(MOUSE_BASE + MOUSE_IIR);
-	while(status & MOUSE_IIR_RXINTR) {
+	if(status & MOUSE_IIR_RXINTR) {
 		packet[index] = get8(MOUSE_BASE + MOUSE_DATA);
 		index = (index + 1) & 0x3;
 		if(index == 0) {
@@ -139,22 +150,75 @@ void mouse_handler(void) {
 			
 			btndown = (btndown << 1 | btnup);
 
-			charbuf_push(&dev->io.ch.buffer, (char)btndown, 1);
-			charbuf_push(&dev->io.ch.buffer, (char)rx, 1);
-			charbuf_push(&dev->io.ch.buffer, (char)ry, 1);
-			charbuf_push(&dev->io.ch.buffer, (char)rz, 1);
-			proc_wakeup((uint32_t)dev);
+			info->btn = btndown;
+			info->rx = rx;
+			info->ry = ry;
+			info->rz = rz;
+			return 0;
 		}
-		status = get8(MOUSE_BASE + MOUSE_IIR);
 	}
+	return -1;
 }
 
-int32_t mouse_dev_op(dev_t* dev, int32_t opcode, int32_t arg) {
-	(void)dev;
-	(void)arg;
+static int mouse_mount(fsinfo_t* mnt_point, mount_info_t* mnt_info, void* p) {
+	(void)p;
+	fsinfo_t info;
+	memset(&info, 0, sizeof(fsinfo_t));
+	strcpy(info.name, mnt_point->name);
+	info.type = FS_TYPE_DEV;
+	vfs_new_node(&info);
 
-	if(opcode == DEV_OP_CLEAR_BUFFER) {
-		memset(&dev->io.ch.buffer, 0, sizeof(charbuf_t));
+	if(vfs_mount(mnt_point, &info, mnt_info) != 0) {
+		vfs_del(&info);
+		return -1;
 	}
+	memcpy(mnt_point, &info, sizeof(fsinfo_t));
+	return 0;
+}
+
+static int mouse_read(int fd, int from_pid, fsinfo_t* info, void* buf, int size, int offset, void* p) {
+	(void)fd;
+	(void)from_pid;
+	(void)offset;
+	(void)p;
+	(void)info;
+
+	mouse_info_t minfo;
+	if(size < 4 || mouse_handler(&minfo) != 0)
+		return ERR_RETRY;
+
+	uint8_t* d = (uint8_t*)buf;
+	d[0] = minfo.btn;
+	d[1] = minfo.rx;
+	d[2] = minfo.ry;
+	d[3] = minfo.rz;
+	return 4;
+}
+
+static int mouse_umount(fsinfo_t* info, void* p) {
+	(void)p;
+	vfs_umount(info);
+	return 0;
+}
+
+int main(int argc, char** argv) {
+	fsinfo_t mnt_point;
+	const char* mnt_name = argc > 1 ? argv[1]: "/dev/mouse0";
+	vfs_create(mnt_name, &mnt_point, FS_TYPE_DEV);
+
+	mouse_init();
+	vdevice_t dev;
+	memset(&dev, 0, sizeof(vdevice_t));
+	strcpy(dev.name, "mouse");
+	dev.mount = mouse_mount;
+	dev.read = mouse_read;
+	dev.umount = mouse_umount;
+
+	mount_info_t mnt_info;
+	strcpy(mnt_info.dev_name, dev.name);
+	mnt_info.dev_index = 0;
+	mnt_info.access = 0;
+
+	device_run(&dev, &mnt_point, &mnt_info, NULL, 1);
 	return 0;
 }
