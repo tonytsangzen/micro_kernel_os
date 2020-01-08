@@ -146,8 +146,7 @@ int read(int fd, void* buf, uint32_t size) {
 			break;
 		if(errno != EAGAIN)
 			break;
-		if(vfs_block(&info) != 0)
-			sleep(0);
+		sleep(0);
 	}
 	return res;
 }
@@ -241,8 +240,7 @@ int write(int fd, const void* buf, uint32_t size) {
 			break;
 		if(errno != EAGAIN)
 			break;
-		if(vfs_block(&info) != 0)
-			sleep(0);
+		sleep(0);
 	}
 	return res;
 }

@@ -27,9 +27,6 @@ void flush_actled(void) {
 }
 
 void printf(const char *format, ...) {
-	if(get_dev(DEV_UART0)->state == DEV_STATE_OFF)
-		return;
-
 	act_led(1);
 	_delay_msec(10);
 

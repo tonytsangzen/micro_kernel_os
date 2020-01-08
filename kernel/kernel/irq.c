@@ -10,19 +10,6 @@
 #include <string.h>
 #include <kprintf.h>
 
-static void uart_handler(void) {
-	int32_t rd = 0;
-	dev_t* dev = get_dev(DEV_UART0);
-	while(1) {
-		if(dev->io.ch.inputch == NULL || dev->io.ch.inputch(dev, 1) != 0)
-			break;
-		rd++;
-	}
-	if(rd > 0) {
-		proc_wakeup((uint32_t)DEV_UART0);
-	}
-}
-
 static void sd_handler(void) {
 	dev_t* dev = get_dev(DEV_SD);
 	sd_dev_handle(dev);
@@ -37,9 +24,6 @@ void irq_handler(context_t* ctx) {
 
 	uint32_t irqs = gic_get_irqs();
 
-	if((irqs & IRQ_UART0) != 0) {
-		uart_handler();
-	}
 	if((irqs & IRQ_SDC) != 0) {
 		sd_handler();
 	}
@@ -91,7 +75,7 @@ void data_abort_handler(context_t* ctx) {
 void irq_init(void) {
 	irq_arch_init();
 	//gic_set_irqs( IRQ_UART0 | IRQ_TIMER0 | IRQ_KEY | IRQ_MOUSE | IRQ_SDC);
-	gic_set_irqs( IRQ_UART0 | IRQ_TIMER0 | IRQ_SDC);
+	gic_set_irqs(IRQ_TIMER0 | IRQ_SDC);
 	__irq_enable();
 	_kernel_tic = 0;
 	_timer_usec = 0;

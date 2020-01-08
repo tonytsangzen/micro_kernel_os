@@ -10,9 +10,10 @@
 #include <shm.h>
 #include <vfs.h>
 #include <ext2fs.h>
-#include <sd.h>
 #include <vprintf.h>
+#include <sysinfo.h>
 #include <sconf.h>
+#include <sd.h>
 #include <rawdata.h>
 #include <global.h>
 #include <kernel/kevent_type.h>
@@ -85,6 +86,14 @@ static int run_dev(init_t* init, const char* cmd, const char* mnt, bool prompt) 
 	if(prompt)
 		console_out(init, "[ok]\n");
 	return 0;
+}
+	
+static int run_arch_dev(init_t* init, const char* dev, const char* mnt) {
+	sysinfo_t sysinfo;
+	syscall1(SYS_GET_SYSINFO, (int32_t)&sysinfo);
+	char devfn[FS_FULL_NAME_MAX];
+	snprintf(devfn, FS_FULL_NAME_MAX-1, "/sbin/dev/%s/%s", sysinfo.machine, dev);
+	return run_dev(init, devfn, mnt, true);
 }
 
 static void run(init_t* init, const char* cmd) {
@@ -159,12 +168,11 @@ static void tty_shell(init_t* init) {
 	
 static void load_devs(init_t* init) {
 	run_dev(init, "/sbin/dev/nulld", "/dev/null", true);
-	run_dev(init, "/sbin/dev/ttyd", "/dev/tty0", true);
 	run_dev(init, "/sbin/dev/fbd", "/dev/fb0", true);
-	/*
-	run_dev(init, "/sbin/dev/versatilepb_moused", "/dev/mouse0", true);
-	run_dev(init, "/sbin/dev/versatilepb_keybd", "/dev/keyb0", true);
-	*/
+
+	run_arch_dev(init, "ttyd", "/dev/tty0");
+	run_arch_dev(init, "moused", "/dev/mouse0");
+	run_arch_dev(init, "keybd", "/dev/keyb0");
 }
 
 static void console_shells(init_t* init) {

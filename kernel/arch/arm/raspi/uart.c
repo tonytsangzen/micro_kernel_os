@@ -55,36 +55,15 @@ int32_t uart_dev_init(void) {
 	put32(UART_CNTL_REG, 0x03); /** enable TX/RX */
 	return 0;
 }
-/*----------------------------------------------------------------------------*/
+
 #define UART_TXFIFO_EMPTY 0x20
 #define UART_RXFIFO_AVAIL 0x01
-/*----------------------------------------------------------------------------*/
+
 void uart_trans(uint32_t data) {
 	while(!(get32(UART_LSR_REG) & UART_TXFIFO_EMPTY));
 	if(data == '\r')
 		data = '\n';
 	put32(UART_IO_REG, data);
-}
-
-/*----------------------------------------------------------------------------*/
-int32_t uart_ready_to_recv(void) {
-	if((get32(UART_LSR_REG)&UART_RXFIFO_AVAIL) == 0)
-		return -1;
-	return 0;
-}
-
-/*----------------------------------------------------------------------------*/
-int32_t uart_recv(void) {
-	return get32(UART_IO_REG) & 0xFF;
-}
-
-int32_t uart_inputch(dev_t* dev, int32_t loop) {
-  if(dev == NULL || uart_ready_to_recv() != 0)
-    return -1;
-
-  char c = uart_recv();
-  charbuf_push(&dev->io.ch.buffer, c, loop);
-  return 0;
 }
 
 int32_t uart_write(dev_t* dev, const void* data, uint32_t size) {

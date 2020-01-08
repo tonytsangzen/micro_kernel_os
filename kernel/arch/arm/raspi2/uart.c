@@ -88,25 +88,6 @@ static void uart_trans(char c) {
 	put32(_mmio_base+UART0_DR, c);
 }
 
-int32_t uart_ready_to_recv(void) {
-	if(get32(_mmio_base+UART0_FR) & (1 << 4)) 
-		return -1;
-	return 0;
-}
-
-int32_t uart_recv(void) {
-	return get32(_mmio_base+UART0_DR);
-}
-
-int32_t uart_inputch(dev_t* dev, int32_t loop) {
-  if(dev == NULL || uart_ready_to_recv() != 0)
-    return -1;
-
-  char c = uart_recv();
-  charbuf_push(&dev->io.ch.buffer, c, loop);
-  return 0;
-}
-
 int32_t uart_write(dev_t* dev, const void* data, uint32_t size) {
   (void)dev;
   int32_t i;

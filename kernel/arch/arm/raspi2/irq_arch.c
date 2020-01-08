@@ -1,6 +1,5 @@
 #include <dev/gic.h>
 #include <kernel/irq.h>
-#include <dev/uart.h>
 #include <dev/kdevice.h>
 #include <kernel/kernel.h>
 #include <kernel/hw_info.h>
@@ -71,8 +70,6 @@ void gic_set_irqs(uint32_t irqs) {
 		uint32_t vbase = _mmio_base+offset;
 		put32(vbase, 0x00);
 	}
-  if((irqs & IRQ_UART0) != 0)  
-		enable_irq(PIC_INT_UART0);
 	*/
 }
 
@@ -94,11 +91,6 @@ uint32_t gic_get_irqs(void) {
 	}
 	*/
 
-  //if((_pic->irq_basic_pending & PIC_INT_UART0) != 0)
-
-	if(uart_ready_to_recv() == 0) {
-		ret |= IRQ_UART0;
-	}
 	ret |= IRQ_SDC;
 	return ret;
 }

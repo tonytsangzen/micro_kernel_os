@@ -1,7 +1,5 @@
 #include <dev/device.h>
 #include <dev/kdevice.h>
-#include <dev/uart.h>
-#include <dev/keyb.h>
 #include <dev/framebuffer.h>
 #include <dev/sd.h>
 #include <kstring.h>
@@ -9,6 +7,7 @@
 
 static dev_t _devs[DEV_NUM];
 
+/*
 static int32_t char_dev_read(dev_t* dev, void* data, uint32_t size) {
 	if(dev == NULL)
 		return -1;
@@ -28,27 +27,13 @@ static int32_t char_dev_ready_read(dev_t* dev) {
 		return 0;
 	return -1;
 }
+*/
 
 void dev_init(void) {
 	int32_t i;
 	for(i=0; i<DEV_NUM; i++) {
 		memset(&_devs[i], 0, sizeof(dev_t));
 	}
-}
-
-int32_t uart_init(void) {
-	if(uart_dev_init() == 0) {
-		dev_t* dev = &_devs[DEV_UART0];
-		memset(dev, 0, sizeof(dev_t));
-		dev->type = DEV_TYPE_CHAR;
-		dev->ready_read = char_dev_ready_read;
-		dev->io.ch.inputch = uart_inputch;
-		dev->io.ch.read = char_dev_read;
-		dev->io.ch.write = uart_write;
-		dev->state = DEV_STATE_INITED;
-		return 0;
-	}
-	return -1;
 }
 
 int32_t fb_init(uint32_t w, uint32_t h, uint32_t dep) {

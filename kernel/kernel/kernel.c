@@ -108,7 +108,7 @@ void _kernel_entry_c(context_t* ctx) {
 #endif
 	kevent_init();
 	dev_init();
-	uart_init();
+	uart_dev_init();
 	uart_out("\n\n"
 			"------Ewok micro-kernel-------\n"
 			"kernel: mmu inited\n");

@@ -28,10 +28,6 @@ else
 ARCH=arm/versatilepb
 endif
 
-ifeq ($(EPAPER),yes)
-CFLAGS = -DEPAPER
-endif
-
 ARCH_DIR=../kernel/arch
 
 LDFLAGS = -lc -lnosys
@@ -127,7 +123,6 @@ all: mkdirs $(LIB_OBJS) apps
 	@echo "all done."
 
 include $(ROOT_DIR)/sbin/init/build.mk
-include $(ROOT_DIR)/sbin/dev/ttyd/build.mk
 include $(ROOT_DIR)/sbin/dev/fbd/build.mk
 include $(ROOT_DIR)/sbin/dev/nulld/build.mk
 include $(ROOT_DIR)/sbin/dev/xserverd/build.mk
@@ -136,6 +131,11 @@ include $(ROOT_DIR)/sbin/x/xwm/build.mk
 
 include $(ROOT_DIR)/sbin/dev/arch/versatilepb/keybd/build.mk
 include $(ROOT_DIR)/sbin/dev/arch/versatilepb/moused/build.mk
+include $(ROOT_DIR)/sbin/dev/arch/versatilepb/ttyd/build.mk
+
+include $(ROOT_DIR)/sbin/dev/arch/raspi2/ttyd/build.mk
+
+include $(ROOT_DIR)/sbin/dev/arch/raspi/ttyd/build.mk
 
 include $(ROOT_DIR)/bin/shell/build.mk
 include $(ROOT_DIR)/bin/pwd/build.mk
@@ -161,7 +161,9 @@ include $(ROOT_DIR)/bin/x/build.mk
 include $(ROOT_DIR)/bin/mario/build.mk
 
 mkdirs:
-	@mkdir -p ${TARGET_DIR}/$(ROOT_DIR)/sbin/dev
+	@mkdir -p ${TARGET_DIR}/$(ROOT_DIR)/sbin/dev/versatilepb
+	@mkdir -p ${TARGET_DIR}/$(ROOT_DIR)/sbin/dev/raspi
+	@mkdir -p ${TARGET_DIR}/$(ROOT_DIR)/sbin/dev/raspi2
 	@mkdir -p ${TARGET_DIR}/$(ROOT_DIR)/sbin/x
 	@mkdir -p ${TARGET_DIR}/$(ROOT_DIR)/bin
 	@mkdir -p ${TARGET_DIR}/$(ROOT_DIR)/dev
