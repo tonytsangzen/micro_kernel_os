@@ -127,6 +127,7 @@ include $(ROOT_DIR)/sbin/dev/fbd/build.mk
 include $(ROOT_DIR)/sbin/dev/nulld/build.mk
 include $(ROOT_DIR)/sbin/dev/xserverd/build.mk
 include $(ROOT_DIR)/sbin/dev/sdd/build.mk
+include $(ROOT_DIR)/sbin/dev/rootfsd/build.mk
 include $(ROOT_DIR)/sbin/x/xwm/build.mk
 
 include $(ROOT_DIR)/sbin/dev/arch/versatilepb/keybd/build.mk

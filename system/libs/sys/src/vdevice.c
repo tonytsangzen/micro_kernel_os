@@ -114,6 +114,71 @@ static void do_write(vdevice_t* dev, int from_pid, proto_t *in, void* p) {
 	proto_clear(&out);
 }
 
+static void do_read_block(vdevice_t* dev, int from_pid, proto_t *in, void* p) {
+	int size, index, shm_id;
+	fsinfo_t info;
+	int fd = proto_read_int(in);
+	proto_read_to(in, &info, sizeof(fsinfo_t));
+	size = proto_read_int(in);
+	index = proto_read_int(in);
+	shm_id = proto_read_int(in);
+
+	proto_t out;
+	proto_init(&out, NULL, 0);
+
+	if(dev != NULL && dev->read_block != NULL) {
+		void* buf;
+		if(shm_id < 0)
+			buf = malloc(size);
+		else
+			buf = shm_map(shm_id);
+		if(buf == NULL) {
+			proto_add_int(&out, -1);
+		}
+		else {
+			size = dev->read_block(fd, from_pid, &info, buf, size, index, p);
+			proto_add_int(&out, size);
+			if(size > 0) {
+				if(shm_id < 0) {
+					proto_add(&out, buf, size);
+				}
+			}
+
+			if(shm_id >= 0)
+				shm_unmap(shm_id);
+			else
+				free(buf);
+		}
+	}
+	else {
+		proto_add_int(&out, -1);
+	}
+	ipc_send(from_pid, &out, in->id);
+	proto_clear(&out);
+}
+
+static void do_write_block(vdevice_t* dev, int from_pid, proto_t *in, void* p) {
+	int32_t size, index;
+	fsinfo_t info;
+	int fd = proto_read_int(in);
+	memcpy(&info, proto_read(in, NULL), sizeof(fsinfo_t));
+	void* data = proto_read(in, &size);
+	index = proto_read_int(in);
+
+	proto_t out;
+	proto_init(&out, NULL, 0);
+
+	if(dev != NULL && dev->write_block != NULL) {
+		size = dev->write_block(fd, from_pid, &info, data, size, index, p);
+		proto_add_int(&out, size);
+	}
+	else {
+		proto_add_int(&out, -1);
+	}
+	ipc_send(from_pid, &out, in->id);
+	proto_clear(&out);
+}
+
 static void do_dma(vdevice_t* dev, int from_pid, proto_t *in, void* p) {
 	fsinfo_t info;
 	int fd = proto_read_int(in);
@@ -218,7 +283,7 @@ static void do_clear_buffer(vdevice_t* dev, int from_pid, proto_t *in, void* p) 
 	proto_read_to(in, &info, sizeof(fsinfo_t));
 
 	int res = -1;
-	if(dev != NULL && dev->block != NULL) {
+	if(dev != NULL && dev->clear_buffer != NULL) {
 		res = dev->clear_buffer(&info, p);
 	}
 
@@ -250,6 +315,12 @@ static void handle(vdevice_t* dev, int from_pid, proto_t *in, void* p) {
 		return;
 	case FS_CMD_WRITE:
 		do_write(dev, from_pid, in, p);
+		return;
+	case FS_CMD_READ_BLOCK:
+		do_read_block(dev, from_pid, in, p);
+		return;
+	case FS_CMD_WRITE_BLOCK:
+		do_write_block(dev, from_pid, in, p);
 		return;
 	case FS_CMD_DMA:
 		do_dma(dev, from_pid, in, p);

@@ -201,7 +201,7 @@ int main(int argc, char** argv) {
 
 	console_out(&init, "\n[init process started]\n");
 	//mount root fs
-	run_init_root(&init, "/sbin/dev/sdd");
+	run_init_root(&init, "/sbin/dev/rootfsd");
 
 	load_devs(&init);
 	tty_shell(&init);
