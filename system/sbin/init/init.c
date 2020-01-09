@@ -201,6 +201,7 @@ static void tty_shell(init_t* init) {
 static void load_devs(init_t* init) {
 	run_dev(init, "/sbin/dev/fbd", "/dev/fb0", true);
 	run_arch_dev(init, "ttyd", "/dev/tty0", true); 
+	run_arch_dev(init, "actledd", "/dev/actled", true);
 	run_dev(init, "/sbin/dev/nulld", "/dev/null", true);
 
 	init->do_console = false;
