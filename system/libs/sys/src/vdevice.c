@@ -127,7 +127,6 @@ static void do_read_block(vdevice_t* dev, int from_pid, proto_t *in, void* p) {
 	size = proto_read_int(in);
 	index = proto_read_int(in);
 	shm_id = proto_read_int(in);
-
 	proto_t out;
 	proto_init(&out, NULL, 0);
 

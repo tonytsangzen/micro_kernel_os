@@ -105,7 +105,7 @@ static partition_t _partitions[PARTITION_MAX];
 
 int32_t read_partition(void) {
 	uint8_t sector[512];
-	if(sd_read_sector(0, sector) != 0)
+	if(sd_read_sector(0, sector) != SECTOR_SIZE)
 		return -1;
 	//check magic 
 	if(sector[510] != 0x55 || sector[511] != 0xAA) 
@@ -138,6 +138,7 @@ int32_t sd_quit(void) {
 int32_t sd_init(void) {
 	_sector_buf = NULL;
 	_sector_buf_num = 0;
+	memset(&_partition, 0, sizeof(partition_t));
 
 	if(read_partition() != 0 || partition_get(1, &_partition) != 0) {
 		memset(&_partition, 0, sizeof(partition_t));

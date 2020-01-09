@@ -32,7 +32,6 @@ static int32_t write_sector(int32_t sector, const void* buf) {
 
 static int sd_read_block(int from_pid, void* buf, int size, int index, void* p) {
 	(void)from_pid;
-	(void)buf;
 	(void)p;
 
 	if(size < SECTOR_SIZE)
@@ -45,7 +44,6 @@ static int sd_read_block(int from_pid, void* buf, int size, int index, void* p) 
 
 static int sd_write_block(int from_pid, const void* buf, int size, int index, void* p) {
 	(void)from_pid;
-	(void)buf;
 	(void)p;
 
 	if(size < SECTOR_SIZE)
