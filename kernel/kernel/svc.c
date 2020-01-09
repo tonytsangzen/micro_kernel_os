@@ -88,13 +88,6 @@ static void sys_dev_block_write_done(context_t* ctx, uint32_t type) {
 	ctx->gpr[0] = -1;
 }
 
-static int32_t sys_dev_op(uint32_t type, int32_t opcode, int32_t arg) {
-	dev_t* dev = get_dev(type);
-	if(dev == NULL)
-		return -1;
-	return dev_op(dev, opcode, arg);
-}
-
 static int32_t sys_dev_ch_read(uint32_t type, void* data, uint32_t sz) {
 	dev_t* dev = get_dev(type);
 	if(dev == NULL)
@@ -654,9 +647,6 @@ void svc_handler(int32_t code, int32_t arg0, int32_t arg1, int32_t arg2, context
 		return;
 	case SYS_DEV_BLOCK_WRITE_DONE:
 		sys_dev_block_write_done(ctx, arg0);
-		return;
-	case SYS_DEV_OP:
-		ctx->gpr[0] = sys_dev_op(arg0, arg1, arg2);
 		return;
 	case SYS_EXIT:
 		sys_exit(ctx, arg0);
