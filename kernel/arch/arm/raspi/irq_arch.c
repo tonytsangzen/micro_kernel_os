@@ -68,9 +68,10 @@ uint32_t gic_get_irqs(void) {
 		ret |= IRQ_TIMER0;
 	}
 
-	if(uart_ready_to_recv() == 0) {
+	/*if(uart_ready_to_recv() == 0) {
 		ret |= IRQ_UART0;
 	}
+	*/
 	ret |= IRQ_SDC;
 	return ret;
 }
