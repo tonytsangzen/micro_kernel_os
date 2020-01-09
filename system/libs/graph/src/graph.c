@@ -473,3 +473,16 @@ int32_t get_text_size(const char* s, font_t* font, gsize_t* size) {
 	size->h = font->h;
 	return 0;
 }
+
+inline void dup16(uint16_t* dst, uint32_t* src, uint32_t w, uint32_t h) {
+	register int32_t i, size;
+	size = w * h;
+	for(i=0; i < size; i++) {
+		register uint32_t s = src[i];
+		register uint8_t b = (s >> 16) & 0xff;
+		register uint8_t g = (s >> 8)  & 0xff;
+		register uint8_t r = s & 0xff;
+		dst[i] = ((r >> 3) <<11) | ((g >> 3) << 6) | (b >> 3);
+	}
+}
+

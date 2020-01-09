@@ -8,6 +8,7 @@
 #include <dev/fbinfo.h>
 #include <syscall.h>
 #include <dev/device.h>
+#include <graph/graph.h>
 #include <shm.h>
 
 typedef struct {
@@ -16,13 +17,14 @@ typedef struct {
 	int32_t shm_id;
 } fb_dma_t;
 
+static fbinfo_t _fbinfo;
+
 static int fb_mount(fsinfo_t* mnt_point, mount_info_t* mnt_info, void* p) {
 	(void)p;
 	fsinfo_t info;
 	memset(&info, 0, sizeof(fsinfo_t));
 	strcpy(info.name, mnt_point->name);
 	info.type = FS_TYPE_DEV;
-	info.data = DEV_FRAMEBUFFER;
 	vfs_new_node(&info);
 
 	if(vfs_mount(mnt_point, &info, mnt_info) != 0) {
@@ -38,7 +40,16 @@ static int fb_flush(int fd, int from_pid, fsinfo_t* info, void* p) {
 	(void)from_pid;
 	(void)info;
 	fb_dma_t* dma = (fb_dma_t*)p;
-	return syscall3(SYS_DEV_CHAR_WRITE, (int32_t)info->data, (int32_t)dma->data, dma->size);
+
+	uint32_t size = dma->size;
+	uint32_t sz = (_fbinfo.depth/8) * _fbinfo.width * _fbinfo.height;
+	if(size > sz)
+		size = sz;
+
+	if(_fbinfo.depth == 32) 
+		memcpy((void*)_fbinfo.pointer, dma->data, size);
+	else if(_fbinfo.depth == 16) 
+		dup16((uint16_t*)_fbinfo.pointer, (uint32_t*)dma->data, _fbinfo.width, _fbinfo.height);
 	return 0;
 }
 
@@ -65,9 +76,7 @@ static int fb_fcntl(int fd, int from_pid, fsinfo_t* info, int cmd, proto_t* in, 
 	(void)p;
 
 	if(cmd == CNTL_INFO) {
-		fbinfo_t fbinfo;
-		syscall3(SYS_DEV_OP, DEV_FRAMEBUFFER, DEV_OP_INFO, (int32_t)&fbinfo);
-		proto_add(out, &fbinfo, sizeof(fbinfo_t));	
+		proto_add(out, &_fbinfo, sizeof(fbinfo_t));	
 	}
 	return 0;
 }
@@ -77,9 +86,8 @@ int main(int argc, char** argv) {
 	const char* mnt_name = argc > 1 ? argv[1]: "/dev/fb0";
 	vfs_create(mnt_name, &mnt_point, FS_TYPE_DEV);
 
-	fbinfo_t fbinfo;
-	syscall3(SYS_DEV_OP, DEV_FRAMEBUFFER, DEV_OP_INFO, (int32_t)&fbinfo);
-	uint32_t sz = fbinfo.width*fbinfo.height*4;
+	syscall1(SYS_FRAMEBUFFER_MAP, (int32_t)&_fbinfo);
+	uint32_t sz = _fbinfo.width * _fbinfo.height * 4;
 
 	fb_dma_t dma;
 	dma.shm_id = shm_alloc(sz, 1);

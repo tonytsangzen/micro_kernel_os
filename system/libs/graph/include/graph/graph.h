@@ -65,4 +65,6 @@ int32_t check_in_rect(int32_t x, int32_t y, grect_t* rect);
 
 int32_t get_text_size(const char* s, font_t* font, gsize_t* size);
 
+void dup16(uint16_t* dst, uint32_t* src, uint32_t w, uint32_t h);
+
 #endif
