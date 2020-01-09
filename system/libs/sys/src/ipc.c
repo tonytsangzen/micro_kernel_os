@@ -8,7 +8,9 @@ static int ipc_send_raw(int pid, void* data, uint32_t size, int32_t id) {
 	rawdata_t rawdata;
 	rawdata.data = data;
 	rawdata.size = size;
-	return syscall3(SYS_SEND_MSG, (int32_t)pid, (int32_t)&rawdata, id);
+	int res = syscall3(SYS_SEND_MSG, (int32_t)pid, (int32_t)&rawdata, id);
+	sleep(0);
+	return res;
 }
 
 static int ipc_get_raw(int* from_pid,  rawdata_t* data, int32_t id, uint8_t block) {

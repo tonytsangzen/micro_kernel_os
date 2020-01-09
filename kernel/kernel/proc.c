@@ -74,7 +74,7 @@ static void proc_init_space(proc_t* proc) {
 }
 
 void proc_switch(context_t* ctx, proc_t* to){
-	if(to == NULL)
+	if(to == NULL || to == _current_proc)
 		return;
 
 	if(_current_proc != NULL && _current_proc->state != UNUSED) {
@@ -253,6 +253,9 @@ static void proc_unready(context_t* ctx, proc_t* proc) {
 
 	if(_current_proc == proc) {
 		schedule(ctx);
+	}
+	else {
+		memcpy(&proc->ctx, ctx, sizeof(context_t));
 	}
 }
 

@@ -10,8 +10,9 @@ int main(int argc, char** argv) {
 	critical_enter();
 	kprintf("enter\n");
 	sleep(1);
-	critical_quit();
 	kprintf("quit\n");
+	critical_quit();
+	//sleep(1);
   return 0;
 }
 

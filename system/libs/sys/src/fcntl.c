@@ -120,7 +120,7 @@ void flush(int fd) {
 	}
 }
 
-int cntl_raw(int fd, int cmd, proto_t* arg_in, proto_t* arg_out) {
+int fcntl_raw(int fd, int cmd, proto_t* arg_in, proto_t* arg_out) {
 	fsinfo_t info;
 	if(vfs_get_by_fd(fd, &info) != 0)
 		return -1;

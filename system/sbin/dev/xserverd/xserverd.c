@@ -487,7 +487,7 @@ static int x_workspace(x_t* x, proto_t* in, proto_t* out) {
 	return 0;
 }
 
-static int xserver_cntl(int fd, int from_pid, fsinfo_t* info, int cmd, proto_t* in, proto_t* out, void* p) {
+static int xserver_fcntl(int fd, int from_pid, fsinfo_t* info, int cmd, proto_t* in, proto_t* out, void* p) {
 	(void)info;
 	x_t* x = (x_t*)p;
 
@@ -590,7 +590,7 @@ static int x_init(x_t* x) {
 	proto_t out;
 	proto_init(&out, NULL, 0);
 
-	if(cntl_raw(fd, CNTL_INFO, NULL, &out) != 0) {
+	if(fcntl_raw(fd, CNTL_INFO, NULL, &out) != 0) {
 		shm_unmap(id);
 		close(x->keyb_fd);
 		close(x->mouse_fd);
@@ -824,7 +824,7 @@ int main(int argc, char** argv) {
 	memset(&dev, 0, sizeof(vdevice_t));
 	strcpy(dev.name, "xserver");
 	dev.mount = xserver_mount;
-	dev.cntl = xserver_cntl;
+	dev.fcntl = xserver_fcntl;
 	//dev.close = xserver_close;
 	dev.closed = xserver_closed;
 	dev.open = xserver_open;

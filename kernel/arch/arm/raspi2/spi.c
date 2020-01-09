@@ -15,7 +15,6 @@
 #define SPI2_OFFSET 0x002150C0
 
 #define SPI_BASE (_mmio_base | SPI0_OFFSET)
-#define SPI_ENABLES    (_mmio_base | 0x00215004)
 
 #define SPI_CS_REG   (SPI_BASE+0x00)
 #define SPI_FIFO_REG (SPI_BASE+0x04)

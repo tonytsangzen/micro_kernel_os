@@ -36,7 +36,7 @@ void irq_handler(context_t* ctx) {
 				uint64_t usec_gap = usec - _timer_usec;
 				_timer_usec = usec;
 				_timer_tic += usec_gap;
-				if(_timer_tic >= 1000000) {
+				if(_timer_tic >= 1000000) { //1 sec
 					_kernel_tic++;
 					_timer_tic = 0;
 				}
@@ -46,7 +46,6 @@ void irq_handler(context_t* ctx) {
 		timer_clear_interrupt(0);
 
 		if(_current_proc != NULL && _current_proc->critical_counter > 0) {
-			printf("critical!! keep %d\n", _current_proc->critical_counter);
 			_current_proc->critical_counter--;
 		}
 		else

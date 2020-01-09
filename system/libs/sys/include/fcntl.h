@@ -18,7 +18,7 @@ enum {
 	CNTL_INFO
 }; //cntl command
 
-int  cntl_raw(int fd, int cmd, proto_t* in, proto_t* out);
+int  fcntl_raw(int fd, int cmd, proto_t* in, proto_t* out);
 
 int  open(const char* name, int oflag);
 void close(int fd);

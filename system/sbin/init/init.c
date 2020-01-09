@@ -146,33 +146,6 @@ static void init_stdio(void) {
 	dup2(fd, 1);
 }
 
-static void kevent_handle(init_t* init, int32_t type, rawdata_t* data) {
-	(void)data;
-	if(type == KEV_CONSOLE_SWITCH) {
-		char id[2];
-		const char* s = get_global("current_console");
-		if(s[0] == 'x') {
-			set_global("current_console", "0");
-			init->cid = 0;
-		}
-		else {
-			init->cid++;
-			if(init->cid >= init->console_num) {
-				if(init->start_x)
-					set_global("current_console", "x");
-				else
-					set_global("current_console", "0");
-				init->cid = 0;
-			}
-			else {
-				id[1] = 0;
-				id[0] = '0' + init->cid;
-				set_global("current_console", id);
-			}
-		}
-	}
-}
-
 static int32_t read_conf(init_t* init, const char* fname) {
 	init->console_num = 2;
 	init->start_x = false;
@@ -201,6 +174,7 @@ static void tty_shell(init_t* init) {
 static void load_devs(init_t* init) {
 	run_dev(init, "/sbin/dev/fbd", "/dev/fb0", true);
 	run_arch_dev(init, "ttyd", "/dev/tty0", true); 
+	run_arch_dev(init, "gpiod", "/dev/gpio", true);
 	run_arch_dev(init, "actledd", "/dev/actled", true);
 	run_dev(init, "/sbin/dev/nulld", "/dev/null", true);
 
@@ -221,6 +195,38 @@ static void console_shells(init_t* init) {
 		snprintf(cmd, 64, "/bin/console %d", i);
 		run(init, cmd);
 		i++;
+	}
+}
+
+static void kevent_handle(init_t* init) {
+	int32_t type;
+	rawdata_t data;
+	if(syscall2(SYS_GET_KEVENT, (int32_t)&type, (int32_t)&data) != 0) {
+		return;
+	}
+
+	if(type == KEV_CONSOLE_SWITCH) {
+		char id[2];
+		const char* s = get_global("current_console");
+		if(s[0] == 'x') {
+			set_global("current_console", "0");
+			init->cid = 0;
+		}
+		else {
+			init->cid++;
+			if(init->cid >= init->console_num) {
+				if(init->start_x)
+					set_global("current_console", "x");
+				else
+					set_global("current_console", "0");
+				init->cid = 0;
+			}
+			else {
+				id[1] = 0;
+				id[0] = '0' + init->cid;
+				set_global("current_console", id);
+			}
+		}
 	}
 }
 
@@ -256,12 +262,7 @@ int main(int argc, char** argv) {
 	}
 
 	while(1) {
-		int32_t type;
-		rawdata_t data;
-		if(syscall2(SYS_GET_KEVENT, (int32_t)&type, (int32_t)&data) != 0) {
-			continue;
-		}
-		kevent_handle(&init, type, &data);
+		kevent_handle(&init);
 	}
 	return 0;
 }

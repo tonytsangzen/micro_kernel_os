@@ -1,7 +1,7 @@
 #ifndef GPIO_ARCH_H
 #define GPIO_ARCH_H
 
-#include <mm/mmu.h>
+#include <types.h>
 
 #define GPIO_FSEL0         ((volatile uint32_t*)(_mmio_base+0x00200000))
 #define GPIO_FSEL1         ((volatile uint32_t*)(_mmio_base+0x00200004))
@@ -39,5 +39,15 @@
 #define GPIO_PULL_DOWN 0x01
 #define GPIO_PULL_UP   0x02
 #define GPIO_PULL_MASK 0x03
+
+void gpio_init(void);
+
+void gpio_config(int32_t gpio_num, int32_t gpio_sel);
+
+void gpio_pull(int32_t gpio_num, int32_t pull_dir);
+
+void gpio_write(int32_t gpio_num, int32_t value);
+
+uint32_t gpio_read(int32_t gpio_num);
 
 #endif

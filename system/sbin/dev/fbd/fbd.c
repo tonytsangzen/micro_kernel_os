@@ -57,7 +57,7 @@ static int fb_umount(fsinfo_t* info, void* p) {
 	return 0;
 }
 
-static int fb_cntl(int fd, int from_pid, fsinfo_t* info, int cmd, proto_t* in, proto_t* out, void* p) {
+static int fb_fcntl(int fd, int from_pid, fsinfo_t* info, int cmd, proto_t* in, proto_t* out, void* p) {
 	(void)fd;
 	(void)from_pid;
 	(void)info;
@@ -96,7 +96,7 @@ int main(int argc, char** argv) {
 	dev.mount = fb_mount;
 	dev.dma = fb_dma;
 	dev.flush = fb_flush;
-	dev.cntl = fb_cntl;
+	dev.fcntl = fb_fcntl;
 	dev.umount = fb_umount;
 
 	mount_info_t mnt_info;

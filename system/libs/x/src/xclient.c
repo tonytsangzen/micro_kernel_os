@@ -7,7 +7,7 @@
 #include <string.h>
 
 int x_update(x_t* x) {
-	int ret = cntl_raw(x->fd, X_CNTL_UPDATE, NULL, NULL);
+	int ret = fcntl_raw(x->fd, X_CNTL_UPDATE, NULL, NULL);
 	return ret;
 }
 
@@ -15,7 +15,7 @@ int x_update_info(x_t* x, xinfo_t* info) {
 	proto_t in;
 	proto_init(&in, NULL, 0);
 	proto_add(&in, info, sizeof(xinfo_t));
-	int ret = cntl_raw(x->fd, X_CNTL_UPDATE_INFO, &in, NULL);
+	int ret = fcntl_raw(x->fd, X_CNTL_UPDATE_INFO, &in, NULL);
 	proto_clear(&in);
 	return ret;
 }
@@ -27,7 +27,7 @@ static int  x_get_workspace(int xfd, int style, grect_t* frame, grect_t* workspa
 
 	proto_add_int(&in, style);
 	proto_add(&in, frame, sizeof(grect_t));
-	int ret = cntl_raw(xfd, X_CNTL_WORKSPACE, &in, &out);
+	int ret = fcntl_raw(xfd, X_CNTL_WORKSPACE, &in, &out);
 	proto_clear(&in);
 	if(ret == 0) 
 		proto_read_to(&out, workspace, sizeof(grect_t));
@@ -71,7 +71,7 @@ int x_get_info(x_t* x, xinfo_t* info) {
 	
 	proto_t out;
 	proto_init(&out, NULL, 0);
-	if(cntl_raw(x->fd, X_CNTL_GET_INFO, NULL, &out) != 0)
+	if(fcntl_raw(x->fd, X_CNTL_GET_INFO, NULL, &out) != 0)
 		return -1;
 	proto_read_to(&out, info, sizeof(xinfo_t));
 	proto_clear(&out);
@@ -157,7 +157,7 @@ int x_get_event(x_t* x, xevent_t* ev) {
 	proto_init(&out, NULL, 0);
 
 	int res = -1;
-	if(cntl_raw(x->fd, X_CNTL_GET_EVT, NULL, &out) == 0) {
+	if(fcntl_raw(x->fd, X_CNTL_GET_EVT, NULL, &out) == 0) {
 		proto_read_to(&out, ev, sizeof(xevent_t));
 		if(ev->type == XEVT_WIN) 
 			res = win_event_handle(x, ev);
@@ -173,7 +173,7 @@ int x_is_top(x_t* x) {
 	proto_init(&out, NULL, 0);
 
 	int res = -1;
-	if(cntl_raw(x->fd, X_CNTL_IS_TOP, NULL, &out) == 0) {
+	if(fcntl_raw(x->fd, X_CNTL_IS_TOP, NULL, &out) == 0) {
 		res = proto_read_int(&out);
 	}
 	proto_clear(&out);
@@ -187,7 +187,7 @@ int x_screen_info(xscreen_t* scr) {
 
 	proto_t out;
 	proto_init(&out, NULL, 0);
-	int ret = cntl_raw(fd, X_CNTL_SCR_INFO, NULL, &out);
+	int ret = fcntl_raw(fd, X_CNTL_SCR_INFO, NULL, &out);
 	close(fd);
 
 	if(ret == 0)

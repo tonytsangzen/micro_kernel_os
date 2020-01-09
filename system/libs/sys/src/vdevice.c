@@ -199,7 +199,7 @@ static void do_dma(vdevice_t* dev, int from_pid, proto_t *in, void* p) {
 	proto_clear(&out);
 }
 
-static void do_cntl(vdevice_t* dev, int from_pid, proto_t *in, void* p) {
+static void do_fcntl(vdevice_t* dev, int from_pid, proto_t *in, void* p) {
 	fsinfo_t info;
 	int fd = proto_read_int(in);
 	memcpy(&info, proto_read(in, NULL), sizeof(fsinfo_t));
@@ -214,8 +214,8 @@ static void do_cntl(vdevice_t* dev, int from_pid, proto_t *in, void* p) {
 	proto_init(&arg_in, arg_data, arg_size);
 
 	int res = -1;
-	if(dev != NULL && dev->cntl != NULL) {
-		res = dev->cntl(fd, from_pid, &info, cmd, &arg_in, &arg_out, p);
+	if(dev != NULL && dev->fcntl != NULL) {
+		res = dev->fcntl(fd, from_pid, &info, cmd, &arg_in, &arg_out, p);
 	}
 	proto_clear(&arg_in);
 
@@ -333,7 +333,7 @@ static void handle(vdevice_t* dev, int from_pid, proto_t *in, void* p) {
 		do_flush(dev, from_pid, in, p);
 		return;
 	case FS_CMD_CNTL:
-		do_cntl(dev, from_pid, in, p);
+		do_fcntl(dev, from_pid, in, p);
 		return;
 	case FS_CMD_CREATE:
 		do_create(dev, from_pid, in, p);

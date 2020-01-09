@@ -102,7 +102,6 @@ LIB_OBJS = $(LIB_SYS_DIR)/syscall.o \
 	$(LIB_SYS_DIR)/basic_math.o \
 	$(LIB_SYS_DIR)/shm.o \
 	$(LIB_SYS_DIR)/sd.o \
-	$(LIB_SYS_DIR)/gpio.o \
 	$(LIB_SYS_DIR)/global.o \
 	$(LIB_SYS_DIR)/proclock.o \
 	$(LIB_SYS_DIR)/sys/wait.o \
@@ -134,14 +133,18 @@ include $(ROOT_DIR)/sbin/dev/arch/versatilepb/keybd/build.mk
 include $(ROOT_DIR)/sbin/dev/arch/versatilepb/moused/build.mk
 include $(ROOT_DIR)/sbin/dev/arch/versatilepb/ttyd/build.mk
 include $(ROOT_DIR)/sbin/dev/arch/versatilepb/sdd/build.mk
+include $(ROOT_DIR)/sbin/dev/arch/versatilepb/gpiod/build.mk
+include $(ROOT_DIR)/sbin/dev/arch/versatilepb/actledd/build.mk
 
 include $(ROOT_DIR)/sbin/dev/arch/raspi2/ttyd/build.mk
 include $(ROOT_DIR)/sbin/dev/arch/raspi2/sdd/build.mk
 include $(ROOT_DIR)/sbin/dev/arch/raspi2/actledd/build.mk
+include $(ROOT_DIR)/sbin/dev/arch/raspi2/gpiod/build.mk
 
 include $(ROOT_DIR)/sbin/dev/arch/raspi/ttyd/build.mk
 include $(ROOT_DIR)/sbin/dev/arch/raspi/sdd/build.mk
 include $(ROOT_DIR)/sbin/dev/arch/raspi/actledd/build.mk
+include $(ROOT_DIR)/sbin/dev/arch/raspi/gpiod/build.mk
 
 include $(ROOT_DIR)/bin/shell/build.mk
 include $(ROOT_DIR)/bin/pwd/build.mk

@@ -17,10 +17,6 @@ else
 ARCH=arm/versatilepb
 endif
 
-ifeq ($(EPAPER),yes)
-CFLAGS = -DEPAPER
-endif
-
 ARCH_DIR=arch
 include ${ARCH_DIR}/${ARCH}/config.mk
 
@@ -61,14 +57,11 @@ ARCH_OBJS = \
 	${ARCH_DIR}/arm/common/memcpy.o \
 	${ARCH_DIR}/${ARCH}/hw_info.o \
 	${ARCH_DIR}/${ARCH}/uart.o \
-	${ARCH_DIR}/${ARCH}/gpio_arch.o \
 	${ARCH_DIR}/${ARCH}/irq_arch.o \
 	${ARCH_DIR}/${ARCH}/framebuffer.o \
 	${ARCH_DIR}/${ARCH}/actled.o \
 	${ARCH_DIR}/${ARCH}/sd.o \
-	${ARCH_DIR}/${ARCH}/spi.o \
 	${ARCH_DIR}/${ARCH}/timer.o \
-	${ARCH_DIR}/${ARCH}/i2c.o \
 	${ARCH_DIR}/${ARCH}/mailbox.o 
 
 LIB_DIR = lib
@@ -87,16 +80,9 @@ LIB_OBJS = \
 	${LIB_DIR}/ext2read.o \
 	${LIB_DIR}/kprintf.o
 
-ifeq ($(MACH),raspi)
-EXTRA_DIR = arch/extra
-EXTRA_OBJS = \
-	${EXTRA_DIR}/epaper/epaper.o
-endif
-
 KERNEL_DIR = kernel
 OBJS = ${ARCH_OBJS} \
 	${LIB_OBJS} \
-	${EXTRA_OBJS} \
 	${KERNEL_DIR}/mm/startup.o \
 	${KERNEL_DIR}/mm/kalloc.o \
 	${KERNEL_DIR}/mm/mmu.o \

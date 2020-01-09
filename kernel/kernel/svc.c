@@ -15,7 +15,6 @@
 #include <kprintf.h>
 #include <buffer.h>
 #include <dev/kdevice.h>
-#include <dev/gpio.h>
 #include <rawdata.h>
 
 static void sys_exit(context_t* ctx, int32_t res) {
@@ -358,22 +357,15 @@ static void sys_load_elf(context_t* ctx, const char* cmd, void* elf, uint32_t el
 	memcpy(ctx, &_current_proc->ctx, sizeof(context_t));
 }
 
-static void sys_block_on(context_t* ctx, int32_t event) {
-	proc_t* proc = _current_proc;
-	proc_block_on(ctx, (uint32_t)event);
-	proc->ctx.gpr[0] = 0;
-}
-
 static void sys_get_msg(context_t* ctx, int32_t *pid, rawdata_t* data, int32_t id) {
 	int32_t res = proc_get_msg(pid, data, id);
 	if(res >= 0) {
 		ctx->gpr[0] = res;
 		return;
 	}
-
+	ctx->gpr[0] = -1;
 	proc_t* proc = _current_proc;
 	proc_block_on(ctx, (uint32_t)&proc->pid);
-	proc->ctx.gpr[0] = -1;
 }
 
 static void sys_get_kevent(context_t* ctx, int32_t *pid, rawdata_t* data) {
@@ -382,10 +374,8 @@ static void sys_get_kevent(context_t* ctx, int32_t *pid, rawdata_t* data) {
 		ctx->gpr[0] = res;
 		return;
 	}
-
-	proc_t* proc = _current_proc;
+	ctx->gpr[0] = -1;
 	proc_block_on(ctx, (uint32_t)kevent_pop);
-	proc->ctx.gpr[0] = -1;
 }
 
 static int32_t sys_proc_set_cwd(const char* cwd) {
@@ -471,10 +461,8 @@ static void sys_pipe_write(context_t* ctx, fsinfo_t* info, const rawdata_t* data
 		ctx->gpr[0] = 0; //retry;
 		return;
 	}
-
-	proc_t* proc = _current_proc;
+	ctx->gpr[0] = 0; //retry;
 	proc_block_on(ctx, (uint32_t)buffer);
-	proc->ctx.gpr[0] = 0;
 }
 
 static void sys_pipe_read(context_t *ctx, fsinfo_t* info, rawdata_t* data, int32_t block) {
@@ -506,10 +494,8 @@ static void sys_pipe_read(context_t *ctx, fsinfo_t* info, rawdata_t* data, int32
 		ctx->gpr[0] = 0; //retry;
 		return;
 	}
-
-	proc_t* proc = _current_proc;
+	ctx->gpr[0] = 0; //retry;
 	proc_block_on(ctx, (uint32_t)buffer);
-	proc->ctx.gpr[0] = 0;
 }
 
 static int32_t sys_get_env(const char* name, char* value, int32_t size) {
@@ -602,10 +588,8 @@ static void sys_lock(context_t* ctx, int32_t arg) {
 		ctx->gpr[0] = 0;
 		return;
 	}
-	
-	proc_t* proc = _current_proc;
+	ctx->gpr[0] = -1;
 	proc_block_on(ctx, (uint32_t)lock);
-	proc->ctx.gpr[0] = -1;
 }
 
 static void sys_unlock(int32_t arg) {
@@ -687,9 +671,6 @@ void svc_handler(int32_t code, int32_t arg0, int32_t arg1, int32_t arg2, context
 		return;
 	case SYS_FORK:
 		ctx->gpr[0] = sys_fork(ctx);
-		return;
-	case SYS_BLOCK_ON:
-		sys_block_on(ctx, arg0);
 		return;
 	case SYS_DETACH:
 		sys_detach();
@@ -840,18 +821,6 @@ void svc_handler(int32_t code, int32_t arg0, int32_t arg1, int32_t arg2, context
 		return;
 	case SYS_KPRINT:
 		sys_kprint((const char*)arg0, arg1);
-		return;
-	case SYS_GPIO_CONFIG:
-		gpio_config(arg0, arg1);
-		return;
-	case SYS_GPIO_PULL:
-		gpio_pull(arg0, arg1);
-		return;
-	case SYS_GPIO_WRITE:
-		gpio_write(arg0, arg1);
-		return;
-	case SYS_GPIO_READ:
-		ctx->gpr[0] = gpio_read(arg0);
 		return;
 	case SYS_MMIO_MAP:
 		ctx->gpr[0] = sys_mmio_map();

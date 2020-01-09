@@ -70,7 +70,7 @@ static void init_console(fb_console_t* console) {
 	proto_t out;
 	proto_init(&out, NULL, 0);
 
-	if(cntl_raw(fb_fd, CNTL_INFO, NULL, &out) != 0) {
+	if(fcntl_raw(fb_fd, CNTL_INFO, NULL, &out) != 0) {
 		shm_unmap(id);
 		close(fb_fd);
 		return;

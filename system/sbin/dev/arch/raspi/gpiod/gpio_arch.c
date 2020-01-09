@@ -1,6 +1,11 @@
 #include "gpio_arch.h"
-#include <dev/gpio.h>
-#include <kernel/system.h>
+#include <sys/mmio.h>
+
+static uint32_t _mmio_base = 0;
+
+void gpio_init(void) {
+	_mmio_base = mmio_map();
+}
 
 void gpio_config(int32_t gpio_num, int32_t gpio_sel) {
 	uint32_t raddr = (uint32_t)GPIO_FSEL0 + ((gpio_num/10)<<2);
@@ -17,9 +22,10 @@ void gpio_pull(int32_t gpio_num, int32_t pull_dir) {
 	uint32_t shift = (gpio_num % 32);
 	uint32_t index = (gpio_num/32) + 1;
 	*GPIO_PUD = pull_dir & GPIO_PULL_MASK;
-	_delay(150);
+
+	uint32_t n = 150; while(n > 0) n--; //delay 150
 	put32((uint32_t)GPIO_PUD+(index<<2), 1<<shift); /* enable ppud clock */
-	_delay(150);
+	n = 150; while(n > 0) n--; //delay 150
 	*GPIO_PUD = GPIO_PULL_NONE;
 	put32((uint32_t)GPIO_PUD+(index<<2), 0); /* disable ppud clock */
 }

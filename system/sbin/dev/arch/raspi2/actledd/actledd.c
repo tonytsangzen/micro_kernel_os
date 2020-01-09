@@ -4,7 +4,6 @@
 #include <cmain.h>
 #include <string.h>
 #include <vfs.h>
-#include <gpio.h>
 #include <vdevice.h>
 #include <syscall.h>
 #include <dev/device.h>
@@ -31,6 +30,8 @@ static int actled_mount(fsinfo_t* info, mount_info_t* mnt_info, void* p) {
 	return 0;
 }
 
+static int _gpio_fd = -1;
+
 static int actled_write(int fd, int from_pid, fsinfo_t* info, const void* buf, int size, int offset, void* p) {
 	(void)fd;
 	(void)from_pid;
@@ -39,10 +40,19 @@ static int actled_write(int fd, int from_pid, fsinfo_t* info, const void* buf, i
 	(void)size;
 	(void)p;
 
+	proto_t in;
+	proto_init(&in, NULL, 0);
+	proto_add_int(&in, 47); //gpio 47
+
 	if(((const char*)buf)[0] == 0)
-		gpio_write(47, 1); //1 for off
+		proto_add_int(&in, 1); //1 for off
 	else
-		gpio_write(47, 0); //0 for on
+		proto_add_int(&in, 0); //0 for on
+
+	int res = fcntl_raw(_gpio_fd, 2, &in, NULL); //2 for write
+	proto_clear(&in);
+	if(res != 0)
+		return 0;
 	return 1;
 }
 
@@ -53,10 +63,21 @@ static int actled_umount(fsinfo_t* info, void* p) {
 }
 
 int main(int argc, char** argv) {
+	_gpio_fd = open("/dev/gpio", O_RDWR);
+	if(_gpio_fd < 0)
+		return -1;
+	proto_t in;
+	proto_init(&in, NULL, 0);
+	proto_add_int(&in, 47); //gpio 47
+	proto_add_int(&in, 1); //1 for output mode
+	int res = fcntl_raw(_gpio_fd, 0, &in, NULL); //0 for config
+	proto_clear(&in);
+	if(res != 0) //
+		return -1;
+
 	fsinfo_t mnt_point;
 	const char* mnt_name = argc > 1 ? argv[1]: "/dev/actled";
 	vfs_create(mnt_name, &mnt_point, FS_TYPE_DEV);
-	gpio_config(47, 1);//set 47 port to output mode , act led
 
 	vdevice_t dev;
 	memset(&dev, 0, sizeof(vdevice_t));
@@ -71,5 +92,6 @@ int main(int argc, char** argv) {
 	mnt_info.access = 0;
 
 	device_run(&dev, &mnt_point, &mnt_info, NULL, 1);
+	close(_gpio_fd);
 	return 0;
 }
