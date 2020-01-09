@@ -23,5 +23,4 @@ void arch_vm(page_dir_entry_t* vm) {
 	uint32_t vbase = MMIO_BASE + offset;
 	uint32_t pbase = _hw_info.phy_mmio_base + offset;
 	map_pages(vm, vbase, pbase, pbase+16*KB, AP_RW_D);
-	map_pages(vm, (uint32_t)_framebuffer_base, V2P(_framebuffer_base), V2P(_framebuffer_end), AP_RW_D);
 }

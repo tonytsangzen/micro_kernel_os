@@ -9,6 +9,7 @@
 #include <mm/shm.h>
 #include <mm/kmalloc.h>
 #include <sysinfo.h>
+#include <dev/framebuffer.h>
 #include <vfs.h>
 #include <syscalls.h>
 #include <kstring.h>
@@ -608,7 +609,16 @@ static uint32_t sys_mmio_map(void) {
 	map_pages(_current_proc->space->vm, MMIO_BASE, hw_info->phy_mmio_base, hw_info->phy_mmio_base + hw_info->mmio_size, AP_RW_RW);
 	return MMIO_BASE;
 }
-	
+		
+static int32_t sys_framebuffer_map(fbinfo_t* info) {
+	if(_current_proc->owner != 0)
+		return 0;
+	fbinfo_t *fbinfo = fb_get_info();
+	memcpy(info, fbinfo, sizeof(fbinfo_t));
+	map_pages(_current_proc->space->vm, fbinfo->pointer, V2P(fbinfo->pointer), V2P(info->pointer)+info->size, AP_RW_RW);
+	return 0;
+}
+
 static void sys_proc_critical_enter(void) {
 	if(_current_proc->owner != 0)
 		return;
@@ -824,6 +834,9 @@ void svc_handler(int32_t code, int32_t arg0, int32_t arg1, int32_t arg2, context
 		return;
 	case SYS_MMIO_MAP:
 		ctx->gpr[0] = sys_mmio_map();
+		return;
+	case SYS_FRAMEBUFFER_MAP:
+		ctx->gpr[0] = sys_framebuffer_map((fbinfo_t*)arg0);
 		return;
 	case SYS_PROC_CRITICAL_ENTER:
 		sys_proc_critical_enter();

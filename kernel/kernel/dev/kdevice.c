@@ -36,20 +36,6 @@ void dev_init(void) {
 	}
 }
 
-int32_t fb_init(uint32_t w, uint32_t h, uint32_t dep) {
-	if(fb_dev_init(w, h, dep) == 0) {
-		dev_t* dev;
-		dev = &_devs[DEV_FRAMEBUFFER];
-		memset(dev, 0, sizeof(dev_t));
-		dev->type = DEV_TYPE_CHAR;
-		dev->io.ch.write = fb_dev_write;
-		dev->op = fb_dev_op;
-		dev->state = DEV_STATE_INITED;
-		return 0;
-	}
-	return -1;
-}
-
 void dev_setup(void) {
 	dev_t* dev;
 

@@ -14,8 +14,6 @@ enum {
 
 enum {
 	DEV_NULL = 0,
-	DEV_UART0,
-	DEV_FRAMEBUFFER,
 	DEV_SD,
 	DEV_NUM
 };

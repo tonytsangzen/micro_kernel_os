@@ -17,7 +17,5 @@ inline hw_info_t* get_hw_info(void) {
 }
 
 void arch_vm(page_dir_entry_t* vm) {
-  uint32_t fb_base = (uint32_t)V2P(_framebuffer_base); //framebuffer addr
-  uint32_t fb_end = (uint32_t)V2P(_framebuffer_end); //framebuffer addr
-  map_pages(vm, fb_base, fb_base, fb_end, AP_RW_D);
+	(void)vm;
 }

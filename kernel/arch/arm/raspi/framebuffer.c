@@ -12,8 +12,6 @@
 #include <graph.h>
 
 static fbinfo_t _fb_info __attribute__((aligned(16)));
-char* _framebuffer_base = NULL;
-char* _framebuffer_end = NULL;
 
 typedef struct {
 	uint32_t width;
@@ -62,29 +60,16 @@ int32_t __attribute__((optimize("O0"))) fb_dev_init(uint32_t w, uint32_t h, uint
 	_fb_info.xoffset = 0;
 	_fb_info.yoffset = 0;
 
-	_framebuffer_base = (char*)_fb_info.pointer;
-	if((uint32_t)_framebuffer_base < KERNEL_BASE) {
-		_framebuffer_base = (char*)P2V(_framebuffer_base);
+	if(_fb_info.pointer < KERNEL_BASE) {
+		_fb_info.pointer = P2V(_fb_info.pointer);
 	}
-	_framebuffer_end = _framebuffer_base + _fb_info.size;
-	map_pages(_kernel_vm, (uint32_t)_framebuffer_base, (uint32_t)(_fb_info.pointer), (uint32_t)(_fb_info.pointer+_fb_info.size), AP_RW_D);
-	//map_pages(_kernel_vm, (uint32_t)_framebuffer_base, V2P(_framebuffer_base), V2P(_framebuffer_end), AP_RW_D);
-	_fb_info.pointer = (uint32_t)_framebuffer_base;
-	kmake_hole((uint32_t)_framebuffer_base, (uint32_t)_framebuffer_end);
+	map_pages(_kernel_vm, _fb_info.pointer, V2P(_fb_info.pointer), V2P(_fb_info.pointer)+_fb_info.size, AP_RW_D);
+	kmake_hole(_fb_info.pointer, _fb_info.pointer+_fb_info.size);
 	return 0;
 }
 
 inline fbinfo_t* fb_get_info(void) {
 	return &_fb_info;
-}
-
-int32_t fb_dev_op(dev_t* dev, int32_t opcode, int32_t arg) {
-	(void)dev;
-	if(opcode == DEV_OP_INFO) {
-		fbinfo_t* info = (fbinfo_t*)arg;
-		memcpy(info, &_fb_info, sizeof(fbinfo_t));
-	}
-	return 0;
 }
 
 int32_t fb_dev_write(dev_t* dev, const void* buf, uint32_t size) {

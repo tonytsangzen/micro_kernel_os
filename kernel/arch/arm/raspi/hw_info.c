@@ -18,5 +18,5 @@ inline hw_info_t* get_hw_info(void) {
 }
 
 void arch_vm(page_dir_entry_t* vm) {
-	map_pages(vm, (uint32_t)_framebuffer_base, V2P(_framebuffer_base), V2P(_framebuffer_end), AP_RW_D);
+	(void)vm;
 }
