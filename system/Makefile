@@ -106,6 +106,7 @@ LIB_OBJS = $(LIB_SYS_DIR)/syscall.o \
 	$(LIB_SYS_DIR)/global.o \
 	$(LIB_SYS_DIR)/proclock.o \
 	$(LIB_SYS_DIR)/sys/wait.o \
+	$(LIB_SYS_DIR)/sys/critical.o \
 	$(LIB_SYS_DIR)/sys/mmio.o \
 	$(GRAPH_OBJS) \
 	$(LIB_EXT2_OBJS) \

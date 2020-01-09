@@ -624,6 +624,16 @@ static uint32_t sys_mmio_map(void) {
 	map_pages(_current_proc->space->vm, MMIO_BASE, hw_info->phy_mmio_base, hw_info->phy_mmio_base + hw_info->mmio_size, AP_RW_RW);
 	return MMIO_BASE;
 }
+	
+static void sys_proc_critical_enter(void) {
+	if(_current_proc->owner != 0)
+		return;
+	_current_proc->critical_counter = CRITICAL_MAX;
+}
+	
+static void sys_proc_critical_quit(void) {
+	_current_proc->critical_counter = 0;
+}
 
 void svc_handler(int32_t code, int32_t arg0, int32_t arg1, int32_t arg2, context_t* ctx, int32_t processor_mode) {
 	(void)arg1;
@@ -845,6 +855,12 @@ void svc_handler(int32_t code, int32_t arg0, int32_t arg1, int32_t arg2, context
 		return;
 	case SYS_MMIO_MAP:
 		ctx->gpr[0] = sys_mmio_map();
+		return;
+	case SYS_PROC_CRITICAL_ENTER:
+		sys_proc_critical_enter();
+		return;
+	case SYS_PROC_CRITICAL_QUIT:
+		sys_proc_critical_quit();
 		return;
 	}
 	printf("pid:%d, code(%d) error!\n", _current_proc->pid, code);

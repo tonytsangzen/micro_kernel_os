@@ -41,6 +41,7 @@ typedef struct {
 #define STACK_PAGES 32
 #define THREAD_STACK_PAGES 4
 
+#define CRITICAL_MAX 8 //critical zone keep just for 8 timer schedules
 typedef struct st_proc {
 	int32_t type;
 	int32_t pid;
@@ -49,6 +50,7 @@ typedef struct st_proc {
 	int32_t owner;
 	uint32_t start_sec;
 
+	int32_t critical_counter;
 	uint32_t block_event;
 	int64_t sleep_counter; //sleep usec
 	int32_t wait_pid;

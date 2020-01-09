@@ -28,22 +28,29 @@ void irq_handler(context_t* ctx) {
 		sd_handler();
 	}
 	if((irqs & IRQ_TIMER0) != 0) {
-		if(_timer_usec == 0)
-			_timer_usec = timer_read_sys_usec();
-		else {
-			uint64_t usec = timer_read_sys_usec();
-			uint64_t usec_gap = usec - _timer_usec;
-			_timer_usec = usec;
-			_timer_tic += usec_gap;
-			if(_timer_tic >= 1000000) {
-				_kernel_tic++;
-				_timer_tic = 0;
+		uint64_t usec = timer_read_sys_usec();
+		if(_current_proc == NULL || _current_proc->critical_counter == 0) {
+			if(_timer_usec == 0)
+				_timer_usec = usec;
+			else {
+				uint64_t usec_gap = usec - _timer_usec;
+				_timer_usec = usec;
+				_timer_tic += usec_gap;
+				if(_timer_tic >= 1000000) {
+					_kernel_tic++;
+					_timer_tic = 0;
+				}
+				renew_sleep_counter(usec_gap);
 			}
-			renew_sleep_counter(usec_gap);
-		}
+		}	
 		timer_clear_interrupt(0);
 
-		schedule(ctx);
+		if(_current_proc != NULL && _current_proc->critical_counter > 0) {
+			printf("critical!! keep %d\n", _current_proc->critical_counter);
+			_current_proc->critical_counter--;
+		}
+		else
+			schedule(ctx);
 		return;
 	}
 }
