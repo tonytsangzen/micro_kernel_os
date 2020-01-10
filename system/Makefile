@@ -102,6 +102,7 @@ LIB_OBJS = $(LIB_SYS_DIR)/syscall.o \
 	$(LIB_SYS_DIR)/basic_math.o \
 	$(LIB_SYS_DIR)/shm.o \
 	$(LIB_SYS_DIR)/sd.o \
+	$(LIB_SYS_DIR)/gpio.o \
 	$(LIB_SYS_DIR)/global.o \
 	$(LIB_SYS_DIR)/proclock.o \
 	$(LIB_SYS_DIR)/sys/wait.o \

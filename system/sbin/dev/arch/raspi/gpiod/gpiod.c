@@ -36,24 +36,29 @@ static int gpio_fcntl(int fd, int from_pid, fsinfo_t* info, int cmd, proto_t* in
 	(void)info;
 	(void)p;
 
-	int gpio_num = proto_read_int(in);
+	int32_t gpio_num = proto_read_int(in);
 	if(cmd == 0) { //0: config
-		int v = proto_read_int(in);
-		gpio_config(gpio_num, v);
+		int32_t v = proto_read_int(in);
+		gpio_arch_config(gpio_num, v);
 	//	kprintf("gpio config n: %d, v: %d\n", gpio_num, v);
 	}
 	else if(cmd == 1) { //1: pull
-		int v = proto_read_int(in);
-		gpio_pull(gpio_num, v);
+		int32_t v = proto_read_int(in);
+		gpio_arch_pull(gpio_num, v);
 	//	kprintf("gpio pull n: %d, v: %d\n", gpio_num, v);
 	}
 	else if(cmd == 2) { //2: write
-		int v = proto_read_int(in);
-		gpio_write(gpio_num, v);
+		int32_t v = proto_read_int(in);
+		gpio_arch_write(gpio_num, v);
 	//	kprintf("gpio write n: %d, v: %d\n", gpio_num, v);
 	}
 	else if(cmd == 3) { //3: read
-		int v = gpio_read(gpio_num);
+		int32_t v = gpio_arch_read(gpio_num);
+		if(v == 1) 
+			gpio_arch_write(47, 0);
+		else
+			gpio_arch_write(47, 1);
+
 		proto_add_int(out, v);
 	//	kprintf("gpio read n: %d\n", gpio_num);
 	}
@@ -67,7 +72,7 @@ static int gpio_umount(fsinfo_t* info, void* p) {
 }
 
 int main(int argc, char** argv) {
-	gpio_init();
+	gpio_arch_init();
 
 	fsinfo_t mnt_point;
 	const char* mnt_name = argc > 1 ? argv[1]: "/dev/gpio";

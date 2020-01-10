@@ -220,8 +220,7 @@ static void do_fcntl(vdevice_t* dev, int from_pid, proto_t *in, void* p) {
 	proto_clear(&arg_in);
 
 	proto_add_int(&out, res);
-	arg_data = proto_read(&arg_out, &arg_size);
-	proto_add(&out, arg_data, arg_size);
+	proto_add(&out, arg_out.data, arg_out.size);
 	proto_clear(&arg_out);
 
 	ipc_send(from_pid, &out, in->id);

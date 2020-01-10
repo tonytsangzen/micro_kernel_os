@@ -14,6 +14,7 @@
 #include <sysinfo.h>
 #include <sconf.h>
 #include <sd.h>
+#include <gpio.h>
 #include <rawdata.h>
 #include <global.h>
 #include <kernel/kevent_type.h>
@@ -114,7 +115,7 @@ static int run_dev(init_t* init, const char* cmd, const char* mnt, bool prompt) 
 		if(exec(fcmd) != 0) {
 			if(prompt)
 				console_out(init, "[error!] (%s)\n", cmd);
-			return -1;
+			exit(-1);
 		}
 	}
 	wait_ready(pid);
@@ -179,9 +180,9 @@ static void load_devs(init_t* init) {
 	run_dev(init, "/sbin/dev/nulld", "/dev/null", true);
 
 	init->do_console = false;
-	run_arch_dev(init, "keybd", "/dev/keyb0", true);
-	if(run_arch_dev(init, "moused", "/dev/mouse0", true) == 0)
-		init->do_console = true;
+	//run_arch_dev(init, "keybd", "/dev/keyb0", true);
+	//if(run_arch_dev(init, "moused", "/dev/mouse0", true) == 0)
+	//	init->do_console = true;
 }
 
 static void console_shells(init_t* init) {
@@ -230,6 +231,15 @@ static void kevent_handle(init_t* init) {
 	}
 }
 
+#define KEY_UP_PIN      6
+#define KEY_DOWN_PIN    19
+#define KEY_LEFT_PIN    5
+#define KEY_RIGHT_PIN   26
+#define KEY_PRESS_PIN   13
+#define KEY1_PIN        21
+#define KEY2_PIN        20
+#define KEY3_PIN        16
+
 int main(int argc, char** argv) {
 	(void)argc;
 	(void)argv;
@@ -261,8 +271,29 @@ int main(int argc, char** argv) {
 		console_out(&init, "\ninput devices load failed, only do tty shell!\n");
 	}
 
+	int fd_gpio = open("/dev/gpio", O_RDWR);
+	int fd_actled = open("/dev/actled", O_RDWR);
+
+	gpio_config(fd_gpio, KEY1_PIN, 0);
+	gpio_config(fd_gpio, KEY2_PIN, 0);
+	gpio_config(fd_gpio, KEY3_PIN, 0);
+	gpio_config(fd_gpio, KEY_UP_PIN, 0);
+	gpio_config(fd_gpio, KEY_PRESS_PIN, 0);
+	char c = 0;
 	while(1) {
-		kevent_handle(&init);
+		c = 0;
+		//kevent_handle(&init);
+		//if(gpio_read(fd_gpio, KEY1_PIN) == 1)
+		//	c = 1;
+		//if(gpio_read(fd_gpio, KEY2_PIN) == 1)
+		//	c = 1;
+		//if(gpio_read(fd_gpio, KEY3_PIN) == 1)
+		//	c = 1;
+		if(gpio_read(fd_gpio, KEY_PRESS_PIN) == 1)
+			c = 1;
+		if(gpio_read(fd_gpio, KEY_UP_PIN) == 1)
+			c = 1;
+		//write(fd_actled, &c, 1);
 	}
 	return 0;
 }

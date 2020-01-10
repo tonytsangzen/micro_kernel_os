@@ -148,7 +148,7 @@ int fcntl_raw(int fd, int cmd, proto_t* arg_in, proto_t* arg_out) {
 		if(arg_out != NULL) {
 			int32_t sz;
 			void *p = proto_read(&out, &sz);
-			proto_add(arg_out, p, sz);
+			proto_copy(arg_out, p, sz);
 		}
 	}
 	proto_clear(&in);
