@@ -54,13 +54,8 @@ static int gpio_fcntl(int fd, int from_pid, fsinfo_t* info, int cmd, proto_t* in
 	}
 	else if(cmd == 3) { //3: read
 		int32_t v = gpio_arch_read(gpio_num);
-		if(v == 1) 
-			gpio_arch_write(47, 0);
-		else
-			gpio_arch_write(47, 1);
-
 		proto_add_int(out, v);
-	//	kprintf("gpio read n: %d\n", gpio_num);
+	//	kprintf("gpio read n: %d, v: %d\n", gpio_num, v);
 	}
 	return 0;
 }
