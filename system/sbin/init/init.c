@@ -313,7 +313,8 @@ int main(int argc, char** argv) {
 		if(init.start_x) {
 			set_global("current_console", "x");
 			run_dev(&init, "/sbin/dev/xserverd", "/dev/x", true);
-			run(&init, "/bin/launcher");
+			//run(&init, "/bin/launcher");
+			run(&init, "/bin/xjoy");
 		}
 	}
 

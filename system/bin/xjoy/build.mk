@@ -1,0 +1,9 @@
+XJOY_OBJS = $(ROOT_DIR)/bin/xjoy/xjoy.o
+
+XJOY = $(TARGET_DIR)/$(ROOT_DIR)/bin/xjoy
+
+PROGS += $(XJOY)
+CLEAN += $(XJOY_OBJS)
+
+$(XJOY): $(XJOY_OBJS) $(LIB_OBJS)
+	$(LD) -Ttext=100 $(XJOY_OBJS) $(LIB_OBJS) $(LIB_CONSOLE_OBJS) -o $(XJOY) $(LDFLAGS)
