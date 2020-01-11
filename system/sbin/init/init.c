@@ -280,7 +280,7 @@ static void DEV_SPI_WriteByte(UBYTE data) {
 	spi_arch_activate(0);
 }
 
-static void DEV_SPI_Write_nByte(UBYTE* data, uint32_t sz) {
+static inline void DEV_SPI_Write_nByte(UBYTE* data, uint32_t sz) {
 	spi_arch_activate(1);
 	for(uint32_t i=0; i<sz; i++)
 		spi_arch_transfer(data[i]);
@@ -530,7 +530,7 @@ void test(void) {
 	gpio_arch_config(LCD_DC, 1);
 	gpio_arch_config(LCD_BL, 1);
 
-	spi_arch_init(1024);
+	spi_arch_init(8);
 	spi_arch_select(1);
 
 	LCD_1in3_Init(HORIZONTAL);
