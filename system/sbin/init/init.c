@@ -176,10 +176,12 @@ static void load_devs(init_t* init) {
 	run_dev(init, "/sbin/dev/fbd", "/dev/fb0", true);
 	run_arch_dev(init, "ttyd", "/dev/tty0", true); 
 	run_arch_dev(init, "gpiod", "/dev/gpio", true);
+	run_arch_dev(init, "spid", "/dev/spi", true);
 	run_arch_dev(init, "actledd", "/dev/actled", true);
 	run_dev(init, "/sbin/dev/nulld", "/dev/null", true);
 
 	init->do_console = false;
+	run_arch_dev(init, "joystickd", "/dev/joystick", true);
 	//run_arch_dev(init, "keybd", "/dev/keyb0", true);
 	//if(run_arch_dev(init, "moused", "/dev/mouse0", true) == 0)
 	//	init->do_console = true;
@@ -231,14 +233,311 @@ static void kevent_handle(init_t* init) {
 	}
 }
 
-#define KEY_UP_PIN      6
-#define KEY_DOWN_PIN    19
-#define KEY_LEFT_PIN    5
-#define KEY_RIGHT_PIN   26
-#define KEY_PRESS_PIN   13
-#define KEY1_PIN        21
-#define KEY2_PIN        20
-#define KEY3_PIN        16
+#define UBYTE   uint8_t
+#define UWORD   uint16_t
+#define UDOUBLE uint32_t
+
+#define LCD_CS   8
+#define LCD_RST  27
+#define LCD_DC   25
+#define LCD_BL   24
+
+#define DEV_Delay_ms(x) usleep((x)*1000)
+#define DEV_Digital_Write gpio_arch_write
+
+#define LCD_CS_0		DEV_Digital_Write(LCD_CS,0)
+#define LCD_CS_1		DEV_Digital_Write(LCD_CS,1)
+
+#define LCD_RST_0		DEV_Digital_Write(LCD_RST,0)
+#define LCD_RST_1		DEV_Digital_Write(LCD_RST,1)
+
+#define LCD_DC_0		DEV_Digital_Write(LCD_DC,0)
+#define LCD_DC_1		DEV_Digital_Write(LCD_DC,1)
+
+#define LCD_BL_0		DEV_Digital_Write(LCD_BL,0)
+#define LCD_BL_1		DEV_Digital_Write(LCD_BL,1)
+
+#define LCD_HEIGHT 240
+#define LCD_WIDTH 240
+
+#define LCD_WIDTH_Byte 240
+
+#define HORIZONTAL 0
+#define VERTICAL   1
+
+
+
+typedef struct{
+	UWORD WIDTH;
+	UWORD HEIGHT;
+	UBYTE SCAN_DIR;
+}LCD_ATTRIBUTES;
+static LCD_ATTRIBUTES LCD;
+
+static void DEV_SPI_WriteByte(UBYTE data) {
+	spi_arch_activate(1);
+	spi_arch_transfer(data);
+	spi_arch_activate(0);
+}
+
+static void DEV_SPI_Write_nByte(UBYTE* data, uint32_t sz) {
+	spi_arch_activate(1);
+	for(uint32_t i=0; i<sz; i++)
+		spi_arch_transfer(data[i]);
+	spi_arch_activate(0);
+}
+
+/******************************************************************************
+function :	Hardware reset
+parameter:
+******************************************************************************/
+static void LCD_Reset(void)
+{
+    LCD_RST_1;
+    DEV_Delay_ms(100);
+    LCD_RST_0;
+    DEV_Delay_ms(100);
+    LCD_RST_1;
+    DEV_Delay_ms(100);
+}
+
+/******************************************************************************
+function :	send command
+parameter:
+     Reg : Command register
+******************************************************************************/
+static void LCD_SendCommand(UBYTE Reg)
+{
+    LCD_DC_0;
+    // LCD_CS_0;
+    DEV_SPI_WriteByte(Reg);
+    // LCD_CS_1;
+}
+
+/******************************************************************************
+function :	send data
+parameter:
+    Data : Write data
+******************************************************************************/
+static void LCD_SendData_8Bit(UBYTE Data)
+{
+    LCD_DC_1;
+    // LCD_CS_0;
+    DEV_SPI_WriteByte(Data);
+    // LCD_CS_1;
+}
+
+/******************************************************************************
+function :	send data
+parameter:
+    Data : Write data
+******************************************************************************/
+static void LCD_SendData_16Bit(UWORD Data)
+{
+    LCD_DC_1;
+    // LCD_CS_0;
+    DEV_SPI_WriteByte((Data >> 8) & 0xFF);
+    DEV_SPI_WriteByte(Data & 0xFF);
+    // LCD_CS_1;
+}
+
+/********************************************************************************
+function:	Set the resolution and scanning method of the screen
+parameter:
+		Scan_dir:   Scan direction
+********************************************************************************/
+static void LCD_SetAttributes(UBYTE Scan_dir)
+{
+    //Get the screen scan direction
+    LCD.SCAN_DIR = Scan_dir;
+    UBYTE MemoryAccessReg = 0x00;
+
+    //Get GRAM and LCD width and height
+    if(Scan_dir == HORIZONTAL) {
+        LCD.HEIGHT	= LCD_HEIGHT;
+        LCD.WIDTH   = LCD_WIDTH;
+        MemoryAccessReg = 0X70;
+    } else {
+        LCD.HEIGHT	= LCD_WIDTH;
+        LCD.WIDTH   = LCD_HEIGHT;
+        MemoryAccessReg = 0X00;
+    }
+
+    // Set the read / write scan direction of the frame memory
+    LCD_SendCommand(0x36); //MX, MY, RGB mode
+    LCD_SendData_8Bit(MemoryAccessReg);	//0x08 set RGB
+}
+
+/******************************************************************************
+function :	Initialize the lcd register
+parameter:
+******************************************************************************/
+static void LCD_InitReg(void)
+{
+    LCD_SendCommand(0x11); 
+    DEV_Delay_ms(120);
+    // LCD_SendCommand(0x36);
+    // LCD_SendData_8Bit(0x00);
+
+    LCD_SendCommand(0x3A); 
+    LCD_SendData_8Bit(0x05);
+
+    LCD_SendCommand(0xB2);
+    LCD_SendData_8Bit(0x0C);
+    LCD_SendData_8Bit(0x0C);
+    LCD_SendData_8Bit(0x00);
+    LCD_SendData_8Bit(0x33);
+    LCD_SendData_8Bit(0x33); 
+
+    LCD_SendCommand(0xB7); 
+    LCD_SendData_8Bit(0x35);  
+
+    LCD_SendCommand(0xBB);
+    LCD_SendData_8Bit(0x37);
+
+    LCD_SendCommand(0xC0);
+    LCD_SendData_8Bit(0x2C);
+
+    LCD_SendCommand(0xC2);
+    LCD_SendData_8Bit(0x01);
+
+    LCD_SendCommand(0xC3);
+    LCD_SendData_8Bit(0x12);   
+
+    LCD_SendCommand(0xC4);
+    LCD_SendData_8Bit(0x20);  
+
+    LCD_SendCommand(0xC6); 
+    LCD_SendData_8Bit(0x0F);    
+
+    LCD_SendCommand(0xD0); 
+    LCD_SendData_8Bit(0xA4);
+    LCD_SendData_8Bit(0xA1);
+
+    LCD_SendCommand(0xE0);
+    LCD_SendData_8Bit(0xD0);
+    LCD_SendData_8Bit(0x04);
+    LCD_SendData_8Bit(0x0D);
+    LCD_SendData_8Bit(0x11);
+    LCD_SendData_8Bit(0x13);
+    LCD_SendData_8Bit(0x2B);
+    LCD_SendData_8Bit(0x3F);
+    LCD_SendData_8Bit(0x54);
+    LCD_SendData_8Bit(0x4C);
+    LCD_SendData_8Bit(0x18);
+    LCD_SendData_8Bit(0x0D);
+    LCD_SendData_8Bit(0x0B);
+    LCD_SendData_8Bit(0x1F);
+    LCD_SendData_8Bit(0x23);
+
+    LCD_SendCommand(0xE1);
+    LCD_SendData_8Bit(0xD0);
+    LCD_SendData_8Bit(0x04);
+    LCD_SendData_8Bit(0x0C);
+    LCD_SendData_8Bit(0x11);
+    LCD_SendData_8Bit(0x13);
+    LCD_SendData_8Bit(0x2C);
+    LCD_SendData_8Bit(0x3F);
+    LCD_SendData_8Bit(0x44);
+    LCD_SendData_8Bit(0x51);
+    LCD_SendData_8Bit(0x2F);
+    LCD_SendData_8Bit(0x1F);
+    LCD_SendData_8Bit(0x1F);
+    LCD_SendData_8Bit(0x20);
+    LCD_SendData_8Bit(0x23);
+
+    LCD_SendCommand(0x21); 
+
+    LCD_SendCommand(0x29);
+}
+
+/********************************************************************************
+function :	Initialize the lcd
+parameter:
+********************************************************************************/
+void LCD_1in3_Init(UBYTE Scan_dir)
+{
+    //Turn on the backlight
+    LCD_BL_1;
+
+    //Hardware reset
+    LCD_Reset();
+kprintf("reset\n");
+    //Set the resolution and scanning method of the screen
+    LCD_SetAttributes(Scan_dir);
+kprintf("set attr\n");
+    
+    //Set the initialization register
+    LCD_InitReg();
+kprintf("init reg\n");
+}
+
+/********************************************************************************
+function:	Sets the start position and size of the display area
+parameter:
+		Xstart 	:   X direction Start coordinates
+		Ystart  :   Y direction Start coordinates
+		Xend    :   X direction end coordinates
+		Yend    :   Y direction end coordinates
+********************************************************************************/
+void LCD_1in3_SetWindows(UWORD Xstart, UWORD Ystart, UWORD Xend, UWORD Yend)
+{
+    //set the X coordinates
+    LCD_SendCommand(0x2A);
+    LCD_SendData_8Bit((Xstart >> 8) & 0xFF);
+    LCD_SendData_8Bit(Xstart & 0xFF);
+    LCD_SendData_8Bit(((Xend  - 1) >> 8) & 0xFF);
+    LCD_SendData_8Bit((Xend  - 1) & 0xFF);
+
+    //set the Y coordinates
+    LCD_SendCommand(0x2B);
+    LCD_SendData_8Bit((Ystart >> 8) & 0xFF);
+    LCD_SendData_8Bit(Ystart & 0xFF);
+    LCD_SendData_8Bit(((Yend  - 1) >> 8) & 0xFF);
+    LCD_SendData_8Bit((Yend  - 1) & 0xFF);
+
+    LCD_SendCommand(0X2C);
+}
+
+/******************************************************************************
+function :	Clear screen
+parameter:
+******************************************************************************/
+void LCD_1in3_Clear(UWORD Color)
+{
+    UWORD j;
+    UWORD Image[LCD_WIDTH*LCD_HEIGHT];
+    
+    Color = ((Color<<8)&0xff00)|(Color>>8);
+   
+    for (j = 0; j < LCD_HEIGHT*LCD_WIDTH; j++) {
+        Image[j] = Color;
+    }
+    
+    LCD_1in3_SetWindows(0, 0, LCD_WIDTH, LCD_HEIGHT);
+    LCD_DC_1;
+    for(j = 0; j < LCD_HEIGHT; j++){
+        DEV_SPI_Write_nByte((uint8_t *)&Image[j*LCD_WIDTH], LCD_WIDTH*2);
+    }
+}
+
+
+void test(void) {
+	gpio_arch_init();
+
+	gpio_arch_config(LCD_CS, 1);
+	gpio_arch_config(LCD_RST, 1);
+	gpio_arch_config(LCD_DC, 1);
+	gpio_arch_config(LCD_BL, 1);
+
+	spi_arch_init(1024);
+	spi_arch_select(1);
+
+	LCD_1in3_Init(HORIZONTAL);
+kprintf("inited\n");
+	LCD_1in3_Clear(0xFFFF);
+kprintf("cleared\n");
+}
 
 int main(int argc, char** argv) {
 	(void)argc;
@@ -271,29 +570,15 @@ int main(int argc, char** argv) {
 		console_out(&init, "\ninput devices load failed, only do tty shell!\n");
 	}
 
-	int fd_gpio = open("/dev/gpio", O_RDWR);
-	int fd_actled = open("/dev/actled", O_RDWR);
-
-	gpio_config(fd_gpio, KEY1_PIN, 0);
-	gpio_config(fd_gpio, KEY2_PIN, 0);
-	gpio_config(fd_gpio, KEY3_PIN, 0);
-	gpio_config(fd_gpio, KEY_UP_PIN, 0);
-	gpio_config(fd_gpio, KEY_PRESS_PIN, 0);
-	char c = 0;
+	test();
+	int fd = open("/dev/joystick", O_RDONLY);
 	while(1) {
-		c = 0;
 		//kevent_handle(&init);
-		//if(gpio_read(fd_gpio, KEY1_PIN) == 1)
-		//	c = 1;
-		//if(gpio_read(fd_gpio, KEY2_PIN) == 1)
-		//	c = 1;
-		//if(gpio_read(fd_gpio, KEY3_PIN) == 1)
-		//	c = 1;
-		if(gpio_read(fd_gpio, KEY_PRESS_PIN) == 1)
-			c = 1;
-		if(gpio_read(fd_gpio, KEY_UP_PIN) == 1)
-			c = 1;
-		//write(fd_actled, &c, 1);
+		char c;
+		read(fd, &c, 1);
+		if(c != 0)
+			kprintf("key: 0x%x\n", c);
 	}
+	close(fd);
 	return 0;
 }

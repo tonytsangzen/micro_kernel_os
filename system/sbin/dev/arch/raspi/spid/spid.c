@@ -6,6 +6,7 @@
 #include <vfs.h>
 #include <vdevice.h>
 #include <dev/device.h>
+#include "../lib/spi_arch.h"
 #include "../lib/gpio_arch.h"
 
 static int mount(fsinfo_t* mnt_point, mount_info_t* mnt_info, void* p) {
@@ -24,56 +25,51 @@ static int mount(fsinfo_t* mnt_point, mount_info_t* mnt_info, void* p) {
 	return 0;
 }
 
-static int gpio_mount(fsinfo_t* info, mount_info_t* mnt_info, void* p) {
+static int spi_mount(fsinfo_t* info, mount_info_t* mnt_info, void* p) {
 	mount(info, mnt_info, p);
 	return 0;
 }
 
-static int gpio_fcntl(int fd, int from_pid, fsinfo_t* info, int cmd, proto_t* in, proto_t* out, void* p) {
-	(void)fd;
-	(void)from_pid;
-	(void)info;
-	(void)p;
-
-	int32_t gpio_num = proto_read_int(in);
-	if(cmd == 0) { //0: config
-		int32_t v = proto_read_int(in);
-		gpio_arch_config(gpio_num, v);
-	}
-	else if(cmd == 1) { //1: pull
-		int32_t v = proto_read_int(in);
-		gpio_arch_pull(gpio_num, v);
-	}
-	else if(cmd == 2) { //2: write
-		int32_t v = proto_read_int(in);
-		gpio_arch_write(gpio_num, v);
-	}
-	else if(cmd == 3) { //3: read
-		int32_t v = gpio_arch_read(gpio_num);
-		proto_add_int(out, v);
-	}
-	return 0;
-}
-
-static int gpio_umount(fsinfo_t* info, void* p) {
+static int spi_umount(fsinfo_t* info, void* p) {
 	(void)p;
 	vfs_umount(info);
 	return 0;
 }
 
+static int spi_write(int fd, int from_pid, fsinfo_t* info, const void* buf, int size, int offset, void* p) {
+	(void)fd;
+	(void)from_pid;
+	(void)info;
+	(void)offset;
+	(void)size;
+	(void)p;
+	(void)buf;
+
+	spi_arch_activate(SPI_ACTIVATE);
+	int i;
+	uint8_t* wr = (uint8_t*)buf;
+	for(i=0; i<size; i++) {
+		spi_arch_transfer(wr[i]);
+	}
+	spi_arch_activate(SPI_DEACTIVATE);
+	return i;
+}
+
 int main(int argc, char** argv) {
 	gpio_arch_init();
+	spi_arch_init(1024); //244kHZ 
+	spi_arch_select(SPI_SELECT_0);
 
 	fsinfo_t mnt_point;
-	const char* mnt_name = argc > 1 ? argv[1]: "/dev/gpio";
+	const char* mnt_name = argc > 1 ? argv[1]: "/dev/spi";
 	vfs_create(mnt_name, &mnt_point, FS_TYPE_DEV);
 
 	vdevice_t dev;
 	memset(&dev, 0, sizeof(vdevice_t));
-	strcpy(dev.name, "gpio");
-	dev.mount = gpio_mount;
-	dev.fcntl = gpio_fcntl;
-	dev.umount = gpio_umount;
+	strcpy(dev.name, "spi");
+	dev.mount = spi_mount;
+	dev.write = spi_write;
+	dev.umount = spi_umount;
 
 	mount_info_t mnt_info;
 	strcpy(mnt_info.dev_name, dev.name);

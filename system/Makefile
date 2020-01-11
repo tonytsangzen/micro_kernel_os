@@ -146,6 +146,8 @@ include $(ROOT_DIR)/sbin/dev/arch/raspi/ttyd/build.mk
 include $(ROOT_DIR)/sbin/dev/arch/raspi/sdd/build.mk
 include $(ROOT_DIR)/sbin/dev/arch/raspi/actledd/build.mk
 include $(ROOT_DIR)/sbin/dev/arch/raspi/gpiod/build.mk
+include $(ROOT_DIR)/sbin/dev/arch/raspi/spid/build.mk
+include $(ROOT_DIR)/sbin/dev/arch/raspi/joystickd/build.mk
 
 include $(ROOT_DIR)/bin/shell/build.mk
 include $(ROOT_DIR)/bin/pwd/build.mk
