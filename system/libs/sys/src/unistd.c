@@ -215,7 +215,20 @@ int write_raw(int fd, fsinfo_t* info, const void* buf, uint32_t size) {
 	int offset = syscall1(SYS_VFS_PROC_TELL, fd);
 	if(offset < 0)
 		offset = 0;
-	
+		
+	int32_t shm_id = -1;
+	void* shm = NULL;
+	if(size >= SHM_ON) {
+		shm_id = shm_alloc(size, SHM_PUBLIC);
+		if(shm_id < 0)
+			return -1;
+
+		shm = shm_map(shm_id);
+		if(shm == NULL) 
+			return -1;
+		memcpy(shm, buf, size);
+	}
+
 	proto_t in, out;
 	proto_init(&in, NULL, 0);
 	proto_init(&out, NULL, 0);
@@ -223,8 +236,12 @@ int write_raw(int fd, fsinfo_t* info, const void* buf, uint32_t size) {
 	proto_add_int(&in, FS_CMD_WRITE);
 	proto_add_int(&in, fd);
 	proto_add(&in, info, sizeof(fsinfo_t));
-	proto_add(&in, buf, size);
 	proto_add_int(&in, offset);
+	proto_add_int(&in, shm_id);
+	if(shm_id < 0)
+		proto_add(&in, buf, size);
+	else
+		proto_add_int(&in, size);
 
 	int res = -1;
 	if(ipc_call(mount.pid, &in, &out) == 0) {
@@ -241,6 +258,8 @@ int write_raw(int fd, fsinfo_t* info, const void* buf, uint32_t size) {
 	}
 	proto_clear(&in);
 	proto_clear(&out);
+	if(shm != NULL)
+		shm_unmap(shm_id);
 	return res;
 }
 

@@ -23,6 +23,7 @@ typedef struct {
 
 int32_t console_init(console_t* console);
 void console_close(console_t* console);
+void console_clear(console_t* console);
 void console_refresh(console_t* console);
 int32_t console_reset(console_t* console);
 void console_put_char(console_t* console, char c);

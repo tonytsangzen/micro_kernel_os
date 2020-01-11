@@ -141,18 +141,25 @@ include $(ROOT_DIR)/sbin/dev/arch/raspi2/ttyd/build.mk
 include $(ROOT_DIR)/sbin/dev/arch/raspi2/sdd/build.mk
 include $(ROOT_DIR)/sbin/dev/arch/raspi2/actledd/build.mk
 include $(ROOT_DIR)/sbin/dev/arch/raspi2/gpiod/build.mk
+include $(ROOT_DIR)/sbin/dev/arch/raspi2/spid/build.mk
+include $(ROOT_DIR)/sbin/dev/arch/raspi2/moused/build.mk
+include $(ROOT_DIR)/sbin/dev/arch/raspi2/keybd/build.mk
 
 include $(ROOT_DIR)/sbin/dev/arch/raspi/ttyd/build.mk
 include $(ROOT_DIR)/sbin/dev/arch/raspi/sdd/build.mk
 include $(ROOT_DIR)/sbin/dev/arch/raspi/actledd/build.mk
 include $(ROOT_DIR)/sbin/dev/arch/raspi/gpiod/build.mk
 include $(ROOT_DIR)/sbin/dev/arch/raspi/spid/build.mk
+include $(ROOT_DIR)/sbin/dev/arch/raspi/lcdhatd/build.mk
 include $(ROOT_DIR)/sbin/dev/arch/raspi/joystickd/build.mk
+include $(ROOT_DIR)/sbin/dev/arch/raspi/moused/build.mk
+include $(ROOT_DIR)/sbin/dev/arch/raspi/keybd/build.mk
 
 include $(ROOT_DIR)/bin/shell/build.mk
 include $(ROOT_DIR)/bin/pwd/build.mk
 include $(ROOT_DIR)/bin/cat/build.mk
 include $(ROOT_DIR)/bin/ps/build.mk
+include $(ROOT_DIR)/bin/joyshell/build.mk
 include $(ROOT_DIR)/bin/echo/build.mk
 include $(ROOT_DIR)/bin/ls/build.mk
 include $(ROOT_DIR)/bin/dump/build.mk

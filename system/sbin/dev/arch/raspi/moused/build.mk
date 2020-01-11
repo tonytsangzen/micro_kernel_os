@@ -1,0 +1,9 @@
+RASPI_MOUSED_OBJS = $(ROOT_DIR)/sbin/dev/arch/raspi/moused/moused.o
+
+RASPI_MOUSED = $(TARGET_DIR)/$(ROOT_DIR)/sbin/dev/raspi/moused
+
+PROGS += $(RASPI_MOUSED)
+CLEAN += $(RASPI_MOUSED_OBJS)
+
+$(RASPI_MOUSED): $(RASPI_MOUSED_OBJS) $(LIB_OBJS)
+	$(LD) -Ttext=100 $(RASPI_MOUSED_OBJS) $(LIB_OBJS) -o $(RASPI_MOUSED) $(LDFLAGS)

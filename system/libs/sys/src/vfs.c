@@ -37,6 +37,11 @@ int vfs_get(const char* fname, fsinfo_t* info) {
 	return res;
 }
 
+int  vfs_access(const char* fname) {
+	fsinfo_t info;
+	return vfs_get(fname, &info);
+}
+
 int vfs_first_kid(fsinfo_t* info, fsinfo_t* ret) {
 	return syscall2(SYS_VFS_FKID, (int32_t)info, (int32_t)ret);
 }

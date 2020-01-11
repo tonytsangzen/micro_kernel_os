@@ -66,7 +66,6 @@ static void init_console(fb_console_t* console) {
 		return;
 	}
 
-	fbinfo_t info;
 	proto_t out;
 	proto_init(&out, NULL, 0);
 
@@ -76,8 +75,9 @@ static void init_console(fb_console_t* console) {
 		return;
 	}
 
-	proto_read_to(&out, &info, sizeof(fbinfo_t));
-	graph_t* g = graph_new(gbuf, info.width, info.height);
+	int w = proto_read_int(&out);
+	int h = proto_read_int(&out);
+	graph_t* g = graph_new(gbuf, w, h);
 	proto_clear(&out);
 
 	console->fb_fd = fb_fd;

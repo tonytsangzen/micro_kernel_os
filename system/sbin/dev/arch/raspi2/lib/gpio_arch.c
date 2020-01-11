@@ -26,16 +26,16 @@ void gpio_arch_pull(int32_t num, int32_t pull_dir) {
 	uint32_t n = 150; while(n > 0) n--; //delay 150
 	put32((uint32_t)GPIO_PUD+(index<<2), 1<<shift); /* enable ppud clock */
 	n = 150; while(n > 0) n--; //delay 150
-	*GPIO_PUD = GPIO_PULL_NONE;
+	*GPIO_PUD = 0;
 	put32((uint32_t)GPIO_PUD+(index<<2), 0); /* disable ppud clock */
 }
 
 static inline void gpio_arch_set(int32_t num) {
-	put32((uint32_t)GPIO_SET0 + ((num/32)<<2),1<<(num%32));
+	put32((uint32_t)GPIO_SET0 + ((num/32)<<2), 1<<(num%32));
 }
 
 static inline void gpio_arch_clr(int32_t num) {
-	put32((uint32_t)GPIO_CLR0+((num/32)<<2),1<<(num%32));
+	put32((uint32_t)GPIO_CLR0+((num/32)<<2), 1<<(num%32));
 }
 
 inline void gpio_arch_write(int32_t num, int32_t value) {
@@ -46,8 +46,7 @@ inline void gpio_arch_write(int32_t num, int32_t value) {
 }
 
 inline uint32_t gpio_arch_read(int32_t num) {
-	if((get32((uint32_t)GPIO_LEV0 + ((num/32)<<2))&(1<<(num%32))) != 0)
+	if((get32((uint32_t)GPIO_LEV0+((num/32)<<2)) & (1<<(num%32))) != 0)
 		return 1;
 	return 0;
 }
-

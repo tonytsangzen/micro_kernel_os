@@ -4,6 +4,7 @@
 #include <cmain.h>
 #include <string.h>
 #include <vfs.h>
+#include <gpio.h>
 #include <vdevice.h>
 #include <syscall.h>
 #include <dev/device.h>
@@ -40,19 +41,10 @@ static int actled_write(int fd, int from_pid, fsinfo_t* info, const void* buf, i
 	(void)size;
 	(void)p;
 
-	proto_t in;
-	proto_init(&in, NULL, 0);
-	proto_add_int(&in, 47); //gpio 47
-
 	if(((const char*)buf)[0] == 0)
-		proto_add_int(&in, 1); //1 for off
+		gpio_write(_gpio_fd, 47, 1); //1 for off
 	else
-		proto_add_int(&in, 0); //0 for on
-
-	int res = fcntl_raw(_gpio_fd, 2, &in, NULL); //2 for write
-	proto_clear(&in);
-	if(res != 0)
-		return 0;
+		gpio_write(_gpio_fd, 47, 0); //o for on
 	return 1;
 }
 
@@ -66,14 +58,7 @@ int main(int argc, char** argv) {
 	_gpio_fd = open("/dev/gpio", O_RDWR);
 	if(_gpio_fd < 0)
 		return -1;
-	proto_t in;
-	proto_init(&in, NULL, 0);
-	proto_add_int(&in, 47); //gpio 47
-	proto_add_int(&in, 1); //1 for output mode
-	int res = fcntl_raw(_gpio_fd, 0, &in, NULL); //0 for config
-	proto_clear(&in);
-	if(res != 0) //
-		return -1;
+	gpio_config(_gpio_fd, 47, 1);
 
 	fsinfo_t mnt_point;
 	const char* mnt_name = argc > 1 ? argv[1]: "/dev/actled";

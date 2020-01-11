@@ -35,6 +35,38 @@ static int fb_mount(fsinfo_t* mnt_point, mount_info_t* mnt_info, void* p) {
 	return 0;
 }
 
+static int fb_write(int fd, int from_pid, fsinfo_t* info, const void* buf, int size, int offset, void* p) {
+	(void)fd;
+	(void)from_pid;
+	(void)info;
+	(void)offset;
+	(void)p;
+
+	int32_t sz = (_fbinfo.depth/8) * _fbinfo.width * _fbinfo.height;
+	if(size < sz)
+		return 0;
+	
+	if(_fbinfo.depth == 32) 
+		memcpy((void*)_fbinfo.pointer, buf, size);
+	else if(_fbinfo.depth == 16) 
+		dup16((uint16_t*)_fbinfo.pointer, (uint32_t*)buf, _fbinfo.width, _fbinfo.height);
+	return sz;
+}	
+
+static int fb_fcntl(int fd, int from_pid, fsinfo_t* info, int cmd, proto_t* in, proto_t* out, void* p) {
+	(void)fd;
+	(void)from_pid;
+	(void)info;
+	(void)in;
+	(void)p;
+
+	if(cmd == CNTL_INFO) {
+		proto_add_int(out, _fbinfo.width);
+		proto_add_int(out, _fbinfo.height);
+	}
+	return 0;
+}
+
 static int fb_flush(int fd, int from_pid, fsinfo_t* info, void* p) {
 	(void)fd;
 	(void)from_pid;
@@ -68,19 +100,6 @@ static int fb_umount(fsinfo_t* info, void* p) {
 	return 0;
 }
 
-static int fb_fcntl(int fd, int from_pid, fsinfo_t* info, int cmd, proto_t* in, proto_t* out, void* p) {
-	(void)fd;
-	(void)from_pid;
-	(void)info;
-	(void)in;
-	(void)p;
-
-	if(cmd == CNTL_INFO) {
-		proto_add(out, &_fbinfo, sizeof(fbinfo_t));	
-	}
-	return 0;
-}
-
 int main(int argc, char** argv) {
 	fsinfo_t mnt_point;
 	const char* mnt_name = argc > 1 ? argv[1]: "/dev/fb0";
@@ -104,6 +123,7 @@ int main(int argc, char** argv) {
 	dev.mount = fb_mount;
 	dev.dma = fb_dma;
 	dev.flush = fb_flush;
+	dev.write = fb_write;
 	dev.fcntl = fb_fcntl;
 	dev.umount = fb_umount;
 

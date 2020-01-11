@@ -65,8 +65,8 @@ int32_t console_reset(console_t* console) {
 
 int32_t console_init(console_t* console) {
 	console->g = NULL;
-	console->bg_color = argb(0xff, 0x22, 0x22, 0x66);
-	console->fg_color = argb(0xff, 0xaa, 0xbb, 0xaa);
+	console->bg_color = argb(0xff, 0x0, 0x0, 0x0);
+	console->fg_color = argb(0xff, 0xaa, 0xaa, 0xaa);
 	console->font = font_by_name("8x16");
 	memset(&console->content, 0, sizeof(content_t));
 	return 0;
@@ -104,6 +104,13 @@ void console_refresh(console_t* console) {
 		}
 		i++;
 	}	
+}
+
+void console_clear(console_t* console) {
+	console->content.size = 0;
+	console->content.start_line = 0;
+	console->content.line = 0;
+	console_refresh(console);
 }
 
 static void move_line(console_t* console) {

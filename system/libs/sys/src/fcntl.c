@@ -25,9 +25,13 @@ int open(const char* fname, int oflag) {
 	fsinfo_t info;
 
 	if(vfs_get(fname, &info) != 0) {
-		if((oflag & O_CREAT) != 0)
+		if((oflag & O_CREAT) != 0) {
 			if(vfs_create(fname, &info, FS_TYPE_FILE) != 0)
 				return -1;
+		}
+		else  {
+			return -1;	
+		}	
 	}
 	
 	mount_t mount;

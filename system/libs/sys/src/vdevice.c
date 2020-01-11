@@ -75,6 +75,7 @@ static void do_read(vdevice_t* dev, int from_pid, proto_t *in, void* p) {
 			buf = malloc(size);
 		else
 			buf = shm_map(shm_id);
+
 		if(buf == NULL) {
 			proto_add_int(&out, -1);
 		}
@@ -101,23 +102,39 @@ static void do_read(vdevice_t* dev, int from_pid, proto_t *in, void* p) {
 }
 
 static void do_write(vdevice_t* dev, int from_pid, proto_t *in, void* p) {
-	int32_t size, offset;
+	int32_t size, offset, shm_id;
 	fsinfo_t info;
 	int fd = proto_read_int(in);
 	memcpy(&info, proto_read(in, NULL), sizeof(fsinfo_t));
-	void* data = proto_read(in, &size);
 	offset = proto_read_int(in);
-
+	shm_id = proto_read_int(in);
+	
 	proto_t out;
 	proto_init(&out, NULL, 0);
 
 	if(dev != NULL && dev->write != NULL) {
-		size = dev->write(fd, from_pid, &info, data, size, offset, p);
-		proto_add_int(&out, size);
+		void* data;
+		if(shm_id < 0)
+			data = proto_read(in, &size);
+		else {
+			size = proto_read_int(in);
+			data = shm_map(shm_id);
+		}
+
+		if(data == NULL) {
+			proto_add_int(&out, -1);
+		}
+		else {
+			size = dev->write(fd, from_pid, &info, data, size, offset, p);
+			proto_add_int(&out, size);
+		}
+		if(shm_id >= 0)
+			shm_unmap(shm_id);
 	}
 	else {
 		proto_add_int(&out, -1);
 	}
+
 	ipc_send(from_pid, &out, in->id);
 	proto_clear(&out);
 }

@@ -1,5 +1,6 @@
-RASPI2_GPIOD_OBJS = $(ROOT_DIR)/sbin/dev/arch/raspi2/gpiod/gpiod.o \
-		$(ROOT_DIR)/sbin/dev/arch/raspi2/gpiod/gpio_arch.o
+RASPI2_GPIOD_OBJS = \
+	$(ROOT_DIR)/sbin/dev/arch/raspi2/lib/gpio_arch.o \
+	$(ROOT_DIR)/sbin/dev/arch/raspi2/gpiod/gpiod.o 
 
 RASPI2_GPIOD = $(TARGET_DIR)/$(ROOT_DIR)/sbin/dev/raspi2/gpiod
 

@@ -26,7 +26,7 @@ void gpio_arch_pull(int32_t num, int32_t pull_dir) {
 	uint32_t n = 150; while(n > 0) n--; //delay 150
 	put32((uint32_t)GPIO_PUD+(index<<2), 1<<shift); /* enable ppud clock */
 	n = 150; while(n > 0) n--; //delay 150
-	*GPIO_PUD = GPIO_PULL_NONE;
+	*GPIO_PUD = 0;
 	put32((uint32_t)GPIO_PUD+(index<<2), 0); /* disable ppud clock */
 }
 

@@ -9,6 +9,7 @@ const char* vfs_fullname(const char* fname);
 int vfs_new_node(fsinfo_t* info);
 int vfs_add(fsinfo_t* to, fsinfo_t* info);
 int vfs_del(fsinfo_t* info);
+int vfs_access(const char* fname);
 int vfs_get(const char* fname, fsinfo_t* info);
 int vfs_get_by_fd(int fd, fsinfo_t* info);
 int vfs_first_kid(fsinfo_t* info, fsinfo_t* ret);

@@ -4,9 +4,10 @@
 #include <cmain.h>
 #include <string.h>
 #include <vfs.h>
+#include <gpio.h>
 #include <vdevice.h>
 #include <dev/device.h>
-#include "gpio_arch.h"
+#include "../lib/gpio_arch.h"
 
 static int mount(fsinfo_t* mnt_point, mount_info_t* mnt_info, void* p) {
 	(void)p;
@@ -14,7 +15,6 @@ static int mount(fsinfo_t* mnt_point, mount_info_t* mnt_info, void* p) {
 	memset(&info, 0, sizeof(fsinfo_t));
 	strcpy(info.name, mnt_point->name);
 	info.type = FS_TYPE_DEV;
-	info.data = DEV_NULL;
 	vfs_new_node(&info);
 
 	if(vfs_mount(mnt_point, &info, mnt_info) != 0) {
@@ -36,17 +36,27 @@ static int gpio_fcntl(int fd, int from_pid, fsinfo_t* info, int cmd, proto_t* in
 	(void)info;
 	(void)p;
 
-	int gpio_num = proto_read_int(in);
+	int32_t gpio_num = proto_read_int(in);
 	if(cmd == 0) { //0: config
-		int v = proto_read_int(in);
-		gpio_arch_config(gpio_num, v);
+		int32_t v = proto_read_int(in);
+		if(v == GPIO_MODE_INPUT)
+			gpio_arch_config(gpio_num, GPIO_INPUT);
+		else if(v == GPIO_MODE_OUTPUT)
+			gpio_arch_config(gpio_num, GPIO_OUTPUT);
+		else
+			gpio_arch_config(gpio_num, v);
 	}
 	else if(cmd == 1) { //1: pull
-		int v = proto_read_int(in);
-		gpio_arch_pull(gpio_num, v);
+		int32_t v = proto_read_int(in);
+		if(v == GPIO_PULL_DOWN)
+			gpio_arch_pull(gpio_num, 1);
+		else if(v == GPIO_PULL_UP)
+			gpio_arch_pull(gpio_num, 2);
+		else
+			gpio_arch_pull(gpio_num, v);
 	}
 	else if(cmd == 2) { //2: write
-		int v = proto_read_int(in);
+		int32_t v = proto_read_int(in);
 		gpio_arch_write(gpio_num, v);
 	}
 	else if(cmd == 3) { //3: read

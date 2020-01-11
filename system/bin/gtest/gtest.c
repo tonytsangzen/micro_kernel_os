@@ -22,7 +22,7 @@ int main(int argc, char* argv[]) {
 
 	xscreen_t scr;
 	x_screen_info(&scr);
-	x_t* x = x_open(100, 100, 600, 200, "gtest", X_STYLE_NORMAL);
+	x_t* x = x_open(10, 10, 220, 200, "gtest", X_STYLE_NORMAL);
 	int top = 0;
 	x->data = &top;
 	x->on_focus = on_focus;
@@ -40,11 +40,11 @@ int main(int argc, char* argv[]) {
 				break;
 		}
 		if(top == 1) {
-			snprintf(str, 31, "paint = %d", i++);
+			snprintf(str, 10, "paint = %d", i++);
 			graph_t* g = x_get_graph(x);
 			clear(g, argb_int(0xff0000ff));
-			draw_text(g, 30, 10, str, font, 0xffffffff);
-			draw_text(g, 30, g->h-20, "press anykey to quit......", font_by_name("8x16"), 0xffffffff);
+			draw_text(g, 10, 10, str, font, 0xffffffff);
+			draw_text(g, 10, g->h-20, "press anykey to quit......", font_by_name("8x16"), 0xffffffff);
 			x_release_graph(x, g);
 			x_update(x);
 		}

@@ -397,6 +397,7 @@ static int x_update_info(int fd, int from_pid, proto_t* in, x_t* x) {
 		if(p == NULL) 
 			return -1;
 		view->g = graph_new(p, xinfo.r.w, xinfo.r.h);
+		clear(view->g, 0xffffffff);
 	}
 	view->dirty = 1;
 	x->need_repaint = 1;
@@ -562,7 +563,9 @@ static int x_init(x_t* x) {
 	}
 	x->mouse_fd = fd;
 
-	fd = open("/dev/fb0", O_RDONLY);
+	fd = open("/dev/fb1", O_RDWR);
+	if(fd < 0) 
+		fd = open("/dev/fb0", O_RDWR);
 	if(fd < 0) {
 		close(x->keyb_fd);
 		close(x->mouse_fd);
@@ -586,7 +589,6 @@ static int x_init(x_t* x) {
 		return -1;
 	}
 
-	fbinfo_t info;
 	proto_t out;
 	proto_init(&out, NULL, 0);
 
@@ -598,8 +600,9 @@ static int x_init(x_t* x) {
 		return -1;
 	}
 
-	proto_read_to(&out, &info, sizeof(fbinfo_t));
-	x->g = graph_new(gbuf, info.width, info.height);
+	int w = proto_read_int(&out);
+	int h = proto_read_int(&out);
+	x->g = graph_new(gbuf, w, h);
 	proto_clear(&out);
 	x->shm_id = id;
 	x_dirty(x);
@@ -608,8 +611,8 @@ static int x_init(x_t* x) {
 	x->cursor.size.h = 15;
 	x->cursor.offset.x = 8;
 	x->cursor.offset.y = 8;
-	x->cursor.cpos.x = info.width/2;
-	x->cursor.cpos.y = info.height/2; 
+	x->cursor.cpos.x = w/2;
+	x->cursor.cpos.y = h/2; 
 
 	x->lock = proc_lock_new();
 	return 0;
