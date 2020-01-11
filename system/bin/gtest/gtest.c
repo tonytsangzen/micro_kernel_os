@@ -40,7 +40,7 @@ int main(int argc, char* argv[]) {
 				break;
 		}
 		if(top == 1) {
-			snprintf(str, 10, "paint = %d", i++);
+			snprintf(str, 31, "paint = %d", i++);
 			graph_t* g = x_get_graph(x);
 			clear(g, argb_int(0xff0000ff));
 			draw_text(g, 10, 10, str, font, 0xffffffff);
