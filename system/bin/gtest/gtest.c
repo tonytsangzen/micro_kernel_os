@@ -28,7 +28,7 @@ int main(int argc, char* argv[]) {
 	x->on_focus = on_focus;
 	x->on_unfocus = on_unfocus;
 
-	font_t* font = font_by_name("16x32");
+	font_t* font = font_by_name("12x24");
 
 	char str[32];
 	int i=0;
