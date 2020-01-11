@@ -45,10 +45,8 @@ static int _gpio_fd = -1;
 #define KEY_V_UP        0x1
 #define KEY_V_DOWN      0x2
 #define KEY_V_LEFT      0x4
-#define KEY_V_LEFT      0x4
 #define KEY_V_RIGHT     0x8
 #define KEY_V_PRESS     0x10
-
 #define KEY_V_1         0x20
 #define KEY_V_2         0x40
 #define KEY_V_3         0x80
