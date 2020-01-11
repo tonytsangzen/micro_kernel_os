@@ -57,6 +57,7 @@ typedef struct {
 	int fb_fd;
 	int keyb_fd;
 	int mouse_fd;
+	int joystick_fd;
 	int xwm_pid;
 	int shm_id;
 	int dirty;
@@ -563,6 +564,9 @@ static int x_init(x_t* x) {
 	}
 	x->mouse_fd = fd;
 
+	fd = open("/dev/joystick", O_RDONLY);
+	x->joystick_fd = fd;
+
 	fd = open("/dev/fb1", O_RDWR);
 	if(fd < 0) 
 		fd = open("/dev/fb0", O_RDWR);
@@ -745,6 +749,33 @@ static int mouse_handle(x_t* x, int8_t state, int32_t rx, int32_t ry) {
 	return -1;
 }
 
+#define KEY_V_UP        0x1
+#define KEY_V_DOWN      0x2
+#define KEY_V_LEFT      0x4
+#define KEY_V_RIGHT     0x8
+#define KEY_V_PRESS     0x10
+
+static void joy_2_mouse(int key, int8_t* mv) {
+	mv[0] = mv[1] = mv[2] = 0;
+	switch(key) {
+	case KEY_V_UP:
+		mv[2] -= 10;
+		return;
+	case KEY_V_DOWN:
+		mv[2] += 10;
+		return;
+	case KEY_V_LEFT:
+		mv[1] -= 10;
+		return;
+	case KEY_V_RIGHT:
+		mv[1] += 10;
+		return;
+	case KEY_V_PRESS:
+		mv[0] = 2;
+		return;
+	}	
+}
+
 static void read_thread(void* p) {
 	x_t* x = (x_t*)p;
 	while(1) {
@@ -778,6 +809,19 @@ static void read_thread(void* p) {
 			x->need_repaint = 1;
 			proc_unlock(x->lock);
 		}
+
+		//read joystick
+		if(x->joystick_fd >= 0) {
+			uint8_t j;
+			if(read(x->joystick_fd, &j, 1) == 1 && j != 0) {
+				joy_2_mouse(j, mv);
+				proc_lock(x->lock);
+				mouse_handle(x, mv[0], mv[1], mv[2]);
+				x->need_repaint = 1;
+				proc_unlock(x->lock);
+			}
+		}
+
 		sleep(0);
 	}
 }
