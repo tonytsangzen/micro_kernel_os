@@ -10,6 +10,49 @@
 
 static console_t _console;
 
+#ifdef WITH_LCDHAT
+#include "lcdhat/lcdhat.h"
+void init_console(void) {
+	console_init(&_console);
+	lcd_init();
+	graph_t* g = graph_new(NULL, LCD_WIDTH, LCD_HEIGHT);
+	_console.g = g;
+//	_console.font = font_by_name("5x12");
+	console_reset(&_console);
+}
+
+static void flush_console(void) {
+	lcd_flush(_console.g->buffer, LCD_WIDTH*LCD_HEIGHT*4);
+}
+
+void setup_console(void) {
+}
+
+#else
+
+void init_console(void) {
+	console_init(&_console);
+}
+
+void setup_console(void) {
+	if(_console.g != NULL) //already setup
+		return;
+
+	fbinfo_t* info = fb_get_info();
+	if(info->pointer == 0)
+		return;
+
+	graph_t* g = graph_new(NULL, info->width, info->height);
+	_console.g = g;
+	console_reset(&_console);
+}
+
+static void flush_console(void) {
+	fbinfo_t* info = fb_get_info();
+	fb_dev_write(NULL, _console.g->buffer, info->width * info->height * 4);
+}
+#endif
+
 void uart_out(const char* s) {
 	uart_write(NULL, s, strlen(s));
 }
@@ -39,13 +82,16 @@ void printf(const char *format, ...) {
 	uart_out(buf->cstr);
 	act_led(0);
 	if(_console.g != NULL) {
-		fbinfo_t* info = fb_get_info();
 		console_put_string(&_console, buf->cstr);
-		fb_dev_write(NULL, _console.g->buffer, info->width * info->height * (info->depth / 8));
+		flush_console();
 	}
 	str_free(buf);
 }
 
-inline console_t* get_console(void) {
-	return &_console;
+void close_console(void) {
+	if(_console.g != NULL) {
+		graph_free(_console.g);
+		console_close(&_console);
+	}
 }
+

@@ -99,72 +99,60 @@ void _kernel_entry_c(context_t* ctx) {
 	hw_info_init();
 	init_kernel_vm();  
 
-	console_t* console = get_console();
-	console_init(console);
-
-#ifdef EPAPER
-	epaper_test();
-	while(1);
-#endif
 	kevent_init();
 	dev_init();
 	uart_dev_init();
-	uart_out("\n\n"
-			"------Ewok micro-kernel-------\n"
+	km_init();
+
+	init_console();
+
+	printf("\n\n"
+			"===Ewok micro-kernel===\n"
 			"kernel: mmu inited\n");
 
-	km_init();
-	printf("kernel: %39s [ok] : %dMB\n", "kmalloc initing", 
-		div_u32(KMALLOC_END-KMALLOC_BASE, 1*MB));
+	printf("kernel: kmalloc initing\n");
+	printf("  [ok] : %dMB\n", div_u32(KMALLOC_END-KMALLOC_BASE, 1*MB));
 
-	printf("kernel: %39s ", "framebuffer initing");
+	printf("kernel: framebuffer initing\n");
 	if(fb_dev_init(1280, 720, 16) == 0) {
 		fbinfo_t* info = fb_get_info();
-		printf("[OK] : %dx%d %dbits, addr: 0x%X, size:%d\n", 
+		printf(  "[OK] : %dx%d %dbits, addr: 0x%X, size:%d\n", 
 				info->width, info->height, info->depth,
 				info->pointer, info->size);
 		memset((void*)info->pointer, 0, info->size);
-		graph_t* g = graph_new(NULL, info->width, info->height);
-		console->g = g;
-		console_reset(console);
 	}
-	else
-		printf("[Failed!]\n");
+	else {
+		printf("  [Failed!]\n");
+	}
 
-	printf("kernel: %39s ", "whole allocable memory initing");
+	setup_console(); 
+
 	init_allocable_mem(); //init the rest allocable memory VM
-	printf("[ok] : %dMB\n", div_u32(get_free_mem_size(), 1*MB));
+	printf("kernel: init allocable memory: %dMB\n", div_u32(get_free_mem_size(), 1*MB));
 
-
-
-	printf("kernel: devices initing\n");
+	printf("kernel: devices initing.\n");
 	dev_setup();
 
-	printf("kernel: %39s ", "global env initing");
 	init_global();
-	printf("[ok]\n");
+	printf("kernel: global env inited.\n");
 
-	printf("kernel: %39s ", "share memory initing");
 	shm_init();
-	printf("[ok]\n");
+	printf("kernel: share memory inited.\n");
 
-	printf("kernel: %39s ", "processes initing");
 	procs_init();
-	printf("[ok]\n");
+	printf("kernel: processes inited.\n");
 
-	printf("kernel: %39s ", "vfs initing");
 	fs_init();
-	printf("[ok]\n");
+	printf("kernel: vfs inited\n");
 
-	printf("kernel: %39s ", "irq initing");
 	irq_init();
-	printf("[ok]\n");
+	printf("kernel: irq inited\n");
 
-	printf("kernel: %39s ", "loading first process(init)");
+	printf("kernel: loading init");
 	if(load_init() != 0) 
-		printf("[failed!]\n");
+		printf(" [failed!]\n");
 	else
-		printf("[ok]\n");
+		printf(" [ok]\n");
 	
 	printf("kernel: start timer.\n");
 	timer_set_interval(0, 0x400); 
@@ -173,8 +161,5 @@ void _kernel_entry_c(context_t* ctx) {
 		__asm__("MOV r0, #0; MCR p15,0,R0,c7,c0,4"); // CPU enter WFI state
 	}
 
-	if(console->g != NULL) {
-		graph_free(console->g);
-		console_close(console);
-	}
+	close_console();
 }

@@ -64,11 +64,20 @@ ARCH_OBJS = \
 	${ARCH_DIR}/${ARCH}/timer.o \
 	${ARCH_DIR}/${ARCH}/mailbox.o 
 
+ifeq ($(MACH),raspi)
+CFLAGS += -I${ARCH_DIR}/${ARCH}/extra -DWITH_LCDHAT
+
+ARCH_OBJS += ${ARCH_DIR}/${ARCH}/extra/lib/gpio_arch.o  \
+	${ARCH_DIR}/${ARCH}/extra/lib/spi_arch.o \
+	${ARCH_DIR}/${ARCH}/extra/lcdhat/lcdhat.o 
+endif
+
 LIB_DIR = lib
 LIB_OBJS = \
 	${LIB_DIR}/graph.o \
 	${LIB_DIR}/font.o \
 	${LIB_DIR}/font8x16.o \
+	${LIB_DIR}/font5x12.o \
 	${LIB_DIR}/console.o \
 	${LIB_DIR}/kstring.o \
 	${LIB_DIR}/buffer.o \

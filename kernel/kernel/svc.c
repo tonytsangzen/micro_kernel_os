@@ -35,7 +35,7 @@ static int32_t sys_dev_block_read(uint32_t type, int32_t bid) {
 
 static void sys_kprint(const char* s, int32_t len) {
 	(void)len;
-	uart_write(NULL, s, strlen(s));
+	printf(s);
 }
 
 static int32_t sys_dev_block_write(uint32_t type, int32_t bid, const char* buf) {
