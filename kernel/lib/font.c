@@ -6,7 +6,6 @@ extern font_t font_5x12;
 
 static font_item_t _fonts[] ={
 	{"8x16", &font_8x16},
-	{"5x12", &font_5x12},
 	{"", NULL}
 };
 

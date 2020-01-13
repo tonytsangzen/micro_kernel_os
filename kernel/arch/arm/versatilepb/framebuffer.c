@@ -6,7 +6,7 @@
 static fbinfo_t _fbinfo __attribute__((aligned(16)));
 
 int32_t fb_dev_init(uint32_t w, uint32_t h, uint32_t dep) {
-	memset(&_fb_info, 0, sizeof(fbinfo_t));
+	memset(&_fbinfo, 0, sizeof(fbinfo_t));
 	dep = 32;
 	_fbinfo.width = w;
 	_fbinfo.height = h;
