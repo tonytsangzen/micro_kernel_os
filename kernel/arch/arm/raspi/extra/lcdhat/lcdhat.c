@@ -281,15 +281,15 @@ void lcd_init(void) {
 	LCD_1in3_Clear(0x0);
 }
 
-void  lcd_flush(const void* buf, uint32_t size) {
-	if(size < LCD_WIDTH * LCD_HEIGHT* 4)
+void  lcd_flush(graph_t* g) {
+	if(g->w != LCD_WIDTH  || g->h !=  LCD_HEIGHT)
 		return;
 
 	LCD_1in3_SetWindows(0, 0, LCD_WIDTH, LCD_HEIGHT);
 	LCD_DC_1;
 	spi_arch_activate(1);
 
-	uint32_t *src = (uint32_t*)buf;
+	uint32_t *src = (uint32_t*)g->buffer;
 	uint32_t sz = LCD_HEIGHT*LCD_WIDTH;
 	UWORD i;
 	UWORD color;

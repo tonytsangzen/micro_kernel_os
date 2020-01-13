@@ -22,7 +22,7 @@ void init_console(void) {
 }
 
 static void flush_console(void) {
-	lcd_flush(_console.g->buffer, LCD_WIDTH*LCD_HEIGHT*4);
+	lcd_flush(_console.g);
 }
 
 void setup_console(void) {
