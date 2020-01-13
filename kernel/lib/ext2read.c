@@ -142,13 +142,6 @@ static inline int32_t get_block_in_group(ext2_t* ext2, int32_t block, int32_t in
 	return block - (index * ext2->super.s_blocks_per_group);
 }
 
-static int32_t get_gd(ext2_t* ext2, int32_t index, GD* gd) {
-	char buf[BLOCK_SIZE];
-	ext2->read_block(index*ext2->super.s_blocks_per_group+2, buf);
-	memcpy(gd, buf, sizeof(GD));
-	return 0;
-}
-
 static int32_t ext2_read(ext2_t* ext2, INODE* node, char *buf, int32_t nbytes, int32_t offset) {
 	//(2) count = 0
 	// avil = fileSize - OFT's offset // number of bytes still available in file.
@@ -219,7 +212,7 @@ static INODE* get_node_by_ino(ext2_t* ext2, int32_t ino, char* buf) {
 	int32_t bgid = get_gd_index_by_ino(ext2, ino);
 	ino = get_ino_in_group(ext2, ino, bgid);
 
-	ext2->read_block(bgid*ext2->super.s_blocks_per_group + ext2->gds[bgid].bg_inode_table + 	((ino-1)/8), buf);
+	ext2->read_block(ext2->gds[bgid].bg_inode_table + 	((ino-1)/8), buf);
 	return ((INODE *)buf) + ((ino-1) % 8);
 }
 
@@ -293,7 +286,8 @@ static int32_t ext2_ino_by_fname(ext2_t* ext2, const char* filename) {
 
 	ino = -1;
 	for (j=0; j<ext2->group_num; j++) {
-		if(ext2->read_block((ext2->super.s_blocks_per_group * j) + ext2->gds[j].bg_inode_table, buf) == 0) {// read first inode block
+		//if(ext2->read_block((ext2->super.s_blocks_per_group * j) + ext2->gds[j].bg_inode_table+i, buf) == 0) {// read first inode block
+		if(ext2->read_block(ext2->gds[j].bg_inode_table, buf) == 0) {
 			ip = ((INODE *)buf) + 1;   // ip->root inode #2
 			/* serach for system name */
 			for (i=0; i<depth; i++) {
@@ -334,6 +328,28 @@ static inline int32_t get_gd_num(ext2_t* ext2) {
 	return ret;
 }
 
+static int32_t get_gds(ext2_t* ext2) {
+	int32_t gd_size = sizeof(GD);
+	ext2->group_num = get_gd_num(ext2);
+	ext2->gds = (GD*)kmalloc(gd_size * ext2->group_num);
+
+	int32_t gd_num = div_u32(EXT2_BLOCK_SIZE, gd_size);
+	int32_t i = 2;
+	int32_t index = 0;
+	while(true) {
+		char buf[EXT2_BLOCK_SIZE];
+		ext2->read_block(ext2->super.s_blocks_per_group+i, buf);
+		for(int32_t j=0; j<gd_num; j++) {
+			memcpy(&ext2->gds[index], buf+(j*gd_size), gd_size);
+			index++;
+			if(index >= ext2->group_num)
+				return 0;
+		}
+		i++;
+	}
+	return 0;
+}
+
 static int32_t ext2_init(ext2_t* ext2, read_block_func_t read_block, write_block_func_t write_block) {
 	_sector_buf = NULL;
 	_sector_buf_num = 0;
@@ -349,13 +365,7 @@ static int32_t ext2_init(ext2_t* ext2, read_block_func_t read_block, write_block
 	ext2->read_block(1, buf);
 	memcpy(&ext2->super, buf, sizeof(SUPER));
 
-	ext2->group_num = get_gd_num(ext2);
-	ext2->gds = (GD*)kmalloc(sizeof(GD) * ext2->group_num);
-
-	int32_t i;
-	for(i=0; i<ext2->group_num; i++) {
-		get_gd(ext2, i, &ext2->gds[i]);
-	}
+	get_gds(ext2);
 
 	_sector_buf_num = ext2->super.s_blocks_count*(EXT2_BLOCK_SIZE/SECTOR_SIZE);
 	_sector_buf = sector_buf_new(_sector_buf_num);
