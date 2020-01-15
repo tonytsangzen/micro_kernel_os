@@ -339,7 +339,8 @@ static void x_repaint(x_t* x) {
 
 	xview_t* view = x->view_head;
 	while(view != NULL) {
-		draw_view(x, view);
+		if(view->xinfo.visible)
+			draw_view(x, view);
 		view = view->next;
 	}
 	draw_cursor(x);
@@ -374,6 +375,20 @@ static int x_update(int fd, int from_pid, x_t* x) {
 	return 0;
 }
 
+static int x_set_visible(int fd, int from_pid, proto_t* in, x_t* x) {
+	if(fd < 0)
+		return -1;
+	
+	xview_t* view = x_get_view(x, fd, from_pid);
+	if(view == NULL)
+		return -1;
+
+	view->xinfo.visible = proto_read_int(in);
+	view->dirty = 1;
+	x_dirty(x);
+	return 0;
+}
+
 static int x_update_info(int fd, int from_pid, proto_t* in, x_t* x) {
 	xinfo_t xinfo;
 	int sz = sizeof(xinfo_t);
@@ -398,7 +413,7 @@ static int x_update_info(int fd, int from_pid, proto_t* in, x_t* x) {
 		if(p == NULL) 
 			return -1;
 		view->g = graph_new(p, xinfo.r.w, xinfo.r.h);
-		clear(view->g, 0xffffffff);
+		clear(view->g, 0xff000000);
 	}
 	view->dirty = 1;
 	x->need_repaint = 1;
@@ -408,6 +423,7 @@ static int x_update_info(int fd, int from_pid, proto_t* in, x_t* x) {
 			view->xinfo.r.y != xinfo.r.y ||
 			view->xinfo.r.w != xinfo.r.w ||
 			view->xinfo.r.h != xinfo.r.h ||
+			view->xinfo.visible != xinfo.visible ||
 			(view->xinfo.style & X_STYLE_ALPHA) != 0) {
 		x_dirty(x);
 	}
@@ -498,6 +514,9 @@ static int xserver_fcntl(int fd, int from_pid, fsinfo_t* info, int cmd, proto_t*
 	}	
 	else if(cmd == X_CNTL_UPDATE_INFO) {
 		return x_update_info(fd, from_pid, in, x);
+	}
+	else if(cmd == X_CNTL_SET_VISIBLE) {
+		return x_set_visible(fd, from_pid, in, x);
 	}
 	else if(cmd == X_CNTL_GET_INFO) {
 		return x_get_info(fd, from_pid, x, out);
@@ -648,8 +667,14 @@ static xview_t* get_mouse_owner(x_t* x, int* win_frame_pos) {
 		*win_frame_pos = -1;
 
 	while(view != NULL) {
-		if(x->cursor.cpos.x >= view->xinfo.r.x && x->cursor.cpos.x < (view->xinfo.r.x+view->xinfo.r.w) &&
-				x->cursor.cpos.y >= view->xinfo.r.y && x->cursor.cpos.y < (view->xinfo.r.y+view->xinfo.r.h))
+		if(!view->xinfo.visible) {
+			view = view->prev;
+			continue;
+		}
+		if(x->cursor.cpos.x >= view->xinfo.r.x &&
+				x->cursor.cpos.x < (view->xinfo.r.x+view->xinfo.r.w) &&
+				x->cursor.cpos.y >= view->xinfo.r.y &&
+				x->cursor.cpos.y < (view->xinfo.r.y+view->xinfo.r.h))
 			return view;
 		int pos = get_win_frame_pos(x, view);
 		if(pos >= 0) {
@@ -780,6 +805,16 @@ static void joy_2_mouse(int key, int8_t* mv) {
 	}	
 }
 
+static xview_t* get_top_view(x_t* x) {
+	xview_t* ret = x->view_tail; 
+	while(ret != NULL) {
+		if(ret->xinfo.visible)
+			return ret;
+		ret = ret->prev;
+	}
+	return NULL;
+}
+
 static void read_thread(void* p) {
 	x_t* x = (x_t*)p;
 	while(1) {
@@ -792,7 +827,7 @@ static void read_thread(void* p) {
 		//read keyb
 		int rd = read_nblock(x->keyb_fd, &v, 1);
 		if(rd == 1) {
-			xview_t* topv = x->view_tail; 
+			xview_t* topv = get_top_view(x);
 			if(topv != NULL) {
 				xview_event_t* e = (xview_event_t*)malloc(sizeof(xview_event_t));
 				e->next = NULL;

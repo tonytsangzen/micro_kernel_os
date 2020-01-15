@@ -117,6 +117,8 @@ static int run(int argc, char* argv[]) {
 	xp->on_focus = console_focus;
 	xp->on_unfocus = console_unfocus;
 
+	x_set_visible(xp, true);
+
 	int krd = 0;
 	xevent_t xev;
 	while(xp->closed == 0) {

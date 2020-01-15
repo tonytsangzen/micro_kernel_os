@@ -159,7 +159,6 @@ include $(ROOT_DIR)/bin/shell/build.mk
 include $(ROOT_DIR)/bin/pwd/build.mk
 include $(ROOT_DIR)/bin/cat/build.mk
 include $(ROOT_DIR)/bin/ps/build.mk
-include $(ROOT_DIR)/bin/xjoy/build.mk
 include $(ROOT_DIR)/bin/echo/build.mk
 include $(ROOT_DIR)/bin/ls/build.mk
 include $(ROOT_DIR)/bin/dump/build.mk

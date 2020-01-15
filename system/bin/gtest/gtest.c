@@ -28,6 +28,8 @@ int main(int argc, char* argv[]) {
 	x->on_focus = on_focus;
 	x->on_unfocus = on_unfocus;
 
+	x_set_visible(x, true);
+
 	font_t* font = font_by_name("12x24");
 
 	char str[32];

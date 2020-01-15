@@ -99,10 +99,10 @@ int main(int argc, char* argv[]) {
 			items.icon_size * items.num,
 			"launcher", X_STYLE_NO_FRAME | X_STYLE_ALPHA | X_STYLE_NO_FOCUS);
 	draw(x, &items);
+	x_set_visible(x, true);
 
 	xinfo_t xinfo;
 	x_get_info(x, &xinfo);
-
 	xevent_t xev;
 	while(1) {
 		if(x_get_event(x, &xev) == 0) {

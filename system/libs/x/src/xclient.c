@@ -195,3 +195,13 @@ int x_screen_info(xscreen_t* scr) {
 	proto_clear(&out);
 	return ret;
 }
+
+int x_set_visible(x_t* x, bool visible) {
+	proto_t in;
+	proto_init(&in, NULL, 0);
+	proto_add_int(&in, visible);
+
+	int res = fcntl_raw(x->fd, X_CNTL_SET_VISIBLE, &in, NULL);
+	proto_clear(&in);
+	return res;
+}

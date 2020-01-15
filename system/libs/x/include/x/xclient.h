@@ -30,5 +30,6 @@ void     x_close(x_t* x);
 int      x_get_event(x_t* x, xevent_t* ev);
 int      x_screen_info(xscreen_t* scr);
 int      x_is_top(x_t* x);
+int      x_set_visible(x_t* x, bool visible);
 
 #endif

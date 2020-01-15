@@ -10,7 +10,8 @@ enum {
 	X_CNTL_SCR_INFO,
 	X_CNTL_WORKSPACE,
 	X_CNTL_IS_TOP,
-	X_CNTL_GET_EVT
+	X_CNTL_GET_EVT,
+	X_CNTL_SET_VISIBLE
 };
 
 enum {
@@ -31,6 +32,7 @@ typedef struct {
 	int shm_id;
 	int style;
 	int state;
+	bool visible;
 	grect_t r;
 	char title[X_TITLE_MAX];
 } xinfo_t;

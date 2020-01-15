@@ -34,6 +34,8 @@ int main(int argc, char* argv[]) {
 	x_release_graph(x, g);
 	x_update(x);
 
+	x_set_visible(x, true);
+
 	xevent_t xev;
 	while(x->closed == 0) {
 		if(x_get_event(x, &xev) == 0) {
