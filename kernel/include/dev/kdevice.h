@@ -33,7 +33,6 @@ typedef struct st_dev {
 } dev_t;
 
 extern void    dev_init(void);
-extern void    dev_setup(void);
 extern dev_t*  get_dev(uint32_t type);
 extern int32_t dev_ready_read(dev_t* dev);
 extern int32_t dev_ready_write(dev_t* dev);

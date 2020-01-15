@@ -56,9 +56,16 @@ void uart_out(const char* s) {
 	uart_write(NULL, s, strlen(s));
 }
 
+#define PRINTF_BUF_MAX 128
+static uint32_t _len = 0;
+static char _buf[PRINTF_BUF_MAX];
 static void outc(char c, void* p) {
-	str_t* buf = (str_t*)p;
-	str_addc(buf, c);
+	(void)p;
+	if((_len+1) >= PRINTF_BUF_MAX)
+		return;
+	_buf[_len] = c;
+	_len++;
+	_buf[_len] = 0;
 }
 
 void flush_actled(void) {
@@ -74,17 +81,14 @@ void printf(const char *format, ...) {
 
 	va_list ap;
 	va_start(ap, format);
-	str_t* buf = str_new("");
-	v_printf(outc, buf, format, ap);
-	va_end(ap);
-	
-	uart_out(buf->cstr);
+	_len = 0;
+	v_printf(outc, NULL, format, ap);
+	uart_out(_buf);
 	act_led(0);
 	if(_console.g != NULL) {
-		console_put_string(&_console, buf->cstr);
+		console_put_string(&_console, _buf);
 		flush_console();
 	}
-	str_free(buf);
 }
 
 void close_console(void) {

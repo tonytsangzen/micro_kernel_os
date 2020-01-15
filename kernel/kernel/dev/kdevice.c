@@ -30,13 +30,6 @@ static int32_t char_dev_ready_read(dev_t* dev) {
 */
 
 void dev_init(void) {
-	int32_t i;
-	for(i=0; i<DEV_NUM; i++) {
-		memset(&_devs[i], 0, sizeof(dev_t));
-	}
-}
-
-void dev_setup(void) {
 	dev_t* dev;
 
 	printf("    %16s ", "mmc_sd");

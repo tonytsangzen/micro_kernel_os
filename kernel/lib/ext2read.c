@@ -14,64 +14,17 @@
 
 static partition_t _partition;
 
-typedef struct {
-	uint32_t index;
-	uint32_t* data;
-} sector_buf_t;
-
-static sector_buf_t* _sector_buf = NULL;
-static uint32_t _sector_buf_num = 0;
-
-sector_buf_t* sector_buf_new(uint32_t num) {
-	sector_buf_t* ret = (sector_buf_t*)kmalloc(sizeof(sector_buf_t)*num);
-	memset(ret, 0, sizeof(sector_buf_t)*num);
-	return ret;
-}
-
-void sector_buf_free(sector_buf_t* buffer, uint32_t num) {
-	while(num > 0) {
-		if(buffer[num-1].data != NULL)
-			kfree(buffer[num-1].data);
-		num--;
-	}
-	kfree(buffer);
-}
-
-void sector_buf_set(uint32_t index, const void* data) {
-	index -= _partition.start_sector;
-	if(_sector_buf == NULL || index >= _sector_buf_num)
-		return;
-	if(_sector_buf[index].data != NULL)
-		kfree(_sector_buf[index].data);
-	_sector_buf[index].data = kmalloc(SECTOR_SIZE);
-	memcpy(_sector_buf[index].data, data, SECTOR_SIZE);
-}
-
-void* sector_buf_get(uint32_t index) {
-	index -= _partition.start_sector;
-	if(_sector_buf == NULL || index >= _sector_buf_num)
-		return NULL;
-	return _sector_buf[index].data;
-}
-
 static int32_t sd_read_sector(int32_t sector, void* buf) {
 	dev_t* dev = get_dev(DEV_SD);
 	if(dev == NULL) 
 		return -1;
 
-	void* b = sector_buf_get(sector);
-	if(b != NULL) {
-		memcpy(buf, b, SECTOR_SIZE);
-		return 0;
-	}
-	
 	if(dev_block_read(dev, sector) != 0)
 		return -1;
 
 	while(1) {
 		sd_dev_handle(dev);
 		if(dev_block_read_done(dev, buf)  == 0) {
-			sector_buf_set(sector, buf);
 			break;
 		}
 	}
@@ -351,9 +304,6 @@ static int32_t get_gds(ext2_t* ext2) {
 }
 
 static int32_t ext2_init(ext2_t* ext2, read_block_func_t read_block, write_block_func_t write_block) {
-	_sector_buf = NULL;
-	_sector_buf_num = 0;
-
 	if(read_partition() != 0 || partition_get(1, &_partition) != 0) {
 		memset(&_partition, 0, sizeof(partition_t));
 	}
@@ -367,16 +317,11 @@ static int32_t ext2_init(ext2_t* ext2, read_block_func_t read_block, write_block
 
 	get_gds(ext2);
 
-	_sector_buf_num = ext2->super.s_blocks_count*(EXT2_BLOCK_SIZE/SECTOR_SIZE);
-	_sector_buf = sector_buf_new(_sector_buf_num);
 	return 0;
 }
 
 static void ext2_quit(ext2_t* ext2) {
 	kfree(ext2->gds);
-	sector_buf_free(_sector_buf, _sector_buf_num);
-	_sector_buf = NULL;
-	_sector_buf_num = 0;
 }
 
 static void* ext2_readfile(ext2_t* ext2, const char* fname, int32_t* size) {

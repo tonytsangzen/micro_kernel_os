@@ -98,20 +98,16 @@ void _kernel_entry_c(context_t* ctx) {
 	(void)ctx;
 	hw_info_init();
 	init_kernel_vm();  
-
-	kevent_init();
-	dev_init();
-	uart_dev_init();
 	km_init();
 
+	uart_dev_init();
 	init_console();
 
 	printf("\n\n"
-			"===Ewok micro-kernel===\n"
-			"kernel: mmu inited\n");
-
-	printf("kernel: kmalloc initing\n");
-	printf("  [ok] : %dMB\n", div_u32(KMALLOC_END-KMALLOC_BASE, 1*MB));
+			"===Ewok micro-kernel===\n\n"
+			"kernel: mmu inited\n"
+			"kernel: uart inited\n");
+	printf("kernel: kmalloc initing  [ok] : %dMB\n", div_u32(KMALLOC_END-KMALLOC_BASE, 1*MB));
 
 	printf("kernel: framebuffer initing\n");
 	if(fb_dev_init(1280, 720, 16) == 0) {
@@ -131,7 +127,9 @@ void _kernel_entry_c(context_t* ctx) {
 	printf("kernel: init allocable memory: %dMB\n", div_u32(get_free_mem_size(), 1*MB));
 
 	printf("kernel: devices initing.\n");
-	dev_setup();
+	dev_init();
+
+	kevent_init();
 
 	init_global();
 	printf("kernel: global env inited.\n");
