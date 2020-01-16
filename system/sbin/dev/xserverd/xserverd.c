@@ -862,7 +862,6 @@ static void read_thread(void* p) {
 				proc_unlock(x->lock);
 			}
 		}
-
 		sleep(0);
 	}
 }

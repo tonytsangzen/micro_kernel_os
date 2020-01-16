@@ -42,6 +42,7 @@ static int32_t gets(str_t* buf) {
 				break;
 			str_addc(buf, c);
 		}
+		usleep(10000);
 	}
 	str_addc(buf, 0);
 	return 0;
