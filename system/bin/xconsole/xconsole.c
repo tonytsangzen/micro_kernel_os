@@ -92,13 +92,8 @@ static int run(int argc, char* argv[]) {
 	memset(&_conf, 0, sizeof(conf_t));
 	read_config(&_conf, "/etc/x/xconsole.conf");
 
-	int fd = open("/dev/keyb0", O_RDONLY);
-	if(fd < 0)
-		return -1;
-
 	x_t* xp = x_open(0, 0, _conf.w, _conf.h, "xconsole", 0);
 	if(xp == NULL) {
-		close(fd);
 		return -1;
 	}
 
@@ -157,7 +152,6 @@ static int run(int argc, char* argv[]) {
 		x_update(xp);
 	}
 
-	close(fd);
 	console_close(&console);
 	x_release_graph(xp, g);
 	x_close(xp);

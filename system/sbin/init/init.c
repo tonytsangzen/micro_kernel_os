@@ -172,12 +172,6 @@ static void run_procs(void) {
 	}
 	close(fd);
 }
-/*
-static void tty_shell(void) {
-	setenv("CONSOLE_ID", "tty");
-	run("/bin/session");
-}
-*/
 
 int main(int argc, char** argv) {
 	(void)argc;

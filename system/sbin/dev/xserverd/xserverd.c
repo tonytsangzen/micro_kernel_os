@@ -244,6 +244,7 @@ static void push_view(x_t* x, xview_t* view) {
 		else {
 			x->view_tail = x->view_head = view;
 		}
+
 		xview_event_t* e = (xview_event_t*)malloc(sizeof(xview_event_t));
 		e->next = NULL;
 		e->event.type = XEVT_WIN;
@@ -260,7 +261,9 @@ static void push_view(x_t* x, xview_t* view) {
 			x->view_tail = x->view_head = view;
 		}
 	}
-	x_dirty(x);
+
+	if(view->xinfo.visible)
+		x_dirty(x);
 }
 
 static void x_del_view(x_t* x, xview_t* view) {
@@ -572,15 +575,9 @@ static int x_init(x_t* x) {
 	x->view_tail = NULL;	
 
 	int fd = open("/dev/keyb0", O_RDONLY);
-	if(fd < 0)
-		return -1;
 	x->keyb_fd = fd;
 
 	fd = open("/dev/mouse0", O_RDONLY);
-	if(fd < 0) {
-		close(x->keyb_fd);
-		return -1;
-	}
 	x->mouse_fd = fd;
 
 	fd = open("/dev/joystick", O_RDONLY);
@@ -825,33 +822,38 @@ static void read_thread(void* p) {
 
 		int8_t v;
 		//read keyb
-		int rd = read_nblock(x->keyb_fd, &v, 1);
-		if(rd == 1) {
-			xview_t* topv = get_top_view(x);
-			if(topv != NULL) {
-				xview_event_t* e = (xview_event_t*)malloc(sizeof(xview_event_t));
-				e->next = NULL;
-				e->event.type = XEVT_KEYB;
-				e->event.value.keyboard.value = v;
+		if(x->keyb_fd >= 0) {
+			int rd = read_nblock(x->keyb_fd, &v, 1);
+			if(rd == 1) {
+				xview_t* topv = get_top_view(x);
+				if(topv != NULL) {
+					xview_event_t* e = (xview_event_t*)malloc(sizeof(xview_event_t));
+					e->next = NULL;
+					e->event.type = XEVT_KEYB;
+					e->event.value.keyboard.value = v;
 
-				proc_lock(x->lock);
-				x_push_event(topv, e, 1);
-				proc_unlock(x->lock);
+					proc_lock(x->lock);
+					x_push_event(topv, e, 1);
+					proc_unlock(x->lock);
+				}
 			}
 		}
 
 		//read mouse
-		int8_t mv[4];
-		if(read_nblock(x->mouse_fd, mv, 4) == 4) {
-			proc_lock(x->lock);
-			mouse_handle(x, mv[0], mv[1], mv[2]);
-			x->need_repaint = 1;
-			proc_unlock(x->lock);
+		if(x->mouse_fd >= 0) {
+			int8_t mv[4];
+			if(read_nblock(x->mouse_fd, mv, 4) == 4) {
+				proc_lock(x->lock);
+				mouse_handle(x, mv[0], mv[1], mv[2]);
+				x->need_repaint = 1;
+				proc_unlock(x->lock);
+			}
 		}
 
 		//read joystick
 		if(x->joystick_fd >= 0) {
 			uint8_t j;
+			int8_t mv[4];
 			if(read(x->joystick_fd, &j, 1) == 1 && j != 0) {
 				joy_2_mouse(j, mv);
 				proc_lock(x->lock);
