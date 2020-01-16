@@ -121,7 +121,7 @@ static int win_event_handle(x_t* x, xevent_t* ev) {
 			x->on_unfocus(x, x->data);
 	}
 	else if(ev->value.window.event == XEVT_WIN_MAX) {
-	/*
+		/*
 		if(x->xinfo.state == X_STATE_MAX) {
 			x_resize_to(x, x->xinfo_prev.r.x, 
 					x->xinfo_prev.r.y,
