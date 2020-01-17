@@ -47,7 +47,7 @@ int main(int argc, char** argv) {
 	vdevice_t dev;
 	memset(&dev, 0, sizeof(vdevice_t));
 	strcpy(dev.name, "null");
-	//dev.mount = null_mount;
+	dev.mount = null_mount;
 	dev.read = null_read;
 	dev.write = null_write;
 	dev.umount = null_umount;
