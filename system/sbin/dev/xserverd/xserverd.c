@@ -798,9 +798,11 @@ static void read_thread(void* p) {
 			continue;
 		}
 
-		int8_t v;
+		bool slp = true;
+
 		//read keyb
 		if(x->keyb_fd >= 0) {
+			int8_t v;
 			int rd = read_nblock(x->keyb_fd, &v, 1);
 			if(rd == 1) {
 				xview_t* topv = get_top_view(x);
@@ -813,6 +815,7 @@ static void read_thread(void* p) {
 					proc_lock(x->lock);
 					x_push_event(topv, e, 1);
 					proc_unlock(x->lock);
+					slp = false;
 				}
 			}
 		}
@@ -825,6 +828,7 @@ static void read_thread(void* p) {
 				mouse_handle(x, mv[0], mv[1], mv[2]);
 				x->need_repaint = 1;
 				proc_unlock(x->lock);
+				slp = false;
 			}
 		}
 
@@ -838,9 +842,12 @@ static void read_thread(void* p) {
 				mouse_handle(x, mv[0], mv[1], mv[2]);
 				x->need_repaint = 1;
 				proc_unlock(x->lock);
+				slp = false;
 			}
 		}
-		sleep(0);
+
+		if(slp)
+			usleep(3000);
 	}
 }
 
