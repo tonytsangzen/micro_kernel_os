@@ -53,7 +53,7 @@ typedef struct {
 } x_current_t;
 
 typedef struct {
-	int actived;
+	bool actived;
 	int fb_fd;
 	int keyb_fd;
 	int mouse_fd;
@@ -308,7 +308,7 @@ static inline void draw_cursor(x_t* x) {
 }
 
 static void x_repaint(x_t* x) {
-	if(x->actived == 0 ||
+	if(!x->actived ||
 			(x->need_repaint == 0 && x->dirty == 0))
 		return;
 	x->need_repaint = 0;
@@ -793,7 +793,7 @@ static xview_t* get_top_view(x_t* x) {
 static void read_thread(void* p) {
 	x_t* x = (x_t*)p;
 	while(1) {
-		if(x->actived == 0)  {
+		if(!x->actived)  {
 			usleep(10000);
 			continue;
 		}
@@ -847,16 +847,7 @@ static void read_thread(void* p) {
 
 static int xserver_loop_step(void* p) {
 	x_t* x = (x_t*)p;
-	const char* cc = get_global("current_console");
-	if(cc[0] == 'x') {
-		if(x->actived == 0) {
-			x_dirty(x);
-		}
-		x->actived = 1;
-	}
-	else
-		x->actived = 0;
-	if(x->actived == 0)  {
+	if(!x->actived)  {
 		usleep(10000);
 		return -1;
 	}
@@ -895,6 +886,7 @@ int main(int argc, char** argv) {
 
 	x_t x;
 	if(x_init(&x) == 0) {
+		x.actived = true;
 		x.xwm_pid = pid;
 		thread_create(read_thread, &x);
 		device_run(&dev, mnt_point, FS_TYPE_DEV, &x, 0);
