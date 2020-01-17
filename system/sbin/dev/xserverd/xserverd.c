@@ -72,23 +72,6 @@ typedef struct {
 	proc_lock_t lock;
 } x_t;
 
-static int xserver_mount(fsinfo_t* mnt_point, void* p) {
-	(void)p;
-
-	fsinfo_t info;
-	memset(&info, 0, sizeof(fsinfo_t));
-	strcpy(info.name, mnt_point->name);
-	info.type = FS_TYPE_DEV;
-	vfs_new_node(&info);
-
-	if(vfs_mount(mnt_point, &info) != 0) {
-		vfs_del(&info);
-		return -1;
-	}
-	memcpy(mnt_point, &info, sizeof(fsinfo_t));
-	return 0;
-}
-
 static void draw_win_frame(x_t* x, xview_t* view) {
 	if((view->xinfo.style & X_STYLE_NO_FRAME) != 0)
 		return;
@@ -902,7 +885,6 @@ int main(int argc, char** argv) {
 	vdevice_t dev;
 	memset(&dev, 0, sizeof(vdevice_t));
 	strcpy(dev.name, "xserver");
-	dev.mount = xserver_mount;
 	dev.fcntl = xserver_fcntl;
 	//dev.close = xserver_close;
 	dev.closed = xserver_closed;

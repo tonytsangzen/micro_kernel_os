@@ -8,25 +8,9 @@
 #include <syscall.h>
 #include <dev/device.h>
 
-static int mount(fsinfo_t* mnt_point, void* p) {
-	(void)p;
-	fsinfo_t info;
-	memset(&info, 0, sizeof(fsinfo_t));
-	strcpy(info.name, mnt_point->name);
-	info.type = FS_TYPE_DEV;
-	info.data = DEV_NULL;
-	vfs_new_node(&info);
-
-	if(vfs_mount(mnt_point, &info) != 0) {
-		vfs_del(&info);
-		return -1;
-	}
-	memcpy(mnt_point, &info, sizeof(fsinfo_t));
-	return 0;
-}
-
 static int null_mount(fsinfo_t* info, void* p) {
-	mount(info, p);
+	(void)info;
+	(void)p;
 	return 0;
 }
 
@@ -52,6 +36,7 @@ static int null_write(int fd, int from_pid, fsinfo_t* info, const void* buf, int
 }
 
 static int null_umount(fsinfo_t* info, void* p) {
+	(void)info;
 	(void)p;
 	return 0;
 }
@@ -62,7 +47,7 @@ int main(int argc, char** argv) {
 	vdevice_t dev;
 	memset(&dev, 0, sizeof(vdevice_t));
 	strcpy(dev.name, "null");
-	dev.mount = null_mount;
+	//dev.mount = null_mount;
 	dev.read = null_read;
 	dev.write = null_write;
 	dev.umount = null_umount;

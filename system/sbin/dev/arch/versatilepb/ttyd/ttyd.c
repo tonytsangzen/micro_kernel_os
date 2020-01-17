@@ -51,22 +51,6 @@ int32_t uart_write(const void* data, uint32_t size) {
   return i;
 }
 
-static int tty_mount(fsinfo_t* mnt_point, void* p) {
-	(void)p;
-	fsinfo_t info;
-	memset(&info, 0, sizeof(fsinfo_t));
-	strcpy(info.name, mnt_point->name);
-	info.type = FS_TYPE_DEV;
-	vfs_new_node(&info);
-
-	if(vfs_mount(mnt_point, &info) != 0) {
-		vfs_del(&info);
-		return -1;
-	}
-	memcpy(mnt_point, &info, sizeof(fsinfo_t));
-	return 0;
-}
-
 static int tty_read(int fd, int from_pid, fsinfo_t* info, void* buf, int size, int offset, void* p) {
 	(void)fd;
 	(void)from_pid;
@@ -101,7 +85,6 @@ int main(int argc, char** argv) {
 	vdevice_t dev;
 	memset(&dev, 0, sizeof(vdevice_t));
 	strcpy(dev.name, "tty");
-	dev.mount = tty_mount;
 	dev.read = tty_read;
 	dev.write = tty_write;
 

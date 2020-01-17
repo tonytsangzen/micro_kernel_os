@@ -363,6 +363,29 @@ static void handle(vdevice_t* dev, int from_pid, proto_t *in, void* p) {
 	}
 }
 
+static int do_mount(vdevice_t* dev, fsinfo_t* mnt_point, int type, void* p) {
+	(void)p;
+	fsinfo_t info;
+	memset(&info, 0, sizeof(fsinfo_t));
+	strcpy(info.name, mnt_point->name);
+	info.type = type;
+	vfs_new_node(&info);
+
+	if(dev->mount != NULL) {
+		if(dev->mount(&info, p) != 0) {
+			vfs_del(&info);
+			return -1;
+		}
+	}
+
+	if(vfs_mount(mnt_point, &info) != 0) {
+		vfs_del(&info);
+		return -1;
+	}
+	memcpy(mnt_point, &info, sizeof(fsinfo_t));
+	return 0;
+}
+
 int device_run(vdevice_t* dev, const char* mnt_point, int mnt_type, void* p, int block) {
 	if(dev == NULL)
 		return -1;
@@ -374,10 +397,8 @@ int device_run(vdevice_t* dev, const char* mnt_point, int mnt_type, void* p, int
 		else
 			vfs_get(mnt_point, &mnt_point_info);
 
-		if(dev->mount != NULL) {
-			if(dev->mount(&mnt_point_info, p) != 0)
-				return -1;
-		}
+		if(do_mount(dev, &mnt_point_info, mnt_type, p) != 0)
+			return -1;
 	}
 
 	proto_t pkg;

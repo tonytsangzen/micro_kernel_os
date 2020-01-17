@@ -304,29 +304,6 @@ typedef struct {
 
 static int _gpio_fd = -1;
 
-static int mount(fsinfo_t* mnt_point, void* p) {
-	(void)p;
-	fsinfo_t info;
-	memset(&info, 0, sizeof(fsinfo_t));
-	strcpy(info.name, mnt_point->name);
-	info.type = FS_TYPE_DEV;
-	info.data = DEV_NULL;
-	vfs_new_node(&info);
-
-	if(vfs_mount(mnt_point, &info) != 0) {
-		vfs_del(&info);
-		return -1;
-	}
-	memcpy(mnt_point, &info, sizeof(fsinfo_t));
-	return 0;
-}
-
-static int lcd_mount(fsinfo_t* info, void* p) {
-	mount(info, p);
-	return 0;
-}
-
-
 static void  do_flush(const void* buf, uint32_t size) {
 	if(size < LCD_WIDTH * LCD_HEIGHT* 4)
 		return;
@@ -420,7 +397,6 @@ int main(int argc, char** argv) {
 	vdevice_t dev;
 	memset(&dev, 0, sizeof(vdevice_t));
 	strcpy(dev.name, "lcd");
-	dev.mount = lcd_mount;
 	dev.write = lcd_write;
 	dev.flush = lcd_flush;
 	dev.dma   = lcd_dma;

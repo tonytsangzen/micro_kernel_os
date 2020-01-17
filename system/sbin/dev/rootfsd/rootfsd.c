@@ -81,34 +81,19 @@ static int32_t add_nodes(ext2_t* ext2, INODE *ip, fsinfo_t* dinfo) {
 	return 0;
 }
 
-static int mount(fsinfo_t* mnt_point, ext2_t* ext2) {
-	fsinfo_t info;
-	memset(&info, 0, sizeof(fsinfo_t));
-	strcpy(info.name, mnt_point->name);
-	info.type = FS_TYPE_DIR;
-	info.data = 2; //ext2 root block at 2
-	vfs_new_node(&info);
-
+static int sdext2_mount(fsinfo_t* info, void* p) {
+	ext2_t* ext2 = (ext2_t*)p;
 	INODE root_node;
 	ext2_node_by_fname(ext2, "/", &root_node);
-	add_nodes(ext2, &root_node, &info);
-
-	if(vfs_mount(mnt_point, &info) != 0) {
-		vfs_del(&info);
-		return -1;
-	}
-	memcpy(mnt_point, &info, sizeof(fsinfo_t));
-	return 0;
-}
-
-static int sdext2_mount(fsinfo_t* info, void* p) {
-	mount(info, (ext2_t*)p);
+	add_nodes(ext2, &root_node, info);
 	return 0;
 }
 
 static int sdext2_create(fsinfo_t* info_to, fsinfo_t* info, void* p) {
 	ext2_t* ext2 = (ext2_t*)p;
 	int32_t ino_to = (int32_t)info_to->data;
+	if(ino_to == 0) ino_to = 2;
+
 	INODE inode_to;
 	if(ext2_node_by_ino(ext2, ino_to, &inode_to) != 0) {
 		return -1;
@@ -133,6 +118,7 @@ static int sdext2_read(int fd, int from_pid, fsinfo_t* info, void* buf, int size
 
 	ext2_t* ext2 = (ext2_t*)p;
 	int32_t ino = (int32_t)info->data;
+	if(ino == 0) ino = 2;
 	INODE inode;
 	if(ext2_node_by_ino(ext2, ino, &inode) != 0) {
 		return -1;
@@ -155,6 +141,7 @@ static int sdext2_write(int fd, int from_pid, fsinfo_t* info, const void* buf, i
 
 	ext2_t* ext2 = (ext2_t*)p;
 	int32_t ino = (int32_t)info->data;
+	if(ino == 0) ino = 2;
 	INODE inode;
 	if(ext2_node_by_ino(ext2, ino, &inode) != 0) {
 		return -1;

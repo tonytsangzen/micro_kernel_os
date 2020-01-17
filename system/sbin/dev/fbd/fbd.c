@@ -19,22 +19,6 @@ typedef struct {
 
 static fbinfo_t _fbinfo;
 
-static int fb_mount(fsinfo_t* mnt_point, void* p) {
-	(void)p;
-	fsinfo_t info;
-	memset(&info, 0, sizeof(fsinfo_t));
-	strcpy(info.name, mnt_point->name);
-	info.type = FS_TYPE_DEV;
-	vfs_new_node(&info);
-
-	if(vfs_mount(mnt_point, &info) != 0) {
-		vfs_del(&info);
-		return -1;
-	}
-	memcpy(mnt_point, &info, sizeof(fsinfo_t));
-	return 0;
-}
-
 static int fb_write(int fd, int from_pid, fsinfo_t* info, const void* buf, int size, int offset, void* p) {
 	(void)fd;
 	(void)from_pid;
@@ -112,7 +96,6 @@ int main(int argc, char** argv) {
 	vdevice_t dev;
 	memset(&dev, 0, sizeof(vdevice_t));
 	strcpy(dev.name, "framebuffer");
-	dev.mount = fb_mount;
 	dev.dma = fb_dma;
 	dev.flush = fb_flush;
 	dev.write = fb_write;
