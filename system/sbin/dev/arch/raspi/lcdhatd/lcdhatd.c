@@ -317,14 +317,13 @@ static void  do_flush(const void* buf, uint32_t size) {
 	uint32_t *src = (uint32_t*)buf;
 	uint32_t sz = LCD_HEIGHT*LCD_WIDTH;
 	UWORD i;
-	UWORD color;
 
 	for (i = 0; i < sz; i++) {
-		uint32_t s = src[i];
-		uint8_t b = (s >> 16) & 0xff;
-		uint8_t g = (s >> 8)  & 0xff;
-		uint8_t r = s & 0xff;
-		color = ((r >> 3) <<11) | ((g >> 3) << 6) | (b >> 3);
+		register uint32_t s = src[i];
+		register uint8_t b = (s >> 16) & 0xff;
+		register uint8_t g = (s >> 8)  & 0xff;
+		register uint8_t r = s & 0xff;
+		UWORD color = ((r >> 3) <<11) | ((g >> 3) << 6) | (b >> 3);
 		color = ((color<<8)&0xff00)|(color>>8);
 		uint8_t* p = (uint8_t*)&color;
 		spi_arch_transfer(p[0]);
