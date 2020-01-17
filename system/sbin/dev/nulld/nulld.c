@@ -53,7 +53,6 @@ static int null_write(int fd, int from_pid, fsinfo_t* info, const void* buf, int
 
 static int null_umount(fsinfo_t* info, void* p) {
 	(void)p;
-	vfs_umount(info);
 	return 0;
 }
 

@@ -123,12 +123,6 @@ static int keyb_read(int fd, int from_pid, fsinfo_t* info, void* buf, int size, 
 	return 1;
 }
 
-static int keyb_umount(fsinfo_t* info, void* p) {
-	(void)p;
-	vfs_umount(info);
-	return 0;
-}
-
 int main(int argc, char** argv) {
 	const char* mnt_point = argc > 1 ? argv[1]: "/dev/keyb0";
 
@@ -139,7 +133,6 @@ int main(int argc, char** argv) {
 	strcpy(dev.name, "keyb");
 	dev.mount = keyb_mount;
 	dev.read = keyb_read;
-	dev.umount = keyb_umount;
 
 	device_run(&dev, mnt_point, FS_TYPE_DEV, NULL, 1);
 	return 0;

@@ -195,12 +195,6 @@ static int mouse_read(int fd, int from_pid, fsinfo_t* info, void* buf, int size,
 	return 4;
 }
 
-static int mouse_umount(fsinfo_t* info, void* p) {
-	(void)p;
-	vfs_umount(info);
-	return 0;
-}
-
 int main(int argc, char** argv) {
 	const char* mnt_point = argc > 1 ? argv[1]: "/dev/mouse0";
 
@@ -210,7 +204,6 @@ int main(int argc, char** argv) {
 	strcpy(dev.name, "mouse");
 	dev.mount = mouse_mount;
 	dev.read = mouse_read;
-	dev.umount = mouse_umount;
 
 	device_run(&dev, mnt_point, FS_TYPE_DEV, NULL, 1);
 	return 0;

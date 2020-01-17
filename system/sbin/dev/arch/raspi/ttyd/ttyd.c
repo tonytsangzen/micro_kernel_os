@@ -109,12 +109,6 @@ static int tty_write(int fd, int from_pid, fsinfo_t* info, const void* buf, int 
 	return uart_write(buf, size);
 }
 
-static int tty_umount(fsinfo_t* info, void* p) {
-	(void)p;
-	vfs_umount(info);
-	return 0;
-}
-
 int main(int argc, char** argv) {
 	const char* mnt_point = argc > 1 ? argv[1]: "/dev/tty0";
 	_mmio_base = mmio_map();
@@ -125,7 +119,6 @@ int main(int argc, char** argv) {
 	dev.mount = tty_mount;
 	dev.read = tty_read;
 	dev.write = tty_write;
-	dev.umount = tty_umount;
 
 	device_run(&dev, mnt_point, FS_TYPE_DEV, NULL, 1);
 	return 0;

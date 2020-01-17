@@ -397,5 +397,6 @@ int device_run(vdevice_t* dev, const char* mnt_point, int mnt_type, void* p, int
 	if(mnt_point != NULL && dev->umount != NULL) {
 		return dev->umount(&mnt_point_info, p);
 	}
+	vfs_uumount(&mnt_point_info);
 	return 0;
 }

@@ -402,12 +402,6 @@ static int lcd_fcntl(int fd, int from_pid, fsinfo_t* info, int cmd, proto_t* in,
 	return 0;
 }
 
-static int lcd_umount(fsinfo_t* info, void* p) {
-	(void)p;
-	vfs_umount(info);
-	return 0;
-}
-
 int main(int argc, char** argv) {
 	lcd_init();
 
@@ -431,7 +425,6 @@ int main(int argc, char** argv) {
 	dev.flush = lcd_flush;
 	dev.dma   = lcd_dma;
 	dev.fcntl = lcd_fcntl;
-	dev.umount = lcd_umount;
 
 	device_run(&dev, mnt_point, FS_TYPE_DEV, &dma, 1);
 

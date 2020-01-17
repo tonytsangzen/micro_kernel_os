@@ -81,12 +81,6 @@ static int joystick_read(int fd, int from_pid, fsinfo_t* info, void* buf, int si
 	return 1;
 }
 
-static int joystick_umount(fsinfo_t* info, void* p) {
-	(void)p;
-	vfs_umount(info);
-	return 0;
-}
-
 static void init_gpio(void) {
 	gpio_config(_gpio_fd, KEY_UP_PIN, 0);//input	
 	gpio_pull(_gpio_fd, KEY_UP_PIN, 2); //pull up
@@ -126,7 +120,6 @@ int main(int argc, char** argv) {
 	strcpy(dev.name, "joystick");
 	dev.mount = joystick_mount;
 	dev.read = joystick_read;
-	dev.umount = joystick_umount;
 
 	device_run(&dev, mnt_point, FS_TYPE_DEV, NULL, 1);
 	close(_gpio_fd);

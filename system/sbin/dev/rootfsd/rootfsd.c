@@ -175,12 +175,6 @@ static int sdext2_unlink(fsinfo_t* info, const char* fname, void* p) {
 	return ext2_unlink(ext2, fname);
 }
 
-static int sdext2_umount(fsinfo_t* info, void* p) {
-	(void)p;
-	vfs_umount(info);
-	return 0;
-}
-
 int main(int argc, char** argv) {
 	(void)argc;
 	(void)argv;
@@ -193,7 +187,6 @@ int main(int argc, char** argv) {
 	dev.write = sdext2_write;
 	dev.create = sdext2_create;
 	dev.unlink = sdext2_unlink;
-	dev.umount = sdext2_umount;
 
 	sd_init();
 	ext2_t ext2;

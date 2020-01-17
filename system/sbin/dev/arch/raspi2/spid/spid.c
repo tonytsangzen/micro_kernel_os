@@ -30,12 +30,6 @@ static int spi_mount(fsinfo_t* info, void* p) {
 	return 0;
 }
 
-static int spi_umount(fsinfo_t* info, void* p) {
-	(void)p;
-	vfs_umount(info);
-	return 0;
-}
-
 static int spi_write(int fd, int from_pid, fsinfo_t* info, const void* buf, int size, int offset, void* p) {
 	(void)fd;
 	(void)from_pid;
@@ -67,7 +61,6 @@ int main(int argc, char** argv) {
 	strcpy(dev.name, "spi");
 	dev.mount = spi_mount;
 	dev.write = spi_write;
-	dev.umount = spi_umount;
 
 	device_run(&dev, mnt_point, FS_TYPE_DEV, NULL, 1);
 	return 0;

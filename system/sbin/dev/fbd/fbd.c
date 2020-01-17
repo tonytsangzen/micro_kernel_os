@@ -94,12 +94,6 @@ static int fb_dma(int fd, int from_pid, fsinfo_t* info, int* size, void* p) {
 	return dma->shm_id;
 }
 
-static int fb_umount(fsinfo_t* info, void* p) {
-	(void)p;
-	vfs_umount(info);
-	return 0;
-}
-
 int main(int argc, char** argv) {
 	const char* mnt_name = argc > 1 ? argv[1]: "/dev/fb0";
 
@@ -123,7 +117,6 @@ int main(int argc, char** argv) {
 	dev.flush = fb_flush;
 	dev.write = fb_write;
 	dev.fcntl = fb_fcntl;
-	dev.umount = fb_umount;
 
 	device_run(&dev, mnt_name, FS_TYPE_DEV, &dma, 1);
 

@@ -89,12 +89,6 @@ static int xserver_mount(fsinfo_t* mnt_point, void* p) {
 	return 0;
 }
 
-static int xserver_umount(fsinfo_t* info, void* p) {
-	(void)p;
-	vfs_umount(info);
-	return 0;
-}
-
 static void draw_win_frame(x_t* x, xview_t* view) {
 	if((view->xinfo.style & X_STYLE_NO_FRAME) != 0)
 		return;
@@ -914,7 +908,6 @@ int main(int argc, char** argv) {
 	dev.closed = xserver_closed;
 	dev.open = xserver_open;
 	dev.loop_step= xserver_loop_step;
-	dev.umount = xserver_umount;
 
 	x_t x;
 	if(x_init(&x) == 0) {

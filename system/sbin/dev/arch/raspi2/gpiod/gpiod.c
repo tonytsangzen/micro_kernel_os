@@ -66,12 +66,6 @@ static int gpio_fcntl(int fd, int from_pid, fsinfo_t* info, int cmd, proto_t* in
 	return 0;
 }
 
-static int gpio_umount(fsinfo_t* info, void* p) {
-	(void)p;
-	vfs_umount(info);
-	return 0;
-}
-
 int main(int argc, char** argv) {
 	gpio_arch_init();
 
@@ -82,7 +76,6 @@ int main(int argc, char** argv) {
 	strcpy(dev.name, "gpio");
 	dev.mount = gpio_mount;
 	dev.fcntl = gpio_fcntl;
-	dev.umount = gpio_umount;
 
 	device_run(&dev, mnt_point, FS_TYPE_DEV, NULL, 1);
 	return 0;

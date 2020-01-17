@@ -48,12 +48,6 @@ static int actled_write(int fd, int from_pid, fsinfo_t* info, const void* buf, i
 	return 1;
 }
 
-static int actled_umount(fsinfo_t* info, void* p) {
-	(void)p;
-	vfs_umount(info);
-	return 0;
-}
-
 int main(int argc, char** argv) {
 	_gpio_fd = open("/dev/gpio", O_RDWR);
 	if(_gpio_fd < 0)
@@ -67,7 +61,6 @@ int main(int argc, char** argv) {
 	strcpy(dev.name, "actled");
 	dev.mount = actled_mount;
 	dev.write = actled_write;
-	dev.umount = actled_umount;
 
 	device_run(&dev, mnt_point, FS_TYPE_DEV, NULL, 1);
 	close(_gpio_fd);
