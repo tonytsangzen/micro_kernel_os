@@ -29,7 +29,8 @@ static int _gpio_fd = -1;
 #define KEY_V_2         0x40
 #define KEY_V_3         0x80
 
-static int joystick_read(int fd, int from_pid, fsinfo_t* info, void* buf, int size, int offset, void* p) {
+static int joystick_read(int fd, int from_pid, fsinfo_t* info,
+		void* buf, int size, int offset, void* p) {
 	(void)fd;
 	(void)from_pid;
 	(void)info;

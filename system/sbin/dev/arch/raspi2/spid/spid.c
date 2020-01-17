@@ -9,7 +9,8 @@
 #include "../lib/spi_arch.h"
 #include "../lib/gpio_arch.h"
 
-static int spi_write(int fd, int from_pid, fsinfo_t* info, const void* buf, int size, int offset, void* p) {
+static int spi_write(int fd, int from_pid, fsinfo_t* info,
+		const void* buf, int size, int offset, void* p) {
 	(void)fd;
 	(void)from_pid;
 	(void)info;

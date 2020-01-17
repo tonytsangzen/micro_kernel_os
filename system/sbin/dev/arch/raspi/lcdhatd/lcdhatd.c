@@ -354,7 +354,8 @@ static int lcd_dma(int fd, int from_pid, fsinfo_t* info, int* size, void* p) {
 	return dma->shm_id;
 }
 
-static int lcd_write(int fd, int from_pid, fsinfo_t* info, const void* buf, int size, int offset, void* p) {
+static int lcd_write(int fd, int from_pid, fsinfo_t* info, 
+		const void* buf, int size, int offset, void* p) {
 	(void)fd;
 	(void)from_pid;
 	(void)info;
@@ -365,7 +366,8 @@ static int lcd_write(int fd, int from_pid, fsinfo_t* info, const void* buf, int 
 	return size;
 }
 
-static int lcd_fcntl(int fd, int from_pid, fsinfo_t* info, int cmd, proto_t* in, proto_t* out, void* p) {
+static int lcd_fcntl(int fd, int from_pid, fsinfo_t* info, 
+		int cmd, proto_t* in, proto_t* out, void* p) {
 	(void)fd;
 	(void)from_pid;
 	(void)info;

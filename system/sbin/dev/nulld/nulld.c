@@ -8,7 +8,14 @@
 #include <syscall.h>
 #include <dev/device.h>
 
-static int null_read(int fd, int from_pid, fsinfo_t* info, void* buf, int size, int offset, void* p) {
+static int null_read(int fd,
+		int from_pid,
+		fsinfo_t* info,
+		void* buf,
+		int size,
+		int offset,
+		void* p) {
+
 	(void)fd;
 	(void)from_pid;
 	(void)info;
@@ -19,7 +26,14 @@ static int null_read(int fd, int from_pid, fsinfo_t* info, void* buf, int size, 
 	return 0;	
 }
 
-static int null_write(int fd, int from_pid, fsinfo_t* info, const void* buf, int size, int offset, void* p) {
+static int null_write(int fd, 
+		int from_pid,
+		fsinfo_t* info,
+		const void* buf,
+		int size,
+		int offset,
+		void* p) {
+		
 	(void)fd;
 	(void)from_pid;
 	(void)info;

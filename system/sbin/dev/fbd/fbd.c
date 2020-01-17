@@ -19,7 +19,14 @@ typedef struct {
 
 static fbinfo_t _fbinfo;
 
-static int fb_write(int fd, int from_pid, fsinfo_t* info, const void* buf, int size, int offset, void* p) {
+static int fb_write(int fd,
+		int from_pid, 
+		fsinfo_t* info, 
+		const void* buf,
+		int size,
+		int offset,
+		void* p) {
+
 	(void)fd;
 	(void)from_pid;
 	(void)info;
@@ -37,7 +44,14 @@ static int fb_write(int fd, int from_pid, fsinfo_t* info, const void* buf, int s
 	return sz;
 }	
 
-static int fb_fcntl(int fd, int from_pid, fsinfo_t* info, int cmd, proto_t* in, proto_t* out, void* p) {
+static int fb_fcntl(int fd, 
+		int from_pid,
+		fsinfo_t* info, 
+		int cmd, 
+		proto_t* in, 
+		proto_t* out,
+		void* p) {
+
 	(void)fd;
 	(void)from_pid;
 	(void)info;

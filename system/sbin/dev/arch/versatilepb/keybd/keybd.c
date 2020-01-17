@@ -90,7 +90,8 @@ static int32_t keyb_handle(void) {
 	return c;
 }
 
-static int keyb_read(int fd, int from_pid, fsinfo_t* info, void* buf, int size, int offset, void* p) {
+static int keyb_read(int fd, int from_pid, fsinfo_t* info, 
+		void* buf, int size, int offset, void* p) {
 	(void)fd;
 	(void)from_pid;
 	(void)offset;

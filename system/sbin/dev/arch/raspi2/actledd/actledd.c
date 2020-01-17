@@ -11,7 +11,8 @@
 
 static int _gpio_fd = -1;
 
-static int actled_write(int fd, int from_pid, fsinfo_t* info, const void* buf, int size, int offset, void* p) {
+static int actled_write(int fd, int from_pid, fsinfo_t* info,
+		const void* buf, int size, int offset, void* p) {
 	(void)fd;
 	(void)from_pid;
 	(void)info;

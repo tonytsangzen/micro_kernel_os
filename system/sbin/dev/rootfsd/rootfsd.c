@@ -112,7 +112,8 @@ static int sdext2_create(fsinfo_t* info_to, fsinfo_t* info, void* p) {
 	return 0;
 }
 
-static int sdext2_read(int fd, int from_pid, fsinfo_t* info, void* buf, int size, int offset, void* p) {
+static int sdext2_read(int fd, int from_pid, fsinfo_t* info, 
+		void* buf, int size, int offset, void* p) {
 	(void)fd;
 	(void)from_pid;
 
@@ -135,7 +136,8 @@ static int sdext2_read(int fd, int from_pid, fsinfo_t* info, void* buf, int size
 	return size;	
 }
 
-static int sdext2_write(int fd, int from_pid, fsinfo_t* info, const void* buf, int size, int offset, void* p) {
+static int sdext2_write(int fd, int from_pid, fsinfo_t* info,
+		const void* buf, int size, int offset, void* p) {
 	(void)fd;
 	(void)from_pid;
 

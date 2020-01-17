@@ -485,7 +485,8 @@ static int x_workspace(x_t* x, proto_t* in, proto_t* out) {
 	return 0;
 }
 
-static int xserver_fcntl(int fd, int from_pid, fsinfo_t* info, int cmd, proto_t* in, proto_t* out, void* p) {
+static int xserver_fcntl(int fd, int from_pid, fsinfo_t* info,
+		int cmd, proto_t* in, proto_t* out, void* p) {
 	(void)info;
 	x_t* x = (x_t*)p;
 
