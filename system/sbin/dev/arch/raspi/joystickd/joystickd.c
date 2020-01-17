@@ -9,7 +9,7 @@
 #include <syscall.h>
 #include <dev/device.h>
 
-static int mount(fsinfo_t* mnt_point, mount_info_t* mnt_info, void* p) {
+static int mount(fsinfo_t* mnt_point, void* p) {
 	(void)p;
 	fsinfo_t info;
 	memset(&info, 0, sizeof(fsinfo_t));
@@ -18,7 +18,7 @@ static int mount(fsinfo_t* mnt_point, mount_info_t* mnt_info, void* p) {
 	info.data = DEV_NULL;
 	vfs_new_node(&info);
 
-	if(vfs_mount(mnt_point, &info, mnt_info) != 0) {
+	if(vfs_mount(mnt_point, &info) != 0) {
 		vfs_del(&info);
 		return -1;
 	}
@@ -26,8 +26,8 @@ static int mount(fsinfo_t* mnt_point, mount_info_t* mnt_info, void* p) {
 	return 0;
 }
 
-static int joystick_mount(fsinfo_t* info, mount_info_t* mnt_info, void* p) {
-	mount(info, mnt_info, p);
+static int joystick_mount(fsinfo_t* info, void* p) {
+	mount(info, p);
 	return 0;
 }
 
@@ -119,9 +119,7 @@ int main(int argc, char** argv) {
 		return -1;
 	init_gpio();
 
-	fsinfo_t mnt_point;
-	const char* mnt_name = argc > 1 ? argv[1]: "/dev/joystick";
-	vfs_create(mnt_name, &mnt_point, FS_TYPE_DEV);
+	const char* mnt_point = argc > 1 ? argv[1]: "/dev/joystick";
 
 	vdevice_t dev;
 	memset(&dev, 0, sizeof(vdevice_t));
@@ -130,12 +128,7 @@ int main(int argc, char** argv) {
 	dev.read = joystick_read;
 	dev.umount = joystick_umount;
 
-	mount_info_t mnt_info;
-	strcpy(mnt_info.dev_name, dev.name);
-	mnt_info.dev_index = 0;
-	mnt_info.access = 0;
-
-	device_run(&dev, &mnt_point, &mnt_info, NULL, 1);
+	device_run(&dev, mnt_point, FS_TYPE_DEV, NULL, 1);
 	close(_gpio_fd);
 	return 0;
 }

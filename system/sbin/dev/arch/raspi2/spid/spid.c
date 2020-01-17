@@ -9,7 +9,7 @@
 #include "../lib/spi_arch.h"
 #include "../lib/gpio_arch.h"
 
-static int mount(fsinfo_t* mnt_point, mount_info_t* mnt_info, void* p) {
+static int mount(fsinfo_t* mnt_point, void* p) {
 	(void)p;
 	fsinfo_t info;
 	memset(&info, 0, sizeof(fsinfo_t));
@@ -17,7 +17,7 @@ static int mount(fsinfo_t* mnt_point, mount_info_t* mnt_info, void* p) {
 	info.type = FS_TYPE_DEV;
 	vfs_new_node(&info);
 
-	if(vfs_mount(mnt_point, &info, mnt_info) != 0) {
+	if(vfs_mount(mnt_point, &info) != 0) {
 		vfs_del(&info);
 		return -1;
 	}
@@ -25,8 +25,8 @@ static int mount(fsinfo_t* mnt_point, mount_info_t* mnt_info, void* p) {
 	return 0;
 }
 
-static int spi_mount(fsinfo_t* info, mount_info_t* mnt_info, void* p) {
-	mount(info, mnt_info, p);
+static int spi_mount(fsinfo_t* info, void* p) {
+	mount(info, p);
 	return 0;
 }
 
@@ -60,9 +60,7 @@ int main(int argc, char** argv) {
 	spi_arch_init(4);
 	spi_arch_select(SPI_SELECT_0);
 
-	fsinfo_t mnt_point;
-	const char* mnt_name = argc > 1 ? argv[1]: "/dev/spi";
-	vfs_create(mnt_name, &mnt_point, FS_TYPE_DEV);
+	const char* mnt_point = argc > 1 ? argv[1]: "/dev/spi";
 
 	vdevice_t dev;
 	memset(&dev, 0, sizeof(vdevice_t));
@@ -71,11 +69,6 @@ int main(int argc, char** argv) {
 	dev.write = spi_write;
 	dev.umount = spi_umount;
 
-	mount_info_t mnt_info;
-	strcpy(mnt_info.dev_name, dev.name);
-	mnt_info.dev_index = 0;
-	mnt_info.access = 0;
-
-	device_run(&dev, &mnt_point, &mnt_info, NULL, 1);
+	device_run(&dev, mnt_point, FS_TYPE_DEV, NULL, 1);
 	return 0;
 }

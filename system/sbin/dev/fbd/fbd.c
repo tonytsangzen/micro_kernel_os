@@ -19,7 +19,7 @@ typedef struct {
 
 static fbinfo_t _fbinfo;
 
-static int fb_mount(fsinfo_t* mnt_point, mount_info_t* mnt_info, void* p) {
+static int fb_mount(fsinfo_t* mnt_point, void* p) {
 	(void)p;
 	fsinfo_t info;
 	memset(&info, 0, sizeof(fsinfo_t));
@@ -27,7 +27,7 @@ static int fb_mount(fsinfo_t* mnt_point, mount_info_t* mnt_info, void* p) {
 	info.type = FS_TYPE_DEV;
 	vfs_new_node(&info);
 
-	if(vfs_mount(mnt_point, &info, mnt_info) != 0) {
+	if(vfs_mount(mnt_point, &info) != 0) {
 		vfs_del(&info);
 		return -1;
 	}
@@ -101,9 +101,7 @@ static int fb_umount(fsinfo_t* info, void* p) {
 }
 
 int main(int argc, char** argv) {
-	fsinfo_t mnt_point;
 	const char* mnt_name = argc > 1 ? argv[1]: "/dev/fb0";
-	vfs_create(mnt_name, &mnt_point, FS_TYPE_DEV);
 
 	syscall1(SYS_FRAMEBUFFER_MAP, (int32_t)&_fbinfo);
 	uint32_t sz = _fbinfo.width * _fbinfo.height * 4;
@@ -127,12 +125,7 @@ int main(int argc, char** argv) {
 	dev.fcntl = fb_fcntl;
 	dev.umount = fb_umount;
 
-	mount_info_t mnt_info;
-	strcpy(mnt_info.dev_name, dev.name);
-	mnt_info.dev_index = 0;
-	mnt_info.access = 0;
-
-	device_run(&dev, &mnt_point, &mnt_info, &dma, 1);
+	device_run(&dev, mnt_name, FS_TYPE_DEV, &dma, 1);
 
 	shm_unmap(dma.shm_id);
 	return 0;

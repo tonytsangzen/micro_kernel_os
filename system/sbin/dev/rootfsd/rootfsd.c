@@ -81,7 +81,7 @@ static int32_t add_nodes(ext2_t* ext2, INODE *ip, fsinfo_t* dinfo) {
 	return 0;
 }
 
-static int mount(fsinfo_t* mnt_point, mount_info_t* mnt_info, ext2_t* ext2) {
+static int mount(fsinfo_t* mnt_point, ext2_t* ext2) {
 	fsinfo_t info;
 	memset(&info, 0, sizeof(fsinfo_t));
 	strcpy(info.name, mnt_point->name);
@@ -93,7 +93,7 @@ static int mount(fsinfo_t* mnt_point, mount_info_t* mnt_info, ext2_t* ext2) {
 	ext2_node_by_fname(ext2, "/", &root_node);
 	add_nodes(ext2, &root_node, &info);
 
-	if(vfs_mount(mnt_point, &info, mnt_info) != 0) {
+	if(vfs_mount(mnt_point, &info) != 0) {
 		vfs_del(&info);
 		return -1;
 	}
@@ -101,8 +101,8 @@ static int mount(fsinfo_t* mnt_point, mount_info_t* mnt_info, ext2_t* ext2) {
 	return 0;
 }
 
-static int sdext2_mount(fsinfo_t* info, mount_info_t* mnt_info, void* p) {
-	mount(info, mnt_info, (ext2_t*)p);
+static int sdext2_mount(fsinfo_t* info, void* p) {
+	mount(info, (ext2_t*)p);
 	return 0;
 }
 
@@ -200,15 +200,7 @@ int main(int argc, char** argv) {
 	ext2_init(&ext2, sd_read, sd_write);
 	sd_set_buffer(ext2.super.s_blocks_count*2);
 
-	fsinfo_t root_info;
-	vfs_get("/", &root_info);
-
-	mount_info_t mnt_info;
-	strcpy(mnt_info.dev_name, dev.name);
-	mnt_info.dev_index = 0;
-	mnt_info.access = 0;
-
-	device_run(&dev, &root_info, &mnt_info, &ext2, 1);
+	device_run(&dev, "/", FS_TYPE_DIR, &ext2, 1);
 	ext2_quit(&ext2);
 	sd_quit();
 	return 0;

@@ -51,7 +51,7 @@ int32_t uart_write(const void* data, uint32_t size) {
   return i;
 }
 
-static int tty_mount(fsinfo_t* mnt_point, mount_info_t* mnt_info, void* p) {
+static int tty_mount(fsinfo_t* mnt_point, void* p) {
 	(void)p;
 	fsinfo_t info;
 	memset(&info, 0, sizeof(fsinfo_t));
@@ -59,7 +59,7 @@ static int tty_mount(fsinfo_t* mnt_point, mount_info_t* mnt_info, void* p) {
 	info.type = FS_TYPE_DEV;
 	vfs_new_node(&info);
 
-	if(vfs_mount(mnt_point, &info, mnt_info) != 0) {
+	if(vfs_mount(mnt_point, &info) != 0) {
 		vfs_del(&info);
 		return -1;
 	}
@@ -101,9 +101,7 @@ static int tty_umount(fsinfo_t* info, void* p) {
 }
 
 int main(int argc, char** argv) {
-	fsinfo_t mnt_point;
-	const char* mnt_name = argc > 1 ? argv[1]: "/dev/tty0";
-	vfs_create(mnt_name, &mnt_point, FS_TYPE_DEV);
+	const char* mnt_point = argc > 1 ? argv[1]: "/dev/tty0";
 	_mmio_base = mmio_map();
 
 	vdevice_t dev;
@@ -114,11 +112,6 @@ int main(int argc, char** argv) {
 	dev.write = tty_write;
 	dev.umount = tty_umount;
 
-	mount_info_t mnt_info;
-	strcpy(mnt_info.dev_name, dev.name);
-	mnt_info.dev_index = 0;
-	mnt_info.access = 0;
-
-	device_run(&dev, &mnt_point, &mnt_info, NULL, 1);
+	device_run(&dev, mnt_point, FS_TYPE_DEV, NULL, 1);
 	return 0;
 }

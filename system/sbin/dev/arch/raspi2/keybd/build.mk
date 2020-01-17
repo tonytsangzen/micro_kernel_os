@@ -1,9 +1,0 @@
-RASPI2_KEYBD_OBJS = $(ROOT_DIR)/sbin/dev/arch/raspi2/keybd/keybd.o
-
-RASPI2_KEYBD = $(TARGET_DIR)/$(ROOT_DIR)/sbin/dev/raspi2/keybd
-
-PROGS += $(RASPI2_KEYBD)
-CLEAN += $(RASPI2_KEYBD_OBJS)
-
-$(RASPI2_KEYBD): $(RASPI2_KEYBD_OBJS) $(LIB_OBJS)
-	$(LD) -Ttext=100 $(RASPI2_KEYBD_OBJS) $(LIB_OBJS) -o $(RASPI2_KEYBD) $(LDFLAGS)

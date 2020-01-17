@@ -70,8 +70,8 @@ int vfs_get_mount(fsinfo_t* info, mount_t* mount) {
 	return syscall2(SYS_VFS_GET_MOUNT, (int32_t)info, (int32_t)mount);
 }
 
-int vfs_mount(fsinfo_t* mount_to, fsinfo_t* info, mount_info_t* mnt_info) {
-	return syscall3(SYS_VFS_MOUNT, (int32_t)mount_to, (int32_t)info, (int32_t)mnt_info);
+int vfs_mount(fsinfo_t* mount_to, fsinfo_t* info) {
+	return syscall2(SYS_VFS_MOUNT, (int32_t)mount_to, (int32_t)info);
 }
 
 int vfs_umount(fsinfo_t* info) {

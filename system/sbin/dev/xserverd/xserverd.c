@@ -72,7 +72,7 @@ typedef struct {
 	proc_lock_t lock;
 } x_t;
 
-static int xserver_mount(fsinfo_t* mnt_point, mount_info_t* mnt_info, void* p) {
+static int xserver_mount(fsinfo_t* mnt_point, void* p) {
 	(void)p;
 
 	fsinfo_t info;
@@ -81,7 +81,7 @@ static int xserver_mount(fsinfo_t* mnt_point, mount_info_t* mnt_info, void* p) {
 	info.type = FS_TYPE_DEV;
 	vfs_new_node(&info);
 
-	if(vfs_mount(mnt_point, &info, mnt_info) != 0) {
+	if(vfs_mount(mnt_point, &info) != 0) {
 		vfs_del(&info);
 		return -1;
 	}
@@ -898,9 +898,7 @@ static void x_close(x_t* x) {
 }
 
 int main(int argc, char** argv) {
-	fsinfo_t mnt_point;
-	const char* mnt_name = argc > 1 ? argv[1]: "/dev/x";
-	vfs_create(mnt_name, &mnt_point, FS_TYPE_DEV);
+	const char* mnt_point = argc > 1 ? argv[1]: "/dev/x";
 
 	int pid = fork();
 	if(pid == 0) {
@@ -918,16 +916,11 @@ int main(int argc, char** argv) {
 	dev.loop_step= xserver_loop_step;
 	dev.umount = xserver_umount;
 
-	mount_info_t mnt_info;
-	strcpy(mnt_info.dev_name, dev.name);
-	mnt_info.dev_index = 0;
-	mnt_info.access = 0;
-
 	x_t x;
 	if(x_init(&x) == 0) {
 		x.xwm_pid = pid;
 		thread_create(read_thread, &x);
-		device_run(&dev, &mnt_point, &mnt_info, &x, 0);
+		device_run(&dev, mnt_point, FS_TYPE_DEV, &x, 0);
 		x_close(&x);
 	}
 	return 0;
