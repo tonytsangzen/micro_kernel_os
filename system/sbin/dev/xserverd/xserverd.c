@@ -798,8 +798,6 @@ static void read_thread(void* p) {
 			continue;
 		}
 
-		bool slp = true;
-
 		//read keyb
 		if(x->keyb_fd >= 0) {
 			int8_t v;
@@ -815,7 +813,6 @@ static void read_thread(void* p) {
 					proc_lock(x->lock);
 					x_push_event(topv, e, 1);
 					proc_unlock(x->lock);
-					slp = false;
 				}
 			}
 		}
@@ -828,7 +825,6 @@ static void read_thread(void* p) {
 				mouse_handle(x, mv[0], mv[1], mv[2]);
 				x->need_repaint = 1;
 				proc_unlock(x->lock);
-				slp = false;
 			}
 		}
 
@@ -842,12 +838,10 @@ static void read_thread(void* p) {
 				mouse_handle(x, mv[0], mv[1], mv[2]);
 				x->need_repaint = 1;
 				proc_unlock(x->lock);
-				slp = false;
 			}
 		}
 
-		if(slp)
-			usleep(3000);
+		usleep(3000);
 	}
 }
 
