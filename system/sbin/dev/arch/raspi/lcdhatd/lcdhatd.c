@@ -276,7 +276,7 @@ static void LCD_1in3_Clear(UWORD Color) {
 		Image[j] = Color;
 	}
 
-	LCD_1in3_SetWindows(0, 0, LCD_WIDTH, LCD_HEIGHT);
+	//LCD_1in3_SetWindows(0, 0, LCD_WIDTH, LCD_HEIGHT);
 	LCD_DC_1;
 	DEV_SPI_Write((uint8_t *)Image, LCD_WIDTH*LCD_HEIGHT*2);
 }
@@ -293,6 +293,7 @@ static void lcd_init(void) {
 	spi_arch_select(1);
 
 	LCD_1in3_Init(HORIZONTAL);
+	LCD_1in3_SetWindows(0, 0, LCD_WIDTH, LCD_HEIGHT);
 	LCD_1in3_Clear(0x0);
 }
 
@@ -310,7 +311,6 @@ static void  do_flush(const void* buf, uint32_t size) {
 
 	critical_enter();
 
-	LCD_1in3_SetWindows(0, 0, LCD_WIDTH, LCD_HEIGHT);
 	LCD_DC_1;
 	spi_arch_activate(1);
 

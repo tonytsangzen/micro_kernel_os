@@ -411,7 +411,7 @@ int device_run(vdevice_t* dev, const char* mnt_point, int mnt_type, void* p, int
 		}
 		if(dev->loop_step != NULL)
 			dev->loop_step(p);
-		if(block == 0)
+		else if(block == 0)
 			sleep(0);
 	}
 
