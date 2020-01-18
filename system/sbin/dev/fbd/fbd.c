@@ -10,6 +10,7 @@
 #include <dev/device.h>
 #include <graph/graph.h>
 #include <shm.h>
+#include <sys/critical.h>
 
 typedef struct {
 	void* data;
@@ -37,10 +38,12 @@ static int fb_write(int fd,
 	if(size < sz)
 		return 0;
 	
+	critical_enter();
 	if(_fbinfo.depth == 32) 
 		memcpy((void*)_fbinfo.pointer, buf, size);
 	else if(_fbinfo.depth == 16) 
 		dup16((uint16_t*)_fbinfo.pointer, (uint32_t*)buf, _fbinfo.width, _fbinfo.height);
+	critical_quit();
 	return sz;
 }	
 
@@ -76,10 +79,12 @@ static int fb_flush(int fd, int from_pid, fsinfo_t* info, void* p) {
 	if(size > sz)
 		size = sz;
 
+	critical_enter();
 	if(_fbinfo.depth == 32) 
 		memcpy((void*)_fbinfo.pointer, dma->data, size);
 	else if(_fbinfo.depth == 16) 
 		dup16((uint16_t*)_fbinfo.pointer, (uint32_t*)dma->data, _fbinfo.width, _fbinfo.height);
+	critical_quit();
 	return 0;
 }
 

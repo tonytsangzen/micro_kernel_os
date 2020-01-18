@@ -324,10 +324,10 @@ static void  do_flush(const void* buf, uint32_t size) {
 		register uint8_t g = (s >> 8)  & 0xff;
 		register uint8_t r = s & 0xff;
 		UWORD color = ((r >> 3) <<11) | ((g >> 3) << 6) | (b >> 3);
-		color = ((color<<8)&0xff00)|(color>>8);
+		//color = ((color<<8)&0xff00)|(color>>8);
 		uint8_t* p = (uint8_t*)&color;
-		spi_arch_transfer(p[0]);
 		spi_arch_transfer(p[1]);
+		spi_arch_transfer(p[0]);
 	}
 
 	spi_arch_activate(0);

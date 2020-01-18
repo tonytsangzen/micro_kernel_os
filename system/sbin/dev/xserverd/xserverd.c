@@ -309,7 +309,7 @@ static inline void draw_cursor(x_t* x) {
 
 static void x_repaint(x_t* x) {
 	if(!x->actived ||
-			(x->need_repaint == 0 && x->dirty == 0))
+			(x->need_repaint == 0))
 		return;
 	x->need_repaint = 0;
 
@@ -840,8 +840,7 @@ static void read_thread(void* p) {
 				proc_unlock(x->lock);
 			}
 		}
-
-		usleep(0);
+		usleep(400);
 	}
 }
 
