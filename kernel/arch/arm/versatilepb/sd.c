@@ -249,6 +249,7 @@ int32_t sd_dev_read(dev_t* dev, int32_t sector) {
 }
 
 int32_t sd_dev_read_done(dev_t* dev, void* buf) {
+	sd_dev_handle(dev);
 	return sd_read_done(dev, buf);
 }
 

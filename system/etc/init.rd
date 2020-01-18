@@ -1,3 +1,3 @@
 /bin/session
-/bin/x
-/bin/launcher
+#/bin/x
+#/bin/launcher

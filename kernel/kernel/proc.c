@@ -15,6 +15,7 @@ __attribute__((__aligned__(PAGE_DIR_SIZE)))
 static page_dir_entry_t _proc_vm[PROC_MAX][PAGE_DIR_NUM];
 proc_t* _current_proc = NULL;
 proc_t* _ready_proc = NULL;
+proc_t* _unready_proc = NULL;
 
 /* proc_init initializes the process sub-system. */
 void procs_init(void) {
@@ -23,6 +24,7 @@ void procs_init(void) {
 		_proc_table[i].state = UNUSED;
 	_current_proc = NULL;
 	_ready_proc = NULL;
+	_unready_proc = NULL;
 }
 
 proc_t* proc_get(int32_t pid) {
@@ -207,15 +209,28 @@ static void proc_ready(proc_t* proc) {
 	if(proc == NULL || proc->state == READY)
 		return;
 
+	//remove from unready list
+	if(_unready_proc == proc)
+		_unready_proc = proc->next;
+
+	if(proc->next != NULL)
+		proc->next->prev = proc->prev;
+	if(proc->prev != NULL)
+		proc->prev->next = proc->next;
+
+	proc->prev = NULL;
+	proc->next = NULL;
 	proc->state = READY;
+
+	//add to ready list
 	if(_ready_proc == NULL) {
 		_ready_proc = proc;
 	}
-
-	proc->prev = _ready_proc;
-	proc->next = _ready_proc->next;
-	_ready_proc->next->prev = proc;
-	_ready_proc->next = proc;
+	else {
+		proc->next = _ready_proc;
+		_ready_proc->prev = proc;
+		_ready_proc = proc;
+	}
 }
 
 proc_t* proc_get_next_ready(void) {
@@ -234,25 +249,35 @@ proc_t* proc_get_next_ready(void) {
 	return next;
 }
 
-static void proc_unready(context_t* ctx, proc_t* proc) {
-	if(proc == NULL)
+static void proc_unready(context_t* ctx, proc_t* proc, uint32_t state) {
+	if(proc == NULL || proc->state != READY)
 		return;
+
+	//remove from ready list
+	if(_ready_proc == proc)
+		_ready_proc = proc->next;
 
 	if(proc->next != NULL)
 		proc->next->prev = proc->prev;
 	if(proc->prev != NULL)
 		proc->prev->next = proc->next;
 
-	if(proc->next == proc) //only one left.
-		_ready_proc = NULL;
-	else
-		_ready_proc = proc->next;
-
-	proc->next = NULL;
 	proc->prev = NULL;
+	proc->next = NULL;
+	proc->state = state;
+
+	//add to unready list
+	if(_unready_proc == NULL) {
+		_unready_proc = proc;
+	}
+	else {
+		proc->next = _unready_proc;
+		_unready_proc->prev = proc;
+		_unready_proc = proc;
+	}
 
 	if(_current_proc == proc) {
-		schedule(ctx);
+		proc_switch(ctx, _ready_proc);
 	}
 	else {
 		memcpy(&proc->ctx, ctx, sizeof(context_t));
@@ -260,21 +285,35 @@ static void proc_unready(context_t* ctx, proc_t* proc) {
 }
 
 static void proc_wakeup_waiting(int32_t pid) {
-	int32_t i;
-	for (i = 0; i < PROC_MAX; i++) {
-		proc_t *proc = &_proc_table[i];
-		if (proc->state == WAIT && proc->wait_pid == pid) {
-			proc_ready(proc);
+	proc_t* p = _unready_proc;
+	while(p != NULL) {
+		if (p->state == WAIT && p->wait_pid == pid) {
+			proc_t* ptmp = p->next;
+			proc_ready(p);
+			p = ptmp;
+			continue;
 		}
+		p = p->next;
 	}
 }
 
 static void proc_terminate(context_t* ctx, proc_t* proc) {
 	if(proc->state == ZOMBIE || proc->state == UNUSED)
 		return;
-	if(proc->state == READY)
-		proc_unready(ctx, proc);
-	proc->state = ZOMBIE;
+	if(proc->state == READY) {
+		proc_t* next = proc->next;
+		if(_ready_proc == proc)
+			_ready_proc = next;
+
+		proc->state = ZOMBIE;
+		if(proc->next != NULL)
+			proc->next->prev = proc->prev;
+		if(proc->prev != NULL)
+			proc->prev->next = proc->next;
+
+		if(_current_proc == proc)
+			proc_switch(ctx, next);
+	}
 
 	int32_t i;
 	for (i = 0; i < PROC_MAX; i++) {
@@ -428,8 +467,7 @@ void proc_usleep(context_t* ctx, uint32_t count) {
 		return;
 
 	_current_proc->sleep_counter = count;
-	_current_proc->state = SLEEPING;
-	proc_unready(ctx, _current_proc);
+	proc_unready(ctx, _current_proc, SLEEPING);
 }
 
 void proc_block_on(context_t* ctx, uint32_t event) {
@@ -437,8 +475,7 @@ void proc_block_on(context_t* ctx, uint32_t event) {
 		return;
 
 	_current_proc->block_event = event;
-	_current_proc->state = BLOCK;
-	proc_unready(ctx, _current_proc);
+	proc_unready(ctx, _current_proc, BLOCK);
 }
 
 void proc_waitpid(context_t* ctx, int32_t pid) {
@@ -446,22 +483,22 @@ void proc_waitpid(context_t* ctx, int32_t pid) {
 		return;
 
 	_current_proc->wait_pid = pid;
-	_current_proc->state = WAIT;
-	proc_unready(ctx, _current_proc);
+	proc_unready(ctx, _current_proc, WAIT);
 }
 
 void proc_wakeup(uint32_t event) {
-	int32_t i = 0;	
-	while(1) {
-		if(i >= PROC_MAX)
-			break;
-		proc_t* proc = &_proc_table[i];	
-		if(proc->state == BLOCK && proc->block_event == event) {
-			proc->block_event = 0;
-			if(proc->sleep_counter == 0)
-				proc_ready(proc);
+	proc_t* p = _unready_proc;
+	while(p != NULL) {
+		if(p->state == BLOCK && p->block_event == event) {
+			p->block_event = 0;
+			if(p->sleep_counter == 0) {
+				proc_t* ptmp = p->next;
+				proc_ready(p);
+				p = ptmp;
+				continue;
+			}
 		}
-		i++;
+		p = p->next;
 	}
 }
 
@@ -653,16 +690,18 @@ procinfo_t* get_procs(int32_t *num) {
 	return procs;
 }
 
-void renew_sleep_counter(uint32_t usec) {
-	int i;
-	for(i=0; i<PROC_MAX; i++) {
-		proc_t* proc = &_proc_table[i];
-		if(proc->state == SLEEPING && proc->sleep_counter > 0) {
-			proc->sleep_counter -= usec;
-			if(proc->sleep_counter <= 0) {
-				proc->sleep_counter = 0;
-				proc_ready(proc);
+inline void renew_sleep_counter(uint32_t usec) {
+	proc_t* p = _unready_proc;
+	while(p != NULL) {
+		if(p->state == SLEEPING && p->sleep_counter > 0) {
+			p->sleep_counter -= usec;
+			if(p->sleep_counter <= 0) {
+				proc_t* ptmp = p->next;
+				proc_ready(p);
+				p = ptmp;
+				continue;
 			}
 		}
+		p = p->next;
 	}
 }

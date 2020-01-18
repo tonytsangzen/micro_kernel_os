@@ -61,7 +61,7 @@ void irq_arch_init(void) {
 	_pic = (pic_regs_t*)(PIC);
 }
 
-void gic_set_irqs(uint32_t irqs) {
+inline void gic_set_irqs(uint32_t irqs) {
 	(void)irqs;
 	/*
   if((irqs & IRQ_SDC) != 0) {
@@ -73,7 +73,7 @@ void gic_set_irqs(uint32_t irqs) {
 	*/
 }
 
-uint32_t gic_get_irqs(void) {
+inline uint32_t gic_get_irqs(void) {
 	uint32_t ret = 0;
 	uint32_t pending = read_core0_pending();
 
@@ -90,7 +90,5 @@ uint32_t gic_get_irqs(void) {
 		}
 	}
 	*/
-
-	ret |= IRQ_SDC;
 	return ret;
 }

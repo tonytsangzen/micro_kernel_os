@@ -351,5 +351,6 @@ int main(int argc, char* argv[]) {
 	}
 
 	str_free(cmdstr);	
+	kprintf("1\n");
 	return 0;
 }

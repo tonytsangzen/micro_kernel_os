@@ -841,7 +841,7 @@ static void read_thread(void* p) {
 			}
 		}
 
-		usleep(200);
+		usleep(0);
 	}
 }
 
