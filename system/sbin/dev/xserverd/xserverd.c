@@ -790,7 +790,7 @@ static xview_t* get_top_view(x_t* x) {
 	return NULL;
 }
 
-static void read_thread(void* p) {
+/*static void read_thread(void* p) {
 	x_t* x = (x_t*)p;
 	while(1) {
 		if(!x->actived)  {
@@ -840,7 +840,53 @@ static void read_thread(void* p) {
 				proc_unlock(x->lock);
 			}
 		}
-		sleep(0);
+		usleep(10000);
+	}
+}
+*/
+
+static void read_event(x_t* x) {
+	//read keyb
+	if(x->keyb_fd >= 0) {
+		int8_t v;
+		int rd = read_nblock(x->keyb_fd, &v, 1);
+		if(rd == 1) {
+			xview_t* topv = get_top_view(x);
+			if(topv != NULL) {
+				xview_event_t* e = (xview_event_t*)malloc(sizeof(xview_event_t));
+				e->next = NULL;
+				e->event.type = XEVT_KEYB;
+				e->event.value.keyboard.value = v;
+
+				proc_lock(x->lock);
+				x_push_event(topv, e, 1);
+				proc_unlock(x->lock);
+			}
+		}
+	}
+
+	//read mouse
+	if(x->mouse_fd >= 0) {
+		int8_t mv[4];
+		if(read_nblock(x->mouse_fd, mv, 4) == 4) {
+			proc_lock(x->lock);
+			mouse_handle(x, mv[0], mv[1], mv[2]);
+			x->need_repaint = 1;
+			proc_unlock(x->lock);
+		}
+	}
+
+	//read joystick
+	if(x->joystick_fd >= 0) {
+		uint8_t j;
+		int8_t mv[4];
+		if(read(x->joystick_fd, &j, 1) == 1 && j != 0) {
+			joy_2_mouse(j, mv);
+			proc_lock(x->lock);
+			mouse_handle(x, mv[0], mv[1], mv[2]);
+			x->need_repaint = 1;
+			proc_unlock(x->lock);
+		}
 	}
 }
 
@@ -851,9 +897,12 @@ static int xserver_loop_step(void* p) {
 		return -1;
 	}
 
+	read_event(x);
+
 	proc_lock(x->lock);
 	x_repaint(x);	
 	proc_unlock(x->lock);
+	usleep(1000);
 	return 0;
 }
 
@@ -887,7 +936,7 @@ int main(int argc, char** argv) {
 	if(x_init(&x) == 0) {
 		x.actived = true;
 		x.xwm_pid = pid;
-		thread_create(read_thread, &x);
+		//thread_create(read_thread, &x);
 		device_run(&dev, mnt_point, FS_TYPE_DEV, &x, 0);
 		x_close(&x);
 	}

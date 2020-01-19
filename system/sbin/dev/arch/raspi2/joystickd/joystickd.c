@@ -38,7 +38,7 @@ static int joystick_read(int fd, int from_pid, fsinfo_t* info,
 
 	char* rd = (char*)buf;
 	*rd = 0;
-
+/*
 	if(gpio_arch_read(KEY_UP_PIN) == 0)
 		*rd |= KEY_V_UP;
 	if(gpio_arch_read(KEY_DOWN_PIN) == 0)
@@ -55,6 +55,7 @@ static int joystick_read(int fd, int from_pid, fsinfo_t* info,
 		*rd |= KEY_V_2;
 	if(gpio_arch_read(KEY3_PIN) == 0)
 		*rd |= KEY_V_3;
+*/
 	return 1;
 }
 

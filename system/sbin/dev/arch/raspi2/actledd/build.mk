@@ -1,4 +1,5 @@
-RASPI2_ACTLEDD_OBJS = $(ROOT_DIR)/sbin/dev/arch/raspi2/actledd/actledd.o
+RASPI2_ACTLEDD_OBJS = $(ROOT_DIR)/sbin/dev/arch/raspi2/actledd/actledd.o \
+	$(ROOT_DIR)/sbin/dev/arch/raspi2/lib/gpio_arch.o
 
 RASPI2_ACTLEDD = $(TARGET_DIR)/$(ROOT_DIR)/sbin/dev/raspi2/actledd
 
