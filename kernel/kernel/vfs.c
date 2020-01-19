@@ -162,7 +162,7 @@ static const char* fullname(vfs_node_t* node) {
 }
 
 
-int32_t vfs_mount(vfs_node_t* org, vfs_node_t* node, mount_info_t* mnt_info) {
+int32_t vfs_mount(vfs_node_t* org, vfs_node_t* node) {
 	if(org == NULL || node == NULL)
 		return -1;
 		
@@ -178,7 +178,6 @@ int32_t vfs_mount(vfs_node_t* org, vfs_node_t* node, mount_info_t* mnt_info) {
 	strcpy(_vfs_mounts[id].org_name, fullname(org));
 	strcpy(node->fsinfo.name, org->fsinfo.name);
 	node->fsinfo.mount_id =  id;
-	memcpy(&_vfs_mounts[id].info, mnt_info, sizeof(mount_info_t));
 
 	vfs_node_t* father = org->father;
 	if(father == NULL) {

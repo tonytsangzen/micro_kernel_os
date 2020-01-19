@@ -81,34 +81,19 @@ static int32_t add_nodes(ext2_t* ext2, INODE *ip, fsinfo_t* dinfo) {
 	return 0;
 }
 
-static int mount(fsinfo_t* mnt_point, mount_info_t* mnt_info, ext2_t* ext2) {
-	fsinfo_t info;
-	memset(&info, 0, sizeof(fsinfo_t));
-	strcpy(info.name, mnt_point->name);
-	info.type = FS_TYPE_DIR;
-	info.data = 2; //ext2 root block at 2
-	vfs_new_node(&info);
-
+static int sdext2_mount(fsinfo_t* info, void* p) {
+	ext2_t* ext2 = (ext2_t*)p;
 	INODE root_node;
 	ext2_node_by_fname(ext2, "/", &root_node);
-	add_nodes(ext2, &root_node, &info);
-
-	if(vfs_mount(mnt_point, &info, mnt_info) != 0) {
-		vfs_del(&info);
-		return -1;
-	}
-	memcpy(mnt_point, &info, sizeof(fsinfo_t));
-	return 0;
-}
-
-static int sdext2_mount(fsinfo_t* info, mount_info_t* mnt_info, void* p) {
-	mount(info, mnt_info, (ext2_t*)p);
+	add_nodes(ext2, &root_node, info);
 	return 0;
 }
 
 static int sdext2_create(fsinfo_t* info_to, fsinfo_t* info, void* p) {
 	ext2_t* ext2 = (ext2_t*)p;
 	int32_t ino_to = (int32_t)info_to->data;
+	if(ino_to == 0) ino_to = 2;
+
 	INODE inode_to;
 	if(ext2_node_by_ino(ext2, ino_to, &inode_to) != 0) {
 		return -1;
@@ -127,12 +112,14 @@ static int sdext2_create(fsinfo_t* info_to, fsinfo_t* info, void* p) {
 	return 0;
 }
 
-static int sdext2_read(int fd, int from_pid, fsinfo_t* info, void* buf, int size, int offset, void* p) {
+static int sdext2_read(int fd, int from_pid, fsinfo_t* info, 
+		void* buf, int size, int offset, void* p) {
 	(void)fd;
 	(void)from_pid;
 
 	ext2_t* ext2 = (ext2_t*)p;
 	int32_t ino = (int32_t)info->data;
+	if(ino == 0) ino = 2;
 	INODE inode;
 	if(ext2_node_by_ino(ext2, ino, &inode) != 0) {
 		return -1;
@@ -149,12 +136,14 @@ static int sdext2_read(int fd, int from_pid, fsinfo_t* info, void* buf, int size
 	return size;	
 }
 
-static int sdext2_write(int fd, int from_pid, fsinfo_t* info, const void* buf, int size, int offset, void* p) {
+static int sdext2_write(int fd, int from_pid, fsinfo_t* info,
+		const void* buf, int size, int offset, void* p) {
 	(void)fd;
 	(void)from_pid;
 
 	ext2_t* ext2 = (ext2_t*)p;
 	int32_t ino = (int32_t)info->data;
+	if(ino == 0) ino = 2;
 	INODE inode;
 	if(ext2_node_by_ino(ext2, ino, &inode) != 0) {
 		return -1;
@@ -175,12 +164,6 @@ static int sdext2_unlink(fsinfo_t* info, const char* fname, void* p) {
 	return ext2_unlink(ext2, fname);
 }
 
-static int sdext2_umount(fsinfo_t* info, void* p) {
-	(void)p;
-	vfs_umount(info);
-	return 0;
-}
-
 int main(int argc, char** argv) {
 	(void)argc;
 	(void)argv;
@@ -193,22 +176,13 @@ int main(int argc, char** argv) {
 	dev.write = sdext2_write;
 	dev.create = sdext2_create;
 	dev.unlink = sdext2_unlink;
-	dev.umount = sdext2_umount;
 
 	sd_init();
 	ext2_t ext2;
 	ext2_init(&ext2, sd_read, sd_write);
 	sd_set_buffer(ext2.super.s_blocks_count*2);
 
-	fsinfo_t root_info;
-	vfs_get("/", &root_info);
-
-	mount_info_t mnt_info;
-	strcpy(mnt_info.dev_name, dev.name);
-	mnt_info.dev_index = 0;
-	mnt_info.access = 0;
-
-	device_run(&dev, &root_info, &mnt_info, &ext2, 1);
+	device_run(&dev, "/", FS_TYPE_DIR, &ext2, 1);
 	ext2_quit(&ext2);
 	sd_quit();
 	return 0;

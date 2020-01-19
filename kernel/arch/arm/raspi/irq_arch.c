@@ -44,7 +44,7 @@ void irq_arch_init(void) {
 }
 
 
-void gic_set_irqs(uint32_t irqs) {
+inline void gic_set_irqs(uint32_t irqs) {
 	(void)irqs;
   if((irqs & IRQ_TIMER0) != 0) {
   	enable_irq(64);
@@ -62,7 +62,7 @@ void gic_set_irqs(uint32_t irqs) {
 	*/
 }
 
-uint32_t gic_get_irqs(void) {
+inline uint32_t gic_get_irqs(void) {
 	uint32_t ret = 0;
 	if(IRQ_IS_PENDING(_pic, 64)) {
 		ret |= IRQ_TIMER0;
@@ -71,7 +71,7 @@ uint32_t gic_get_irqs(void) {
 	/*if(uart_ready_to_recv() == 0) {
 		ret |= IRQ_UART0;
 	}
-	*/
 	ret |= IRQ_SDC;
+	*/
 	return ret;
 }

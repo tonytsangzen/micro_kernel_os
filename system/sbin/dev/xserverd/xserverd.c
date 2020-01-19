@@ -53,7 +53,7 @@ typedef struct {
 } x_current_t;
 
 typedef struct {
-	int actived;
+	bool actived;
 	int fb_fd;
 	int keyb_fd;
 	int mouse_fd;
@@ -71,29 +71,6 @@ typedef struct {
 	x_current_t current;
 	proc_lock_t lock;
 } x_t;
-
-static int xserver_mount(fsinfo_t* mnt_point, mount_info_t* mnt_info, void* p) {
-	(void)p;
-
-	fsinfo_t info;
-	memset(&info, 0, sizeof(fsinfo_t));
-	strcpy(info.name, mnt_point->name);
-	info.type = FS_TYPE_DEV;
-	vfs_new_node(&info);
-
-	if(vfs_mount(mnt_point, &info, mnt_info) != 0) {
-		vfs_del(&info);
-		return -1;
-	}
-	memcpy(mnt_point, &info, sizeof(fsinfo_t));
-	return 0;
-}
-
-static int xserver_umount(fsinfo_t* info, void* p) {
-	(void)p;
-	vfs_umount(info);
-	return 0;
-}
 
 static void draw_win_frame(x_t* x, xview_t* view) {
 	if((view->xinfo.style & X_STYLE_NO_FRAME) != 0)
@@ -331,8 +308,8 @@ static inline void draw_cursor(x_t* x) {
 }
 
 static void x_repaint(x_t* x) {
-	if(x->actived == 0 ||
-			(x->need_repaint == 0 && x->dirty == 0))
+	if(!x->actived ||
+			(x->need_repaint == 0))
 		return;
 	x->need_repaint = 0;
 
@@ -508,7 +485,8 @@ static int x_workspace(x_t* x, proto_t* in, proto_t* out) {
 	return 0;
 }
 
-static int xserver_fcntl(int fd, int from_pid, fsinfo_t* info, int cmd, proto_t* in, proto_t* out, void* p) {
+static int xserver_fcntl(int fd, int from_pid, fsinfo_t* info,
+		int cmd, proto_t* in, proto_t* out, void* p) {
 	(void)info;
 	x_t* x = (x_t*)p;
 
@@ -815,14 +793,14 @@ static xview_t* get_top_view(x_t* x) {
 static void read_thread(void* p) {
 	x_t* x = (x_t*)p;
 	while(1) {
-		if(x->actived == 0)  {
+		if(!x->actived)  {
 			usleep(10000);
 			continue;
 		}
 
-		int8_t v;
 		//read keyb
 		if(x->keyb_fd >= 0) {
+			int8_t v;
 			int rd = read_nblock(x->keyb_fd, &v, 1);
 			if(rd == 1) {
 				xview_t* topv = get_top_view(x);
@@ -862,22 +840,13 @@ static void read_thread(void* p) {
 				proc_unlock(x->lock);
 			}
 		}
-		sleep(0);
+		usleep(400);
 	}
 }
 
 static int xserver_loop_step(void* p) {
 	x_t* x = (x_t*)p;
-	const char* cc = get_global("current_console");
-	if(cc[0] == 'x') {
-		if(x->actived == 0) {
-			x_dirty(x);
-		}
-		x->actived = 1;
-	}
-	else
-		x->actived = 0;
-	if(x->actived == 0)  {
+	if(!x->actived)  {
 		usleep(10000);
 		return -1;
 	}
@@ -898,9 +867,7 @@ static void x_close(x_t* x) {
 }
 
 int main(int argc, char** argv) {
-	fsinfo_t mnt_point;
-	const char* mnt_name = argc > 1 ? argv[1]: "/dev/x";
-	vfs_create(mnt_name, &mnt_point, FS_TYPE_DEV);
+	const char* mnt_point = argc > 1 ? argv[1]: "/dev/x";
 
 	int pid = fork();
 	if(pid == 0) {
@@ -910,24 +877,18 @@ int main(int argc, char** argv) {
 	vdevice_t dev;
 	memset(&dev, 0, sizeof(vdevice_t));
 	strcpy(dev.name, "xserver");
-	dev.mount = xserver_mount;
 	dev.fcntl = xserver_fcntl;
 	//dev.close = xserver_close;
 	dev.closed = xserver_closed;
 	dev.open = xserver_open;
 	dev.loop_step= xserver_loop_step;
-	dev.umount = xserver_umount;
-
-	mount_info_t mnt_info;
-	strcpy(mnt_info.dev_name, dev.name);
-	mnt_info.dev_index = 0;
-	mnt_info.access = 0;
 
 	x_t x;
 	if(x_init(&x) == 0) {
+		x.actived = true;
 		x.xwm_pid = pid;
 		thread_create(read_thread, &x);
-		device_run(&dev, &mnt_point, &mnt_info, &x, 0);
+		device_run(&dev, mnt_point, FS_TYPE_DEV, &x, 0);
 		x_close(&x);
 	}
 	return 0;

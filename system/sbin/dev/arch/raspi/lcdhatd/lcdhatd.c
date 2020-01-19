@@ -276,7 +276,7 @@ static void LCD_1in3_Clear(UWORD Color) {
 		Image[j] = Color;
 	}
 
-	LCD_1in3_SetWindows(0, 0, LCD_WIDTH, LCD_HEIGHT);
+	//LCD_1in3_SetWindows(0, 0, LCD_WIDTH, LCD_HEIGHT);
 	LCD_DC_1;
 	DEV_SPI_Write((uint8_t *)Image, LCD_WIDTH*LCD_HEIGHT*2);
 }
@@ -293,6 +293,7 @@ static void lcd_init(void) {
 	spi_arch_select(1);
 
 	LCD_1in3_Init(HORIZONTAL);
+	LCD_1in3_SetWindows(0, 0, LCD_WIDTH, LCD_HEIGHT);
 	LCD_1in3_Clear(0x0);
 }
 
@@ -304,54 +305,29 @@ typedef struct {
 
 static int _gpio_fd = -1;
 
-static int mount(fsinfo_t* mnt_point, mount_info_t* mnt_info, void* p) {
-	(void)p;
-	fsinfo_t info;
-	memset(&info, 0, sizeof(fsinfo_t));
-	strcpy(info.name, mnt_point->name);
-	info.type = FS_TYPE_DEV;
-	info.data = DEV_NULL;
-	vfs_new_node(&info);
-
-	if(vfs_mount(mnt_point, &info, mnt_info) != 0) {
-		vfs_del(&info);
-		return -1;
-	}
-	memcpy(mnt_point, &info, sizeof(fsinfo_t));
-	return 0;
-}
-
-static int lcd_mount(fsinfo_t* info, mount_info_t* mnt_info, void* p) {
-	mount(info, mnt_info, p);
-	return 0;
-}
-
-
 static void  do_flush(const void* buf, uint32_t size) {
 	if(size < LCD_WIDTH * LCD_HEIGHT* 4)
 		return;
 
 	critical_enter();
 
-	LCD_1in3_SetWindows(0, 0, LCD_WIDTH, LCD_HEIGHT);
 	LCD_DC_1;
 	spi_arch_activate(1);
 
 	uint32_t *src = (uint32_t*)buf;
 	uint32_t sz = LCD_HEIGHT*LCD_WIDTH;
 	UWORD i;
-	UWORD color;
 
 	for (i = 0; i < sz; i++) {
-		uint32_t s = src[i];
-		uint8_t b = (s >> 16) & 0xff;
-		uint8_t g = (s >> 8)  & 0xff;
-		uint8_t r = s & 0xff;
-		color = ((r >> 3) <<11) | ((g >> 3) << 6) | (b >> 3);
-		color = ((color<<8)&0xff00)|(color>>8);
+		register uint32_t s = src[i];
+		register uint8_t b = (s >> 16) & 0xff;
+		register uint8_t g = (s >> 8)  & 0xff;
+		register uint8_t r = s & 0xff;
+		UWORD color = ((r >> 3) <<11) | ((g >> 3) << 6) | (b >> 3);
+		//color = ((color<<8)&0xff00)|(color>>8);
 		uint8_t* p = (uint8_t*)&color;
-		spi_arch_transfer(p[0]);
 		spi_arch_transfer(p[1]);
+		spi_arch_transfer(p[0]);
 	}
 
 	spi_arch_activate(0);
@@ -377,7 +353,8 @@ static int lcd_dma(int fd, int from_pid, fsinfo_t* info, int* size, void* p) {
 	return dma->shm_id;
 }
 
-static int lcd_write(int fd, int from_pid, fsinfo_t* info, const void* buf, int size, int offset, void* p) {
+static int lcd_write(int fd, int from_pid, fsinfo_t* info, 
+		const void* buf, int size, int offset, void* p) {
 	(void)fd;
 	(void)from_pid;
 	(void)info;
@@ -388,7 +365,8 @@ static int lcd_write(int fd, int from_pid, fsinfo_t* info, const void* buf, int 
 	return size;
 }
 
-static int lcd_fcntl(int fd, int from_pid, fsinfo_t* info, int cmd, proto_t* in, proto_t* out, void* p) {
+static int lcd_fcntl(int fd, int from_pid, fsinfo_t* info, 
+		int cmd, proto_t* in, proto_t* out, void* p) {
 	(void)fd;
 	(void)from_pid;
 	(void)info;
@@ -402,18 +380,10 @@ static int lcd_fcntl(int fd, int from_pid, fsinfo_t* info, int cmd, proto_t* in,
 	return 0;
 }
 
-static int lcd_umount(fsinfo_t* info, void* p) {
-	(void)p;
-	vfs_umount(info);
-	return 0;
-}
-
 int main(int argc, char** argv) {
 	lcd_init();
 
-	fsinfo_t mnt_point;
-	const char* mnt_name = argc > 1 ? argv[1]: "/dev/lcd";
-	vfs_create(mnt_name, &mnt_point, FS_TYPE_DEV);
+	const char* mnt_point = argc > 1 ? argv[1]: "/dev/lcd";
 
 	uint32_t sz = LCD_HEIGHT*LCD_WIDTH*4;
 	fb_dma_t dma;
@@ -428,19 +398,12 @@ int main(int argc, char** argv) {
 	vdevice_t dev;
 	memset(&dev, 0, sizeof(vdevice_t));
 	strcpy(dev.name, "lcd");
-	dev.mount = lcd_mount;
 	dev.write = lcd_write;
 	dev.flush = lcd_flush;
 	dev.dma   = lcd_dma;
 	dev.fcntl = lcd_fcntl;
-	dev.umount = lcd_umount;
 
-	mount_info_t mnt_info;
-	strcpy(mnt_info.dev_name, dev.name);
-	mnt_info.dev_index = 0;
-	mnt_info.access = 0;
-
-	device_run(&dev, &mnt_point, &mnt_info, &dma, 1);
+	device_run(&dev, mnt_point, FS_TYPE_DEV, &dma, 1);
 
 	close(_gpio_fd);
 	shm_unmap(dma.shm_id);

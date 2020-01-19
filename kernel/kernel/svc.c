@@ -251,8 +251,8 @@ static int32_t sys_vfs_get_mount_by_id(int32_t id, mount_t* mount) {
 	return vfs_get_mount_by_id(id, mount);
 }
 
-static int32_t sys_vfs_mount(fsinfo_t* info_to, fsinfo_t* info, mount_info_t* mnt_info) {
-	if(info_to == NULL || info == NULL || mnt_info == NULL)
+static int32_t sys_vfs_mount(fsinfo_t* info_to, fsinfo_t* info) {
+	if(info_to == NULL || info == NULL)
 		return -1;
 	
 	vfs_node_t* node_to = (vfs_node_t*)info_to->node;
@@ -260,7 +260,7 @@ static int32_t sys_vfs_mount(fsinfo_t* info_to, fsinfo_t* info, mount_info_t* mn
 	if(node == NULL || node_to == NULL)
 		return -1;
 	
-	vfs_mount(node_to, node, mnt_info);
+	vfs_mount(node_to, node);
 	return 0;
 }
 
@@ -382,8 +382,8 @@ static void sys_proc_get_cwd(char* cwd, int32_t sz) {
 	strncpy(cwd, CS(_current_proc->cwd), sz);
 }
 
-static void sys_proc_get_cmd(char* cmd, int32_t sz) {
-	strncpy(cmd, CS(_current_proc->cmd), sz);
+static void sys_proc_get_cmd(int32_t pid, char* cmd, int32_t sz) {
+	strncpy(cmd, CS(proc_get(pid)->cmd), sz);
 }
 
 static void	sys_get_sysinfo(sysinfo_t* info) {
@@ -722,7 +722,7 @@ void svc_handler(int32_t code, int32_t arg0, int32_t arg1, int32_t arg2, context
 		ctx->gpr[0] = sys_vfs_get_mount_by_id(arg0, (mount_t*)arg1);
 		return;
 	case SYS_VFS_MOUNT:
-		ctx->gpr[0] = sys_vfs_mount((fsinfo_t*)arg0, (fsinfo_t*)arg1, (mount_info_t*)arg2);
+		ctx->gpr[0] = sys_vfs_mount((fsinfo_t*)arg0, (fsinfo_t*)arg1);
 		return;
 	case SYS_VFS_UMOUNT:
 		sys_vfs_umount((fsinfo_t*)arg0);
@@ -758,7 +758,7 @@ void svc_handler(int32_t code, int32_t arg0, int32_t arg1, int32_t arg2, context
 		sys_proc_get_cwd((char*)arg0, arg1);
 		return;
 	case SYS_PROC_GET_CMD: 
-		sys_proc_get_cmd((char*)arg0, arg1);
+		sys_proc_get_cmd(arg0, (char*)arg1, arg2);
 		return;
 	case SYS_GET_SYSINFO:
 		sys_get_sysinfo((sysinfo_t*)arg0);

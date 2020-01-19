@@ -363,12 +363,41 @@ static void handle(vdevice_t* dev, int from_pid, proto_t *in, void* p) {
 	}
 }
 
-int device_run(vdevice_t* dev, fsinfo_t* mount_point, mount_info_t* mnt_info, void* p, int block) {
+static int do_mount(vdevice_t* dev, fsinfo_t* mnt_point, int type, void* p) {
+	(void)p;
+	fsinfo_t info;
+	memset(&info, 0, sizeof(fsinfo_t));
+	strcpy(info.name, mnt_point->name);
+	info.type = type;
+	vfs_new_node(&info);
+
+	if(dev->mount != NULL) {
+		if(dev->mount(&info, p) != 0) {
+			vfs_del(&info);
+			return -1;
+		}
+	}
+
+	if(vfs_mount(mnt_point, &info) != 0) {
+		vfs_del(&info);
+		return -1;
+	}
+	memcpy(mnt_point, &info, sizeof(fsinfo_t));
+	return 0;
+}
+
+int device_run(vdevice_t* dev, const char* mnt_point, int mnt_type, void* p, int block) {
 	if(dev == NULL)
 		return -1;
 
-	if(dev->mount != NULL) {
-		if(dev->mount(mount_point, mnt_info, p) != 0)
+	fsinfo_t mnt_point_info;
+	if(mnt_point != NULL) {
+		if(strcmp(mnt_point, "/") != 0)
+			vfs_create(mnt_point, &mnt_point_info, mnt_type);
+		else
+			vfs_get(mnt_point, &mnt_point_info);
+
+		if(do_mount(dev, &mnt_point_info, mnt_type, p) != 0)
 			return -1;
 	}
 
@@ -382,12 +411,13 @@ int device_run(vdevice_t* dev, fsinfo_t* mount_point, mount_info_t* mnt_info, vo
 		}
 		if(dev->loop_step != NULL)
 			dev->loop_step(p);
-		if(block == 0)
+		else if(block == 0)
 			sleep(0);
 	}
 
-	if(dev->umount != NULL) {
-		return dev->umount(mount_point, p);
+	if(mnt_point != NULL && dev->umount != NULL) {
+		return dev->umount(&mnt_point_info, p);
 	}
+	vfs_uumount(&mnt_point_info);
 	return 0;
 }

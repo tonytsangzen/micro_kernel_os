@@ -10,6 +10,7 @@
 #include <dev/device.h>
 #include <graph/graph.h>
 #include <shm.h>
+#include <sys/critical.h>
 
 typedef struct {
 	void* data;
@@ -19,23 +20,14 @@ typedef struct {
 
 static fbinfo_t _fbinfo;
 
-static int fb_mount(fsinfo_t* mnt_point, mount_info_t* mnt_info, void* p) {
-	(void)p;
-	fsinfo_t info;
-	memset(&info, 0, sizeof(fsinfo_t));
-	strcpy(info.name, mnt_point->name);
-	info.type = FS_TYPE_DEV;
-	vfs_new_node(&info);
+static int fb_write(int fd,
+		int from_pid, 
+		fsinfo_t* info, 
+		const void* buf,
+		int size,
+		int offset,
+		void* p) {
 
-	if(vfs_mount(mnt_point, &info, mnt_info) != 0) {
-		vfs_del(&info);
-		return -1;
-	}
-	memcpy(mnt_point, &info, sizeof(fsinfo_t));
-	return 0;
-}
-
-static int fb_write(int fd, int from_pid, fsinfo_t* info, const void* buf, int size, int offset, void* p) {
 	(void)fd;
 	(void)from_pid;
 	(void)info;
@@ -46,14 +38,23 @@ static int fb_write(int fd, int from_pid, fsinfo_t* info, const void* buf, int s
 	if(size < sz)
 		return 0;
 	
+	critical_enter();
 	if(_fbinfo.depth == 32) 
 		memcpy((void*)_fbinfo.pointer, buf, size);
 	else if(_fbinfo.depth == 16) 
 		dup16((uint16_t*)_fbinfo.pointer, (uint32_t*)buf, _fbinfo.width, _fbinfo.height);
+	critical_quit();
 	return sz;
 }	
 
-static int fb_fcntl(int fd, int from_pid, fsinfo_t* info, int cmd, proto_t* in, proto_t* out, void* p) {
+static int fb_fcntl(int fd, 
+		int from_pid,
+		fsinfo_t* info, 
+		int cmd, 
+		proto_t* in, 
+		proto_t* out,
+		void* p) {
+
 	(void)fd;
 	(void)from_pid;
 	(void)info;
@@ -78,10 +79,12 @@ static int fb_flush(int fd, int from_pid, fsinfo_t* info, void* p) {
 	if(size > sz)
 		size = sz;
 
+	critical_enter();
 	if(_fbinfo.depth == 32) 
 		memcpy((void*)_fbinfo.pointer, dma->data, size);
 	else if(_fbinfo.depth == 16) 
 		dup16((uint16_t*)_fbinfo.pointer, (uint32_t*)dma->data, _fbinfo.width, _fbinfo.height);
+	critical_quit();
 	return 0;
 }
 
@@ -94,16 +97,8 @@ static int fb_dma(int fd, int from_pid, fsinfo_t* info, int* size, void* p) {
 	return dma->shm_id;
 }
 
-static int fb_umount(fsinfo_t* info, void* p) {
-	(void)p;
-	vfs_umount(info);
-	return 0;
-}
-
 int main(int argc, char** argv) {
-	fsinfo_t mnt_point;
 	const char* mnt_name = argc > 1 ? argv[1]: "/dev/fb0";
-	vfs_create(mnt_name, &mnt_point, FS_TYPE_DEV);
 
 	syscall1(SYS_FRAMEBUFFER_MAP, (int32_t)&_fbinfo);
 	uint32_t sz = _fbinfo.width * _fbinfo.height * 4;
@@ -120,19 +115,12 @@ int main(int argc, char** argv) {
 	vdevice_t dev;
 	memset(&dev, 0, sizeof(vdevice_t));
 	strcpy(dev.name, "framebuffer");
-	dev.mount = fb_mount;
 	dev.dma = fb_dma;
 	dev.flush = fb_flush;
 	dev.write = fb_write;
 	dev.fcntl = fb_fcntl;
-	dev.umount = fb_umount;
 
-	mount_info_t mnt_info;
-	strcpy(mnt_info.dev_name, dev.name);
-	mnt_info.dev_index = 0;
-	mnt_info.access = 0;
-
-	device_run(&dev, &mnt_point, &mnt_info, &dma, 1);
+	device_run(&dev, mnt_name, FS_TYPE_DEV, &dma, 1);
 
 	shm_unmap(dma.shm_id);
 	return 0;

@@ -179,7 +179,6 @@ int main(int argc, char** argv) {
 
 	setenv("OS", "mkos");
 	setenv("PATH", "/sbin:/bin");
-	set_global("current_console", "0");
 
 	kprintf("\n[init process started]\n");
 	//mount root fs

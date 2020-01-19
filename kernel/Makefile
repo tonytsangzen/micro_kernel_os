@@ -69,7 +69,7 @@ CFLAGS += -I${ARCH_DIR}/${ARCH}/extra -DWITH_LCDHAT
 
 ARCH_OBJS += ${ARCH_DIR}/${ARCH}/extra/lib/gpio_arch.o  \
 	${ARCH_DIR}/${ARCH}/extra/lib/spi_arch.o \
-	${ARCH_DIR}/${ARCH}/extra/lcdhat/lcdhat.o 
+	${ARCH_DIR}/${ARCH}/extra/lcdhat/lcdhat.o
 endif
 
 LIB_DIR = lib

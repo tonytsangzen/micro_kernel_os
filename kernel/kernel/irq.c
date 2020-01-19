@@ -10,10 +10,11 @@
 #include <string.h>
 #include <kprintf.h>
 
-static void sd_handler(void) {
+/*static void sd_handler(void) {
 	dev_t* dev = get_dev(DEV_SD);
 	sd_dev_handle(dev);
 }
+*/
 
 uint32_t _kernel_tic = 0;
 static uint64_t _timer_usec = 0;
@@ -24,9 +25,11 @@ void irq_handler(context_t* ctx) {
 
 	uint32_t irqs = gic_get_irqs();
 
+	/*
 	if((irqs & IRQ_SDC) != 0) {
 		sd_handler();
 	}
+	*/
 	if((irqs & IRQ_TIMER0) != 0) {
 		uint64_t usec = timer_read_sys_usec();
 		if(_current_proc == NULL || _current_proc->critical_counter == 0) {
@@ -81,7 +84,8 @@ void data_abort_handler(context_t* ctx) {
 void irq_init(void) {
 	irq_arch_init();
 	//gic_set_irqs( IRQ_UART0 | IRQ_TIMER0 | IRQ_KEY | IRQ_MOUSE | IRQ_SDC);
-	gic_set_irqs(IRQ_TIMER0 | IRQ_SDC);
+	//gic_set_irqs(IRQ_TIMER0 | IRQ_SDC);
+	gic_set_irqs(IRQ_TIMER0);
 	__irq_enable();
 	_kernel_tic = 0;
 	_timer_usec = 0;
