@@ -161,7 +161,7 @@ static int32_t __attribute__((optimize("O0"))) sd_cmd(uint32_t code, uint32_t ar
 	sd_err = SD_OK;
 	if(code & CMD_NEED_APP) {
 		r = sd_cmd(CMD_APP_CMD|(sd_rca?CMD_RSPNS_48:0), sd_rca);
-		if(sd_rca != 0 && r != 0) {
+		if(sd_rca != 0 && r == 0x0) {
 			sd_err = SD_ERROR;
 			return 0;
 		}
@@ -415,15 +415,14 @@ int32_t __attribute__((optimize("O0"))) sd_init(dev_t* dev) {
 	if(sd_err)
 		return sd_err;
 	
-	if((r=sd_clk(12500000)))
+	if((r=sd_clk(10000000)))
 		return r;
 
 	if(sd_status(SR_DAT_INHIBIT))
 		return SD_TIMEOUT;
 
-	*EMMC_BLKSIZECNT = (1<<16) | dev->io.block.block_size;
+	*EMMC_BLKSIZECNT = (1<<16) | 8;
 
-/*
 	sd_cmd(CMD_SEND_SCR, 0);
 	if(sd_err)
 		return sd_err;
@@ -447,7 +446,6 @@ int32_t __attribute__((optimize("O0"))) sd_init(dev_t* dev) {
 			return sd_err;
 		*EMMC_CONTROL0 |= C0_HCTL_DWITDH;
 	}
-	*/
 
 	// add software flag
 	sd_scr[0] &= ~SCR_SUPP_CCS;
