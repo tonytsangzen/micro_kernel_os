@@ -479,9 +479,9 @@ inline void dup16(uint16_t* dst, uint32_t* src, uint32_t w, uint32_t h) {
 	size = w * h;
 	for(i=0; i < size; i++) {
 		register uint32_t s = src[i];
-		register uint8_t b = (s >> 16) & 0xff;
-		register uint8_t g = (s >> 8)  & 0xff;
-		register uint8_t r = s & 0xff;
+		register uint8_t b = (s >> 16);
+		register uint8_t g = (s >> 8);
+		register uint8_t r = s;
 		dst[i] = ((r >> 3) <<11) | ((g >> 3) << 6) | (b >> 3);
 	}
 }

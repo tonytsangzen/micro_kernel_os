@@ -1,5 +1,6 @@
 #include "gpio_arch.h"
 #include <dev/sd.h>
+#include <dev/actled.h>
 #include <kernel/system.h>
 #include <kernel/proc.h>
 #include <basic_math.h>
@@ -104,15 +105,15 @@
 
 #define SECTOR_SIZE         512 
 
-uint32_t sd_scr[2], sd_ocr, sd_rca, sd_hv;
-int32_t sd_err;
+volatile uint32_t sd_scr[2], sd_ocr, sd_rca, sd_hv;
+volatile int32_t sd_err;
 
 // shared variables between SDC driver and interrupt handler
 typedef struct {
-	int32_t sector;
+	volatile int32_t sector;
 	char rxbuf[SECTOR_SIZE];
 	char txbuf[SECTOR_SIZE];
-	uint32_t rxdone, txdone;
+	volatile uint32_t rxdone, txdone;
 } sd_t;
 
 static sd_t _sdc;
@@ -120,20 +121,21 @@ static sd_t _sdc;
 /**
  * Wait for data or command ready
  */
-static int32_t sd_status(uint32_t mask) {
+static int32_t __attribute__((optimize("O0"))) sd_status(uint32_t mask) {
 	int32_t cnt = 1000000; 
-	while((*EMMC_STATUS & mask) != 0 && (*EMMC_INTERRUPT & INT_ERROR_MASK) == 0 && cnt > 0); //_delay_usec(1);
+	while((*EMMC_STATUS & mask) != 0 && (*EMMC_INTERRUPT & INT_ERROR_MASK) == 0 && cnt > 0)
+		_delay_usec(1);
 	return (cnt <= 0 || (*EMMC_INTERRUPT & INT_ERROR_MASK)) ? SD_ERROR : SD_OK;
 }
 
 /**
  * Wait for interrupt
  */
-static int32_t sd_int(uint32_t mask, int32_t wait) {
+static int32_t __attribute__((optimize("O0"))) sd_int(uint32_t mask, int32_t wait) {
 	uint32_t r, m = (mask | INT_ERROR_MASK);
 	int32_t cnt = 10000; 
 	while((*EMMC_INTERRUPT & m) == 0 && cnt--) {
-		//_delay_usec(1);
+		_delay_usec(1);
 		if(wait == 0)
 			return -1;
 	}
@@ -154,12 +156,12 @@ static int32_t sd_int(uint32_t mask, int32_t wait) {
 /**
  * Send a command
  */
-static int32_t sd_cmd(uint32_t code, uint32_t arg) {
+static int32_t __attribute__((optimize("O0"))) sd_cmd(uint32_t code, uint32_t arg) {
 	int32_t r = 0;
 	sd_err = SD_OK;
 	if(code & CMD_NEED_APP) {
 		r = sd_cmd(CMD_APP_CMD|(sd_rca?CMD_RSPNS_48:0), sd_rca);
-		if(sd_rca != 0 && r != 0) {
+		if(sd_rca != 0 && r == 0x0) {
 			sd_err = SD_ERROR;
 			return 0;
 		}
@@ -210,12 +212,13 @@ static int32_t sd_cmd(uint32_t code, uint32_t arg) {
  * returns 0 on error.
  */
 static int32_t sd_read_sector(dev_t* dev, uint32_t sector) {
-	*EMMC_BLKSIZECNT = (1 << 16) | dev->io.block.block_size;
 	if(sd_status(SR_DAT_INHIBIT)) {
 		sd_err = SD_TIMEOUT;
 		return -1;
 	}
 
+	act_led(1);	
+	*EMMC_BLKSIZECNT = (1 << 16) | dev->io.block.block_size;
 	if((sd_scr[0] & SCR_SUPP_CCS) != 0)
 		sd_cmd(CMD_READ_SINGLE, sector);
 	else
@@ -314,7 +317,7 @@ static int32_t sd_clk(uint32_t f) {
 /**
  * initialize EMMC to read SDHC card
  */
-int32_t sd_init(dev_t* dev) {
+int32_t __attribute__((optimize("O0"))) sd_init(dev_t* dev) {
 	dev->io.block.block_size = SECTOR_SIZE;
 	_sdc.rxdone = 1;
 	_sdc.txdone = 1;
@@ -388,7 +391,7 @@ int32_t sd_init(dev_t* dev) {
 	cnt = 6;
 	r = 0;
 	while(!(r&ACMD41_CMD_COMPLETE) && cnt--) {
-		_delay(400);
+		_delay(4000);
 		r = sd_cmd(CMD_SEND_OP_COND, ACMD41_ARG_HC);
 		if((r & ACMD41_CMD_COMPLETE) &&
 				(r & ACMD41_VOLTAGE) &&
@@ -412,15 +415,14 @@ int32_t sd_init(dev_t* dev) {
 	if(sd_err)
 		return sd_err;
 	
-	if((r=sd_clk(25000000)))
+	if((r=sd_clk(10000000)))
 		return r;
 
 	if(sd_status(SR_DAT_INHIBIT))
 		return SD_TIMEOUT;
 
-	*EMMC_BLKSIZECNT = (1<<16) | dev->io.block.block_size;
+	*EMMC_BLKSIZECNT = (1<<16) | 8;
 
-/*
 	sd_cmd(CMD_SEND_SCR, 0);
 	if(sd_err)
 		return sd_err;
@@ -444,7 +446,6 @@ int32_t sd_init(dev_t* dev) {
 			return sd_err;
 		*EMMC_CONTROL0 |= C0_HCTL_DWITDH;
 	}
-	*/
 
 	// add software flag
 	sd_scr[0] &= ~SCR_SUPP_CCS;
@@ -464,7 +465,7 @@ void sd_dev_handle(dev_t* dev) {
 	for(d=0; d<dev->io.block.block_size/4; d++)
 		buf[d] = *EMMC_DATA;
 
-	proc_wakeup((uint32_t)dev);
+	//proc_wakeup((uint32_t)dev);
 	_sdc.rxdone = 1;
 	return;
 }
@@ -483,6 +484,7 @@ int32_t sd_dev_read_done(dev_t* dev, void* buf) {
 	if(_sdc.rxdone == 0)
 		return -1;
 	memcpy(buf, _sdc.rxbuf, dev->io.block.block_size);
+	act_led(0);	
 	return 0;
 }
 
