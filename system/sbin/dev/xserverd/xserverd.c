@@ -755,6 +755,8 @@ static int mouse_handle(x_t* x, int8_t state, int32_t rx, int32_t ry) {
 #define KEY_V_RIGHT     0x8
 #define KEY_V_PRESS     0x10
 #define KEY_V_1         0x20
+#define KEY_V_2         0x40
+#define KEY_V_3         0x80
 
 static void joy_2_mouse(int key, int8_t* mv) {
 	mv[0] = mv[1] = mv[2] = 0;
@@ -902,7 +904,6 @@ static int xserver_loop_step(void* p) {
 	proc_lock(x->lock);
 	x_repaint(x);	
 	proc_unlock(x->lock);
-	usleep(1000);
 	return 0;
 }
 
