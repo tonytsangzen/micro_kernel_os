@@ -8,7 +8,7 @@
 
 4.remove  kernel*.img files from boot partition root dir.
 
-5.export MACH=raspi and remake kernel
+5.export MACH=raspi and remake kernel (with make clean)
 
 6.copy kernel/build/mkos.bin to boot partition /kernel.img
 
