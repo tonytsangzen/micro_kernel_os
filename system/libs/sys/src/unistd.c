@@ -146,7 +146,6 @@ int read(int fd, void* buf, uint32_t size) {
 			break;
 		if(errno != EAGAIN)
 			break;
-		sleep(0);
 	}
 	return res;
 }
@@ -297,7 +296,6 @@ int write(int fd, const void* buf, uint32_t size) {
 			break;
 		if(errno != EAGAIN)
 			break;
-		sleep(0);
 	}
 	return res;
 }
