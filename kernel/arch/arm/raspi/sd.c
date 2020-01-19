@@ -415,7 +415,7 @@ int32_t __attribute__((optimize("O0"))) sd_init(dev_t* dev) {
 	if(sd_err)
 		return sd_err;
 	
-	if((r=sd_clk(10000000)))
+	if((r=sd_clk(12500000)))
 		return r;
 
 	if(sd_status(SR_DAT_INHIBIT))
