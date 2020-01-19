@@ -12,4 +12,6 @@
 
 6.copy kernel/build/mkos.bin to boot partition /kernel.img
 
-7.copy system/build/rootfs/* to ext2 partition root dir
+7.cd system and make
+
+8.copy system/build/rootfs/* to ext2 partition root dir
