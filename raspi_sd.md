@@ -6,7 +6,7 @@
 
     sudo mke2fs -b 1024 -I 128 /dev/(SD_PARTITION_EXT4)
 
-4.remove all kernel*.img files from boot partition root dir.
+4.remove  kernel*.img files from boot partition root dir.
 
 5.export MACH=raspi and remake kernel
 
