@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <sys/critical.h>
 
 inline uint32_t argb(uint32_t a, uint32_t r, uint32_t g, uint32_t b) {
 	return a << 24 | b << 16 | g << 8 | r;
@@ -83,6 +84,7 @@ void clear(graph_t* g, uint32_t color) {
 	if(g->w == 0 || g->w == 0)
 		return;
 
+	critical_enter();
 	uint32_t i = 0;
 	uint32_t sz = g->w * 4;
 	while(i<g->w) {
@@ -93,6 +95,7 @@ void clear(graph_t* g, uint32_t color) {
 	for(i=1; i<g->h; ++i) {
 		memcpy(p+(i*sz), p, sz);
 	}
+	critical_quit();
 }
 
 void reverse(graph_t* g) {
@@ -262,6 +265,8 @@ void fill(graph_t* g, int32_t x, int32_t y, int32_t w, int32_t h, uint32_t color
 	ex = r.x + r.w;
 	ey = r.y + r.h;
 
+	critical_enter();
+
 	if(!has_alpha(color)) {
 		for(; y < ey; y++) {
 			x = r.x;
@@ -282,6 +287,8 @@ void fill(graph_t* g, int32_t x, int32_t y, int32_t w, int32_t h, uint32_t color
 			}
 		}
 	}
+	critical_quit();
+
 }
 
 static void draw_char8(graph_t* g, int32_t x, int32_t y, char c, font_t* font, uint32_t color) {
@@ -439,6 +446,7 @@ inline void blt_alpha(graph_t* src, int32_t sx, int32_t sy, int32_t sw, int32_t 
 	if(!insect(src, &sr, dst, &dr))
 		return;
 
+	critical_enter();
 	register int32_t ex, ey;
 	sy = sr.y;
 	dy = dr.y;
@@ -457,6 +465,7 @@ inline void blt_alpha(graph_t* src, int32_t sx, int32_t sy, int32_t sw, int32_t 
 					color & 0xff);
 		}
 	}
+	critical_quit();
 }
 
 int32_t check_in_rect(int32_t x, int32_t y, grect_t* rect) {
@@ -477,6 +486,7 @@ int32_t get_text_size(const char* s, font_t* font, gsize_t* size) {
 inline void dup16(uint16_t* dst, uint32_t* src, uint32_t w, uint32_t h) {
 	register int32_t i, size;
 	size = w * h;
+	critical_enter();
 	for(i=0; i < size; i++) {
 		register uint32_t s = src[i];
 		register uint8_t b = (s >> 16);
@@ -484,5 +494,6 @@ inline void dup16(uint16_t* dst, uint32_t* src, uint32_t w, uint32_t h) {
 		register uint8_t r = s;
 		dst[i] = ((r >> 3) <<11) | ((g >> 3) << 6) | (b >> 3);
 	}
+	critical_quit();
 }
 

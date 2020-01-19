@@ -840,7 +840,7 @@ static void read_thread(void* p) {
 				proc_unlock(x->lock);
 			}
 		}
-		usleep(400);
+		sleep(0);
 	}
 }
 
