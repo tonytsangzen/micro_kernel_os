@@ -30,7 +30,7 @@ typedef struct st_xview {
 	int from_pid;
 	graph_t* g;
 	xinfo_t xinfo;
-	int dirty;
+	bool dirty;
 
 	struct st_xview *next;
 	struct st_xview *prev;
@@ -60,8 +60,9 @@ typedef struct {
 	int joystick_fd;
 	int xwm_pid;
 	int shm_id;
-	int dirty;
-	int need_repaint;
+	bool dirty;
+	bool need_repaint;
+	bool show_cursor;
 	graph_t* g;
 	cursor_t cursor;
 
@@ -135,7 +136,7 @@ static void draw_mask(graph_t* g, int x, int y, int w, int h) {
 }
 
 static int draw_view(x_t* xp, xview_t* view) {
-	if(xp->dirty == 0 && view->dirty == 0)
+	if(!xp->dirty && !view->dirty)
 		return 0;
 
 	if(view->g != NULL) {
@@ -171,13 +172,13 @@ static int draw_view(x_t* xp, xview_t* view) {
 	}
 
 	draw_win_frame(xp, view);
-	view->dirty = 0;
+	view->dirty = false;
 	return 0;
 }
 
 static inline void x_dirty(x_t* x) {
-	x->dirty = 1;
-	x->need_repaint = 1;
+	x->dirty = true;
+	x->need_repaint = true;
 }
 
 static void remove_view(x_t* x, xview_t* view) {
@@ -309,12 +310,12 @@ static inline void draw_cursor(x_t* x) {
 
 static void x_repaint(x_t* x) {
 	if(!x->actived ||
-			(x->need_repaint == 0))
+			(!x->need_repaint))
 		return;
-	x->need_repaint = 0;
+	x->need_repaint = false;
 
 	hide_cursor(x);
-	if(x->dirty != 0)
+	if(x->dirty)
 		draw_desktop(x);
 
 	xview_t* view = x->view_head;
@@ -323,9 +324,10 @@ static void x_repaint(x_t* x) {
 			draw_view(x, view);
 		view = view->next;
 	}
-	draw_cursor(x);
+	if(x->show_cursor)
+		draw_cursor(x);
 	flush(x->fb_fd);
-	x->dirty = 0;
+	x->dirty = false;
 }
 
 static xview_t* x_get_view(x_t* x, int fd, int from_pid) {
@@ -346,12 +348,12 @@ static int x_update(int fd, int from_pid, x_t* x) {
 	if(view == NULL)
 		return -1;
 
-	view->dirty = 1;
+	view->dirty = true;
 	if(view != x->view_tail ||
 			(view->xinfo.style & X_STYLE_ALPHA) != 0) {
 		x_dirty(x);
 	}
-	x->need_repaint = 1;
+	x->need_repaint = true;
 	return 0;
 }
 
@@ -364,7 +366,7 @@ static int x_set_visible(int fd, int from_pid, proto_t* in, x_t* x) {
 		return -1;
 
 	view->xinfo.visible = proto_read_int(in);
-	view->dirty = 1;
+	view->dirty = true;
 	x_dirty(x);
 	return 0;
 }
@@ -395,8 +397,8 @@ static int x_update_info(int fd, int from_pid, proto_t* in, x_t* x) {
 		view->g = graph_new(p, xinfo.r.w, xinfo.r.h);
 		clear(view->g, 0xff000000);
 	}
-	view->dirty = 1;
-	x->need_repaint = 1;
+	view->dirty = true;
+	x->need_repaint = true;
 
 	if(view != x->view_tail ||
 			view->xinfo.r.x != xinfo.r.x ||
@@ -611,6 +613,7 @@ static int x_init(x_t* x) {
 	x->cursor.offset.y = 8;
 	x->cursor.cpos.x = w/2;
 	x->cursor.cpos.y = h/2; 
+	x->show_cursor = true;
 
 	x->lock = proc_lock_new();
 	return 0;
@@ -858,7 +861,7 @@ static void read_thread(void* p) {
 			if(read_nblock(x->mouse_fd, mv, 4) == 4) {
 				proc_lock(x->lock);
 				mouse_handle(x, mv[0], mv[1], mv[2]);
-				x->need_repaint = 1;
+				x->need_repaint = true;
 				proc_unlock(x->lock);
 			}
 		}
@@ -871,6 +874,8 @@ static void read_thread(void* p) {
 				if(key == KEY_V_3 && !prs_down) { //switch joy mouse/keyboard mode
 					j_mouse = !j_mouse;
 					prs_down = true;
+					x->show_cursor = j_mouse;
+					x->need_repaint = true;
 				}
 
 				if(j_mouse) {
@@ -883,7 +888,7 @@ static void read_thread(void* p) {
 					if(key != 0) {
 						proc_lock(x->lock);
 						mouse_handle(x, mv[0], mv[1], mv[2]);
-						x->need_repaint = 1;
+						x->need_repaint = true;
 						proc_unlock(x->lock);
 					}
 				}
@@ -929,7 +934,7 @@ static void read_thread(void* p) {
 		if(read_nblock(x->mouse_fd, mv, 4) == 4) {
 			proc_lock(x->lock);
 			mouse_handle(x, mv[0], mv[1], mv[2]);
-			x->need_repaint = 1;
+			x->need_repaint = true;
 			proc_unlock(x->lock);
 		}
 	}
@@ -948,7 +953,7 @@ static void read_thread(void* p) {
 			if(key != 0) {
 				proc_lock(x->lock);
 				mouse_handle(x, mv[0], mv[1], mv[2]);
-				x->need_repaint = 1;
+				x->need_repaint = true;
 				proc_unlock(x->lock);
 			}
 		}
