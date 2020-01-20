@@ -758,6 +758,7 @@ static int mouse_handle(x_t* x, int8_t state, int32_t rx, int32_t ry) {
 #define KEY_V_2         0x40
 #define KEY_V_3         0x80
 
+static bool prs_down = false;
 static void joy_2_mouse(int key, int8_t* mv) {
 	mv[0] = mv[1] = mv[2] = 0;
 	switch(key) {
@@ -774,10 +775,10 @@ static void joy_2_mouse(int key, int8_t* mv) {
 		mv[1] += 10;
 		return;
 	case KEY_V_PRESS:
-		mv[0] = 2;
-		return;
-	case KEY_V_1:
-		mv[0] = 1;
+		if(!prs_down) {
+			mv[0] = 2;
+			prs_down = true;
+		}
 		return;
 	}	
 }
@@ -880,14 +881,21 @@ static void read_event(x_t* x) {
 
 	//read joystick
 	if(x->joystick_fd >= 0) {
-		uint8_t j;
+		uint8_t key;
 		int8_t mv[4];
-		if(read(x->joystick_fd, &j, 1) == 1 && j != 0) {
-			joy_2_mouse(j, mv);
-			proc_lock(x->lock);
-			mouse_handle(x, mv[0], mv[1], mv[2]);
-			x->need_repaint = 1;
-			proc_unlock(x->lock);
+		if(read(x->joystick_fd, &key, 1) == 1) {
+			joy_2_mouse(key, mv);
+			if(key == 0 && prs_down) {
+				key = 1;
+				prs_down = false;
+				mv[0] = 1;
+			}
+			if(key != 0) {
+				proc_lock(x->lock);
+				mouse_handle(x, mv[0], mv[1], mv[2]);
+				x->need_repaint = 1;
+				proc_unlock(x->lock);
+			}
 		}
 	}
 }
@@ -937,6 +945,7 @@ int main(int argc, char** argv) {
 	if(x_init(&x) == 0) {
 		x.actived = true;
 		x.xwm_pid = pid;
+		prs_down = false;
 		//thread_create(read_thread, &x);
 		device_run(&dev, mnt_point, FS_TYPE_DEV, &x, 0);
 		x_close(&x);
