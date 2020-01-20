@@ -52,13 +52,36 @@ static inline void* sector_buf_get(uint32_t index) {
 	return _sector_buf[index].data;
 }
 
+
+static int32_t read_sector(int32_t sector, void* buf) {
+	if(syscall2(SYS_DEV_BLOCK_READ, DEV_SD, sector) != 0)
+		return -1;
+	while(1) {
+		if(syscall2(SYS_DEV_BLOCK_READ_DONE, DEV_SD, (int32_t)buf)  == 0)
+			break;
+	}
+	return 0;
+}
+
+static int32_t write_sector(int32_t sector, const void* buf) {
+	if(syscall3(SYS_DEV_BLOCK_WRITE, DEV_SD, sector, (int32_t)buf) != 0)
+		return -1;
+	while(1) {
+		if(syscall1(SYS_DEV_BLOCK_WRITE_DONE, DEV_SD)  == 0)
+			break;
+	}
+	return 0;
+}
+
+
 int32_t sd_read_sector(int32_t sector, void* buf) {
 	void* b = sector_buf_get(sector);
 	if(b != NULL) {
 		memcpy(buf, b, SECTOR_SIZE);
 		return SECTOR_SIZE;
 	}	
-	if(read_block(SD_DEV_PID, buf, SECTOR_SIZE, sector) == SECTOR_SIZE) {
+	//if(read_block(SD_DEV_PID, buf, SECTOR_SIZE, sector) == SECTOR_SIZE) {
+	if(read_sector(sector, buf) == 0) {
 		sector_buf_set(sector, buf);
 		return SECTOR_SIZE;
 	}
@@ -66,7 +89,10 @@ int32_t sd_read_sector(int32_t sector, void* buf) {
 }
 
 int32_t sd_write_sector(int32_t sector, const void* buf) {
-	return write_block(SD_DEV_PID, buf, SECTOR_SIZE, sector);
+	if(write_sector(sector, buf) == 0) 
+		return SECTOR_SIZE;
+	return 0;
+	//return write_block(SD_DEV_PID, buf, SECTOR_SIZE, sector);
 }
 
 int32_t sd_read(int32_t block, void* buf) {

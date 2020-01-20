@@ -33,6 +33,7 @@ ARCH_DIR=../kernel/arch
 LDFLAGS = -lc -lnosys
 
 LIB_INC = -I libs/sys/include \
+				  -I libs/libc/include \
 				  -I libs/x/include \
 				  -I libs/ext2/include \
 				  -I libs/graph/include \
@@ -42,6 +43,7 @@ LIB_INC = -I libs/sys/include \
 					-I ../kernel/include
 				 
 LIB_SYS_DIR = libs/sys/src
+LIB_LIBC_DIR = libs/libc/src
 LIB_X_DIR = libs/x/src
 LIB_EXT2_DIR = libs/ext2/src
 LIB_GRAPH_DIR = libs/graph/src
@@ -86,18 +88,14 @@ LIB_MARIO_OBJS = $(LIB_MARIO_DIR)/mario_bc.o \
 	$(LIB_MARIO_DIR)/compiler.o
 
 
-LIB_OBJS = $(LIB_SYS_DIR)/syscall.o \
+LIB_SYS_OBJS = $(LIB_SYS_DIR)/syscall.o \
 	$(LIB_SYS_DIR)/cmain.o \
 	$(LIB_SYS_DIR)/vfs.o \
 	$(LIB_SYS_DIR)/sconf.o \
 	$(LIB_SYS_DIR)/vprintf.o \
-	$(LIB_SYS_DIR)/unistd.o \
-	$(LIB_SYS_DIR)/stdlib.o \
 	$(LIB_SYS_DIR)/ipc.o \
 	$(LIB_SYS_DIR)/vdevice.o \
-	$(LIB_SYS_DIR)/fcntl.o \
 	$(LIB_SYS_DIR)/proto.o \
-	$(LIB_SYS_DIR)/stdio.o \
 	$(LIB_SYS_DIR)/thread.o \
 	$(LIB_SYS_DIR)/basic_math.o \
 	$(LIB_SYS_DIR)/shm.o \
@@ -107,11 +105,20 @@ LIB_OBJS = $(LIB_SYS_DIR)/syscall.o \
 	$(LIB_SYS_DIR)/proclock.o \
 	$(LIB_SYS_DIR)/sys/wait.o \
 	$(LIB_SYS_DIR)/sys/critical.o \
-	$(LIB_SYS_DIR)/sys/mmio.o \
+	$(LIB_SYS_DIR)/sys/mmio.o 
+
+LIB_LIBC_OBJS = $(LIB_LIBC_DIR)/unistd.o \
+	$(LIB_LIBC_DIR)/stdlib.o \
+	$(LIB_LIBC_DIR)/fcntl.o \
+	$(LIB_LIBC_DIR)/stdio.o
+
+LIB_OBJS = $(LIB_SYS_OBJS) \
+	$(LIB_LIBC_OBJS) \
 	$(GRAPH_OBJS) \
 	$(LIB_EXT2_OBJS) \
 	$(LIB_M_OBJS) \
 	$(LIB_X_OBJS)
+
 
 CLEAN = $(LIB_OBJS)
 

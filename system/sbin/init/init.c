@@ -182,7 +182,7 @@ int main(int argc, char** argv) {
 
 	kprintf("\n[init process started]\n");
 	//mount root fs
-	run_init_sd("sdd");
+	//run_init_sd("sdd");
 	run_init_root("/sbin/dev/rootfsd");
 
 	load_devs();

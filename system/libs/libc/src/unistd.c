@@ -9,7 +9,6 @@
 #include <string.h>
 #include <mstr.h>
 #include <shm.h>
-#include <ramfs.h>
 #include <errno.h>
 #include <rawdata.h>
 
