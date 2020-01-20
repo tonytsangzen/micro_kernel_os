@@ -6,6 +6,7 @@
 #include <basic_math.h>
 #include <mm/mmu.h>
 #include <kstring.h>
+#include <kprintf.h>
 
 #define SD_OK                0
 #define SD_TIMEOUT          -1
@@ -392,7 +393,7 @@ int32_t __attribute__((optimize("O0"))) sd_init(dev_t* dev) {
 	r = 0;
 	while(!(r&ACMD41_CMD_COMPLETE) && cnt--) {
 		_delay_usec(4000);
-		printf("wait sd cmd...\n");
+		printf(".");
 		r = sd_cmd(CMD_SEND_OP_COND, ACMD41_ARG_HC);
 		if((r & ACMD41_CMD_COMPLETE) &&
 				(r & ACMD41_VOLTAGE) &&
