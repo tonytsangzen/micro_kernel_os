@@ -286,7 +286,7 @@ int main(int argc, char** argv) {
 	(void)argv;
 
 	read_config(&_xwm, "/etc/x/xwm.conf");
-	_xwm.title_h = 24;
+	_xwm.title_h = _xwm.font->h+4;
 	ipc_server(handle, NULL);
 	return 0;
 }
