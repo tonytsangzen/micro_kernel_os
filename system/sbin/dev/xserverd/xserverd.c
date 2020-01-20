@@ -779,6 +779,7 @@ static int keyb_handle(x_t* x, int8_t v) {
 		x_push_event(topv, e, 1);
 		proc_unlock(x->lock);
 	}
+	usleep(100000);
 	return 0;
 }
 
