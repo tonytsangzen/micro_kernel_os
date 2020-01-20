@@ -56,7 +56,6 @@ ARCH_OBJS = \
 	${ARCH_DIR}/arm/common/system.o \
 	${ARCH_DIR}/arm/common/memcpy.o \
 	${ARCH_DIR}/${ARCH}/hw_info.o \
-	${ARCH_DIR}/${ARCH}/cpu_freq.o \
 	${ARCH_DIR}/${ARCH}/uart.o \
 	${ARCH_DIR}/${ARCH}/irq_arch.o \
 	${ARCH_DIR}/${ARCH}/framebuffer.o \
@@ -70,7 +69,8 @@ CFLAGS += -I${ARCH_DIR}/${ARCH}/extra -DWITH_LCDHAT
 
 ARCH_OBJS += ${ARCH_DIR}/${ARCH}/extra/lib/gpio_arch.o  \
 	${ARCH_DIR}/${ARCH}/extra/lib/spi_arch.o \
-	${ARCH_DIR}/${ARCH}/extra/lcdhat/lcdhat.o
+	${ARCH_DIR}/${ARCH}/extra/lcdhat/lcdhat.o \
+	${ARCH_DIR}/${ARCH}/cpu_freq.o
 endif
 
 LIB_DIR = lib

@@ -19,3 +19,6 @@ inline hw_info_t* get_hw_info(void) {
 void arch_vm(page_dir_entry_t* vm) {
 	(void)vm;
 }
+
+void arch_hw_init(void) {
+}
