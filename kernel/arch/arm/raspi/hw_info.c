@@ -3,6 +3,7 @@
 #include <dev/framebuffer.h>
 #include <kstring.h>
 #include "mailbox.h"
+#include "cpu_freq.h"
 
 static hw_info_t _hw_info;
 
@@ -19,4 +20,9 @@ inline hw_info_t* get_hw_info(void) {
 
 void arch_vm(page_dir_entry_t* vm) {
 	(void)vm;
+}
+
+void arch_hw_init(void) {
+	
+	cpu_freq_init();	
 }

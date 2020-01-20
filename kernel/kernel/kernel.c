@@ -98,6 +98,7 @@ void _kernel_entry_c(context_t* ctx) {
 	(void)ctx;
 	hw_info_init();
 	init_kernel_vm();  
+	arch_hw_init();
 	km_init();
 
 	uart_dev_init();
