@@ -258,5 +258,6 @@ int32_t sd_dev_write(dev_t* dev, int32_t sector, const void* buf) {
 }
 
 int32_t sd_dev_write_done(dev_t* dev) {
+	sd_dev_handle(dev);
 	return sd_write_done(dev);
 }
