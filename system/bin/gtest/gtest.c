@@ -37,16 +37,23 @@ int main(int argc, char* argv[]) {
 
 	xevent_t xev;
 	while(x->closed == 0) {
+		int key = 0;
 		if(x_get_event(x, &xev) == 0) {
-			if(xev.type == XEVT_KEYB)
-				break;
+			if(xev.type == XEVT_KEYB) {
+				key = xev.value.keyboard.value;
+				if(key == 27) //esc
+					break;
+			}
 		}
 		if(top == 1) {
 			snprintf(str, 31, "paint = %d", i++);
 			graph_t* g = x_get_graph(x);
 			clear(g, argb_int(0xff0000ff));
 			draw_text(g, 10, 10, str, font, 0xffffffff);
-			draw_text(g, 10, g->h-20, "press anykey to quit......", font_by_name("8x16"), 0xffffffff);
+			if(key != 0) {
+				snprintf(str, 31, "key pressed: %d", key);
+				draw_text(g, 10, g->h-20, str, font_by_name("8x16"), 0xffffffff);
+			}
 			x_release_graph(x, g);
 			x_update(x);
 		}

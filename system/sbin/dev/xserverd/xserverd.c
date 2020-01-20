@@ -675,6 +675,16 @@ static void mouse_cxy(x_t* x, int32_t rx, int32_t ry) {
 		x->cursor.cpos.y = x->g->h;
 }
 
+static xview_t* get_top_view(x_t* x) {
+	xview_t* ret = x->view_tail; 
+	while(ret != NULL) {
+		if(ret->xinfo.visible)
+			return ret;
+		ret = ret->prev;
+	}
+	return NULL;
+}
+
 static int mouse_handle(x_t* x, int8_t state, int32_t rx, int32_t ry) {
 	mouse_cxy(x, rx, ry);
 
@@ -749,6 +759,21 @@ static int mouse_handle(x_t* x, int8_t state, int32_t rx, int32_t ry) {
 	return -1;
 }
 
+static int keyb_handle(x_t* x, int8_t v) {
+	xview_t* topv = get_top_view(x);
+	if(topv != NULL) {
+		xview_event_t* e = (xview_event_t*)malloc(sizeof(xview_event_t));
+		e->next = NULL;
+		e->event.type = XEVT_KEYB;
+		e->event.value.keyboard.value = v;
+
+		proc_lock(x->lock);
+		x_push_event(topv, e, 1);
+		proc_unlock(x->lock);
+	}
+	return 0;
+}
+
 #define KEY_V_UP        0x1
 #define KEY_V_DOWN      0x2
 #define KEY_V_LEFT      0x4
@@ -759,6 +784,8 @@ static int mouse_handle(x_t* x, int8_t state, int32_t rx, int32_t ry) {
 #define KEY_V_3         0x80
 
 static bool prs_down = false;
+static bool j_mouse = true;
+
 static void joy_2_mouse(int key, int8_t* mv) {
 	mv[0] = mv[1] = mv[2] = 0;
 	switch(key) {
@@ -783,14 +810,29 @@ static void joy_2_mouse(int key, int8_t* mv) {
 	}	
 }
 
-static xview_t* get_top_view(x_t* x) {
-	xview_t* ret = x->view_tail; 
-	while(ret != NULL) {
-		if(ret->xinfo.visible)
-			return ret;
-		ret = ret->prev;
-	}
-	return NULL;
+static void joy_2_keyb(int key, int8_t* v) {
+	*v = 0;
+	switch(key) {
+	case KEY_V_UP:
+		*v = 72;
+		return;
+	case KEY_V_DOWN:
+		*v = 80;
+		return;
+	case KEY_V_LEFT:
+		*v = 75;
+		return;
+	case KEY_V_RIGHT:
+		*v = 77;
+		return;
+	case KEY_V_1:
+	case KEY_V_PRESS:
+		*v = 13;
+		return;
+	case KEY_V_2:
+		*v = 27; //esc
+		return;
+	}	
 }
 
 static void read_thread(void* p) {
@@ -806,17 +848,7 @@ static void read_thread(void* p) {
 			int8_t v;
 			int rd = read_nblock(x->keyb_fd, &v, 1);
 			if(rd == 1) {
-				xview_t* topv = get_top_view(x);
-				if(topv != NULL) {
-					xview_event_t* e = (xview_event_t*)malloc(sizeof(xview_event_t));
-					e->next = NULL;
-					e->event.type = XEVT_KEYB;
-					e->event.value.keyboard.value = v;
-
-					proc_lock(x->lock);
-					x_push_event(topv, e, 1);
-					proc_unlock(x->lock);
-				}
+				keyb_handle(x, v);
 			}
 		}
 
@@ -836,17 +868,34 @@ static void read_thread(void* p) {
 			uint8_t key;
 			int8_t mv[4];
 			if(read(x->joystick_fd, &key, 1) == 1) {
-				joy_2_mouse(key, mv);
-				if(key == 0 && prs_down) {
-					key = 1;
-					prs_down = false;
-					mv[0] = 1;
+				if(key == KEY_V_3 && !prs_down) { //switch joy mouse/keyboard mode
+					j_mouse = !j_mouse;
+					prs_down = true;
 				}
-				if(key != 0) {
-					proc_lock(x->lock);
-					mouse_handle(x, mv[0], mv[1], mv[2]);
-					x->need_repaint = 1;
-					proc_unlock(x->lock);
+
+				if(j_mouse) {
+					joy_2_mouse(key, mv);
+					if(key == 0 && prs_down) {
+						key = 1;
+						prs_down = false;
+						mv[0] = 1;
+					}
+					if(key != 0) {
+						proc_lock(x->lock);
+						mouse_handle(x, mv[0], mv[1], mv[2]);
+						x->need_repaint = 1;
+						proc_unlock(x->lock);
+					}
+				}
+				else {
+					int8_t v;
+					if(key == 0 && prs_down)
+						prs_down = false;
+					else {
+						joy_2_keyb(key, &v);
+						if(v != 0)
+							keyb_handle(x, v);
+					}
 				}
 			}
 		}
@@ -952,6 +1001,7 @@ int main(int argc, char** argv) {
 		x.actived = true;
 		x.xwm_pid = pid;
 		prs_down = false;
+		j_mouse = true;
 		thread_create(read_thread, &x);
 		device_run(&dev, mnt_point, FS_TYPE_DEV, &x, 0);
 		x_close(&x);
