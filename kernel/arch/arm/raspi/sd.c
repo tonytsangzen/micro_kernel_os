@@ -123,7 +123,7 @@ static sd_t _sdc;
  */
 static int32_t __attribute__((optimize("O0"))) sd_status(uint32_t mask) {
 	int32_t cnt = 1000000; 
-	while((*EMMC_STATUS & mask) != 0 && (*EMMC_INTERRUPT & INT_ERROR_MASK) == 0 && cnt > 0)
+	while((*EMMC_STATUS & mask) != 0 && (*EMMC_INTERRUPT & INT_ERROR_MASK) == 0 && cnt-- > 0)
 		_delay_usec(1);
 	return (cnt <= 0 || (*EMMC_INTERRUPT & INT_ERROR_MASK)) ? SD_ERROR : SD_OK;
 }
@@ -391,7 +391,8 @@ int32_t __attribute__((optimize("O0"))) sd_init(dev_t* dev) {
 	cnt = 6;
 	r = 0;
 	while(!(r&ACMD41_CMD_COMPLETE) && cnt--) {
-		_delay(4000);
+		_delay_usec(4000);
+		printf("wait sd cmd...\n");
 		r = sd_cmd(CMD_SEND_OP_COND, ACMD41_ARG_HC);
 		if((r & ACMD41_CMD_COMPLETE) &&
 				(r & ACMD41_VOLTAGE) &&
