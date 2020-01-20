@@ -45,6 +45,7 @@ typedef struct {
 	gpos_t offset;
 	gsize_t size;
 	graph_t* g;
+	bool drop;
 } cursor_t;
 
 typedef struct {
@@ -258,6 +259,9 @@ static void x_del_view(x_t* x, xview_t* view) {
 }
 
 static void hide_cursor(x_t* x) {
+	if(x->cursor.drop)
+		return;
+
 	if(x->cursor.g == NULL) {
 		x->cursor.g = graph_new(NULL, x->cursor.size.w, x->cursor.size.h);
 		blt(x->g,
@@ -306,6 +310,7 @@ static inline void draw_cursor(x_t* x) {
 	line(x->g, mx+1, my+mh-1, mx+mw-1, my+1, 0xffffffff);
 	x->cursor.old_pos.x = x->cursor.cpos.x;
 	x->cursor.old_pos.y = x->cursor.cpos.y;
+	x->cursor.drop = false;
 }
 
 static void x_repaint(x_t* x) {
@@ -876,6 +881,9 @@ static void read_thread(void* p) {
 					prs_down = true;
 					x->show_cursor = j_mouse;
 					x->need_repaint = true;
+					if(x->show_cursor) {
+						x->cursor.drop = true;
+					}
 				}
 
 				if(j_mouse) {
