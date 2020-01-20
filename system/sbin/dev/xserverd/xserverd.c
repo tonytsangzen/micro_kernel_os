@@ -913,7 +913,7 @@ static void read_thread(void* p) {
 				}
 			}
 		}
-		usleep(10000);
+		usleep(25000);
 	}
 }
 
