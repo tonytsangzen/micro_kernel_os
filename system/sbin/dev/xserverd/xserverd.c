@@ -793,7 +793,7 @@ static xview_t* get_top_view(x_t* x) {
 	return NULL;
 }
 
-/*static void read_thread(void* p) {
+static void read_thread(void* p) {
 	x_t* x = (x_t*)p;
 	while(1) {
 		if(!x->actived)  {
@@ -833,22 +833,28 @@ static xview_t* get_top_view(x_t* x) {
 
 		//read joystick
 		if(x->joystick_fd >= 0) {
-			uint8_t j;
+			uint8_t key;
 			int8_t mv[4];
-			if(read(x->joystick_fd, &j, 1) == 1 && j != 0) {
-				joy_2_mouse(j, mv);
-				proc_lock(x->lock);
-				mouse_handle(x, mv[0], mv[1], mv[2]);
-				x->need_repaint = 1;
-				proc_unlock(x->lock);
+			if(read(x->joystick_fd, &key, 1) == 1) {
+				joy_2_mouse(key, mv);
+				if(key == 0 && prs_down) {
+					key = 1;
+					prs_down = false;
+					mv[0] = 1;
+				}
+				if(key != 0) {
+					proc_lock(x->lock);
+					mouse_handle(x, mv[0], mv[1], mv[2]);
+					x->need_repaint = 1;
+					proc_unlock(x->lock);
+				}
 			}
 		}
 		usleep(10000);
 	}
 }
-*/
 
-static void read_event(x_t* x) {
+/*static void read_event(x_t* x) {
 	//read keyb
 	if(x->keyb_fd >= 0) {
 		int8_t v;
@@ -899,6 +905,7 @@ static void read_event(x_t* x) {
 		}
 	}
 }
+*/
 
 static int xserver_loop_step(void* p) {
 	x_t* x = (x_t*)p;
@@ -906,8 +913,7 @@ static int xserver_loop_step(void* p) {
 		usleep(10000);
 		return -1;
 	}
-
-	read_event(x);
+	//read_event(x);
 
 	proc_lock(x->lock);
 	x_repaint(x);	
@@ -946,7 +952,7 @@ int main(int argc, char** argv) {
 		x.actived = true;
 		x.xwm_pid = pid;
 		prs_down = false;
-		//thread_create(read_thread, &x);
+		thread_create(read_thread, &x);
 		device_run(&dev, mnt_point, FS_TYPE_DEV, &x, 0);
 		x_close(&x);
 	}
