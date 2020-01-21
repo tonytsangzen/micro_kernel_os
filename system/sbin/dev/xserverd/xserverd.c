@@ -913,7 +913,7 @@ static void read_thread(void* p) {
 				}
 			}
 		}
-		usleep(25000);
+		usleep(20000);
 	}
 }
 
@@ -973,7 +973,6 @@ static void read_thread(void* p) {
 static int xserver_loop_step(void* p) {
 	x_t* x = (x_t*)p;
 	if(!x->actived)  {
-		usleep(10000);
 		return -1;
 	}
 	//read_event(x);
@@ -981,6 +980,7 @@ static int xserver_loop_step(void* p) {
 	proc_lock(x->lock);
 	x_repaint(x);	
 	proc_unlock(x->lock);
+	usleep(10000);
 	return 0;
 }
 
