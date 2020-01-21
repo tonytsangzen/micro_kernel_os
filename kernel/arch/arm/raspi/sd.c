@@ -393,7 +393,7 @@ int32_t __attribute__((optimize("O0"))) sd_init(dev_t* dev) {
 	r = 0;
 	while(!(r&ACMD41_CMD_COMPLETE) && cnt--) {
 		_delay_usec(4000);
-		printf(".");
+		//printf(".");
 		r = sd_cmd(CMD_SEND_OP_COND, ACMD41_ARG_HC);
 		if((r & ACMD41_CMD_COMPLETE) &&
 				(r & ACMD41_VOLTAGE) &&

@@ -14,6 +14,6 @@ typedef struct {
 extern void hw_info_init(void);
 extern hw_info_t*  get_hw_info(void);
 extern void arch_vm(page_dir_entry_t* vm);
-extern void arch_hw_init(void);
+extern void hw_optimise(void);
 
 #endif

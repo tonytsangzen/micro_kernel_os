@@ -25,5 +25,5 @@ void arch_vm(page_dir_entry_t* vm) {
 	map_pages(vm, vbase, pbase, pbase+16*KB, AP_RW_D);
 }
 
-void arch_hw_init(void) {
+void hw_optimise(void) {
 }
