@@ -913,7 +913,7 @@ static void read_thread(void* p) {
 				}
 			}
 		}
-		usleep(20000);
+		usleep(10000);
 	}
 }
 
@@ -980,7 +980,7 @@ static int xserver_loop_step(void* p) {
 	proc_lock(x->lock);
 	x_repaint(x);	
 	proc_unlock(x->lock);
-	usleep(10000);
+	usleep(2000);
 	return 0;
 }
 
