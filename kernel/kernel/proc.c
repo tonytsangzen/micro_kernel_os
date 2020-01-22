@@ -269,7 +269,7 @@ static void proc_wakeup_waiting(int32_t pid) {
 	}
 }
 
-static void proc_terminate(context_t* ctx, proc_t* proc) {
+static void __attribute__((optimize("O0"))) proc_terminate(context_t* ctx, proc_t* proc) {
 	if(proc->state == ZOMBIE || proc->state == UNUSED)
 		return;
 	if(proc->state == READY)
