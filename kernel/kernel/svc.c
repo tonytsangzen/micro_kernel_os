@@ -612,7 +612,7 @@ static void sys_proc_critical_quit(void) {
 	_current_proc->critical_counter = 0;
 }
 
-static void sys_proc_irq_register(uint32_t entry, uint32_t func, uint32_t data) {
+static void sys_proc_irq_setup(uint32_t entry, uint32_t func, uint32_t data) {
 	_current_proc->interrupt.entry = entry;
 	_current_proc->interrupt.func = func;
 	_current_proc->interrupt.data = data;
@@ -834,8 +834,11 @@ void svc_handler(int32_t code, int32_t arg0, int32_t arg1, int32_t arg2, context
 	case SYS_PROC_CRITICAL_QUIT:
 		sys_proc_critical_quit();
 		return;
+	case SYS_PROC_IRQ_SETUP:
+		sys_proc_irq_setup((uint32_t)arg0, (uint32_t)arg1, (uint32_t)arg2);
+		return;
 	case SYS_PROC_IRQ_REGISTER:
-		sys_proc_irq_register((uint32_t)arg0, (uint32_t)arg1, (uint32_t)arg2);
+		//sys_proc_irq_register((uint32_t)arg0);
 		return;
 	case SYS_PROC_INTERRUPT:
 		sys_proc_interrupt(ctx, (uint32_t)arg0, (uint32_t)arg1);

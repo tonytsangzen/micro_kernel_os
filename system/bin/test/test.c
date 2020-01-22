@@ -14,7 +14,7 @@ int main(int argc, char** argv) {
 	int pid = fork();
 	if(pid == 0) {
 		int i = 0;
-		proc_interrupt_register(int_func, &i);
+		proc_interrupt_setup(int_func, &i);
 		while(1) {
 			sleep(1);
 			i++;
