@@ -7,7 +7,6 @@
 #include <mm/shm.h>
 #include <kstring.h>
 #include <kernel/kernel.h>
-#include <kernel/kevent.h>
 #include <kernel/system.h>
 #include <kernel/hw_info.h>
 #include <kernel/proc.h>
@@ -81,7 +80,7 @@ static int32_t load_init(void) {
 
 	char* elf = sd_read_ext2(prog, &sz);
 	if(elf != NULL) {
-		proc_t *proc = proc_create(PROC_TYPE_PROC);
+		proc_t *proc = proc_create(PROC_TYPE_PROC, NULL);
 		str_cpy(proc->cmd, prog);
 		int32_t res = proc_load_elf(proc, elf, sz);
 		kfree(elf);
@@ -130,8 +129,6 @@ void _kernel_entry_c(context_t* ctx) {
 	dev_init();
 	
 	hw_optimise();
-
-	kevent_init();
 
 	init_global();
 	printf("kernel: global env inited.\n");

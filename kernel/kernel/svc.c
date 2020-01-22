@@ -4,7 +4,6 @@
 #include <kernel/system.h>
 #include <kernel/proc.h>
 #include <kernel/hw_info.h>
-#include <kernel/kevent.h>
 #include <mm/kalloc.h>
 #include <mm/shm.h>
 #include <mm/kmalloc.h>
@@ -153,7 +152,7 @@ static void sys_detach(void) {
 	_current_proc->father_pid = 0;
 }
 
-static int32_t sys_thread(context_t* ctx, uint32_t entry, int32_t arg) {
+static int32_t sys_thread(context_t* ctx, uint32_t entry, uint32_t func, int32_t arg) {
 	proc_t *proc = kfork(PROC_TYPE_THREAD);
 	if(proc == NULL)
 		return -1;
@@ -162,8 +161,8 @@ static int32_t sys_thread(context_t* ctx, uint32_t entry, int32_t arg) {
 	proc->ctx.sp = sp;
 	proc->ctx.pc = entry;
 	proc->ctx.lr = entry;
-	proc->ctx.gpr[0] = arg;
-	proc->ctx.gpr[0] = arg;
+	proc->ctx.gpr[0] = func;
+	proc->ctx.gpr[1] = arg;
 	return proc->pid;
 }
 
@@ -361,16 +360,6 @@ static void sys_get_msg(context_t* ctx, int32_t *pid, rawdata_t* data, int32_t i
 	ctx->gpr[0] = -1;
 	proc_t* proc = _current_proc;
 	proc_block_on(ctx, (uint32_t)&proc->pid);
-}
-
-static void sys_get_kevent(context_t* ctx, int32_t *pid, rawdata_t* data) {
-	int32_t res = kevent_pop(pid, data);
-	if(res == 0) {
-		ctx->gpr[0] = res;
-		return;
-	}
-	ctx->gpr[0] = -1;
-	proc_block_on(ctx, (uint32_t)kevent_pop);
 }
 
 static int32_t sys_proc_set_cwd(const char* cwd) {
@@ -623,6 +612,19 @@ static void sys_proc_critical_quit(void) {
 	_current_proc->critical_counter = 0;
 }
 
+static void sys_proc_irq_register(uint32_t entry, uint32_t func, uint32_t data) {
+	_current_proc->interrupt.entry = entry;
+	_current_proc->interrupt.func = func;
+	_current_proc->interrupt.data = data;
+	_current_proc->interrupt.busy = false;
+}
+
+static void sys_proc_interrupt(context_t* ctx, int32_t pid, int32_t int_id) {
+	if(_current_proc->owner != 0)
+		return;
+	proc_interrupt(ctx, pid, int_id);
+}
+
 void svc_handler(int32_t code, int32_t arg0, int32_t arg1, int32_t arg2, context_t* ctx, int32_t processor_mode) {
 	(void)arg1;
 	(void)arg2;
@@ -687,9 +689,6 @@ void svc_handler(int32_t code, int32_t arg0, int32_t arg1, int32_t arg2, context
 		return;
 	case SYS_GET_MSG:
 		sys_get_msg(ctx, (int32_t*)arg0, (rawdata_t*)arg1, arg2);
-		return;
-	case SYS_GET_KEVENT:
-		sys_get_kevent(ctx, (int32_t*)arg0, (rawdata_t*)arg1);
 		return;
 	case SYS_VFS_GET:
 		ctx->gpr[0] = sys_vfs_get_info((const char*)arg0, (fsinfo_t*)arg1);
@@ -806,7 +805,7 @@ void svc_handler(int32_t code, int32_t arg0, int32_t arg1, int32_t arg2, context
 		ctx->gpr[0] = get_global((const char*)arg0, (char*)arg1, arg2);
 		return;
 	case SYS_THREAD:
-		ctx->gpr[0] = sys_thread(ctx, (uint32_t)arg0, arg1);
+		ctx->gpr[0] = sys_thread(ctx, (uint32_t)arg0, (uint32_t)arg1, arg2);
 		return;
 	case SYS_LOCK_NEW:
 		ctx->gpr[0] = sys_lock_new();
@@ -834,6 +833,12 @@ void svc_handler(int32_t code, int32_t arg0, int32_t arg1, int32_t arg2, context
 		return;
 	case SYS_PROC_CRITICAL_QUIT:
 		sys_proc_critical_quit();
+		return;
+	case SYS_PROC_IRQ_REGISTER:
+		sys_proc_irq_register((uint32_t)arg0, (uint32_t)arg1, (uint32_t)arg2);
+		return;
+	case SYS_PROC_INTERRUPT:
+		sys_proc_interrupt(ctx, (uint32_t)arg0, (uint32_t)arg1);
 		return;
 	}
 	printf("pid:%d, code(%d) error!\n", _current_proc->pid, code);

@@ -7,7 +7,8 @@
 
 enum {
 	PROC_TYPE_PROC = 0,
-	PROC_TYPE_THREAD
+	PROC_TYPE_THREAD,
+	PROC_TYPE_INTERRUPT
 };
 
 typedef struct {

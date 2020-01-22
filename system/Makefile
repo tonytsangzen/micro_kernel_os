@@ -105,6 +105,7 @@ LIB_SYS_OBJS = $(LIB_SYS_DIR)/syscall.o \
 	$(LIB_SYS_DIR)/proclock.o \
 	$(LIB_SYS_DIR)/sys/wait.o \
 	$(LIB_SYS_DIR)/sys/critical.o \
+	$(LIB_SYS_DIR)/sys/interrupt.o \
 	$(LIB_SYS_DIR)/sys/mmio.o 
 
 LIB_LIBC_OBJS = $(LIB_LIBC_DIR)/unistd.o \

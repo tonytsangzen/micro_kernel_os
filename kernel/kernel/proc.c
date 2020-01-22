@@ -32,13 +32,13 @@ proc_t* proc_get(int32_t pid) {
 }
 
 static inline uint32_t proc_get_user_stack_pages(proc_t* proc) {
-	return proc->type == PROC_TYPE_THREAD ? THREAD_STACK_PAGES: STACK_PAGES;
+	return proc->type == PROC_TYPE_PROC ? STACK_PAGES: THREAD_STACK_PAGES;
 }
 
 static inline  uint32_t proc_get_user_stack_base(proc_t* proc) {
 	(void)proc;
   uint32_t proc_stack_base = USER_STACK_TOP - STACK_PAGES*PAGE_SIZE;
-	if(proc->type != PROC_TYPE_THREAD)
+	if(proc->type == PROC_TYPE_PROC)
 		return proc_stack_base;
   return proc_stack_base - proc->pid*THREAD_STACK_PAGES*PAGE_SIZE;
 }
@@ -174,8 +174,8 @@ static void proc_clone_files(proc_t *proc_to, proc_t* from) {
 	}
 }
 
-static void proc_free_space(proc_t *proc) {
-	if(proc->type == PROC_TYPE_THREAD)
+static void __attribute__((optimize("O0"))) proc_free_space(proc_t *proc) {
+	if(proc->type != PROC_TYPE_PROC)
 		return;
 
 	int32_t i;
@@ -290,7 +290,7 @@ static void proc_terminate(context_t* ctx, proc_t* proc) {
 
 
 /* proc_free frees all resources allocated by proc. */
-void proc_exit(context_t* ctx, proc_t *proc, int32_t res) {
+void __attribute__((optimize("O0"))) proc_exit(context_t* ctx, proc_t *proc, int32_t res) {
 	(void)res;
 	proc_terminate(ctx, proc);
 	proc->state = UNUSED;
@@ -304,8 +304,14 @@ void proc_exit(context_t* ctx, proc_t *proc, int32_t res) {
 		unmap_page(proc->space->vm, user_stack_base + PAGE_SIZE*i);
 		kfree4k(proc->user_stack[i]);
 	}
-
 	proc_free_space(proc);
+
+	if(proc->type == PROC_TYPE_INTERRUPT) {
+		proc_t* p = proc_get(proc->father_pid);
+		if(p != NULL) {
+			p->interrupt.busy = false;
+		}
+	}
 	memset(proc, 0, sizeof(proc_t));
 }
 
@@ -322,7 +328,7 @@ void proc_free(void* p) {
 }
 
 /* proc_creates allocates a new process and returns it. */
-proc_t *proc_create(int32_t type) {
+proc_t *proc_create(int32_t type, proc_t* parent) {
 	int32_t index = -1;
 	uint32_t i;
 	for (i = 0; i < PROC_MAX; i++) {
@@ -346,9 +352,9 @@ proc_t *proc_create(int32_t type) {
 		proc->cwd = str_new("/");
 	}
 	else {
-		proc->space = _current_proc->space;
-		proc->cmd = str_new(_current_proc->cmd->cstr);
-		proc->cwd = str_new(_current_proc->cwd->cstr);
+		proc->space = parent->space;
+		proc->cmd = str_new(parent->cmd->cstr);
+		proc->cwd = str_new(parent->cwd->cstr);
 	}
 
 	uint32_t user_stack_base =  proc_get_user_stack_base(proc);
@@ -586,16 +592,15 @@ static int32_t proc_clone(proc_t* child, proc_t* parent) {
 	return 0;
 }
 
-proc_t* kfork(int32_t type) {
+static proc_t* kfork_raw(int32_t type, proc_t* parent) {
 	proc_t *child = NULL;
-	proc_t *parent = _current_proc;
 
-	child = proc_create(type);
+	child = proc_create(type, parent);
 	if(child == NULL) {
 		printf("panic: kfork create proc failed!!(%d)\n", parent->pid);
 		return NULL;
 	}
-	child->father_pid = _current_proc->pid;
+	child->father_pid = parent->pid;
 
 	if(type == PROC_TYPE_PROC) {
 		if(proc_clone(child, parent) != 0) {
@@ -606,6 +611,10 @@ proc_t* kfork(int32_t type) {
 
 	proc_ready(child);
 	return child;
+}
+
+proc_t* kfork(int32_t type) {
+	return kfork_raw(type, _current_proc);
 }
 
 static int32_t get_procs_num(void) {
@@ -665,4 +674,24 @@ void renew_sleep_counter(uint32_t usec) {
 			}
 		}
 	}
+}
+
+void proc_interrupt(context_t* ctx, int32_t pid, int32_t int_id) {
+	proc_t* proc = proc_get(pid);	
+	if(proc == NULL || proc->interrupt.entry == 0 || proc->interrupt.busy)
+		return;
+
+	proc_t *int_thread = kfork_raw(PROC_TYPE_INTERRUPT, proc);
+	if(int_thread == NULL)
+		return;
+
+	uint32_t sp = int_thread->ctx.sp;
+	memcpy(&int_thread->ctx, &proc->ctx, sizeof(context_t));
+	int_thread->ctx.sp = sp;
+	int_thread->ctx.pc = int_thread->ctx.lr = proc->interrupt.entry;
+	int_thread->ctx.gpr[0] = int_id;
+	int_thread->ctx.gpr[1] = proc->interrupt.func;
+	int_thread->ctx.gpr[2] = proc->interrupt.data;
+	proc->interrupt.busy = true;
+	proc_switch(ctx, int_thread);
 }

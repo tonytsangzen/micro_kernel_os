@@ -18,7 +18,6 @@
 #include <rawdata.h>
 #include <global.h>
 #include <graph/graph.h>
-#include <kernel/kevent_type.h>
 #include <console.h>
 #include "sdinit.h"
 
@@ -30,6 +29,7 @@ static inline void wait_ready(int pid) {
 	}
 }
 
+/*
 static void run_init_sd(const char* cmd) {
 	sysinfo_t sysinfo;
 	syscall1(SYS_GET_SYSINFO, (int32_t)&sysinfo);
@@ -56,6 +56,7 @@ static void run_init_sd(const char* cmd) {
 	wait_ready(pid);
 	kprintf("[ok]\n");
 }
+*/
 
 static void run_init_root(const char* cmd) {
 	kprintf("init: %16s ", "/");

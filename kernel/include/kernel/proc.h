@@ -58,6 +58,13 @@ typedef struct st_proc {
 	proc_space_t* space;
 	void* user_stack[STACK_PAGES];
 
+	struct {
+		uint32_t entry;
+		uint32_t func;
+		uint32_t data;
+		bool busy;
+	} interrupt;
+
 	proc_msg_t* msg_queue_head;
 	proc_msg_t* msg_queue_tail;
 
@@ -81,7 +88,7 @@ extern void    proc_switch(context_t* ctx, proc_t* to);
 extern int32_t proc_expand_mem(proc_t *proc, int32_t page_num);
 extern void    proc_shrink_mem(proc_t* proc, int32_t page_num);
 extern void    proc_exit(context_t* ctx, proc_t *proc, int32_t res);
-extern proc_t *proc_create(int32_t type);
+extern proc_t *proc_create(int32_t type, proc_t* parent);
 
 extern void*   proc_malloc(uint32_t size);
 extern void    proc_free(void* p);
@@ -101,6 +108,8 @@ extern const char* proc_get_env(const char* name);
 extern const char* proc_get_env_name(int32_t index);
 extern const char* proc_get_env_value(int32_t index);
 extern int32_t proc_set_env(const char* name, const char* value);
+
+extern void proc_interrupt(context_t* ctx, int32_t pid, int32_t int_id);
 
 #define PROC_MAX 128
 
