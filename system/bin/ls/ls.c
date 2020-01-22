@@ -1,9 +1,9 @@
 #include <unistd.h>
 #include <stdio.h>
-#include <vfs.h>
 #include <vprintf.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/vfs.h>
 
 int main(int argc, char* argv[]) {
 	(void)argc;

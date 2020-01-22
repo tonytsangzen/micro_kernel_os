@@ -5,7 +5,7 @@
 #include <string.h>
 #include <console.h>
 #include <vprintf.h>
-#include <shm.h>
+#include <sys/shm.h>
 #include <sconf.h>
 #include <dev/fbinfo.h>
 #include <x/xclient.h>

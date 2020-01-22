@@ -4,9 +4,8 @@
 #include <unistd.h>
 #include <string.h>
 #include <mstr.h>
-#include <syscall.h>
+#include <sys/syscall.h>
 #include <fcntl.h>
-#include <dev/device.h>
 
 static void outc(char c, void* p) {
 	str_t* buf = (str_t*)p;

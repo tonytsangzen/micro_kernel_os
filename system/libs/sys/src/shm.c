@@ -1,5 +1,5 @@
-#include <shm.h>
-#include <syscall.h>
+#include <sys/shm.h>
+#include <sys/syscall.h>
 
 int shm_alloc(unsigned int size, int flag) {
 	return syscall2(SYS_PROC_SHM_ALLOC, size, flag);

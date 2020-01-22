@@ -1,22 +1,21 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <cmain.h>
 #include <string.h>
-#include <vfs.h>
-#include <vdevice.h>
-#include <syscall.h>
+#include <sys/vfs.h>
+#include <sys/vdevice.h>
+#include <sys/syscall.h>
 #include <dev/device.h>
-#include <shm.h>
+#include <sys/shm.h>
 #include <graph/graph.h>
 #include <dev/fbinfo.h>
-#include <ipc.h>
+#include <sys/ipc.h>
 #include <x/xcntl.h>
 #include <x/xevent.h>
 #include <x/xwm.h>
-#include <global.h>
-#include <thread.h>
-#include <proclock.h>
+#include <sys/global.h>
+#include <sys/thread.h>
+#include <sys/proclock.h>
 
 #define X_EVENT_MAX 16
 

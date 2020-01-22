@@ -1,10 +1,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <cmain.h>
 #include <string.h>
-#include <vfs.h>
-#include <vdevice.h>
+#include <sys/vfs.h>
+#include <sys/vdevice.h>
 #include <sys/mmio.h>
 
 #define AUX_OFFSET 0x00215000

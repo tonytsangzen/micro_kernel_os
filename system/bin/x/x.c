@@ -1,7 +1,6 @@
-#include <global.h>
+#include <sys/global.h>
 #include <stdio.h>
 #include <unistd.h>
-#include <cmain.h>
 
 int main(int argc, char* argv[]) {
 	int i;

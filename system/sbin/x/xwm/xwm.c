@@ -1,10 +1,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <cmain.h>
 #include <string.h>
-#include <ipc.h>
-#include <shm.h>
+#include <sys/ipc.h>
+#include <sys/shm.h>
 #include <graph/graph.h>
 #include <sconf.h>
 #include <x/xcntl.h>

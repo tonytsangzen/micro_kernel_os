@@ -1,14 +1,14 @@
-#include <vdevice.h>
-#include <vfs.h>
-#include <ipc.h>
+#include <sys/vdevice.h>
+#include <sys/vfs.h>
+#include <sys/ipc.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <errno.h>
-#include <shm.h>
-#include <syscall.h>
+#include <sys/shm.h>
+#include <sys/syscall.h>
 
 static void do_ping(int from_pid, proto_t* in) {
 	proto_t out;

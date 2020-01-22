@@ -1,4 +1,4 @@
-#include <gpio.h>
+#include <sys/gpio.h>
 #include <fcntl.h>
 
 int32_t gpio_config(int32_t fd, int32_t gpio_num, int32_t gpio_sel) {

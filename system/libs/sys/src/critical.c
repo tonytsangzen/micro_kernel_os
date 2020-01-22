@@ -1,5 +1,5 @@
 #include <sys/critical.h>
-#include <syscall.h>
+#include <sys/syscall.h>
 
 inline void critical_enter(void) {
 	syscall0(SYS_PROC_CRITICAL_ENTER);

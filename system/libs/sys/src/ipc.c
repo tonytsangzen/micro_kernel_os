@@ -1,6 +1,6 @@
-#include <ipc.h>
+#include <sys/ipc.h>
 #include <stddef.h>
-#include <syscall.h>
+#include <sys/syscall.h>
 #include <rawdata.h>
 #include <unistd.h>
 

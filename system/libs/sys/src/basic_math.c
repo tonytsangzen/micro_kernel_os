@@ -1,4 +1,4 @@
-#include <basic_math.h>
+#include <sys/basic_math.h>
 
 inline uint32_t div_u32(uint32_t v, uint32_t by) {
 	if(by == 0)

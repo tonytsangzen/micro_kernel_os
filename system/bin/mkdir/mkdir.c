@@ -1,8 +1,7 @@
 #include <unistd.h>
-#include <vfs.h>
+#include <sys/vfs.h>
 #include <stdio.h>
 #include <vprintf.h>
-#include <cmain.h>
 
 int main(int argc, char* argv[]) {
 	if(argc < 2) {

@@ -1,7 +1,7 @@
 #include <fcntl.h>
-#include <syscall.h>
-#include <ipc.h>
-#include <vfs.h>
+#include <sys/syscall.h>
+#include <sys/ipc.h>
+#include <sys/vfs.h>
 #include <stddef.h>
 #include <string.h>
 

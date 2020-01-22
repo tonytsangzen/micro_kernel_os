@@ -1,5 +1,5 @@
-#include <global.h>
-#include <syscall.h>
+#include <sys/global.h>
+#include <sys/syscall.h>
 
 int set_global(const char* name, const char* value) {
 	return syscall2(SYS_SET_GLOBAL, (int32_t)name, (int32_t)value);

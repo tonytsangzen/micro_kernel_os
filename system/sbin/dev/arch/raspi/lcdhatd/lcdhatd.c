@@ -1,14 +1,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <cmain.h>
 #include <string.h>
-#include <shm.h>
-#include <vfs.h>
+#include <sys/shm.h>
 #include "../lib/gpio_arch.h"
 #include "../lib/spi_arch.h"
-#include <vdevice.h>
-#include <syscall.h>
+#include <sys/vdevice.h>
+#include <sys/syscall.h>
 #include <sys/critical.h>
 #include <dev/device.h>
 #include <graph/graph.h>

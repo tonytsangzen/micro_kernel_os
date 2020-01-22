@@ -5,11 +5,11 @@
 #include <string.h>
 #include <console.h>
 #include <vprintf.h>
-#include <shm.h>
+#include <sys/shm.h>
 #include <sconf.h>
-#include <global.h>
+#include <sys/global.h>
 #include <dev/fbinfo.h>
-#include <thread.h>
+#include <sys/thread.h>
 
 typedef struct {
 	const char* id;

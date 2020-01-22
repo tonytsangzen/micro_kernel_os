@@ -1,7 +1,7 @@
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <syscall.h>
+#include <sys/syscall.h>
 #include <string.h>
 #include <fsinfo.h>
 

@@ -1,6 +1,6 @@
 #include "sdinit.h"
 #include <dev/device.h>
-#include <syscall.h>
+#include <sys/syscall.h>
 #include <stdlib.h>
 #include <partition.h>
 #include <string.h>

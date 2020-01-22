@@ -1,6 +1,6 @@
 #include <sys/interrupt.h>
 #include <stdlib.h>
-#include <syscall.h>
+#include <sys/syscall.h>
 
 static void proc_interrupt_entry(int int_id, interrupt_func_t func, void* p) {
 	func(int_id, p);

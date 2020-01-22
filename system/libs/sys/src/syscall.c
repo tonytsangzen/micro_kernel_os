@@ -1,4 +1,4 @@
-#include <syscall.h>
+#include <sys/syscall.h>
 
 inline int32_t syscall3(int32_t code, int32_t arg0, int32_t arg1, int32_t arg2) {
 	volatile int32_t r;

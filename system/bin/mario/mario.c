@@ -1,5 +1,5 @@
 #include "mario/mario_vm.h"
-#include <vfs.h>
+#include <sys/vfs.h>
 #include <unistd.h>
 #include <stdlib.h>
 #include <fcntl.h>

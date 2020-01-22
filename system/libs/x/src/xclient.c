@@ -1,5 +1,5 @@
 #include <x/xclient.h>
-#include <shm.h>
+#include <sys/shm.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <stdlib.h>

@@ -1,5 +1,5 @@
 #include <unistd.h>
-#include <vfs.h>
+#include <sys/vfs.h>
 #include <string.h>
 #include <stdlib.h>
 #include <graph/tga.h>

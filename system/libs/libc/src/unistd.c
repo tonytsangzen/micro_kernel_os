@@ -2,13 +2,13 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <fcntl.h>
-#include <syscall.h>
-#include <proto.h>
-#include <vfs.h>
-#include <ipc.h>
+#include <sys/syscall.h>
+#include <sys/proto.h>
+#include <sys/vfs.h>
+#include <sys/ipc.h>
 #include <string.h>
 #include <mstr.h>
-#include <shm.h>
+#include <sys/shm.h>
 #include <errno.h>
 #include <rawdata.h>
 

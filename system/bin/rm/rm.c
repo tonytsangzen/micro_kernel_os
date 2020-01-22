@@ -1,7 +1,6 @@
 #include <unistd.h>
 #include <stdio.h>
-#include <cmain.h>
-#include <vfs.h>
+#include <sys/vfs.h>
 
 int main(int argc, char* argv[]) {
 	if(argc < 2) {

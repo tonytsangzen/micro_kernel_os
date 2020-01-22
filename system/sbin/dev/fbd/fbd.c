@@ -1,15 +1,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <cmain.h>
 #include <string.h>
-#include <vfs.h>
-#include <vdevice.h>
+#include <sys/vfs.h>
+#include <sys/vdevice.h>
 #include <dev/fbinfo.h>
-#include <syscall.h>
+#include <sys/syscall.h>
 #include <dev/device.h>
 #include <graph/graph.h>
-#include <shm.h>
+#include <sys/shm.h>
 #include <sys/critical.h>
 
 typedef struct {

@@ -1,5 +1,5 @@
-#include <proclock.h>
-#include <syscall.h>
+#include <sys/proclock.h>
+#include <sys/syscall.h>
 
 proc_lock_t proc_lock_new(void) {
 	return (proc_lock_t)syscall0(SYS_LOCK_NEW);

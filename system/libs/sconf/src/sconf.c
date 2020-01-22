@@ -1,7 +1,6 @@
 #include <sconf.h>
-#include <vfs.h>
+#include <sys/vfs.h>
 #include <stdlib.h>
-#include <sconf.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <string.h>

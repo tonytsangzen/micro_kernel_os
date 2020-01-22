@@ -1,10 +1,10 @@
-#include <cmain.h>
+#include <sys/cmain.h>
 #include <stddef.h>
 #include <string.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <syscall.h>
+#include <sys/syscall.h>
 #include <unistd.h>
 
 static char _cmd[1024];

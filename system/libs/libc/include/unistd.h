@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 #include <errno.h>
+#include <sys/cmain.h>
 
 #define ERR_RETRY -2
 

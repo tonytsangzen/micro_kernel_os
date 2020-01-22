@@ -1,5 +1,5 @@
 #include <stdlib.h>
-#include <syscall.h>
+#include <sys/syscall.h>
 #include <string.h>
 
 void *malloc(size_t size) {

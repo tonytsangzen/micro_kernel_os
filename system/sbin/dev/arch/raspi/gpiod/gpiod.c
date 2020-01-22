@@ -1,11 +1,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <cmain.h>
 #include <string.h>
-#include <vfs.h>
-#include <gpio.h>
-#include <vdevice.h>
+#include <sys/gpio.h>
+#include <sys/vdevice.h>
 #include <dev/device.h>
 #include "../lib/gpio_arch.h"
 

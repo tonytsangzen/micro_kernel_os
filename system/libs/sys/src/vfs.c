@@ -1,11 +1,11 @@
-#include <vfs.h>
+#include <sys/vfs.h>
 #include <string.h>
-#include <syscall.h>
+#include <sys/syscall.h>
 #include <unistd.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <mstr.h>
-#include <ipc.h>
+#include <sys/ipc.h>
 
 int vfs_new_node(fsinfo_t* info) {
 	return syscall1(SYS_VFS_NEW_NODE, (int32_t)info);

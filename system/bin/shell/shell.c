@@ -2,11 +2,11 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <vfs.h>
+#include <sys/vfs.h>
 #include <vprintf.h>
 #include <mstr.h>
 #include <fcntl.h>
-#include <syscall.h>
+#include <sys/syscall.h>
 #include <dev/device.h>
 #include <sys/wait.h>
 

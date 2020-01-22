@@ -1,6 +1,6 @@
-#include <thread.h>
+#include <sys/thread.h>
 #include <stdlib.h>
-#include <syscall.h>
+#include <sys/syscall.h>
 
 static void thread_entry(thread_func_t func, void* p) {
 	func(p);

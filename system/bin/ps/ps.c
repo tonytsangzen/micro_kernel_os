@@ -2,10 +2,9 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <syscall.h>
+#include <sys/syscall.h>
 #include <sysinfo.h>
 #include <string.h>
-#include <cmain.h>
 
 static const char* _states[] = {
 	"unu",

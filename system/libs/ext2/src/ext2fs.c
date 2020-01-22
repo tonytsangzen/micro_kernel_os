@@ -1,5 +1,5 @@
 #include <ext2fs.h>
-#include <vfs.h>
+#include <sys/vfs.h>
 #include <string.h>
 #include <stdlib.h>
 #include <mstr.h>
