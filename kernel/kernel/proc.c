@@ -592,7 +592,7 @@ static int32_t proc_clone(proc_t* child, proc_t* parent) {
 	return 0;
 }
 
-static proc_t* kfork_raw(int32_t type, proc_t* parent) {
+proc_t* kfork_raw(int32_t type, proc_t* parent) {
 	proc_t *child = NULL;
 
 	child = proc_create(type, parent);
@@ -676,22 +676,3 @@ void renew_sleep_counter(uint32_t usec) {
 	}
 }
 
-void proc_interrupt(context_t* ctx, int32_t pid, int32_t int_id) {
-	proc_t* proc = proc_get(pid);	
-	if(proc == NULL || proc->interrupt.entry == 0 || proc->interrupt.busy)
-		return;
-
-	proc_t *int_thread = kfork_raw(PROC_TYPE_INTERRUPT, proc);
-	if(int_thread == NULL)
-		return;
-
-	uint32_t sp = int_thread->ctx.sp;
-	memcpy(&int_thread->ctx, &proc->ctx, sizeof(context_t));
-	int_thread->ctx.sp = sp;
-	int_thread->ctx.pc = int_thread->ctx.lr = proc->interrupt.entry;
-	int_thread->ctx.gpr[0] = int_id;
-	int_thread->ctx.gpr[1] = proc->interrupt.func;
-	int_thread->ctx.gpr[2] = proc->interrupt.data;
-	proc->interrupt.busy = true;
-	proc_switch(ctx, int_thread);
-}

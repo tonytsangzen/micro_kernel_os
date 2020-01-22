@@ -97,6 +97,7 @@ extern void    proc_block_on(context_t* ctx, uint32_t event);
 extern void    proc_wakeup(uint32_t event);
 extern void    proc_waitpid(context_t* ctx, int32_t pid);
 extern proc_t* proc_get(int32_t pid);
+extern proc_t* kfork_raw(int32_t type, proc_t* parent);
 extern proc_t* kfork(int32_t type);
 
 extern procinfo_t* get_procs(int32_t* num);
@@ -108,8 +109,6 @@ extern const char* proc_get_env(const char* name);
 extern const char* proc_get_env_name(int32_t index);
 extern const char* proc_get_env_value(int32_t index);
 extern int32_t proc_set_env(const char* name, const char* value);
-
-extern void proc_interrupt(context_t* ctx, int32_t pid, int32_t int_id);
 
 #define PROC_MAX 128
 

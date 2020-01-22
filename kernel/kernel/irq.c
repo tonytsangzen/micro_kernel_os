@@ -6,6 +6,7 @@
 #include <kernel/irq.h>
 #include <kernel/system.h>
 #include <kernel/schedule.h>
+#include <kernel/uspace_int.h>
 #include <kernel/proc.h>
 #include <string.h>
 #include <kprintf.h>
@@ -83,6 +84,7 @@ void data_abort_handler(context_t* ctx) {
 
 void irq_init(void) {
 	irq_arch_init();
+	uspace_interrupt_init();
 	//gic_set_irqs( IRQ_UART0 | IRQ_TIMER0 | IRQ_KEY | IRQ_MOUSE | IRQ_SDC);
 	//gic_set_irqs(IRQ_TIMER0 | IRQ_SDC);
 	gic_set_irqs(IRQ_TIMER0);

@@ -3,6 +3,7 @@
 #include <kernel/schedule.h>
 #include <kernel/system.h>
 #include <kernel/proc.h>
+#include <kernel/uspace_int.h>
 #include <kernel/hw_info.h>
 #include <mm/kalloc.h>
 #include <mm/shm.h>
@@ -619,6 +620,10 @@ static void sys_proc_irq_setup(uint32_t entry, uint32_t func, uint32_t data) {
 	_current_proc->interrupt.busy = false;
 }
 
+static void sys_proc_irq_register(uint32_t int_id) {
+	uspace_interrupt_register(_current_proc->pid, int_id);
+}
+
 static void sys_proc_interrupt(context_t* ctx, int32_t pid, int32_t int_id) {
 	if(_current_proc->owner != 0)
 		return;
@@ -838,7 +843,7 @@ void svc_handler(int32_t code, int32_t arg0, int32_t arg1, int32_t arg2, context
 		sys_proc_irq_setup((uint32_t)arg0, (uint32_t)arg1, (uint32_t)arg2);
 		return;
 	case SYS_PROC_IRQ_REGISTER:
-		//sys_proc_irq_register((uint32_t)arg0);
+		sys_proc_irq_register((uint32_t)arg0);
 		return;
 	case SYS_PROC_INTERRUPT:
 		sys_proc_interrupt(ctx, (uint32_t)arg0, (uint32_t)arg1);
